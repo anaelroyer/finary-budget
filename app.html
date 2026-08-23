@@ -637,5 +637,17 @@ recordPatrimoineSnapshot();
 render();
 save();
 </script>
+
+<script>
+document.addEventListener('keydown', function(event) {
+  if (event.key !== 'Enter') return;
+  const el = event.target;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+    event.preventDefault();
+    el.blur();
+    if (typeof save === 'function') save();
+  }
+});
+</script>
 </body>
 </html>
