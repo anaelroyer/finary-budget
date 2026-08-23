@@ -42,6 +42,45 @@
       gap: 16px;
     }
 
+    /* Barre d'onglets */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 6px;
+      border-radius: 12px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background-color: var(--accent-green);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
     .card {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -171,46 +210,57 @@
 <body>
 
   <div class="container">
-    <!-- En-tête Reste à vivre -->
-    <div class="card">
-      <h2>📊 Reste à vivre</h2>
-      <div class="summary-box">
-        <span>Total Net :</span>
-        <span id="total-reste">0,00 €</span>
+    <!-- Barre de navigation par onglets -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('budget')">Budget</button>
+      <button class="tab-btn" onclick="switchTab('patrimoine')">Patrimoine</button>
+    </div>
+
+    <!-- ONGLET BUDGET -->
+    <div id="tab-budget" class="tab-content active">
+      <!-- En-tête Reste à vivre -->
+      <div class="card">
+        <h2>📊 Reste à vivre</h2>
+        <div class="summary-box">
+          <span>Total Net :</span>
+          <span id="total-reste">0,00 €</span>
+        </div>
+      </div>
+
+      <!-- Dépenses courantes -->
+      <div class="card">
+        <h2>🛒 Dépenses courantes</h2>
+        <button class="btn-green" onclick="addItem('expenses')">+ Ajouter une dépense</button>
+        <div id="expenses-list"></div>
+        <button class="btn-red-outline" onclick="clearList('expenses')">Tout vider</button>
+      </div>
+
+      <!-- Entrées -->
+      <div class="card">
+        <h2>📥 Entrées</h2>
+        <div id="income-list"></div>
+        <button class="btn-green" onclick="addItem('income')">+ Ajouter revenu</button>
+      </div>
+
+      <!-- Frais fixes -->
+      <div class="card">
+        <h2>🏠 Frais fixes</h2>
+        <div id="fixed-list"></div>
+        <button class="btn-green" onclick="addItem('fixed')">+ Ajouter frais fixe</button>
       </div>
     </div>
 
-    <!-- Section Budget / Dépenses courantes -->
-    <div class="card">
-      <h2>🛒 Dépenses courantes</h2>
-      <button class="btn-green" onclick="addItem('expenses')">+ Ajouter une dépense</button>
-      <div id="expenses-list"></div>
-      <button class="btn-red-outline" onclick="clearList('expenses')">Tout vider</button>
-    </div>
-
-    <!-- Section Entrées -->
-    <div class="card">
-      <h2>📥 Entrées</h2>
-      <div id="income-list"></div>
-      <button class="btn-green" onclick="addItem('income')">+ Ajouter revenu</button>
-    </div>
-
-    <!-- Section Frais fixes -->
-    <div class="card">
-      <h2>🏠 Frais fixes</h2>
-      <div id="fixed-list"></div>
-      <button class="btn-green" onclick="addItem('fixed')">+ Ajouter frais fixe</button>
-    </div>
-
-    <!-- Section Patrimoine -->
-    <div class="card">
-      <h2>🏛️ Patrimoine</h2>
-      <div class="summary-box" style="margin-bottom: 8px;">
-        <span>Total Patrimoine :</span>
-        <span id="total-patrimoine">0,00 €</span>
+    <!-- ONGLET PATRIMOINE -->
+    <div id="tab-patrimoine" class="tab-content">
+      <div class="card">
+        <h2>🏛️ Patrimoine</h2>
+        <div class="summary-box" style="margin-bottom: 8px;">
+          <span>Total Patrimoine :</span>
+          <span id="total-patrimoine">0,00 €</span>
+        </div>
+        <div id="patrimoine-list"></div>
+        <button class="btn-green" onclick="addItem('patrimoine')">+ Ajouter actif / épargne</button>
       </div>
-      <div id="patrimoine-list"></div>
-      <button class="btn-green" onclick="addItem('patrimoine')">+ Ajouter actif / épargne</button>
     </div>
   </div>
 
@@ -221,6 +271,19 @@
       fixed: [],
       patrimoine: []
     };
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      if (tabName === 'budget') {
+        document.getElementById('tab-budget').classList.add('active');
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('tab-patrimoine').classList.add('active');
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      }
+    }
 
     function render() {
       renderSection('expenses', 'expenses-list');
@@ -236,7 +299,6 @@
       
       data[sectionKey].forEach((item, index) => {
         const row = document.createElement('div');
-        // Les sections budget ont une checkbox, le patrimoine n'en a pas forcément besoin mais on garde la structure homogène ou masquée si besoin
         const hasCheckbox = sectionKey !== 'patrimoine';
         row.className = `row ${item.paid && hasCheckbox ? 'paid' : ''}`;
         
