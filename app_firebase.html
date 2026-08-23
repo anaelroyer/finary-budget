@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget & Patrimoine — Mobile Optimized</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e6edf3;line-height:1.5;padding:8px}
+.wrap{max-width:480px;margin:auto;display:flex;flex-direction:column;gap:16px}
+
+.nav-tabs{display:flex;gap:6px;background:#161b22;border:1px solid #30363d;padding:6px;border-radius:12px}
+.tab-btn{flex:1;background:transparent;border:0;color:#8b949e;font-size:14px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-align:center}
+.tab-btn:hover{color:#fff;background:#21262d}
+.tab-btn.active{background:#238636;color:#fff}
+
+.tab-content{display:none;flex-direction:column;gap:16px}
+.tab-content.active{display:flex}
+
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.top h1{font-size:20px;font-weight:700;color:#fff}
+
+.card{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.4);display:flex;flex-direction:column;gap:12px}
+.total{font-size:32px;font-weight:800;margin:4px 0;letter-spacing:-0.5px;color:#58a6ff}
+.total.green{color:#3fb950}
+.total.red{color:#f85149}
+.muted{color:#8b949e;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.stat{background:#21262d;border:1px solid #30363d;border-radius:10px;padding:12px}
+.stat span{font-size:11px;color:#8b949e}
+.stat strong{display:block;font-size:16px;margin-top:2px;color:#fff}
+
+.section-header{display:flex;justify-content:space-between;align-items:center}
+.section-header h2{font-size:16px;font-weight:600;color:#fff}
+
+.rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Ligne Budget avec case à cocher */
+.row{display:grid;grid-template-columns:28px minmax(0, 1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+.row.paid {background-color: rgba(35, 134, 54, 0.15);}
+.row:last-child{border-bottom:0}
+
+/* Ligne Patrimoine simple (Libellé + Montant + Supprimer) */
+.row.patrimoine-row{display:grid;grid-template-columns:minmax(0, 1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+
+.row input[type="text"]{width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none}
+.row input[type="number"]{width:100%;padding:8px 6px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;text-align:right;outline:none}
+.row input[type="checkbox"]{width:20px;height:20px;accent-color:#238636;cursor:pointer}
+
+.amount{text-align:right;font-weight:600;color:#c9d1d9;font-size:13px;}
+
+.history-table{width:100%;border-collapse:collapse;margin-top:6px}
+.history-table th,.history-table td{padding:8px 6px;text-align:left;border-bottom:1px solid #21262d;font-size:13px}
+.history-table th{color:#8b949e;font-weight:600;text-transform:uppercase;font-size:11px}
+.history-table td{color:#c9d1d9}
+
+.chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d}
+.chart-container h3{font-size:12px;color:#8b949e;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px}
+svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
+.chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.chart-area{fill:url(#chart-gradient);opacity:0.25}
+.chart-dot{fill:#58a6ff;stroke:#161b22;stroke-width:2}
+
+.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px;transition:opacity 0.2s}
+.btn-primary{background:#238636;color:#fff;width:100%}
+.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:8px 12px;font-size:13px}
+.btn-add{background:transparent;color:#58a6ff;border:1px dashed #30363d;width:100%;margin-top:8px;padding:10px;border-radius:8px;font-weight:600;cursor:pointer}
+.btn-add:hover{background:#21262d}
+.btn-del{background:transparent;color:#f85149;border:none;cursor:pointer;font-size:16px;padding:4px;display:flex;align-items:center;justify-content:center}
+
+.action-row {display: flex; gap: 8px; margin-top: 4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
+    <button class="tab-btn" onclick="switchTab('patrimoine')">📊 Patrimoine</button>
+  </div>
+
+  <!-- ONGLET BUDGET -->
+  <div id="tab-budget" class="tab-content active">
+    <div class="top">
+      <h1>Budget Mensuel</h1>
+      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px; font-size:12px;">🔒 Clôturer</button>
+    </div>
+    
+    <div class="card">
+      <div class="muted">Reste à vivre estimé</div>
+      <div class="total green" id="budget-reste-vivre">0 €</div>
+    </div>
+
+    <!-- DÉPENSES EN PREMIER -->
+    <div class="card">
+      <div class="section-header">
+        <h2>🛒 Dépenses</h2>
+      </div>
+      <button class="btn-add" onclick="addItem('budgetDepenses')">+ Ajouter</button>
+      <div class="rows-container" data-key="budgetDepenses" style="margin-top:8px;"></div>
+      <button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
+    </div>
+
+    <div class="card">
+      <div class="section-header"><h2>🏠 Frais fixes</h2></div>
+      <div class="rows-container" data-key="budgetFixes"></div>
+      <button class="btn-add" onclick="addItem('budgetFixes')">+ Ajouter frais fixe</button>
+    </div>
+
+    <div class="card">
+      <div class="section-header"><h2>📥 Entrées</h2></div>
+      <div class="rows-container" data-key="budgetRevenus"></div>
+      <button class="btn-add" onclick="addItem('budgetRevenus')">+ Ajouter revenu</button>
+    </div>
+
+    <div class="card">
+      <div class="section-header"><h2>🗓️ Historique</h2></div>
+      <div id="history-container"></div>
+      <div class="action-row">
+        <button class="btn btn-secondary" style="flex:1; color:#f85149;" onclick="resetHistory()">🗑️ Reset</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="exportData()">⬇️ Exporter</button>
+        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+        <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONGLET PATRIMOINE -->
+  <div id="tab-patrimoine" class="tab-content">
+    <div class="top">
+      <h1>Patrimoine</h1>
+      <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 10px; font-size:12px;">🖨️ Imprimer</button>
+    </div>
+    
+    <div class="card">
+      <div class="muted">Patrimoine net</div>
+      <div class="total" id="net">0 €</div>
+      <div class="grid">
+        <div class="stat"><span>Actifs</span><strong id="assets">0 €</strong></div>
+        <div class="stat"><span>Épargne</span><strong id="savings">0 €</strong></div>
+        <div class="stat"><span>Emprunts</span><strong id="debts">0 €</strong></div>
+        <div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
+      </div>
+      
+      <div class="chart-container">
+        <h3>Évolution</h3>
+        <div id="chart-wrapper"></div>
+      </div>
+    </div>
+
+    <div class="card"><div class="section-header"><h2>🏠 Immobilier</h2></div><div class="rows-container" data-key="immobilier"></div><button class="btn-add" onclick="addItem('immobilier')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>💰 Épargne</h2></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>📈 Bourse</h2></div><div class="rows-container" data-key="bourse"></div><button class="btn-add" onclick="addItem('bourse')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>🪙 Crypto</h2></div><div class="rows-container" data-key="crypto"></div><button class="btn-add" onclick="addItem('crypto')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>💳 Emprunts</h2></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
+  </div>
+</div>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",
+  authDomain: "finances-royer.firebaseapp.com",
+  projectId: "finances-royer",
+  storageBucket: "finances-royer.firebasestorage.app",
+  messagingSenderId: "9218166802",
+  appId: "1:9218166802:web:2df9abb231684f8c9ec8cb"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const sharedRef = doc(db, "budget_shared", "main_account");
+
+window.firebaseReady = false;
+window.firebaseWriting = false;
+
+window.firebaseSave = async function() {
+  if (!window.firebaseReady) return;
+  try {
+    window.firebaseWriting = true;
+    await setDoc(sharedRef, {
+      data: window.data,
+      monthHistory: window.monthHistory,
+      patrimoineHistory: window.patrimoineHistory
+    });
+  } catch (e) {
+    console.error("Erreur Firebase :", e);
+  } finally {
+    window.firebaseWriting = false;
+  }
+};
+
+async function initFirebase() {
+  try {
+    await signInAnonymously(auth);
+  } catch (e) {
+    console.error("Authentification Firebase impossible :", e);
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  window.firebaseReady = true;
+
+  try {
+    const snap = await getDoc(sharedRef);
+
+    if (!snap.exists()) {
+      await window.firebaseSave();
+    } else {
+      const remote = snap.data();
+      if (remote.data) window.data = remote.data;
+      if (Array.isArray(remote.monthHistory)) window.monthHistory = remote.monthHistory;
+      if (Array.isArray(remote.patrimoineHistory)) window.patrimoineHistory = remote.patrimoineHistory;
+      window.saveLocalOnly();
+      window.render();
+    }
+
+    onSnapshot(sharedRef, (snapshot) => {
+      if (!snapshot.exists() || window.firebaseWriting) return;
+      const remote = snapshot.data();
+      if (remote.data) window.data = remote.data;
+      if (Array.isArray(remote.monthHistory)) window.monthHistory = remote.monthHistory;
+      if (Array.isArray(remote.patrimoineHistory)) window.patrimoineHistory = remote.patrimoineHistory;
+      window.saveLocalOnly();
+      window.render();
+    });
+  } catch (e) {
+    console.error("Erreur de synchronisation Firebase :", e);
+  }
+});
+
+initFirebase();
+</script>
+
+<script>
+let data = JSON.parse(localStorage.getItem('finaryData')) || {
+  immobilier: [['Résidence principale', 300000]], epargne: [['Livret A', 20000]],
+  assurancevie: [['Assurance-vie Principale', 15000]],
+  bourse: [['ETF World', 2600]], crypto: [['Bitcoin', 30000]], dettes: [['Crédit Immo', 150000]],
+  budgetRevenus: [['Salaire', 2500, false]], budgetFixes: [['Loyer', 900, false]], budgetDepenses: [['Courses', 400, false]]
+};
+let monthHistory = JSON.parse(localStorage.getItem('finaryHistory')) || [];
+let patrimoineHistory = JSON.parse(localStorage.getItem('finaryPatrimoineHistory')) || [];
+window.data = data;
+window.monthHistory = monthHistory;
+window.patrimoineHistory = patrimoineHistory;
+
+const euro = n => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === 'tab-'+t));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.innerText.includes(t==='budget'?'Budget':'Patrimoine')));
+}
+
+function render() {
+  ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'dettes', 'budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
+    const cont = document.querySelector(`.rows-container[data-key="${key}"]`);
+    if(!cont) return;
+    cont.innerHTML = '';
+    
+    if (!Array.isArray(data[key])) data[key] = [];
+
+    data[key].forEach((item, idx) => {
+      const row = document.createElement('div');
+      const isBudget = key.startsWith('budget');
+      
+      if (isBudget) {
+        row.className = `row ${item[2] ? 'paid' : ''}`;
+        row.innerHTML = `
+          <input type="checkbox" ${item[2] ? 'checked' : ''} onchange="togglePaid('${key}',${idx})">
+          <input type="text" value="${item[0] || ''}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé">
+          <input type="number" value="${item[1] === 0 ? '' : item[1]}" oninput="update('${key}',${idx},1,this.value)" placeholder="0">
+          <button class="btn-del" onclick="del('${key}',${idx})">×</button>`;
+      } else {
+        // Patrimoine simple (Libellé + Montant + Supprimer) pour toutes les catégories
+        row.className = 'row patrimoine-row';
+        row.innerHTML = `
+          <input type="text" value="${item[0] || ''}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé">
+          <input type="number" value="${item[1] === 0 ? '' : item[1]}" oninput="update('${key}',${idx},1,this.value)" placeholder="0">
+          <button class="btn-del" onclick="del('${key}',${idx})">×</button>`;
+      }
+      cont.appendChild(row);
+    });
+  });
+  updateTotals();
+  renderHistory();
+  recordPatrimoineSnapshot();
+  renderChart();
+}
+
+function update(k, i, p, v) { 
+  if(!data[k][i]) return;
+  data[k][i][p] = p === 0 ? v : (v === '' ? 0 : Number(v)); 
+  if(p !== 0) updateTotals();
+  save(); 
+}
+
+function togglePaid(k, i) {
+  if(!data[k][i]) return;
+  data[k][i][2] = !data[k][i][2];
+  render();
+  save();
+}
+
+function addItem(k) { 
+  if(!data[k]) data[k] = [];
+  
+  let defaultItem = ['Nouveau', 0];
+  if (k.startsWith('budget')) defaultItem = ['Nouveau', 0, false];
+  
+  if (k === 'budgetDepenses') {
+    data[k].unshift(defaultItem);
+  } else {
+    data[k].push(defaultItem);
+  }
+  
+  render(); 
+  save(); 
+}
+
+function del(k, i) { 
+  data[k].splice(i, 1); 
+  render(); 
+  save(); 
+}
+
+function clearList(k) { 
+  data[k] = []; 
+  render(); 
+  save(); 
+}
+
+function saveLocalOnly() {
+  localStorage.setItem('finaryData', JSON.stringify(data));
+  localStorage.setItem('finaryHistory', JSON.stringify(monthHistory));
+  localStorage.setItem('finaryPatrimoineHistory', JSON.stringify(patrimoineHistory));
+}
+
+function save() {
+  window.data = data;
+  window.monthHistory = monthHistory;
+  window.patrimoineHistory = patrimoineHistory;
+  saveLocalOnly();
+  if (window.firebaseSave) window.firebaseSave();
+}
+
+function calculateNet() {
+  const assetKeys = ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto'];
+  const assets = assetKeys.reduce((s, k) => {
+    if (!data[k]) return s;
+    return s + data[k].reduce((a, i) => a + (i[1]||0), 0);
+  }, 0);
+  const debts = (data.dettes || []).reduce((s, i) => s + (i[1]||0), 0);
+  return { assets, debts, net: assets - debts };
+}
+
+function updateTotals() {
+  const c = calculateNet();
+  document.getElementById('net').textContent = euro(c.net);
+  document.getElementById('assets').textContent = euro(c.assets);
+  document.getElementById('debts').textContent = euro(c.debts);
+  
+  const savingsTotal = (data.epargne || []).reduce((a, i) => a + (i[1]||0), 0);
+  document.getElementById('savings').textContent = euro(savingsTotal);
+
+  const bourseTotal = (data.bourse || []).reduce((a, i) => a + (i[1]||0), 0);
+  const cryptoTotal = (data.crypto || []).reduce((a, i) => a + (i[1]||0), 0);
+  document.getElementById('investments').textContent = euro(bourseTotal + cryptoTotal);
+
+  const rev = (data.budgetRevenus || []).reduce((s,i)=>s+(i[1]||0),0);
+  const fixes = (data.budgetFixes || []).reduce((s,i)=>s+(i[1]||0),0);
+  const dep = (data.budgetDepenses || []).reduce((s,i)=>s+(i[1]||0),0);
+  const rv = rev - fixes - dep;
+
+  document.getElementById('budget-reste-vivre').textContent = euro(rv);
+  document.getElementById('budget-reste-vivre').className = 'total ' + (rv>=0?'green':'red');
+}
+
+function recordPatrimoineSnapshot() {
+  const today = new Date().toISOString().split('T')[0];
+  const currentNet = calculateNet().net;
+
+  const existing = patrimoineHistory.find(h => h.date === today);
+  if (existing) {
+    existing.net = currentNet;
+  } else {
+    patrimoineHistory.push({ date: today, net: currentNet });
+    patrimoineHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+  save();
+}
+
+function closeMonth() {
+  const rev = (data.budgetRevenus || []).reduce((s,i)=>s+(i[1]||0),0);
+  const fixes = (data.budgetFixes || []).reduce((s,i)=>s+(i[1]||0),0);
+  const dep = (data.budgetDepenses || []).reduce((s,i)=>s+(i[1]||0),0);
+  monthHistory.unshift({ 
+    month: new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'}), 
+    revenus: rev, 
+    fixes: fixes, 
+    depenses: dep, 
+    resteVivre: rev - fixes - dep
+  });
+  save(); render();
+}
+
+function resetHistory() {
+  if (confirm("Supprimer l'historique des budgets ?")) {
+    monthHistory = [];
+    localStorage.removeItem('finaryHistory');
+    render();
+  }
+}
+
+function renderHistory() {
+  const cont = document.getElementById('history-container');
+  if(!cont) return;
+  cont.innerHTML = monthHistory.length === 0 ? '<p style="color:#8b949e; font-size:13px;">Aucun historique.</p>' : 
+    `<table class="history-table"><thead><tr><th>Mois</th><th>Revenus</th><th>Fixes</th><th>Dép.</th><th>Reste</th></tr></thead><tbody>` + 
+    monthHistory.map(h => `<tr><td>${h.month}</td><td>${euro(h.revenus)}</td><td>${euro(h.fixes)}</td><td>${euro(h.depenses)}</td><td style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</td></tr>`).join('') + `</tbody></table>`;
+}
+
+function renderChart() {
+  const container = document.getElementById('chart-wrapper');
+  if (!container) return;
+
+  if (patrimoineHistory.length === 0) {
+    container.innerHTML = '<p style="color:#8b949e; font-size:12px; text-align:center;">Chargement...</p>';
+    return;
+  }
+
+  const values = patrimoineHistory.map(h => h.net);
+  const labels = patrimoineHistory.map(h => {
+    const parts = h.date.split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  });
+
+  const width = 400;
+  const height = 95;
+  const padding = 15;
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min === 0 ? 1 : max - min;
+
+  const points = values.map((val, idx) => {
+    const x = padding + (idx / (values.length - 1 || 1)) * (width - padding * 2);
+    const y = height - padding - ((val - min) / range) * (height - padding * 2);
+    return { x, y, val, label: labels[idx] };
+  });
+
+  const pathD = points.length === 1 
+    ? `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`
+    : points.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '');
+
+  const areaD = points.length === 1
+    ? `M ${points[0].x} ${height} L ${points[0].x} ${points[0].y} L ${points[0].x} ${height} Z`
+    : `M ${points[0].x} ${height} ${points.map(p => `L ${p.x} ${p.y}`).join(' ')} L ${points[points.length-1].x} ${height} Z`;
+
+  let svgContent = `
+    <svg viewBox="0 0 ${width} ${height}" class="patrimoine-chart">
+      <defs>
+        <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#58a6ff" />
+          <stop offset="100%" stop-color="#58a6ff" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" class="chart-area" />
+      <path d="${pathD}" class="chart-line" />
+  `;
+
+  points.forEach(p => {
+    svgContent += `<circle cx="${p.x}" cy="${p.y}" r="3" class="chart-dot"><title>${p.label} : ${euro(p.val)}</title></circle>`;
+  });
+
+  svgContent += `</svg>`;
+  container.innerHTML = svgContent;
+}
+
+function exportData() {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({data, monthHistory, patrimoineHistory})])); a.download = 'budget.json'; a.click();
+}
+function importData(e) {
+  const r = new FileReader(); r.onload = (e) => { const j = JSON.parse(e.target.result); data = j.data; monthHistory = j.monthHistory || []; patrimoineHistory = j.patrimoineHistory || []; window.data = data; window.monthHistory = monthHistory; window.patrimoineHistory = patrimoineHistory; render(); save(); }; r.readAsText(e.target.files[0]);
+}
+
+render();
+</script>
+</body>
+</html>
