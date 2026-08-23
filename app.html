@@ -157,7 +157,7 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
     <div class="card">
       <div>
         <div class="muted">Patrimoine brut</div>
-        <div class="total" style="font-size:26px;" id="gross">0 €</div>
+        <div class="total" id="gross">0 €</div>
       </div>
       <div style="border-top:1px solid #21262d; padding-top:8px;">
         <div class="muted">Patrimoine net</div>
@@ -181,7 +181,7 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
       </div>
 
       <div class="chart-container">
-        <h3>Évolution (Épargne, AV, Bourse, Crypto)</h3>
+        <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3>
         <div id="chart-wrapper"></div>
       </div>
     </div>
@@ -191,6 +191,7 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
     <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>📈 Bourse</h2></div><div class="rows-container" data-key="bourse"></div><button class="btn-add" onclick="addItem('bourse')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>🪙 Crypto</h2></div><div class="rows-container" data-key="crypto"></div><button class="btn-add" onclick="addItem('crypto')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>📦 Autres Actifs</h2></div><div class="rows-container" data-key="autres"></div><button class="btn-add" onclick="addItem('autres')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
   </div>
 </div>
@@ -314,7 +315,7 @@ initFirebase();
 let data = JSON.parse(localStorage.getItem('finaryData')) || {
   immobilier: [['Résidence principale', 300000]], epargne: [['Livret A', 20000]],
   assurancevie: [['Assurance-vie Principale', 15000]],
-  bourse: [['ETF World', 2600]], crypto: [['Bitcoin', 30000]], dettes: [['Crédit Immo', 150000]],
+  bourse: [['ETF World', 2600]], crypto: [['Bitcoin', 30000]], autres: [['Voiture / Divers', 10000]], dettes: [['Crédit Immo', 150000]],
   budgetRevenus: [['Salaire', 2500, false]], budgetFixes: [['Loyer', 900, false]], budgetDepenses: [['Courses', 400, false]]
 };
 let monthHistory = JSON.parse(localStorage.getItem('finaryHistory')) || [];
@@ -344,7 +345,7 @@ function switchTab(t) {
 }
 
 function render() {
-  ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'dettes', 'budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
+  ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'autres', 'dettes', 'budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
     const cont = document.querySelector(`.rows-container[data-key="${key}"]`);
     if(!cont) return;
     cont.innerHTML = '';
@@ -447,7 +448,7 @@ function save() {
 }
 
 function calculateNet() {
-  const assetKeys = ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto'];
+  const assetKeys = ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'autres'];
   const assets = assetKeys.reduce((s, k) => {
     if (!data[k]) return s;
     return s + data[k].reduce((a, i) => a + (i[1]||0), 0);
@@ -457,7 +458,7 @@ function calculateNet() {
 }
 
 function calculateLiquidInvestments() {
-  const keys = ['epargne', 'assurancevie', 'bourse', 'crypto'];
+  const keys = ['epargne', 'assurancevie', 'bourse', 'crypto', 'autres'];
   return keys.reduce((s, k) => {
     if (!data[k]) return s;
     return s + data[k].reduce((a, i) => a + (i[1]||0), 0);
@@ -556,7 +557,8 @@ function renderAssetDistribution() {
     { key: 'epargne', label: 'Épargne', color: '#3fb950' },
     { key: 'assurancevie', label: 'Assurance-vie', color: '#a371f7' },
     { key: 'bourse', label: 'Bourse', color: '#d29922' },
-    { key: 'crypto', label: 'Crypto', color: '#f85149' }
+    { key: 'crypto', label: 'Crypto', color: '#f85149' },
+    { key: 'autres', label: 'Autres', color: '#58a6ff' }
   ];
 
   const totals = categories.map(cat => {
