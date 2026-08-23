@@ -199,99 +199,157 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const sharedRef = doc(db, "budget_shared", "main_account");
 
+let currentUserId = null;
+let unsubscribe = null;
+let lastAppliedSignature = "";
+let writeInProgress = false;
+
 window.firebaseReady = false;
+window.firebaseInitialised = false;
+
 function setFirebaseStatus(message) {
   const el = document.getElementById("firebaseStatus");
   if (el) el.textContent = message;
 }
-window.firebaseWriting = false;
 
-let firebaseSaveTimer = null;
-let firebaseSaveInProgress = false;
-let firebaseSavePending = false;
+function makePayload() {
+  return {
+    data: JSON.stringify(window.data),
+    monthHistory: JSON.stringify(window.monthHistory),
+    patrimoineHistory: JSON.stringify(window.patrimoineHistory),
+    updatedBy: currentUserId || "unknown",
+    updatedAt: Date.now()
+  };
+}
+
+function dataSignature(payload) {
+  return JSON.stringify({
+    data: payload.data || "",
+    monthHistory: payload.monthHistory || "",
+    patrimoineHistory: payload.patrimoineHistory || ""
+  });
+}
+
+function parseRemote(remote) {
+  return {
+    data: remote.data ? JSON.parse(remote.data) : undefined,
+    monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
+    patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
+  };
+}
+
+let syncTimer = null;
+let writeInProgress = false;
+
+async function performFirebaseSave() {
+  if (!window.firebaseReady || !currentUserId) return;
+
+  const payload = makePayload();
+  const signature = dataSignature(payload);
+  if (signature === lastAppliedSignature) return;
+
+  writeInProgress = true;
+  setFirebaseStatus("Enregistrement…");
+
+  try {
+    await setDoc(sharedRef, payload);
+    lastAppliedSignature = signature;
+    setFirebaseStatus("Synchronisé");
+  } catch (e) {
+    console.error("Erreur Firebase :", e);
+    setFirebaseStatus("Erreur Firebase");
+  } finally {
+    writeInProgress = false;
+
+    // Si une nouvelle modification est arrivée pendant l'écriture,
+    // on la sauvegarde juste après, sans perdre la dernière saisie.
+    const currentSignature = dataSignature(makePayload());
+    if (currentSignature !== lastAppliedSignature) {
+      window.firebaseSave();
+    }
+  }
+}
 
 window.firebaseSave = function() {
-  if (!window.firebaseReady) return;
+  if (!window.firebaseReady || !currentUserId) return;
 
-  clearTimeout(firebaseSaveTimer);
-  firebaseSaveTimer = setTimeout(async () => {
-    if (firebaseSaveInProgress) {
-      firebaseSavePending = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    if (writeInProgress) {
+      window.firebaseSave();
       return;
     }
-
-    firebaseSaveInProgress = true;
-    window.firebaseWriting = true;
-    setFirebaseStatus("Enregistrement…");
-
-    try {
-      await setDoc(sharedRef, {
-        data: JSON.stringify(window.data),
-        monthHistory: JSON.stringify(window.monthHistory),
-        patrimoineHistory: JSON.stringify(window.patrimoineHistory)
-      });
-      setFirebaseStatus("Synchronisé");
-    } catch (e) {
-      console.error("Erreur Firebase :", e);
-      setFirebaseStatus("Erreur Firebase");
-    } finally {
-      firebaseSaveInProgress = false;
-      window.firebaseWriting = false;
-
-      if (firebaseSavePending) {
-        firebaseSavePending = false;
-        window.firebaseSave();
-      }
-    }
-  }, 250);
+    performFirebaseSave();
+  }, 300);
 };
 
-async function initFirebase() {
+async function startFirebase() {
   try {
     await signInAnonymously(auth);
   } catch (e) {
     console.error("Authentification Firebase impossible :", e);
+    setFirebaseStatus("Erreur connexion Firebase");
   }
 }
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  window.firebaseReady = true;
-  setFirebaseStatus("Connecté à Firebase");
+  if (!user || window.firebaseInitialised) return;
+  currentUserId = user.uid;
 
   try {
     const snap = await getDoc(sharedRef);
 
-    if (!snap.exists()) {
-      await window.firebaseSave();
-    } else {
+    if (snap.exists()) {
       const remote = snap.data();
+      const remoteState = parseRemote(remote);
+      const remoteSignature = dataSignature(remote);
+
+      lastAppliedSignature = remoteSignature;
+
       if (window.applyFirebaseState) {
-        window.applyFirebaseState({
-          data: remote.data ? JSON.parse(remote.data) : undefined,
-          monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
-          patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
-        });
+        window.applyFirebaseState(remoteState);
       }
+    } else {
+      // Première utilisation de Firebase : conserver les données locales actuelles.
+      window.firebaseReady = true;
+      await window.firebaseSave();
     }
 
-    onSnapshot(sharedRef, (snapshot) => {
-      if (!snapshot.exists() || window.firebaseWriting) return;
+    window.firebaseReady = true;
+    window.firebaseInitialised = true;
+    setFirebaseStatus("Synchronisé");
+
+    unsubscribe = onSnapshot(sharedRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+
       const remote = snapshot.data();
-      if (window.applyFirebaseState) {
-        window.applyFirebaseState({
-          data: remote.data ? JSON.parse(remote.data) : undefined,
-          monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
-          patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
-        });
+
+      // Une modification écrite par ce même appareil ne doit jamais
+      // relancer le rendu ni une nouvelle sauvegarde.
+      if (remote.updatedBy === currentUserId) return;
+
+      const signature = dataSignature(remote);
+      if (signature === lastAppliedSignature) return;
+
+      lastAppliedSignature = signature;
+
+      try {
+        if (window.applyFirebaseState) {
+          window.applyFirebaseState(parseRemote(remote));
+        }
+        setFirebaseStatus("Synchronisé");
+      } catch (e) {
+        console.error("Erreur réception Firebase :", e);
+        setFirebaseStatus("Erreur données Firebase");
       }
     });
   } catch (e) {
     console.error("Erreur de synchronisation Firebase :", e);
+    setFirebaseStatus("Erreur Firebase");
   }
 });
 
-initFirebase();
+startFirebase();
 </script>
 
 <script>
@@ -359,7 +417,6 @@ function render() {
   });
   updateTotals();
   renderHistory();
-  recordPatrimoineSnapshot();
   renderChart();
 }
 
@@ -367,40 +424,55 @@ function update(k, i, p, v) {
   if(!data[k][i]) return;
   data[k][i][p] = p === 0 ? v : (v === '' ? 0 : Number(v)); 
   if(p !== 0) updateTotals();
+  recordPatrimoineSnapshot();
   save(); 
 }
 
 function togglePaid(k, i) {
   if(!data[k][i]) return;
   data[k][i][2] = !data[k][i][2];
+  recordPatrimoineSnapshot();
   render();
   save();
 }
 
 function addItem(k) { 
   if(!data[k]) data[k] = [];
-  
-  let defaultItem = ['Nouveau', 0];
-  if (k.startsWith('budget')) defaultItem = ['Nouveau', 0, false];
-  
+
+  const defaultItem = k.startsWith('budget') ? ['', 0, false] : ['', 0];
+  let newIndex;
+
   if (k === 'budgetDepenses') {
     data[k].unshift(defaultItem);
+    newIndex = 0;
   } else {
     data[k].push(defaultItem);
+    newIndex = data[k].length - 1;
   }
-  
-  render(); 
+
+  recordPatrimoineSnapshot();
+  render();
+
+  // Place immédiatement le curseur dans le libellé de la nouvelle ligne.
+  const cont = document.querySelector(`.rows-container[data-key="${k}"]`);
+  if (cont) {
+    const inputs = cont.querySelectorAll('input[type="text"]');
+    if (inputs[newIndex]) inputs[newIndex].focus();
+  }
+
   save(); 
 }
 
 function del(k, i) { 
   data[k].splice(i, 1); 
+  recordPatrimoineSnapshot();
   render(); 
   save(); 
 }
 
 function clearList(k) { 
   data[k] = []; 
+  recordPatrimoineSnapshot();
   render(); 
   save(); 
 }
@@ -475,6 +547,7 @@ function closeMonth() {
     depenses: dep, 
     resteVivre: rev - fixes - dep
   });
+  recordPatrimoineSnapshot();
   save(); render();
 }
 
@@ -482,7 +555,9 @@ function resetHistory() {
   if (confirm("Supprimer l'historique des budgets ?")) {
     monthHistory = [];
     localStorage.removeItem('finaryHistory');
+    recordPatrimoineSnapshot();
     render();
+    save();
   }
 }
 
@@ -555,10 +630,12 @@ function exportData() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({data, monthHistory, patrimoineHistory})])); a.download = 'budget.json'; a.click();
 }
 function importData(e) {
-  const r = new FileReader(); r.onload = (e) => { const j = JSON.parse(e.target.result); data = j.data; monthHistory = j.monthHistory || []; patrimoineHistory = j.patrimoineHistory || []; window.data = data; window.monthHistory = monthHistory; window.patrimoineHistory = patrimoineHistory; render(); save(); }; r.readAsText(e.target.files[0]);
+  const r = new FileReader(); r.onload = (e) => { const j = JSON.parse(e.target.result); data = j.data; monthHistory = j.monthHistory || []; patrimoineHistory = j.patrimoineHistory || []; window.data = data; window.monthHistory = monthHistory; window.patrimoineHistory = patrimoineHistory; recordPatrimoineSnapshot(); render(); save(); }; r.readAsText(e.target.files[0]);
 }
 
+recordPatrimoineSnapshot();
 render();
+save();
 </script>
 </body>
 </html>
