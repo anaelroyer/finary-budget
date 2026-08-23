@@ -75,8 +75,26 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
 
 .action-row {display: flex; gap: 8px; margin-top: 4px;}
 </style>
+
+<style>
+#firebaseStatus {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  opacity: .85;
+  background: rgba(0,0,0,.65);
+  color: white;
+  pointer-events: none;
+}
+</style>
 </head>
 <body>
+<div id="firebaseStatus">Synchronisation…</div>
 <div class="wrap">
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
@@ -182,21 +200,28 @@ const db = getFirestore(firebaseApp);
 const sharedRef = doc(db, "budget_shared", "main_account");
 
 window.firebaseReady = false;
+function setFirebaseStatus(message) {
+  const el = document.getElementById("firebaseStatus");
+  if (el) el.textContent = message;
+}
 window.firebaseWriting = false;
 
 window.firebaseSave = async function() {
   if (!window.firebaseReady) return;
   try {
     window.firebaseWriting = true;
+    setFirebaseStatus("Enregistrement…");
     await setDoc(sharedRef, {
-      data: window.data,
-      monthHistory: window.monthHistory,
-      patrimoineHistory: window.patrimoineHistory
+      data: JSON.stringify(window.data),
+      monthHistory: JSON.stringify(window.monthHistory),
+      patrimoineHistory: JSON.stringify(window.patrimoineHistory)
     });
   } catch (e) {
     console.error("Erreur Firebase :", e);
+    setFirebaseStatus("Erreur Firebase");
   } finally {
     window.firebaseWriting = false;
+    if (window.firebaseReady) setFirebaseStatus("Synchronisé");
   }
 };
 
@@ -211,6 +236,7 @@ async function initFirebase() {
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   window.firebaseReady = true;
+  setFirebaseStatus("Connecté à Firebase");
 
   try {
     const snap = await getDoc(sharedRef);
@@ -219,9 +245,9 @@ onAuthStateChanged(auth, async (user) => {
       await window.firebaseSave();
     } else {
       const remote = snap.data();
-      if (remote.data) window.data = remote.data;
-      if (Array.isArray(remote.monthHistory)) window.monthHistory = remote.monthHistory;
-      if (Array.isArray(remote.patrimoineHistory)) window.patrimoineHistory = remote.patrimoineHistory;
+      if (remote.data) window.data = JSON.parse(remote.data);
+      if (remote.monthHistory) window.monthHistory = JSON.parse(remote.monthHistory);
+      if (remote.patrimoineHistory) window.patrimoineHistory = JSON.parse(remote.patrimoineHistory);
       window.saveLocalOnly();
       window.render();
     }
@@ -229,9 +255,9 @@ onAuthStateChanged(auth, async (user) => {
     onSnapshot(sharedRef, (snapshot) => {
       if (!snapshot.exists() || window.firebaseWriting) return;
       const remote = snapshot.data();
-      if (remote.data) window.data = remote.data;
-      if (Array.isArray(remote.monthHistory)) window.monthHistory = remote.monthHistory;
-      if (Array.isArray(remote.patrimoineHistory)) window.patrimoineHistory = remote.patrimoineHistory;
+      if (remote.data) window.data = JSON.parse(remote.data);
+      if (remote.monthHistory) window.monthHistory = JSON.parse(remote.monthHistory);
+      if (remote.patrimoineHistory) window.patrimoineHistory = JSON.parse(remote.patrimoineHistory);
       window.saveLocalOnly();
       window.render();
     });
