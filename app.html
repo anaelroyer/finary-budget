@@ -164,11 +164,13 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
         <div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
       </div>
       
-      <!-- Barre de répartition des actifs (hors immo) -->
+      <!-- Camembert de répartition des actifs (hors immo) -->
       <div class="chart-container" style="margin-top:16px;">
         <h3>Répartition des Actifs (Hors Immo)</h3>
-        <div id="asset-distribution-bar" style="display:flex; height:8px; width:100%; border-radius:4px; overflow:hidden; background:#21262d; gap:2px; margin-top:8px;"></div>
-        <div id="asset-distribution-legend" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; font-size:11px; color:#8b949e;"></div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:12px; flex-wrap:wrap;">
+          <div id="asset-pie-chart" style="width:130px; height:130px; flex-shrink:0;"></div>
+          <div id="asset-distribution-legend" style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:#c9d1d9; flex:1; min-width:140px;"></div>
+        </div>
       </div>
 
       <div class="chart-container">
@@ -507,10 +509,8 @@ function closeMonth() {
     resteVivre: rev - fixes - dep
   });
 
-  // Vider complètement la liste des dépenses
   data.budgetDepenses = [];
 
-  // Décocher toutes les cases de toutes les catégories budgétaires
   ['budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
     if (Array.isArray(data[key])) {
       data[key].forEach(item => {
@@ -540,9 +540,9 @@ function renderHistory() {
 }
 
 function renderAssetDistribution() {
-  const barContainer = document.getElementById('asset-distribution-bar');
+  const pieContainer = document.getElementById('asset-pie-chart');
   const legendContainer = document.getElementById('asset-distribution-legend');
-  if (!barContainer || !legendContainer) return;
+  if (!pieContainer || !legendContainer) return;
 
   const categories = [
     { key: 'epargne', label: 'Épargne', color: '#3fb950' },
@@ -559,22 +559,58 @@ function renderAssetDistribution() {
   const totalAssets = totals.reduce((acc, cat) => acc + cat.sum, 0);
 
   if (totalAssets === 0) {
-    barContainer.innerHTML = '';
-    legendContainer.innerHTML = '<span>Aucun actif renseigné</span>';
+    pieContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#8b949e; font-size:11px; text-align:center;">Vide</div>';
+    legendContainer.innerHTML = '<span style="color:#8b949e; font-size:11px;">Aucun actif renseigné</span>';
     return;
   }
 
-  let barHTML = '';
-  let legendHTML = '';
+  // Génération d'un camembert SVG (Donut chart moderne)
+  let cumulativePercent = 0;
+  let svgSlices = '';
 
   totals.forEach(cat => {
     if (cat.sum <= 0) return;
-    const percent = ((cat.sum / totalAssets) * 100).toFixed(1);
-    barHTML += `<div style="height:100%; width:${percent}%; background:${cat.color};" title="${cat.label}: ${euro(cat.sum)} (${percent}%)"></div>`;
-    legendHTML += `<div style="display:flex; align-items:center; gap:4px;"><span style="width:8px; height:8px; border-radius:50%; background:${cat.color}; display:inline-block;"></span>${cat.label} (${percent}%)</div>`;
+    const percent = (cat.sum / totalAssets) * 100;
+    const startAngle = (cumulativePercent / 100) * 360;
+    cumulativePercent += percent;
+    const endAngle = (cumulativePercent / 100) * 360;
+
+    const x1 = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
+    const y1 = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
+    const x2 = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
+    const y2 = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
+    const largeArc = percent > 50 ? 1 : 0;
+
+    // Si 100%, on dessine un cercle complet
+    if (percent === 100) {
+      svgSlices += `<circle cx="50" cy="50" r="40" fill="transparent" stroke="${cat.color}" stroke-width="20" />`;
+    } else {
+      svgSlices += `<path d="M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${cat.color}" />`;
+    }
   });
 
-  barContainer.innerHTML = barHTML;
+  // Trou central pour faire un effet Donut propre
+  pieContainer.innerHTML = `
+    <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform: rotate(-90deg);">
+      ${svgSlices}
+      <circle cx="50" cy="50" r="25" fill="#161b22" />
+    </svg>
+  `;
+
+  let legendHTML = '';
+  totals.forEach(cat => {
+    if (cat.sum <= 0) return;
+    const percent = ((cat.sum / totalAssets) * 100).toFixed(1);
+    legendHTML += `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:${cat.color}; display:inline-block;"></span>
+          <span style="color:#c9d1d9;">${cat.label}</span>
+        </div>
+        <strong style="color:#fff; font-weight:600;">${percent}%</strong>
+      </div>`;
+  });
+
   legendContainer.innerHTML = legendHTML;
 }
 
