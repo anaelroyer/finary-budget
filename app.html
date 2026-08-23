@@ -60,7 +60,7 @@
       gap: 8px;
     }
 
-    /* Grille ultra-large pour le libellé : Checkbox (28px) | Libellé (reste tout l'espace) | Montant (90px) | Croix (28px) */
+    /* Grille ultra-large pour le libellé : Checkbox (28px) | Libellé (flexible) | Montant (90px) | Croix (28px) */
     .row {
       display: grid;
       grid-template-columns: 28px minmax(0, 1fr) 90px 28px;
@@ -201,19 +201,32 @@
       <div id="fixed-list"></div>
       <button class="btn-green" onclick="addItem('fixed')">+ Ajouter frais fixe</button>
     </div>
+
+    <!-- Section Patrimoine -->
+    <div class="card">
+      <h2>🏛️ Patrimoine</h2>
+      <div class="summary-box" style="margin-bottom: 8px;">
+        <span>Total Patrimoine :</span>
+        <span id="total-patrimoine">0,00 €</span>
+      </div>
+      <div id="patrimoine-list"></div>
+      <button class="btn-green" onclick="addItem('patrimoine')">+ Ajouter actif / épargne</button>
+    </div>
   </div>
 
   <script>
     let data = {
       expenses: [],
       income: [],
-      fixed: []
+      fixed: [],
+      patrimoine: []
     };
 
     function render() {
       renderSection('expenses', 'expenses-list');
       renderSection('income', 'income-list');
       renderSection('fixed', 'fixed-list');
+      renderSection('patrimoine', 'patrimoine-list');
       calculateTotals();
     }
 
@@ -223,10 +236,12 @@
       
       data[sectionKey].forEach((item, index) => {
         const row = document.createElement('div');
-        row.className = `row ${item.paid ? 'paid' : ''}`;
+        // Les sections budget ont une checkbox, le patrimoine n'en a pas forcément besoin mais on garde la structure homogène ou masquée si besoin
+        const hasCheckbox = sectionKey !== 'patrimoine';
+        row.className = `row ${item.paid && hasCheckbox ? 'paid' : ''}`;
         
         row.innerHTML = `
-          <input type="checkbox" ${item.paid ? 'checked' : ''} onchange="togglePaid('${sectionKey}', ${index})">
+          ${hasCheckbox ? `<input type="checkbox" ${item.paid ? 'checked' : ''} onchange="togglePaid('${sectionKey}', ${index})">` : `<div></div>`}
           <input type="text" value="${item.label || ''}" placeholder="Libellé" oninput="updateItem('${sectionKey}', ${index}, 'label', this.value)">
           <input type="number" value="${item.amount || ''}" placeholder="0" oninput="updateItem('${sectionKey}', ${index}, 'amount', this.value)">
           <button class="delete-btn" onclick="deleteItem('${sectionKey}', ${index})">✕</button>
@@ -264,9 +279,12 @@
       const totalIncome = data.income.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       const totalExpenses = data.expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       const totalFixed = data.fixed.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+      const totalPatrimoine = data.patrimoine.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       
       const reste = totalIncome - (totalExpenses + totalFixed);
+      
       document.getElementById('total-reste').innerText = reste.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+      document.getElementById('total-patrimoine').innerText = totalPatrimoine.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
     }
 
     render();
