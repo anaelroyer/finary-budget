@@ -164,7 +164,7 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
         <div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
       </div>
       
-      <!-- Barre de répartition des actifs (sans l'immobilier) -->
+      <!-- Barre de répartition des actifs (hors immo) -->
       <div class="chart-container" style="margin-top:16px;">
         <h3>Répartition des Actifs (Hors Immo)</h3>
         <div id="asset-distribution-bar" style="display:flex; height:8px; width:100%; border-radius:4px; overflow:hidden; background:#21262d; gap:2px; margin-top:8px;"></div>
@@ -447,7 +447,6 @@ function calculateNet() {
   return { assets, debts, net: assets - debts };
 }
 
-// Calcule uniquement la somme épargne + assurance-vie + bourse + crypto (sans immo, sans dettes)
 function calculateLiquidInvestments() {
   const keys = ['epargne', 'assurancevie', 'bourse', 'crypto'];
   return keys.reduce((s, k) => {
@@ -480,7 +479,7 @@ function updateTotals() {
 
 function recordPatrimoineSnapshot() {
   const today = new Date().toISOString().split('T')[0];
-  const currentVal = calculateLiquidInvestments(); // Enregistre la somme Épargne + AV + Bourse + Crypto
+  const currentVal = calculateLiquidInvestments();
 
   const existing = patrimoineHistory.find(h => h.date === today);
   if (existing) {
@@ -492,6 +491,10 @@ function recordPatrimoineSnapshot() {
 }
 
 function closeMonth() {
+  if (!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro.")) {
+    return;
+  }
+
   const rev = (data.budgetRevenus || []).reduce((s,i)=>s+(i[1]||0),0);
   const fixes = (data.budgetFixes || []).reduce((s,i)=>s+(i[1]||0),0);
   const dep = (data.budgetDepenses || []).reduce((s,i)=>s+(i[1]||0),0);
@@ -504,6 +507,10 @@ function closeMonth() {
     resteVivre: rev - fixes - dep
   });
 
+  // Vider complètement la liste des dépenses
+  data.budgetDepenses = [];
+
+  // Décocher toutes les cases de toutes les catégories budgétaires
   ['budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
     if (Array.isArray(data[key])) {
       data[key].forEach(item => {
@@ -537,7 +544,6 @@ function renderAssetDistribution() {
   const legendContainer = document.getElementById('asset-distribution-legend');
   if (!barContainer || !legendContainer) return;
 
-  // Immobilier exclu de la liste
   const categories = [
     { key: 'epargne', label: 'Épargne', color: '#3fb950' },
     { key: 'assurancevie', label: 'Assurance-vie', color: '#a371f7' },
