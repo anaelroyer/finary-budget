@@ -60,13 +60,13 @@
       gap: 8px;
     }
 
-    /* Grille des lignes optimisée mobile */
+    /* Grille ultra-large pour le libellé : Checkbox (28px) | Libellé (reste tout l'espace) | Montant (90px) | Croix (28px) */
     .row {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) 85px 75px 28px;
+      grid-template-columns: 28px minmax(0, 1fr) 90px 28px;
       gap: 6px;
       align-items: center;
-      padding: 8px 6px;
+      padding: 8px 4px;
       border-bottom: 1px solid #21262d;
       border-radius: 8px;
       transition: background 0.2s;
@@ -89,7 +89,7 @@
 
     .row input[type="number"] {
       width: 100%;
-      padding: 8px 4px;
+      padding: 8px 6px;
       background: #0d1117;
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -104,15 +104,6 @@
       height: 20px;
       accent-color: var(--accent-green);
       cursor: pointer;
-    }
-
-    .amount-display {
-      text-align: right;
-      font-size: 13px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .delete-btn {
@@ -213,7 +204,6 @@
   </div>
 
   <script>
-    // Structure de données locale basique
     let data = {
       expenses: [],
       income: [],
@@ -238,8 +228,7 @@
         row.innerHTML = `
           <input type="checkbox" ${item.paid ? 'checked' : ''} onchange="togglePaid('${sectionKey}', ${index})">
           <input type="text" value="${item.label || ''}" placeholder="Libellé" oninput="updateItem('${sectionKey}', ${index}, 'label', this.value)">
-          <input type="number" value="${item.amount || 0}" oninput="updateItem('${sectionKey}', ${index}, 'amount', this.value)">
-          <div class="amount-display">${Number(item.amount || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</div>
+          <input type="number" value="${item.amount || ''}" placeholder="0" oninput="updateItem('${sectionKey}', ${index}, 'amount', this.value)">
           <button class="delete-btn" onclick="deleteItem('${sectionKey}', ${index})">✕</button>
         `;
         container.appendChild(row);
@@ -247,15 +236,13 @@
     }
 
     function addItem(sectionKey) {
-      data[sectionKey].push({ label: '', amount: 0, paid: false });
+      data[sectionKey].push({ label: '', amount: '', paid: false });
       render();
     }
 
     function updateItem(sectionKey, index, field, value) {
-      data[sectionKey][index][field] = field === 'amount' ? parseFloat(value) || 0 : value;
-      if (field === 'amount') {
-        render(); // Met à jour l'affichage formaté du montant instantanément
-      }
+      data[sectionKey][index][field] = field === 'amount' ? (value === '' ? '' : parseFloat(value) || 0) : value;
+      calculateTotals();
     }
 
     function togglePaid(sectionKey, index) {
@@ -282,7 +269,6 @@
       document.getElementById('total-reste').innerText = reste.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
     }
 
-    // Premier rendu au chargement
     render();
   </script>
 </body>
