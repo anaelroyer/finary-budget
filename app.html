@@ -253,13 +253,46 @@
     <!-- ONGLET PATRIMOINE -->
     <div id="tab-patrimoine" class="tab-content">
       <div class="card">
-        <h2>🏛️ Patrimoine</h2>
+        <h2>🏛️ Patrimoine Global</h2>
         <div class="summary-box" style="margin-bottom: 8px;">
-          <span>Total Patrimoine :</span>
+          <span>Total Actifs :</span>
           <span id="total-patrimoine">0,00 €</span>
         </div>
-        <div id="patrimoine-list"></div>
-        <button class="btn-green" onclick="addItem('patrimoine')">+ Ajouter actif / épargne</button>
+      </div>
+
+      <!-- Comptes courants / Liquidités -->
+      <div class="card">
+        <h2>💳 Comptes courants</h2>
+        <button class="btn-green" onclick="addItem('patrimoine_cash')">+ Ajouter un compte</button>
+        <div id="patrimoine_cash-list"></div>
+      </div>
+
+      <!-- Épargne -->
+      <div class="card">
+        <h2>💰 Épargne & Livrets</h2>
+        <button class="btn-green" onclick="addItem('patrimoine_savings')">+ Ajouter un livret</button>
+        <div id="patrimoine_savings-list"></div>
+      </div>
+
+      <!-- Bourse / Investissements -->
+      <div class="card">
+        <h2>📈 Bourse & Actions</h2>
+        <button class="btn-green" onclick="addItem('patrimoine_stocks')">+ Ajouter un investissement</button>
+        <div id="patrimoine_stocks-list"></div>
+      </div>
+
+      <!-- Crypto -->
+      <div class="card">
+        <h2>🪙 Cryptomonnaies</h2>
+        <button class="btn-green" onclick="addItem('patrimoine_crypto')">+ Ajouter une crypto</button>
+        <div id="patrimoine_crypto-list"></div>
+      </div>
+
+      <!-- Immobilier -->
+      <div class="card">
+        <h2>🏠 Immobilier</h2>
+        <button class="btn-green" onclick="addItem('patrimoine_realestate')">+ Ajouter un bien</button>
+        <div id="patrimoine_realestate-list"></div>
       </div>
     </div>
   </div>
@@ -269,7 +302,11 @@
       expenses: [],
       income: [],
       fixed: [],
-      patrimoine: []
+      patrimoine_cash: [],
+      patrimoine_savings: [],
+      patrimoine_stocks: [],
+      patrimoine_crypto: [],
+      patrimoine_realestate: []
     };
 
     function switchTab(tabName) {
@@ -286,20 +323,29 @@
     }
 
     function render() {
+      // Rendu Budget
       renderSection('expenses', 'expenses-list');
       renderSection('income', 'income-list');
       renderSection('fixed', 'fixed-list');
-      renderSection('patrimoine', 'patrimoine-list');
+      
+      // Rendu Patrimoine
+      renderSection('patrimoine_cash', 'patrimoine_cash-list');
+      renderSection('patrimoine_savings', 'patrimoine_savings-list');
+      renderSection('patrimoine_stocks', 'patrimoine_stocks-list');
+      renderSection('patrimoine_crypto', 'patrimoine_crypto-list');
+      renderSection('patrimoine_realestate', 'patrimoine_realestate-list');
+
       calculateTotals();
     }
 
     function renderSection(sectionKey, containerId) {
       const container = document.getElementById(containerId);
+      if (!container) return;
       container.innerHTML = '';
       
       data[sectionKey].forEach((item, index) => {
         const row = document.createElement('div');
-        const hasCheckbox = sectionKey !== 'patrimoine';
+        const hasCheckbox = !sectionKey.startsWith('patrimoine');
         row.className = `row ${item.paid && hasCheckbox ? 'paid' : ''}`;
         
         row.innerHTML = `
@@ -341,11 +387,18 @@
       const totalIncome = data.income.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       const totalExpenses = data.expenses.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       const totalFixed = data.fixed.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-      const totalPatrimoine = data.patrimoine.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       
       const reste = totalIncome - (totalExpenses + totalFixed);
-      
       document.getElementById('total-reste').innerText = reste.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+
+      // Total Patrimoine combinant toutes les sous-catégories
+      const totalPatrimoine = 
+        data.patrimoine_cash.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) +
+        data.patrimoine_savings.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) +
+        data.patrimoine_stocks.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) +
+        data.patrimoine_crypto.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) +
+        data.patrimoine_realestate.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+
       document.getElementById('total-patrimoine').innerText = totalPatrimoine.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
     }
 
