@@ -206,23 +206,44 @@ function setFirebaseStatus(message) {
 }
 window.firebaseWriting = false;
 
-window.firebaseSave = async function() {
+let firebaseSaveTimer = null;
+let firebaseSaveInProgress = false;
+let firebaseSavePending = false;
+
+window.firebaseSave = function() {
   if (!window.firebaseReady) return;
-  try {
+
+  clearTimeout(firebaseSaveTimer);
+  firebaseSaveTimer = setTimeout(async () => {
+    if (firebaseSaveInProgress) {
+      firebaseSavePending = true;
+      return;
+    }
+
+    firebaseSaveInProgress = true;
     window.firebaseWriting = true;
     setFirebaseStatus("Enregistrement…");
-    await setDoc(sharedRef, {
-      data: JSON.stringify(window.data),
-      monthHistory: JSON.stringify(window.monthHistory),
-      patrimoineHistory: JSON.stringify(window.patrimoineHistory)
-    });
-  } catch (e) {
-    console.error("Erreur Firebase :", e);
-    setFirebaseStatus("Erreur Firebase");
-  } finally {
-    window.firebaseWriting = false;
-    if (window.firebaseReady) setFirebaseStatus("Synchronisé");
-  }
+
+    try {
+      await setDoc(sharedRef, {
+        data: JSON.stringify(window.data),
+        monthHistory: JSON.stringify(window.monthHistory),
+        patrimoineHistory: JSON.stringify(window.patrimoineHistory)
+      });
+      setFirebaseStatus("Synchronisé");
+    } catch (e) {
+      console.error("Erreur Firebase :", e);
+      setFirebaseStatus("Erreur Firebase");
+    } finally {
+      firebaseSaveInProgress = false;
+      window.firebaseWriting = false;
+
+      if (firebaseSavePending) {
+        firebaseSavePending = false;
+        window.firebaseSave();
+      }
+    }
+  }, 250);
 };
 
 async function initFirebase() {
@@ -245,21 +266,25 @@ onAuthStateChanged(auth, async (user) => {
       await window.firebaseSave();
     } else {
       const remote = snap.data();
-      if (remote.data) window.data = JSON.parse(remote.data);
-      if (remote.monthHistory) window.monthHistory = JSON.parse(remote.monthHistory);
-      if (remote.patrimoineHistory) window.patrimoineHistory = JSON.parse(remote.patrimoineHistory);
-      window.saveLocalOnly();
-      window.render();
+      if (window.applyFirebaseState) {
+        window.applyFirebaseState({
+          data: remote.data ? JSON.parse(remote.data) : undefined,
+          monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
+          patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
+        });
+      }
     }
 
     onSnapshot(sharedRef, (snapshot) => {
       if (!snapshot.exists() || window.firebaseWriting) return;
       const remote = snapshot.data();
-      if (remote.data) window.data = JSON.parse(remote.data);
-      if (remote.monthHistory) window.monthHistory = JSON.parse(remote.monthHistory);
-      if (remote.patrimoineHistory) window.patrimoineHistory = JSON.parse(remote.patrimoineHistory);
-      window.saveLocalOnly();
-      window.render();
+      if (window.applyFirebaseState) {
+        window.applyFirebaseState({
+          data: remote.data ? JSON.parse(remote.data) : undefined,
+          monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
+          patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
+        });
+      }
     });
   } catch (e) {
     console.error("Erreur de synchronisation Firebase :", e);
@@ -281,6 +306,19 @@ let patrimoineHistory = JSON.parse(localStorage.getItem('finaryPatrimoineHistory
 window.data = data;
 window.monthHistory = monthHistory;
 window.patrimoineHistory = patrimoineHistory;
+
+window.applyFirebaseState = function(remote) {
+  if (remote.data) data = remote.data;
+  if (remote.monthHistory) monthHistory = remote.monthHistory;
+  if (remote.patrimoineHistory) patrimoineHistory = remote.patrimoineHistory;
+
+  window.data = data;
+  window.monthHistory = monthHistory;
+  window.patrimoineHistory = patrimoineHistory;
+
+  saveLocalOnly();
+  render();
+};
 
 const euro = n => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
 
@@ -424,7 +462,6 @@ function recordPatrimoineSnapshot() {
     patrimoineHistory.push({ date: today, net: currentNet });
     patrimoineHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
   }
-  save();
 }
 
 function closeMonth() {
