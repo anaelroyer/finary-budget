@@ -155,8 +155,17 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
     </div>
     
     <div class="card">
-      <div class="muted">Patrimoine net</div>
-      <div class="total" id="net">0 €</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="muted">Patrimoine net</div>
+          <div class="total" id="net">0 €</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="muted">Patrimoine brut</div>
+          <div style="font-size:20px; font-weight:700; color:#c9d1d9; margin-top:4px;" id="gross">0 €</div>
+        </div>
+      </div>
+
       <div class="grid">
         <div class="stat"><span>Actifs</span><strong id="assets">0 €</strong></div>
         <div class="stat"><span>Épargne</span><strong id="savings">0 €</strong></div>
@@ -460,6 +469,7 @@ function calculateLiquidInvestments() {
 function updateTotals() {
   const c = calculateNet();
   document.getElementById('net').textContent = euro(c.net);
+  document.getElementById('gross').textContent = euro(c.assets);
   document.getElementById('assets').textContent = euro(c.assets);
   document.getElementById('debts').textContent = euro(c.debts);
   
@@ -564,7 +574,6 @@ function renderAssetDistribution() {
     return;
   }
 
-  // Génération d'un camembert SVG (Donut chart moderne)
   let cumulativePercent = 0;
   let svgSlices = '';
 
@@ -581,7 +590,6 @@ function renderAssetDistribution() {
     const y2 = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
     const largeArc = percent > 50 ? 1 : 0;
 
-    // Si 100%, on dessine un cercle complet
     if (percent === 100) {
       svgSlices += `<circle cx="50" cy="50" r="40" fill="transparent" stroke="${cat.color}" stroke-width="20" />`;
     } else {
@@ -589,7 +597,6 @@ function renderAssetDistribution() {
     }
   });
 
-  // Trou central pour faire un effet Donut propre
   pieContainer.innerHTML = `
     <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform: rotate(-90deg);">
       ${svgSlices}
