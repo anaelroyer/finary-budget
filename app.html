@@ -26,6 +26,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .total.red{color:#f85149}
 .muted{color:#8b949e;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
 
+/* Styles pour les menus déroulants (Accordéons Budget) */
+details.card {
+  padding: 0;
+  overflow: hidden;
+}
+details.card summary {
+  padding: 16px;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  user-select: none;
+}
+details.card summary::-webkit-details-marker {
+  display: none;
+}
+details.card summary::after {
+  content: "▼";
+  font-size: 12px;
+  color: #8b949e;
+  transition: transform 0.2s;
+}
+details.card[open] summary::after {
+  transform: rotate(180deg);
+}
+.details-content {
+  padding: 0 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid #21262d;
+  margin-top: -4px;
+  padding-top: 12px;
+}
+
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
 .stat{background:#21262d;border:1px solid #30363d;border-radius:10px;padding:12px}
 .stat span{font-size:11px;color:#8b949e}
@@ -136,27 +175,31 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       <div class="total green" id="budget-reste-vivre">0 €</div>
     </div>
 
-    <!-- DÉPENSES EN PREMIER -->
-    <div class="card">
-      <div class="section-header">
-        <h2>🛒 Dépenses</h2>
+    <!-- DÉPENSES EN PREMIER (EN MODE ACCÉDÉON OUVERT PAR DÉFAUT) -->
+    <details class="card" open>
+      <summary>🛒 Dépenses</summary>
+      <div class="details-content">
+        <button class="btn btn-primary" onclick="addItem('budgetDepenses')" style="margin-top:4px;">+ Ajouter</button>
+        <div class="rows-container" data-key="budgetDepenses" style="margin-top:8px;"></div>
+        <button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
       </div>
-      <button class="btn btn-primary" onclick="addItem('budgetDepenses')" style="margin-top:4px;">+ Ajouter</button>
-      <div class="rows-container" data-key="budgetDepenses" style="margin-top:8px;"></div>
-      <button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
-    </div>
+    </details>
 
-    <div class="card">
-      <div class="section-header"><h2>🏠 Frais fixes</h2></div>
-      <div class="rows-container" data-key="budgetFixes"></div>
-      <button class="btn-add" onclick="addItem('budgetFixes')">+ Ajouter frais fixe</button>
-    </div>
+    <details class="card">
+      <summary>🏠 Frais fixes</summary>
+      <div class="details-content">
+        <div class="rows-container" data-key="budgetFixes"></div>
+        <button class="btn-add" onclick="addItem('budgetFixes')">+ Ajouter frais fixe</button>
+      </div>
+    </details>
 
-    <div class="card">
-      <div class="section-header"><h2>📥 Entrées</h2></div>
-      <div class="rows-container" data-key="budgetRevenus"></div>
-      <button class="btn-add" onclick="addItem('budgetRevenus')">+ Ajouter revenu</button>
-    </div>
+    <details class="card">
+      <summary>📥 Entrées</summary>
+      <div class="details-content">
+        <div class="rows-container" data-key="budgetRevenus"></div>
+        <button class="btn-add" onclick="addItem('budgetRevenus')">+ Ajouter revenu</button>
+      </div>
+    </details>
 
     <div class="card">
       <div class="section-header"><h2>🗓️ Historique</h2></div>
