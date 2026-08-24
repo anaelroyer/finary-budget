@@ -520,7 +520,6 @@ function submitExpenseModal() {
   data['budgetDepenses'].unshift([label, amount, false]);
 
   closeExpenseModal();
-  document.getElementById('details-depenses').setAttribute('open', '');
   render();
   save();
 }
