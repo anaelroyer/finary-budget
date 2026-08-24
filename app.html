@@ -136,6 +136,72 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .btn-del{background:transparent;color:#f85149;border:none;cursor:pointer;font-size:16px;padding:4px;display:flex;align-items:center;justify-content:center}
 
 .action-row {display: flex; gap: 8px; margin-top: 4px;}
+
+/* Styles pour le pop-up / modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 16px;
+  padding: 20px;
+  width: 90%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+.modal-overlay.active .modal {
+  transform: scale(1);
+}
+.modal h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.modal-field label {
+  font-size: 12px;
+  color: #8b949e;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.modal-field input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+}
+.modal-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
 </style>
 
 <style>
@@ -157,6 +223,26 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 </head>
 <body>
 <div id="firebaseStatus">Synchronisation…</div>
+
+<!-- POP-UP / MODAL AJOUT DE DÉPENSE -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <h3>Ajouter une dépense</h3>
+    <div class="modal-field">
+      <label>Libellé</label>
+      <input type="text" id="modalLabel" placeholder="Ex: Courses, Restaurant...">
+    </div>
+    <div class="modal-field">
+      <label>Montant (€)</label>
+      <input type="number" id="modalAmount" placeholder="0">
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeExpenseModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="submitExpenseModal()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
@@ -175,8 +261,11 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       <div class="total green" id="budget-reste-vivre">0 €</div>
     </div>
 
+    <!-- BOUTON D'OUVERTURE DU POP-UP -->
+    <button class="btn btn-primary" onclick="openExpenseModal()">+ Ajouter une dépense</button>
+
     <!-- DÉPENSES (FERMÉ PAR DÉFAUT) -->
-    <details class="card">
+    <details class="card" id="details-depenses">
       <summary>🛒 Dépenses</summary>
       <div class="details-content">
         <button class="btn btn-primary" onclick="addItem('budgetDepenses')" style="margin-top:4px;">+ Ajouter</button>
@@ -408,6 +497,32 @@ const euro = n => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 
 function switchTab(t) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === 'tab-'+t));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.innerText.includes(t==='budget'?'Budget':'Patrimoine')));
+}
+
+/* Gestion du Pop-up Dépense */
+function openExpenseModal() {
+  document.getElementById('modalLabel').value = '';
+  document.getElementById('modalAmount').value = '';
+  document.getElementById('expenseModal').classList.add('active');
+  setTimeout(() => document.getElementById('modalLabel').focus(), 50);
+}
+
+function closeExpenseModal() {
+  document.getElementById('expenseModal').classList.remove('active');
+}
+
+function submitExpenseModal() {
+  const label = document.getElementById('modalLabel').value.trim();
+  const amountVal = document.getElementById('modalAmount').value;
+  const amount = amountVal === '' ? 0 : Number(amountVal);
+
+  if (!data['budgetDepenses']) data['budgetDepenses'] = [];
+  data['budgetDepenses'].unshift([label, amount, false]);
+
+  closeExpenseModal();
+  document.getElementById('details-depenses').setAttribute('open', '');
+  render();
+  save();
 }
 
 function render() {
