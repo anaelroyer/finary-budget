@@ -60,12 +60,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .history-table th{color:#8b949e;font-weight:600;text-transform:uppercase;font-size:11px}
 .history-table td{color:#c9d1d9}
 
-.chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d}
+.chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d;position:relative}
 .chart-container h3{font-size:12px;color:#8b949e;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px}
-svg.patrimoine-chart{width:100%;height:100px;overflow:visible}
+svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .chart-area{fill:url(#chart-gradient);opacity:0.25}
 .chart-dot{fill:#58a6ff;stroke:#161b22;stroke-width:2}
+.chart-tooltip {
+  position: absolute;
+  background: #21262d;
+  border: 1px solid #30363d;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #fff;
+  pointer-events: none;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+  z-index: 10;
+  white-space: nowrap;
+}
+.chart-cursor-line {
+  stroke: #8b949e;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0;
+}
 
 .btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px;transition:opacity 0.2s}
 .btn-primary{background:#238636;color:#fff;width:100%}
@@ -667,8 +689,9 @@ function renderChart() {
     ? `M ${points[0].x} ${height} L ${points[0].x} ${points[0].y} L ${points[0].x} ${height} Z`
     : `M ${points[0].x} ${height} ${points.map(p => `L ${p.x} ${p.y}`).join(' ')} L ${points[points.length-1].x} ${height} Z`;
 
-  let svgContent = `
-    <svg viewBox="0 0 ${width} ${height}" class="patrimoine-chart">
+  container.innerHTML = `
+    <div class="chart-tooltip" id="chartTooltip"></div>
+    <svg viewBox="0 0 ${width} ${height}" class="patrimoine-chart" id="patrimoineSvg">
       <defs>
         <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#58a6ff" />
@@ -677,14 +700,60 @@ function renderChart() {
       </defs>
       <path d="${areaD}" class="chart-area" />
       <path d="${pathD}" class="chart-line" />
+      <line x1="0" y1="0" x2="0" y2="${height}" class="chart-cursor-line" id="cursorLine" />
+      <circle cx="0" cy="0" r="4" id="cursorDot" fill="#58a6ff" stroke="#161b22" stroke-width="2" style="opacity:0;" />
+    </svg>
   `;
 
-  points.forEach(p => {
-    svgContent += `<circle cx="${p.x}" cy="${p.y}" r="3" class="chart-dot"><title>${p.label} : ${euro(p.val)}</title></circle>`;
-  });
+  const svg = document.getElementById('patrimoineSvg');
+  const tooltip = document.getElementById('chartTooltip');
+  const cursorLine = document.getElementById('cursorLine');
+  const cursorDot = document.getElementById('cursorDot');
 
-  svgContent += `</svg>`;
-  container.innerHTML = svgContent;
+  function handleTouch(e) {
+    const rect = svg.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clickX = clientX - rect.left;
+    const svgX = (clickX / rect.width) * width;
+
+    let closest = points[0];
+    let minDist = Infinity;
+    points.forEach(p => {
+      const dist = Math.abs(p.x - svgX);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = p;
+      }
+    });
+
+    cursorLine.setAttribute('x1', closest.x);
+    cursorLine.setAttribute('x2', closest.x);
+    cursorLine.style.opacity = '1';
+
+    cursorDot.setAttribute('cx', closest.x);
+    cursorDot.setAttribute('cy', closest.y);
+    cursorDot.style.opacity = '1';
+
+    tooltip.style.display = 'block';
+    tooltip.innerHTML = `<b>${closest.label}</b><br>${euro(closest.val)}`;
+
+    const percentX = (closest.x / width) * 100;
+    const percentY = (closest.y / height) * 100;
+    tooltip.style.left = `${percentX}%`;
+    tooltip.style.top = `${percentY}%`;
+  }
+
+  function hideTouch() {
+    cursorLine.style.opacity = '0';
+    cursorDot.style.opacity = '0';
+    tooltip.style.display = 'none';
+  }
+
+  svg.addEventListener('mousemove', handleTouch);
+  svg.addEventListener('mouseleave', hideTouch);
+  svg.addEventListener('touchstart', (e) => { e.preventDefault(); handleTouch(e); });
+  svg.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouch(e); });
+  svg.addEventListener('touchend', hideTouch);
 }
 
 function exportData() {
