@@ -261,12 +261,8 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       <div class="total green" id="budget-reste-vivre">0 €</div>
     </div>
 
-    <!-- BOUTONS D'OUVERTURE DES POP-UPS (AU-DESSUS DES SECTIONS) -->
+    <!-- DÉPENSES + BOUTON AU-DESSUS -->
     <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
-    <button class="btn btn-primary" onclick="openModal('budgetFixes')">+ Ajouter un Frais fixe</button>
-    <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
-
-    <!-- DÉPENSES -->
     <details class="card" id="details-depenses">
       <summary>🛒 Dépenses</summary>
       <div class="details-content">
@@ -275,7 +271,8 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       </div>
     </details>
 
-    <!-- FRAIS FIXES -->
+    <!-- FRAIS FIXES + BOUTON AU-DESSUS -->
+    <button class="btn btn-primary" onclick="openModal('budgetFixes')">+ Ajouter un Frais fixe</button>
     <details class="card">
       <summary>🏠 Frais fixes</summary>
       <div class="details-content">
@@ -284,7 +281,8 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       </div>
     </details>
 
-    <!-- ENTRÉES -->
+    <!-- ENTRÉES + BOUTON AU-DESSUS -->
+    <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
     <details class="card">
       <summary>📥 Entrées</summary>
       <div class="details-content">
