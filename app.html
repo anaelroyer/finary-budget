@@ -494,10 +494,40 @@ window.applyFirebaseState = function(remote) {
 
 const euro = n => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
 
+let currentActiveTab = 'budget';
+
 function switchTab(t) {
+  currentActiveTab = t;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === 'tab-'+t));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.innerText.includes(t==='budget'?'Budget':'Patrimoine')));
 }
+
+/* Gestion du Swipe Tactile entre les onglets */
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, {passive: true});
+
+document.addEventListener('touchend', e => {
+  let touchEndX = e.changedTouches[0].screenX;
+  let touchEndY = e.changedTouches[0].screenY;
+  let diffX = touchEndX - touchStartX;
+  let diffY = touchEndY - touchStartY;
+
+  // S'assure que le mouvement est majoritairement horizontal et d'une amplitude suffisante (50px)
+  if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+    if (diffX < 0 && currentActiveTab === 'budget') {
+      // Swipe vers la gauche -> Aller sur Patrimoine
+      switchTab('patrimoine');
+    } else if (diffX > 0 && currentActiveTab === 'patrimoine') {
+      // Swipe vers la droite -> Aller sur Budget
+      switchTab('budget');
+    }
+  }
+}, {passive: true});
 
 /* Gestion du Pop-up Universel (Dépenses, Frais fixes, Entrées) */
 let activeModalKey = '';
