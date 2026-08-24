@@ -224,21 +224,21 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 <body>
 <div id="firebaseStatus">Synchronisation…</div>
 
-<!-- POP-UP / MODAL AJOUT DE DÉPENSE -->
-<div class="modal-overlay" id="expenseModal">
+<!-- POP-UP / MODAL UNIVERSEL -->
+<div class="modal-overlay" id="genericModal">
   <div class="modal">
-    <h3>Ajouter une dépense</h3>
+    <h3 id="modalTitle">Ajouter</h3>
     <div class="modal-field">
       <label>Libellé</label>
-      <input type="text" id="modalLabel" placeholder="Ex: Courses, Restaurant...">
+      <input type="text" id="modalLabel" placeholder="Ex: Loyer, Salaire, Courses...">
     </div>
     <div class="modal-field">
       <label>Montant (€)</label>
       <input type="number" id="modalAmount" placeholder="0">
     </div>
     <div class="modal-buttons">
-      <button class="btn btn-secondary" style="flex:1;" onclick="closeExpenseModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="submitExpenseModal()">Ajouter</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="submitModal()">Ajouter</button>
     </div>
   </div>
 </div>
@@ -261,10 +261,12 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       <div class="total green" id="budget-reste-vivre">0 €</div>
     </div>
 
-    <!-- BOUTON D'OUVERTURE DU POP-UP -->
-    <button class="btn btn-primary" onclick="openExpenseModal()">+ Ajouter une dépense</button>
+    <!-- BOUTONS D'OUVERTURE DES POP-UPS (AU-DESSUS DES SECTIONS) -->
+    <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
+    <button class="btn btn-primary" onclick="openModal('budgetFixes')">+ Ajouter un Frais fixe</button>
+    <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
 
-    <!-- DÉPENSES (FERMÉ PAR DÉFAUT) -->
+    <!-- DÉPENSES -->
     <details class="card" id="details-depenses">
       <summary>🛒 Dépenses</summary>
       <div class="details-content">
@@ -273,19 +275,21 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       </div>
     </details>
 
+    <!-- FRAIS FIXES -->
     <details class="card">
       <summary>🏠 Frais fixes</summary>
       <div class="details-content">
         <div class="rows-container" data-key="budgetFixes"></div>
-        <button class="btn-add" onclick="addItem('budgetFixes')">+ Ajouter frais fixe</button>
+        <button class="btn btn-secondary" onclick="clearList('budgetFixes')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
       </div>
     </details>
 
+    <!-- ENTRÉES -->
     <details class="card">
       <summary>📥 Entrées</summary>
       <div class="details-content">
         <div class="rows-container" data-key="budgetRevenus"></div>
-        <button class="btn-add" onclick="addItem('budgetRevenus')">+ Ajouter revenu</button>
+        <button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
       </div>
     </details>
 
@@ -325,7 +329,6 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
         <div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
       </div>
       
-      <!-- Camembert de répartition des actifs (hors immo) -->
       <div class="chart-container" style="margin-top:16px;">
         <h3>Répartition des Actifs (Hors Immo)</h3>
         <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:12px; flex-wrap:wrap;">
@@ -498,27 +501,38 @@ function switchTab(t) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.innerText.includes(t==='budget'?'Budget':'Patrimoine')));
 }
 
-/* Gestion du Pop-up Dépense */
-function openExpenseModal() {
+/* Gestion du Pop-up Universel (Dépenses, Frais fixes, Entrées) */
+let activeModalKey = '';
+
+function openModal(key) {
+  activeModalKey = key;
+  const titleEl = document.getElementById('modalTitle');
+  
+  if (key === 'budgetDepenses') titleEl.textContent = 'Ajouter une dépense';
+  else if (key === 'budgetFixes') titleEl.textContent = 'Ajouter un frais fixe';
+  else if (key === 'budgetRevenus') titleEl.textContent = 'Ajouter une entrée';
+
   document.getElementById('modalLabel').value = '';
   document.getElementById('modalAmount').value = '';
-  document.getElementById('expenseModal').classList.add('active');
+  document.getElementById('genericModal').classList.add('active');
   setTimeout(() => document.getElementById('modalLabel').focus(), 50);
 }
 
-function closeExpenseModal() {
-  document.getElementById('expenseModal').classList.remove('active');
+function closeModal() {
+  document.getElementById('genericModal').classList.remove('active');
+  activeModalKey = '';
 }
 
-function submitExpenseModal() {
+function submitModal() {
+  if (!activeModalKey) return;
   const label = document.getElementById('modalLabel').value.trim();
   const amountVal = document.getElementById('modalAmount').value;
   const amount = amountVal === '' ? 0 : Number(amountVal);
 
-  if (!data['budgetDepenses']) data['budgetDepenses'] = [];
-  data['budgetDepenses'].unshift([label, amount, false]);
+  if (!data[activeModalKey]) data[activeModalKey] = [];
+  data[activeModalKey].unshift([label, amount, false]);
 
-  closeExpenseModal();
+  closeModal();
   render();
   save();
 }
@@ -575,16 +589,7 @@ function togglePaid(k, i) {
 
 function addItem(k) { 
   if(!data[k]) data[k] = [];
-  
-  let defaultItem = ['', 0];
-  if (k.startsWith('budget')) defaultItem = ['', 0, false];
-  
-  if (k === 'budgetDepenses') {
-    data[k].unshift(defaultItem);
-  } else {
-    data[k].push(defaultItem);
-  }
-  
+  data[k].push(['', 0]);
   render(); 
   save(); 
 
