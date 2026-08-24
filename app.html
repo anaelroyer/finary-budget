@@ -206,6 +206,7 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       <div class="chart-container">
         <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3>
         <div id="chart-wrapper"></div>
+        <button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%; color:#f85149; margin-top:10px; font-size:12px;">🗑️ Reset Graphique</button>
       </div>
     </div>
 
@@ -529,6 +530,16 @@ function recordPatrimoineSnapshot() {
   } else {
     patrimoineHistory.push({ date: today, net: currentVal });
     patrimoineHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+}
+
+function resetPatrimoineChart() {
+  if (confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")) {
+    patrimoineHistory = [];
+    localStorage.removeItem('finaryPatrimoineHistory');
+    recordPatrimoineSnapshot();
+    render();
+    save();
   }
 }
 
