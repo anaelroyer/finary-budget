@@ -47,13 +47,13 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
 #firebaseStatus{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none}
 
-/* Styles pour le verrouillage par schéma grand format et aéré */
+/* Styles pour le schéma minimaliste, grand format et aéré sans bordure */
 #patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
-#patternLockOverlay h2{font-size:18px;color:#fff;text-align:center;font-weight:600}
-#patternLockOverlay p{font-size:13px;color:#8b949e;text-align:center;max-width:300px}
-.pattern-container{position:relative;width:320px;height:320px;background:#161b22;border:1px solid #30363d;border-radius:16px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:36px;touch-action:none}
-.pattern-dot{width:18px;height:18px;background:#30363d;border-radius:50%;margin:auto;cursor:pointer;transition:background .2s,transform .2s}
-.pattern-dot.active{background:#58a6ff;transform:scale(1.4)}
+#patternLockOverlay h2{font-size:16px;color:#8b949e;text-align:center;font-weight:400}
+#patternLockOverlay p{font-size:13px;color:#8b949e;text-align:center;max-width:300px;display:none}
+.pattern-container{position:relative;width:340px;height:340px;background:transparent;border:none;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:24px;touch-action:none}
+.pattern-dot{width:14px;height:14px;background:#8b949e;border-radius:50%;margin:auto;cursor:pointer;transition:background .2s,transform .2s}
+.pattern-dot.active{background:#58a6ff;transform:scale(1.5)}
 .pattern-dot.error{background:#f85149}
 #patternSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 
@@ -66,26 +66,26 @@ body.hide-amounts .row input[type=number]{color:transparent !important;text-shad
 <body>
 <div id="firebaseStatus">Synchronisation…</div>
 
-<!-- ÉCRAN DE VERROUILLAGE SÉCURISÉ -->
+<!-- ÉCRAN DE VERROUILLAGE MINIMALISTE -->
 <div id="patternLockOverlay" style="display:none;">
-  <h2 id="patternTitle">🔒 Déverrouillage</h2>
+  <h2 id="patternTitle">Dessinez un schéma de déverrouillage :</h2>
   <p id="patternSubtitle">Dessinez votre schéma pour accéder à l'application.</p>
   
-  <div id="patternSection" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+  <div id="patternSection" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
     <div class="pattern-container" id="patternContainer">
-      <svg id="patternSvg"><path id="patternPath" d="" fill="none" stroke="#58a6ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg id="patternSvg"><path id="patternPath" d="" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div class="pattern-dot" data-id="0"></div><div class="pattern-dot" data-id="1"></div><div class="pattern-dot" data-id="2"></div>
       <div class="pattern-dot" data-id="3"></div><div class="pattern-dot" data-id="4"></div><div class="pattern-dot" data-id="5"></div>
       <div class="pattern-dot" data-id="6"></div><div class="pattern-dot" data-id="7"></div><div class="pattern-dot" data-id="8"></div>
     </div>
-    <button class="btn btn-secondary" id="patternResetBtn" style="display:none;width:320px;" onclick="resetPatternSetup()">Recommencer</button>
-    <button class="btn btn-secondary" id="togglePasswordModeBtn" style="width:320px;" onclick="togglePasswordMode()">🔑 Entrer par mot de passe</button>
+    <button class="btn btn-secondary" id="patternResetBtn" style="display:none;width:280px;" onclick="resetPatternSetup()">Recommencer</button>
+    <button class="btn btn-secondary" id="togglePasswordModeBtn" style="width:280px;background:transparent;border:0;color:#58a6ff;font-size:13px;" onclick="togglePasswordMode()">🔑 Entrer par mot de passe</button>
   </div>
 
-  <div id="passwordSection" style="display:none;flex-direction:column;gap:12px;width:320px;align-items:center;">
+  <div id="passwordSection" style="display:none;flex-direction:column;gap:12px;width:280px;align-items:center;">
     <input type="password" id="fallbackPasswordInput" placeholder="••••" style="width:100%;padding:14px;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#fff;text-align:center;font-size:18px;letter-spacing:4px;outline:none;" inputmode="numeric">
     <button class="btn btn-primary" onclick="checkFallbackPassword()" style="width:100%;">Valider</button>
-    <button class="btn btn-secondary" onclick="togglePasswordMode()" style="width:100%;">🎨 Revenir au schéma</button>
+    <button class="btn btn-secondary" onclick="togglePasswordMode()" style="width:100%;background:transparent;border:0;color:#58a6ff;">🎨 Revenir au schéma</button>
   </div>
 </div>
 
@@ -244,7 +244,7 @@ let amountsHidden=localStorage.getItem('finaryHideAmounts')==='true';
 function toggleHideAmounts(){amountsHidden=!amountsHidden;localStorage.setItem('finaryHideAmounts',amountsHidden);applyHideAmountsState()}
 function applyHideAmountsState(){const btns=document.querySelectorAll('.toggleAmountsBtn');if(amountsHidden){document.body.classList.add('hide-amounts');btns.forEach(b=>b.textContent='🙈 Masquer')}else{document.body.classList.remove('hide-amounts');btns.forEach(b=>b.textContent='👁️ Afficher')}}
 
-/* LOGIQUE DU SCHÉMA DE VERROUILLAGE GRAND FORMAT */
+/* LOGIQUE DU SCHÉMA DE VERROUILLAGE MINIMALISTE */
 let storedPattern = localStorage.getItem('finaryPattern') || '';
 let patternState = storedPattern ? 'unlock' : 'setup_1'; 
 let setupFirstPattern = '';
@@ -256,13 +256,13 @@ function initPatternLock(){
   if(!storedPattern && patternState === 'unlock') patternState = 'setup_1';
   
   if(!storedPattern && patternState === 'setup_1'){
-    document.getElementById('patternTitle').textContent = '🔒 Créer un schéma';
+    document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
     document.getElementById('patternSubtitle').textContent = 'Dessinez un schéma de sécurité (minimum 4 points).';
     document.getElementById('patternResetBtn').style.display = 'none';
     document.getElementById('togglePasswordModeBtn').style.display = 'none';
     overlay.style.display = 'flex';
   }else if(storedPattern){
-    document.getElementById('patternTitle').textContent = '🔒 Déverrouillage';
+    document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
     document.getElementById('patternSubtitle').textContent = 'Dessinez votre schéma ou utilisez le mot de passe.';
     document.getElementById('patternResetBtn').style.display = 'none';
     document.getElementById('togglePasswordModeBtn').style.display = 'block';
@@ -275,15 +275,15 @@ function initPatternLock(){
 function togglePasswordMode(){
   const patternSec = document.getElementById('patternSection');
   const passSec = document.getElementById('passwordSection');
-  const sub = document.getElementById('patternSubtitle');
+  const title = document.getElementById('patternTitle');
   if(patternSec.style.display === 'none'){
     patternSec.style.display = 'flex';
     passSec.style.display = 'none';
-    sub.textContent = 'Dessinez votre schéma ou utilisez le mot de passe.';
+    title.textContent = 'Dessinez un schéma de déverrouillage :';
   }else{
     patternSec.style.display = 'none';
     passSec.style.display = 'flex';
-    sub.textContent = 'Entrez votre mot de passe de secours.';
+    title.textContent = 'Entrez votre mot de passe :';
     setTimeout(()=>document.getElementById('fallbackPasswordInput').focus(),50);
   }
 }
@@ -311,7 +311,7 @@ function setupPatternListeners(){
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const dist = Math.hypot(cx - x, cy - y);
-      if(dist < 42) return dot; // Zone tactile confortable élargie pour la grille 320px
+      if(dist < 45) return dot; // Zone tactile large et confortable
     }
     return null;
   };
@@ -377,17 +377,17 @@ function updateSvgLine(x, y){
 
 function evaluatePattern(){
   const seqStr = currentPatternSequence.join(',');
-  const sub = document.getElementById('patternSubtitle');
+  const title = document.getElementById('patternTitle');
   
   if(patternState === 'setup_1'){
     if(currentPatternSequence.length < 4){
-      sub.textContent = '❌ Trop court ! Minimum 4 points requis.';
+      title.textContent = '❌ Trop court ! Minimum 4 points.';
       markError();
       return;
     }
     setupFirstPattern = seqStr;
     patternState = 'setup_2';
-    sub.textContent = '🔁 Dessinez à nouveau le schéma pour confirmer.';
+    title.textContent = 'Dessinez à nouveau pour confirmer :';
     document.getElementById('patternResetBtn').style.display = 'block';
     currentPatternSequence = [];
     document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active'));
@@ -395,14 +395,14 @@ function evaluatePattern(){
     if(seqStr === setupFirstPattern){
       storedPattern = seqStr;
       localStorage.setItem('finaryPattern', storedPattern);
-      sub.textContent = '✅ Schéma enregistré avec succès !';
+      title.textContent = '✅ Schéma enregistré !';
       setTimeout(() => {
         document.getElementById('patternLockOverlay').style.display = 'none';
         patternState = 'unlock';
         document.getElementById('togglePasswordModeBtn').style.display = 'block';
       }, 500);
     }else{
-      sub.textContent = '❌ Les schémas ne correspondent pas. Recommencez.';
+      title.textContent = '❌ Erreur, recommencez :';
       markError();
       patternState = 'setup_1';
       setupFirstPattern = '';
@@ -410,12 +410,12 @@ function evaluatePattern(){
     }
   }else if(patternState === 'unlock'){
     if(seqStr === storedPattern){
-      sub.textContent = '✅ Déverrouillé';
+      title.textContent = '✅ Déverrouillé';
       setTimeout(() => {
         document.getElementById('patternLockOverlay').style.display = 'none';
       }, 300);
     }else{
-      sub.textContent = '❌ Schéma incorrect.';
+      title.textContent = '❌ Schéma incorrect :';
       markError();
     }
   }
@@ -429,14 +429,15 @@ function markError(){
   setTimeout(() => {
     document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('error'));
     currentPatternSequence = [];
-  }, 600);
+    document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
+  }, 800);
 }
 
 function resetPatternSetup(){
   patternState = 'setup_1';
   setupFirstPattern = '';
   currentPatternSequence = [];
-  document.getElementById('patternSubtitle').textContent = 'Dessinez un schéma de sécurité (minimum 4 points).';
+  document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
   document.getElementById('patternResetBtn').style.display = 'none';
   document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active', 'error'));
 }
