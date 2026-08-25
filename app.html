@@ -256,12 +256,9 @@ EDF prélevé le 24 du mois" style="
   </div>
 
   <div id="tab-patrimoine" class="tab-content">
-    <div class="top">
-      <h1>Patrimoine</h1>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
-        <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button>
-      </div>
+    <div class="top" style="justify-content:space-between;">
+      <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
+      <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button>
     </div>
     <div class="card">
       <div><div class="muted">Patrimoine brut</div><div class="total" id="gross">0 €</div></div>
