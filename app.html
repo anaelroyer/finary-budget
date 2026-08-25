@@ -226,9 +226,11 @@ EDF prélevé le 24 du mois" style="
 
   <div id="tab-budget" class="tab-content active">
     <div class="top">
-      <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 8px;font-size:11px">📝 Notes</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 8px;font-size:11px">📝 Notes</button>
+        <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 8px;font-size:11px">🔒 Clôturer</button>
+      </div>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Masquer</button>
-      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 8px;font-size:11px">🔒 Clôturer</button>
     </div>
     <div class="card"><div class="muted">Reste à vivre estimé</div><div class="total green" id="budget-reste-vivre">0 €</div></div>
 
@@ -253,8 +255,8 @@ EDF prélevé le 24 du mois" style="
     <div class="top">
       <h1>Patrimoine</h1>
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Masquer</button>
         <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
+        <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Masquer</button>
       </div>
     </div>
     <div class="card">
