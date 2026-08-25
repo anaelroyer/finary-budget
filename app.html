@@ -196,7 +196,6 @@ EDF prélevé le 24 du mois" style="
 
   <div id="tab-budget" class="tab-content active">
     <div class="top" style="position:relative;">
-      
       <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="position:absolute;left:50%;transform:translateX(-50%);padding:6px 10px;font-size:12px">📝 Annotations</button>
       <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px;font-size:12px">🔒 Clôturer</button>
     </div>
@@ -278,7 +277,6 @@ function openModal(key){activeModalKey=key;const t=document.getElementById('moda
 function closeModal(){document.getElementById('genericModal').classList.remove('active');activeModalKey=''}
 function submitModal(){if(!activeModalKey)return;const label=document.getElementById('modalLabel').value.trim(),amountVal=document.getElementById('modalAmount').value,amount=amountVal===''?0:Number(amountVal);if(!data[activeModalKey])data[activeModalKey]=[];data[activeModalKey].unshift([label,amount,false]);closeModal();render();save()}
 
-/* ===== NOUVEAU : MODIFICATION DES MONTANTS PATRIMOINE PAR POP-UP ===== */
 let patrimoineAmountKey='',patrimoineAmountIndex=-1;
 const patrimoineKeys=['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'];
 
@@ -309,7 +307,6 @@ function submitPatrimoineAmount(){
   render();
   save();
 }
-/* ===================================================================== */
 
 function openAnnotationsModal(){
   const saved=data.annotations||'';
@@ -342,6 +339,7 @@ function saveAnnotations(){
   document.getElementById('annotationsView').style.display='block';
   document.getElementById('annotationsEdit').style.display='none';
 }
+
 function render(){
   ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes','budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
     const cont=document.querySelector(`.rows-container[data-key="${key}"]`);if(!cont)return;cont.innerHTML='';if(!Array.isArray(data[key]))data[key]=[];
@@ -359,12 +357,12 @@ function render(){
   });
   updateTotals();renderHistory();recordPatrimoineSnapshot();renderChart();renderAssetDistribution();
 }
+
 function escapeHtml(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function update(k,i,p,v){if(!data[k][i])return;data[k][i][p]=p===0?v:(v===''?0:Number(v));if(p!==0)updateTotals();save()}
 function togglePaid(k,i){if(!data[k][i])return;data[k][i][2]=!data[k][i][2];render();save()}
 function addItem(k){if(!data[k])data[k]=[];data[k].push(['',0]);render();save();const cs=document.querySelectorAll(`[data-key="${k}"]`),c=cs[cs.length-1];if(c){const i=c.querySelectorAll('input')[0];if(i){i.focus();i.select()}}}
 
-/* NOUVEAU : confirmation spécifique aux suppressions Patrimoine */
 function delPatrimoine(k,i){
   if(!data[k]||!data[k][i])return;
   const label=data[k][i][0]||'cet élément';
@@ -383,87 +381,77 @@ function calculateLiquidInvestments(){return ['epargne','assurancevie','bourse',
 function updateTotals(){const c=calculateNet();document.getElementById('net').textContent=euro(c.net);document.getElementById('gross').textContent=euro(c.assets);document.getElementById('assets').textContent=euro(c.assets);document.getElementById('debts').textContent=euro(c.debts);document.getElementById('savings').textContent=euro((data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0));document.getElementById('investments').textContent=euro((data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+(data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0));['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{const e=document.getElementById(`total-${k}`);if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0))});const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0),rv=rev-fixes-dep;[['total-budgetRevenus',rev],['total-budgetFixes',-fixes],['total-budgetDepenses',-dep]].forEach(([id,value])=>{const el=document.getElementById(id);if(el){el.textContent=euro(value);el.classList.toggle('negative',value<0)}});const e=document.getElementById('budget-reste-vivre');e.textContent=euro(rv);e.className='total '+(rv>=0?'green':'red')}
 function recordPatrimoineSnapshot(){const today=new Date().toISOString().split('T')[0],currentVal=calculateLiquidInvestments(),existing=patrimoineHistory.find(h=>h.date===today);if(existing)existing.net=currentVal;else{patrimoineHistory.push({date:today,net:currentVal});patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date))}}
 function resetPatrimoineChart(){if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){patrimoineHistory=[];localStorage.removeItem('finaryPatrimoineHistory');recordPatrimoineSnapshot();render();save()}}
-function closeMonth(){if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro."))return;const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);monthHistory.unshift({
-  month:new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),
-  revenus:rev,
-  fixes,
-  depenses:dep,
-  resteVivre:rev-fixes-dep,
-  lignes:{
-    revenus:JSON.parse(JSON.stringify(data.budgetRevenus||[])),
-    fixes:JSON.parse(JSON.stringify(data.budgetFixes||[])),
-    depenses:JSON.parse(JSON.stringify(data.budgetDepenses||[]))
-  }
-});data.budgetDepenses=[];['budgetRevenus','budgetFixes','budgetDepenses'].forEach(k=>{if(Array.isArray(data[k]))data[k].forEach(item=>{if(item.length>2)item[2]=false})});save();render()}
-function resetHistory(){if(confirm("Supprimer l'historique des budgets ?")){monthHistory=[];localStorage.removeItem('finaryHistory');render();save()}}
-function renderHistory(){
-  const cont=document.getElementById('history-container');
-  if(!cont)return;
 
-  if(monthHistory.length===0){
-    cont.innerHTML='<p style="color:#8b949e;font-size:13px;">Aucun historique.</p>';
+function closeMonth(){
+  if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro.")) return;
+  
+  const rev = (data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const fixes = (data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const dep = (data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
+  
+  monthHistory.unshift({
+    month: new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),
+    revenus: rev,
+    fixes: fixes,
+    depenses: dep,
+    resteVivre: rev - fixes - dep,
+    revenusDetails: JSON.parse(JSON.stringify(data.budgetRevenus || [])),
+    fixesDetails: JSON.parse(JSON.stringify(data.budgetFixes || [])),
+    depensesDetails: JSON.parse(JSON.stringify(data.budgetDepenses || []))
+  });
+
+  data.budgetDepenses = [];
+  if(data.budgetFixes) data.budgetFixes.forEach(item => item[2] = false);
+  if(data.budgetRevenus) data.budgetRevenus.forEach(item => item[2] = false);
+
+  render();
+  save();
+}
+
+function renderHistory(){
+  const c = document.getElementById('history-container');
+  if(!c) return;
+  if(!monthHistory.length){
+    c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun mois clôturé pour l\'instant</div>';
     return;
   }
-
-  cont.innerHTML='<table class="history-table"><thead><tr><th>Mois</th><th>Revenus</th><th>Fixes</th><th>Dép.</th><th>Reste</th></tr></thead><tbody>'+
-    monthHistory.map((h,i)=>{
-      const hasDetails=!!h.lignes;
-      return `<tr class="${hasDetails?'history-clickable':''}" ${hasDetails?`onclick="openHistoryMonthModal(${i})"`:''}>
-        <td>${h.month}</td>
-        <td>${euro(h.revenus)}</td>
-        <td>${euro(h.fixes)}</td>
-        <td>${euro(h.depenses)}</td>
-        <td style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</td>
-      </tr>`;
-    }).join('')+
-    '</tbody></table>'+
-    '<p style="color:#8b949e;font-size:11px;margin-top:8px;text-align:center;">Cliquez sur un mois pour retrouver le détail des opérations.</p>';
+  let h = '<table class="history-table"><thead><tr><th>Mois</th><th style="text-align:right">Reste à vivre</th><th style="width:30px"></th></tr></thead><tbody>';
+  monthHistory.forEach((m, idx)=>{
+    h += `<tr class="history-clickable" onclick="openHistoryMonthModal(${idx})"><td><strong>${escapeHtml(m.month)}</strong></td><td style="text-align:right;font-weight:600;color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</td><td style="text-align:right;color:#8b949e">➔</td></tr>`;
+  });
+  h += '</tbody></table>';
+  c.innerHTML = h;
 }
 
 function openHistoryMonthModal(index){
-  const h=monthHistory[index];
-  if(!h)return;
+  const m = monthHistory[index];
+  if(!m) return;
+  document.getElementById('historyMonthTitle').textContent = `Mois : ${m.month}`;
+  
+  let content = `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+      <div class="stat"><span>Revenus</span><strong>${euro(m.revenus)}</strong></div>
+      <div class="stat"><span>Frais fixes</span><strong>${euro(m.fixes)}</strong></div>
+      <div class="stat"><span>Dépenses</span><strong>${euro(m.depenses)}</strong></div>
+      <div class="stat"><span>Reste à vivre</span><strong style="color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</strong></div>
+    </div>
+  `;
 
-  document.getElementById('historyMonthTitle').textContent='🗓️ '+h.month;
+  const renderSection = (title, items) => {
+    if(!items || !items.length) return `<div class="history-view-section"><h4>${title}</h4><div class="history-view-empty">Aucun élément</div></div>`;
+    let html = `<div class="history-view-section"><h4>${title}</h4>`;
+    items.forEach(it => {
+      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
+    });
+    html += `</div>`;
+    return html;
+  };
 
-  const lignes=h.lignes||{};
-  const sections=[
-    {key:'revenus',title:'📥 Entrées'},
-    {key:'fixes',title:'🏠 Frais fixes'},
-    {key:'depenses',title:'🛒 Dépenses'}
-  ];
+  content += renderSection('📥 Entrées', m.revenusDetails);
+  content += renderSection('🏠 Frais fixes', m.fixesDetails);
+  content += renderSection('🛒 Dépenses', m.depensesDetails);
 
-  let content='';
-  sections.forEach(section=>{
-    const items=Array.isArray(lignes[section.key])?lignes[section.key]:[];
-    const rawTotal=items.reduce((s,item)=>s+(Number(item[1])||0),0);
-    const isOutflow=section.key==='fixes'||section.key==='depenses';
-    const total=isOutflow ? -Math.abs(rawTotal) : Math.abs(rawTotal);
-
-    content+=`<div class="history-view-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-        <h4 style="margin:0;">${section.title}</h4>
-        <strong style="font-size:13px;color:${total<0?'#f85149':'#3fb950'}">${euro(total)}</strong>
-      </div>`;
-
-    if(items.length===0){
-      content+='<div class="history-view-empty" style="margin-top:8px;">Aucune ligne.</div>';
-    }else{
-      items.forEach(item=>{
-        content+=`<div class="history-view-row">
-          <span class="history-view-label">${escapeHtml(item[0]||'Sans libellé')}</span>
-          <span class="history-view-amount">${euro(Number(item[1])||0)}</span>
-        </div>`;
-      });
-    }
-    content+='</div>';
-  });
-
-  content+=`<div class="history-view-section">
-    <div class="history-view-row"><span class="history-view-label">Reste à vivre</span><span class="history-view-amount" style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</span></div>
-  </div>`;
-
-  document.getElementById('historyMonthContent').innerHTML=content;
+  document.getElementById('historyMonthContent').innerHTML = content;
   document.getElementById('historyMonthModal').classList.add('active');
 }
 
@@ -471,30 +459,147 @@ function closeHistoryMonthModal(){
   document.getElementById('historyMonthModal').classList.remove('active');
 }
 
-function escapeHtml(value){
-  return String(value)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
+function resetHistory(){
+  if(!confirm("Voulez-vous vraiment effacer tout l'historique des mois clôturés ?")) return;
+  monthHistory = [];
+  save();
+  renderHistory();
 }
 
-function renderAssetDistribution(){const p=document.getElementById('asset-pie-chart'),l=document.getElementById('asset-distribution-legend');if(!p||!l)return;const cats=[{key:'epargne',label:'Épargne',color:'#3fb950'},{key:'assurancevie',label:'Assurance-vie',color:'#a371f7'},{key:'bourse',label:'Bourse',color:'#d29922'},{key:'crypto',label:'Crypto',color:'#f85149'},{key:'autres',label:'Autres',color:'#58a6ff'}],totals=cats.map(c=>({...c,sum:(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0)})),total=totals.reduce((a,c)=>a+c.sum,0);if(total===0){p.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:11px;text-align:center">Vide</div>';l.innerHTML='<span style="color:#8b949e;font-size:11px">Aucun actif renseigné</span>';return}let cum=0,slices='';totals.forEach(c=>{if(c.sum<=0)return;const pct=c.sum/total*100,start=cum/100*360;cum+=pct;const end=cum/100*360,x1=50+40*Math.cos((start-90)*Math.PI/180),y1=50+40*Math.sin((start-90)*Math.PI/180),x2=50+40*Math.cos((end-90)*Math.PI/180),y2=50+40*Math.sin((end-90)*Math.PI/180),arc=pct>50?1:0;slices+=pct===100?`<circle cx="50" cy="50" r="40" fill="transparent" stroke="${c.color}" stroke-width="20"/>`:`<path d="M50 50 L${x1} ${y1} A40 40 0 ${arc} 1 ${x2} ${y2} Z" fill="${c.color}"/>`});p.innerHTML=`<svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg)">${slices}<circle cx="50" cy="50" r="25" fill="#161b22"/></svg>`;l.innerHTML=totals.filter(c=>c.sum>0).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span><span style="color:#c9d1d9">${c.label}</span></div><strong style="color:#fff;font-weight:600">${(c.sum/total*100).toFixed(1)}%</strong></div>`).join('')}
-function renderChart(){const c=document.getElementById('chart-wrapper');if(!c)return;if(!patrimoineHistory.length){c.innerHTML='<p style="color:#8b949e;font-size:12px;text-align:center">Chargement...</p>';return}const vals=patrimoineHistory.map(h=>h.net),labels=patrimoineHistory.map(h=>{const p=h.date.split('-');return`${p[2]}/${p[1]}/${p[0]}`}),w=400,h=95,pad=15,min=Math.min(...vals),max=Math.max(...vals),range=max-min||1,pts=vals.map((v,i)=>({x:pad+(i/(vals.length-1||1))*(w-pad*2),y:h-pad-((v-min)/range)*(h-pad*2),val:v,label:labels[i]})),path=pts.length===1?`M${pts[0].x} ${pts[0].y}`:pts.map((p,i)=>(i?'L':'M')+`${p.x} ${p.y}`).join(' '),area=pts.length===1?`M${pts[0].x} ${h} L${pts[0].x} ${pts[0].y} L${pts[0].x} ${h} Z`:`M${pts[0].x} ${h} ${pts.map(p=>`L${p.x} ${p.y}`).join(' ')} L${pts.at(-1).x} ${h} Z`;c.innerHTML=`<div class="chart-tooltip" id="chartTooltip"></div><svg viewBox="0 0 ${w} ${h}" class="patrimoine-chart" id="patrimoineSvg"><defs><linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" class="chart-area"/><path d="${path}" class="chart-line"/><line x1="0" y1="0" x2="0" y2="${h}" class="chart-cursor-line" id="cursorLine"/><circle cx="0" cy="0" r="4" id="cursorDot" fill="#58a6ff" stroke="#161b22" stroke-width="2" style="opacity:0"/></svg>`;const svg=document.getElementById('patrimoineSvg'),tip=document.getElementById('chartTooltip'),line=document.getElementById('cursorLine'),dot=document.getElementById('cursorDot');function handle(e){const r=svg.getBoundingClientRect(),cx=e.touches?e.touches[0].clientX:e.clientX,x=(cx-r.left)/r.width*w;let closest=pts[0],d=Infinity;pts.forEach(p=>{const q=Math.abs(p.x-x);if(q<d){d=q;closest=p}});line.setAttribute('x1',closest.x);line.setAttribute('x2',closest.x);line.style.opacity=1;dot.setAttribute('cx',closest.x);dot.setAttribute('cy',closest.y);dot.style.opacity=1;tip.style.display='block';tip.innerHTML=`<b>${closest.label}</b><br>${euro(closest.val)}`;tip.style.left=`${closest.x/w*100}%`;tip.style.top=`${closest.y/h*100}%`}function hide(){line.style.opacity=0;dot.style.opacity=0;tip.style.display='none'}svg.addEventListener('mousemove',handle);svg.addEventListener('mouseleave',hide);svg.addEventListener('touchstart',e=>{e.preventDefault();handle(e)});svg.addEventListener('touchmove',e=>{e.preventDefault();handle(e)});svg.addEventListener('touchend',hide)}
-function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({data,monthHistory,patrimoineHistory})],{type:'application/json'}));a.download='budget.json';a.click();URL.revokeObjectURL(a.href)}
-function importData(e){const r=new FileReader();r.onload=e=>{try{const j=JSON.parse(e.target.result);data=j.data;monthHistory=j.monthHistory||[];patrimoineHistory=j.patrimoineHistory||[];window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;render();save()}catch(err){alert('Fichier invalide.')}};r.readAsText(e.target.files[0])}
+function exportData(){
+  const exportObj = { data, monthHistory, patrimoineHistory, annotations };
+  const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `budget_patrimoine_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-/* Fermeture des modales en cliquant sur le fond */
-document.getElementById('genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});
-document.getElementById('historyMonthModal').addEventListener('click',e=>{if(e.target.id==='historyMonthModal')closeHistoryMonthModal()});
-document.getElementById('annotationsModal').addEventListener('click',e=>{if(e.target.id==='annotationsModal')closeAnnotationsModal()});
-document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{if(e.target.id==='patrimoineAmountModal')closePatrimoineAmountModal()});
-document.getElementById('patrimoineAmountInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitPatrimoineAmount()}if(e.key==='Escape')closePatrimoineAmountModal()});
-document.getElementById('annotationsInput').addEventListener('keydown',e=>{if(e.key==='Escape')closeAnnotationsModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHistoryMonthModal()});
-document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const el=e.target;if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){e.preventDefault();el.blur();if(typeof save==='function')save()}});
-render();
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const imported = JSON.parse(e.target.result);
+      if(imported.data) data = imported.data;
+      if(imported.monthHistory) monthHistory = imported.monthHistory;
+      if(imported.patrimoineHistory) patrimoineHistory = imported.patrimoineHistory;
+      if(typeof imported.annotations === 'string') annotations = imported.annotations;
+      save();
+      render();
+      alert("Importation réussie !");
+    }catch(err){
+      alert("Erreur lors de l'importation du fichier.");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function renderChart(){
+  const container = document.getElementById('chart-wrapper');
+  if(!container) return;
+  if(!patrimoineHistory || patrimoineHistory.length < 2){
+    container.innerHTML = '<div style="color:#8b949e;font-size:12px;text-align:center;padding:20px">Pas assez de données pour afficher l\'évolution (minimum 2 jours différents).</div>';
+    return;
+  }
+  
+  let minVal = Math.min(...patrimoineHistory.map(d => d.net));
+  let maxVal = Math.max(...patrimoineHistory.map(d => d.net));
+  if(minVal === maxVal){ minVal -= 100; maxVal += 100; }
+  
+  const w = 320, h = 100, pad = 10;
+  const pts = patrimoineHistory.map((d, i) => {
+    const x = pad + (i / (patrimoineHistory.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((d.net - minVal) / (maxVal - minVal)) * (h - pad * 2);
+    return {x, y, ...d};
+  });
+  
+  let pathD = `M ${pts[0].x} ${pts[0].y}`;
+  for(let i = 0; i < pts.length - 1; i++){
+    const xc = (pts[i].x + pts[i+1].x) / 2;
+    const yc = (pts[i].y + pts[i+1].y) / 2;
+    pathD += ` Q ${pts[i].x} ${pts[i].y}, ${xc} ${yc}`;
+  }
+  pathD += ` L ${pts[pts.length-1].x} ${pts[pts.length-1].y}`;
+  
+  let areaD = `${pathD} L ${pts[pts.length-1].x} ${h} L ${pts[0].x} ${h} Z`;
+  
+  container.innerHTML = `
+    <div style="position:relative">
+      <svg class="patrimoine-chart" viewBox="0 0 ${w} ${h}">
+        <defs>
+          <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#58a6ff"/>
+            <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path class="chart-area" d="${areaD}"></path>
+        <path class="chart-line" d="${pathD}"></path>
+        <line class="chart-cursor-line" id="chartCursorLine" x1="0" y1="0" x2="0" y2="${h}"></line>
+        ${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#58a6ff" style="cursor:pointer" data-date="${p.date}" data-net="${p.net}"></circle>`).join('')}
+      </svg>
+      <div class="chart-tooltip" id="chartTooltip"></div>
+    </div>
+  `;
+}
+
+function renderAssetDistribution(){
+  const pie = document.getElementById('asset-pie-chart');
+  const legend = document.getElementById('asset-distribution-legend');
+  if(!pie || !legend) return;
+
+  const cats = [
+    {key:'epargne', label:'Épargne', color:'#3fb950'},
+    {key:'assurancevie', label:'Assurance-vie', color:'#58a6ff'},
+    {key:'bourse', label:'Bourse', color:'#a371f7'},
+    {key:'crypto', label:'Crypto', color:'#d29922'},
+    {key:'autres', label:'Autres', color:'#f0883e'}
+  ];
+
+  let total = 0;
+  const items = cats.map(c => {
+    const val = (data[c.key]||[]).reduce((sum, i) => sum + (i[1]||0), 0);
+    total += val;
+    return {...c, val};
+  }).filter(c => c.val > 0);
+
+  if(total === 0){
+    pie.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:11px">Aucun actif</div>`;
+    legend.innerHTML = '';
+    return;
+  }
+
+  let cumulativeAngle = 0;
+  let gradientStops = [];
+  items.forEach(i => {
+    const percentage = (i.val / total) * 100;
+    const startAngle = cumulativeAngle;
+    const endAngle = cumulativeAngle + percentage;
+    gradientStops.push(`${i.color} ${startAngle}% ${endAngle}%`);
+    cumulativeAngle = endAngle;
+  });
+
+  pie.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+  pie.style.borderRadius = '50%';
+
+  legend.innerHTML = items.map(i => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:10px;height:10px;border-radius:2px;background:${i.color}"></div>
+        <span>${i.label}</span>
+      </div>
+      <strong>${euro(i.val)}</strong>
+    </div>
+  `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  render();
+});
 </script>
 </body>
 </html>
