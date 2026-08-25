@@ -468,6 +468,29 @@ function closeMonth(){
   save();
 }
 
+/* Fonctions utilitaires robustes pour la recherche (accents & virgules/points) */
+function normalizeText(str){
+  if(!str) return '';
+  return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function matchesQuery(label, amount, rawQuery){
+  if(!rawQuery) return true;
+  const q = normalizeText(rawQuery);
+  const normalizedLabel = normalizeText(label);
+  
+  // Vérif sur le libellé sans accents
+  if(normalizedLabel.includes(q)) return true;
+  
+  // Vérif sur le montant (gère la virgule française et le point)
+  const amountStr = String(amount);
+  const qNormalized = q.replace(',', '.');
+  if(amountStr.includes(qNormalized)) return true;
+  if(amountStr.includes(q)) return true;
+  
+  return false;
+}
+
 function renderHistory(){
   const c = document.getElementById('history-container');
   if(!c) return;
@@ -476,18 +499,15 @@ function renderHistory(){
     return;
   }
 
-  const query = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
+  const query = (document.getElementById('historySearchInput')?.value || '').trim();
 
   const filteredHistory = monthHistory.map((m, originalIdx) => ({m, originalIdx})).filter(({m}) => {
     if(!query) return true;
-    if(m.month.toLowerCase().includes(query)) return true;
-    if(m.resteVivre.toString().includes(query)) return true;
+    if(normalizeText(m.month).includes(normalizeText(query))) return true;
+    if(m.resteVivre.toString().includes(query.replace(',', '.'))) return true;
     
     const allItems = [...(m.revenusDetails||[]), ...(m.fixesDetails||[]), ...(m.depensesDetails||[])];
-    return allItems.some(item => 
-      (item[0] && item[0].toLowerCase().includes(query)) || 
-      (item[1] && item[1].toString().includes(query))
-    );
+    return allItems.some(item => matchesQuery(item[0], item[1], query));
   });
 
   if(!filteredHistory.length){
@@ -524,7 +544,7 @@ function filterHistoryMonthModal(){
 }
 
 function renderHistoryMonthModalContent(m){
-  const query = (document.getElementById('historyModalSearchInput')?.value || '').toLowerCase().trim();
+  const query = (document.getElementById('historyModalSearchInput')?.value || '').trim();
 
   let content = `
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
@@ -536,14 +556,9 @@ function renderHistoryMonthModalContent(m){
   `;
 
   const renderSection = (title, items) => {
-    const filteredItems = (items || []).filter(it => {
-      if(!query) return true;
-      const labelMatch = it[0] && it[0].toLowerCase().includes(query);
-      const amountMatch = it[1] && it[1].toString().includes(query);
-      return labelMatch || amountMatch;
-    });
+    const filteredItems = (items || []).filter(it => matchesQuery(it[0], it[1], query));
 
-    if(!filteredItems.length && query) return ''; // Cache la section si aucun résultat pour cette recherche
+    if(!filteredItems.length && query) return ''; 
     if(!items || !items.length) return `<div class="history-view-section"><h4>${title}</h4><div class="history-view-empty">Aucun élément</div></div>`;
     
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
