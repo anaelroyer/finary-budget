@@ -300,8 +300,9 @@ initFirebase();
 
 <script>
 let annotations=localStorage.getItem('finaryAnnotations')||'';
-let data=JSON.parse(localStorage.getItem('finaryData'))||{immobilier:[['Résidence principale',300000]],epargne:[['Livret A',20000]],assurancevie:[['Assurance-vie Principale',15000]],bourse:[['ETF World',2600]],crypto:[['Bitcoin',30000]],autres:[['Voiture / Divers',10000]],dettes:[['Crédit Immo',150000]],budgetRevenus:[['Salaire',2500,false]],budgetFixes:[['Loyer',900,false]],budgetDepenses:[['Courses',400,false]]};
-let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[],patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
+let data=JSON.parse(localStorage.getItem('finaryData'))||{immobilier:[],epargne:[],assurancevie:[],bourse:[],crypto:[],autres:[],dettes:[],budgetRevenus:[],budgetFixes:[],budgetDepenses:[]};
+let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[];
+let patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
 window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;
 
 window.applyFirebaseState=function(remote){if(remote.data)data=remote.data;if(remote.monthHistory)monthHistory=remote.monthHistory;if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;if(typeof remote.annotations==='string')annotations=remote.annotations;window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;saveLocalOnly();render()};
@@ -474,13 +475,11 @@ function renderHistory(){
 
   const query = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
 
-  // Filtrage intelligent basé sur le mois ou le contenu des détails
   const filteredHistory = monthHistory.map((m, originalIdx) => ({m, originalIdx})).filter(({m}) => {
     if(!query) return true;
     if(m.month.toLowerCase().includes(query)) return true;
     if(m.resteVivre.toString().includes(query)) return true;
     
-    // Recherche dans les libellés ou montants des sous-éléments
     const allItems = [...(m.revenusDetails||[]), ...(m.fixesDetails||[]), ...(m.depensesDetails||[])];
     return allItems.some(item => 
       (item[0] && item[0].toLowerCase().includes(query)) || 
@@ -633,7 +632,7 @@ function renderAssetDistribution(){
   const cats = [
     {key:'epargne', label:'Épargne', color:'#3fb950'},
     {key:'assurancevie', label:'Assurance-vie', color:'#58a6ff'},
-    {key:'bourse', label:'Bourse', color:#a371f7},
+    {key:'bourse', label:'Bourse', color:'#a371f7'},
     {key:'crypto', label:'Crypto', color:'#d29922'},
     {key:'autres', label:'Autres', color:'#f0883e'}
   ];
