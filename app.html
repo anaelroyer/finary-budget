@@ -18,6 +18,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .muted{color:#8b949e;font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 details.card{padding:0;overflow:hidden}details.card summary{padding:16px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:600;color:#fff;user-select:none}
 details.card summary::-webkit-details-marker{display:none}details.card summary::after{content:"▼";font-size:12px;color:#8b949e;transition:transform .2s}details.card[open] summary::after{transform:rotate(180deg)}
+.history-table tbody tr.history-clickable{
+  cursor:pointer;
+  transition:background .15s;
+}
+.history-table tbody tr.history-clickable:hover{
+  background:#21262d;
+}
+.history-table tbody tr.history-clickable:active{
+  background:#30363d;
+}
+.history-view-section{
+  background:#21262d;
+  border:1px solid #30363d;
+  border-radius:10px;
+  padding:12px;
+}
+.history-view-section h4{
+  font-size:13px;
+  color:#fff;
+  margin-bottom:8px;
+}
+.history-view-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 0;
+  border-bottom:1px solid #30363d;
+  font-size:13px;
+}
+.history-view-row:last-child{border-bottom:0}
+.history-view-label{
+  color:#c9d1d9;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.history-view-amount{
+  color:#fff;
+  font-weight:600;
+  white-space:nowrap;
+}
+.history-view-empty{
+  color:#8b949e;
+  font-size:12px;
+  font-style:italic;
+}
 .budget-summary-total{font-size:13px;font-weight:700;margin-left:auto;margin-right:10px;color:#3fb950}.budget-summary-total.negative{color:#f85149}
 .details-content{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px;border-top:1px solid #21262d;margin-top:-4px;padding-top:12px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.stat{background:#21262d;border:1px solid #30363d;border-radius:10px;padding:12px}.stat span{font-size:11px;color:#8b949e}.stat strong{display:block;font-size:16px;margin-top:2px;color:#fff}
@@ -56,6 +101,17 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="submitModal()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VISUALISATION D'UN MOIS CLÔTURÉ -->
+<div class="modal-overlay" id="historyMonthModal">
+  <div class="modal" style="max-width:440px;max-height:85vh;">
+    <h3 id="historyMonthTitle">Mois clôturé</h3>
+    <div id="historyMonthContent" style="overflow-y:auto;display:flex;flex-direction:column;gap:14px;"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeHistoryMonthModal()">Fermer</button>
     </div>
   </div>
 </div>
@@ -273,9 +329,101 @@ function calculateLiquidInvestments(){return ['epargne','assurancevie','bourse',
 function updateTotals(){const c=calculateNet();document.getElementById('net').textContent=euro(c.net);document.getElementById('gross').textContent=euro(c.assets);document.getElementById('assets').textContent=euro(c.assets);document.getElementById('debts').textContent=euro(c.debts);document.getElementById('savings').textContent=euro((data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0));document.getElementById('investments').textContent=euro((data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+(data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0));['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{const e=document.getElementById(`total-${k}`);if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0))});const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0),rv=rev-fixes-dep;[['total-budgetRevenus',rev],['total-budgetFixes',fixes],['total-budgetDepenses',dep]].forEach(([id,value])=>{const el=document.getElementById(id);if(el){el.textContent=euro(value);el.classList.toggle('negative',value<0)}});const e=document.getElementById('budget-reste-vivre');e.textContent=euro(rv);e.className='total '+(rv>=0?'green':'red')}
 function recordPatrimoineSnapshot(){const today=new Date().toISOString().split('T')[0],currentVal=calculateLiquidInvestments(),existing=patrimoineHistory.find(h=>h.date===today);if(existing)existing.net=currentVal;else{patrimoineHistory.push({date:today,net:currentVal});patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date))}}
 function resetPatrimoineChart(){if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){patrimoineHistory=[];localStorage.removeItem('finaryPatrimoineHistory');recordPatrimoineSnapshot();render();save()}}
-function closeMonth(){if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro."))return;const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);monthHistory.unshift({month:new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),revenus:rev,fixes,depenses:dep,resteVivre:rev-fixes-dep});data.budgetDepenses=[];['budgetRevenus','budgetFixes','budgetDepenses'].forEach(k=>{if(Array.isArray(data[k]))data[k].forEach(item=>{if(item.length>2)item[2]=false})});save();render()}
+function closeMonth(){if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro."))return;const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);monthHistory.unshift({
+  month:new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),
+  revenus:rev,
+  fixes,
+  depenses:dep,
+  resteVivre:rev-fixes-dep,
+  lignes:{
+    revenus:JSON.parse(JSON.stringify(data.budgetRevenus||[])),
+    fixes:JSON.parse(JSON.stringify(data.budgetFixes||[])),
+    depenses:JSON.parse(JSON.stringify(data.budgetDepenses||[]))
+  }
+});data.budgetDepenses=[];['budgetRevenus','budgetFixes','budgetDepenses'].forEach(k=>{if(Array.isArray(data[k]))data[k].forEach(item=>{if(item.length>2)item[2]=false})});save();render()}
 function resetHistory(){if(confirm("Supprimer l'historique des budgets ?")){monthHistory=[];localStorage.removeItem('finaryHistory');render();save()}}
-function renderHistory(){const c=document.getElementById('history-container');if(!c)return;c.innerHTML=monthHistory.length===0?'<p style="color:#8b949e;font-size:13px">Aucun historique.</p>':`<table class="history-table"><thead><tr><th>Mois</th><th>Revenus</th><th>Fixes</th><th>Dép.</th><th>Reste</th></tr></thead><tbody>`+monthHistory.map(h=>`<tr><td>${h.month}</td><td>${euro(h.revenus)}</td><td>${euro(h.fixes)}</td><td>${euro(h.depenses)}</td><td style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</td></tr>`).join('')+'</tbody></table>'}
+function renderHistory(){
+  const cont=document.getElementById('history-container');
+  if(!cont)return;
+
+  if(monthHistory.length===0){
+    cont.innerHTML='<p style="color:#8b949e;font-size:13px;">Aucun historique.</p>';
+    return;
+  }
+
+  cont.innerHTML='<table class="history-table"><thead><tr><th>Mois</th><th>Revenus</th><th>Fixes</th><th>Dép.</th><th>Reste</th></tr></thead><tbody>'+
+    monthHistory.map((h,i)=>{
+      const hasDetails=!!h.lignes;
+      return `<tr class="${hasDetails?'history-clickable':''}" ${hasDetails?`onclick="openHistoryMonthModal(${i})"`:''}>
+        <td>${h.month}</td>
+        <td>${euro(h.revenus)}</td>
+        <td>${euro(h.fixes)}</td>
+        <td>${euro(h.depenses)}</td>
+        <td style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</td>
+      </tr>`;
+    }).join('')+
+    '</tbody></table>'+
+    '<p style="color:#8b949e;font-size:11px;margin-top:8px;text-align:center;">Cliquez sur un mois pour retrouver le détail des opérations.</p>';
+}
+
+function openHistoryMonthModal(index){
+  const h=monthHistory[index];
+  if(!h)return;
+
+  document.getElementById('historyMonthTitle').textContent='🗓️ '+h.month;
+
+  const lignes=h.lignes||{};
+  const sections=[
+    {key:'revenus',title:'📥 Entrées'},
+    {key:'fixes',title:'🏠 Frais fixes'},
+    {key:'depenses',title:'🛒 Dépenses'}
+  ];
+
+  let content='';
+  sections.forEach(section=>{
+    const items=Array.isArray(lignes[section.key])?lignes[section.key]:[];
+    const total=items.reduce((s,item)=>s+(Number(item[1])||0),0);
+
+    content+=`<div class="history-view-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <h4 style="margin:0;">${section.title}</h4>
+        <strong style="font-size:13px;color:${total<0?'#f85149':'#3fb950'}">${euro(total)}</strong>
+      </div>`;
+
+    if(items.length===0){
+      content+='<div class="history-view-empty" style="margin-top:8px;">Aucune ligne.</div>';
+    }else{
+      items.forEach(item=>{
+        content+=`<div class="history-view-row">
+          <span class="history-view-label">${escapeHtml(item[0]||'Sans libellé')}</span>
+          <span class="history-view-amount">${euro(Number(item[1])||0)}</span>
+        </div>`;
+      });
+    }
+    content+='</div>';
+  });
+
+  content+=`<div class="history-view-section">
+    <div class="history-view-row"><span class="history-view-label">Reste à vivre</span><span class="history-view-amount" style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</span></div>
+  </div>`;
+
+  document.getElementById('historyMonthContent').innerHTML=content;
+  document.getElementById('historyMonthModal').classList.add('active');
+}
+
+function closeHistoryMonthModal(){
+  document.getElementById('historyMonthModal').classList.remove('active');
+}
+
+function escapeHtml(value){
+  return String(value)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
 function renderAssetDistribution(){const p=document.getElementById('asset-pie-chart'),l=document.getElementById('asset-distribution-legend');if(!p||!l)return;const cats=[{key:'epargne',label:'Épargne',color:'#3fb950'},{key:'assurancevie',label:'Assurance-vie',color:'#a371f7'},{key:'bourse',label:'Bourse',color:'#d29922'},{key:'crypto',label:'Crypto',color:'#f85149'},{key:'autres',label:'Autres',color:'#58a6ff'}],totals=cats.map(c=>({...c,sum:(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0)})),total=totals.reduce((a,c)=>a+c.sum,0);if(total===0){p.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:11px;text-align:center">Vide</div>';l.innerHTML='<span style="color:#8b949e;font-size:11px">Aucun actif renseigné</span>';return}let cum=0,slices='';totals.forEach(c=>{if(c.sum<=0)return;const pct=c.sum/total*100,start=cum/100*360;cum+=pct;const end=cum/100*360,x1=50+40*Math.cos((start-90)*Math.PI/180),y1=50+40*Math.sin((start-90)*Math.PI/180),x2=50+40*Math.cos((end-90)*Math.PI/180),y2=50+40*Math.sin((end-90)*Math.PI/180),arc=pct>50?1:0;slices+=pct===100?`<circle cx="50" cy="50" r="40" fill="transparent" stroke="${c.color}" stroke-width="20"/>`:`<path d="M50 50 L${x1} ${y1} A40 40 0 ${arc} 1 ${x2} ${y2} Z" fill="${c.color}"/>`});p.innerHTML=`<svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg)">${slices}<circle cx="50" cy="50" r="25" fill="#161b22"/></svg>`;l.innerHTML=totals.filter(c=>c.sum>0).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span><span style="color:#c9d1d9">${c.label}</span></div><strong style="color:#fff;font-weight:600">${(c.sum/total*100).toFixed(1)}%</strong></div>`).join('')}
 function renderChart(){const c=document.getElementById('chart-wrapper');if(!c)return;if(!patrimoineHistory.length){c.innerHTML='<p style="color:#8b949e;font-size:12px;text-align:center">Chargement...</p>';return}const vals=patrimoineHistory.map(h=>h.net),labels=patrimoineHistory.map(h=>{const p=h.date.split('-');return`${p[2]}/${p[1]}/${p[0]}`}),w=400,h=95,pad=15,min=Math.min(...vals),max=Math.max(...vals),range=max-min||1,pts=vals.map((v,i)=>({x:pad+(i/(vals.length-1||1))*(w-pad*2),y:h-pad-((v-min)/range)*(h-pad*2),val:v,label:labels[i]})),path=pts.length===1?`M${pts[0].x} ${pts[0].y}`:pts.map((p,i)=>(i?'L':'M')+`${p.x} ${p.y}`).join(' '),area=pts.length===1?`M${pts[0].x} ${h} L${pts[0].x} ${pts[0].y} L${pts[0].x} ${h} Z`:`M${pts[0].x} ${h} ${pts.map(p=>`L${p.x} ${p.y}`).join(' ')} L${pts.at(-1).x} ${h} Z`;c.innerHTML=`<div class="chart-tooltip" id="chartTooltip"></div><svg viewBox="0 0 ${w} ${h}" class="patrimoine-chart" id="patrimoineSvg"><defs><linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" class="chart-area"/><path d="${path}" class="chart-line"/><line x1="0" y1="0" x2="0" y2="${h}" class="chart-cursor-line" id="cursorLine"/><circle cx="0" cy="0" r="4" id="cursorDot" fill="#58a6ff" stroke="#161b22" stroke-width="2" style="opacity:0"/></svg>`;const svg=document.getElementById('patrimoineSvg'),tip=document.getElementById('chartTooltip'),line=document.getElementById('cursorLine'),dot=document.getElementById('cursorDot');function handle(e){const r=svg.getBoundingClientRect(),cx=e.touches?e.touches[0].clientX:e.clientX,x=(cx-r.left)/r.width*w;let closest=pts[0],d=Infinity;pts.forEach(p=>{const q=Math.abs(p.x-x);if(q<d){d=q;closest=p}});line.setAttribute('x1',closest.x);line.setAttribute('x2',closest.x);line.style.opacity=1;dot.setAttribute('cx',closest.x);dot.setAttribute('cy',closest.y);dot.style.opacity=1;tip.style.display='block';tip.innerHTML=`<b>${closest.label}</b><br>${euro(closest.val)}`;tip.style.left=`${closest.x/w*100}%`;tip.style.top=`${closest.y/h*100}%`}function hide(){line.style.opacity=0;dot.style.opacity=0;tip.style.display='none'}svg.addEventListener('mousemove',handle);svg.addEventListener('mouseleave',hide);svg.addEventListener('touchstart',e=>{e.preventDefault();handle(e)});svg.addEventListener('touchmove',e=>{e.preventDefault();handle(e)});svg.addEventListener('touchend',hide)}
 function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({data,monthHistory,patrimoineHistory})],{type:'application/json'}));a.download='budget.json';a.click();URL.revokeObjectURL(a.href)}
@@ -283,10 +431,12 @@ function importData(e){const r=new FileReader();r.onload=e=>{try{const j=JSON.pa
 
 /* Fermeture des modales en cliquant sur le fond */
 document.getElementById('genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});
+document.getElementById('historyMonthModal').addEventListener('click',e=>{if(e.target.id==='historyMonthModal')closeHistoryMonthModal()});
 document.getElementById('annotationsModal').addEventListener('click',e=>{if(e.target.id==='annotationsModal')closeAnnotationsModal()});
 document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{if(e.target.id==='patrimoineAmountModal')closePatrimoineAmountModal()});
 document.getElementById('patrimoineAmountInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitPatrimoineAmount()}if(e.key==='Escape')closePatrimoineAmountModal()});
 document.getElementById('annotationsInput').addEventListener('keydown',e=>{if(e.key==='Escape')closeAnnotationsModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHistoryMonthModal()});
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const el=e.target;if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){e.preventDefault();el.blur();if(typeof save==='function')save()}});
 render();
 </script>
