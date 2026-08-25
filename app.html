@@ -8,223 +8,39 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e6edf3;line-height:1.5;padding:8px}
 .wrap{max-width:480px;margin:auto;display:flex;flex-direction:column;gap:16px}
-
 .nav-tabs{display:flex;gap:6px;background:#161b22;border:1px solid #30363d;padding:6px;border-radius:12px}
-.tab-btn{flex:1;background:transparent;border:0;color:#8b949e;font-size:14px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-align:center}
-.tab-btn:hover{color:#fff;background:#21262d}
-.tab-btn.active{background:#238636;color:#fff}
-
-.tab-content{display:none;flex-direction:column;gap:16px}
-.tab-content.active{display:flex}
-
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.top h1{font-size:20px;font-weight:700;color:#fff}
-
-.card{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.4);display:flex;flex-direction:column;gap:12px}
-.total{font-size:32px;font-weight:800;margin:4px 0;letter-spacing:-0.5px;color:#58a6ff}
-.total.green{color:#3fb950}
-.total.red{color:#f85149}
-.muted{color:#8b949e;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
-
-/* Styles pour les menus déroulants (Accordéons Budget) */
-details.card {
-  padding: 0;
-  overflow: hidden;
-}
-details.card summary {
-  padding: 16px;
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  user-select: none;
-}
-details.card summary::-webkit-details-marker {
-  display: none;
-}
-details.card summary::after {
-  content: "▼";
-  font-size: 12px;
-  color: #8b949e;
-  transition: transform 0.2s;
-}
-details.card[open] summary::after {
-  transform: rotate(180deg);
-}
-.details-content {
-  padding: 0 16px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border-top: 1px solid #21262d;
-  margin-top: -4px;
-  padding-top: 12px;
-}
-
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
-.stat{background:#21262d;border:1px solid #30363d;border-radius:10px;padding:12px}
-.stat span{font-size:11px;color:#8b949e}
-.stat strong{display:block;font-size:16px;margin-top:2px;color:#fff}
-
-.section-header{display:flex;justify-content:space-between;align-items:center}
-.section-header h2{font-size:16px;font-weight:600;color:#fff}
-.section-total{font-size:14px;font-weight:600;color:#58a6ff}
-
-.rows-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Ligne Budget avec case à cocher */
-.row{display:grid;grid-template-columns:28px minmax(0, 1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
-.row.paid {background-color: rgba(35, 134, 54, 0.15);}
-.row:last-child{border-bottom:0}
-
-/* Ligne Patrimoine simple (Libellé + Montant + Supprimer) */
-.row.patrimoine-row{display:grid;grid-template-columns:minmax(0, 1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
-
-.row input[type="text"]{width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none}
-.row input[type="number"]{width:100%;padding:8px 6px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;text-align:right;outline:none}
-.row input[type="checkbox"]{width:20px;height:20px;accent-color:#238636;cursor:pointer}
-
-.amount{text-align:right;font-weight:600;color:#c9d1d9;font-size:13px;}
-
-.history-table{width:100%;border-collapse:collapse;margin-top:6px}
-.history-table th,.history-table td{padding:8px 6px;text-align:left;border-bottom:1px solid #21262d;font-size:13px}
-.history-table th{color:#8b949e;font-weight:600;text-transform:uppercase;font-size:11px}
-.history-table td{color:#c9d1d9}
-
-.chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d;position:relative}
-.chart-container h3{font-size:12px;color:#8b949e;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px}
-svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
-.chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.chart-area{fill:url(#chart-gradient);opacity:0.25}
-.chart-dot{fill:#58a6ff;stroke:#161b22;stroke-width:2}
-.chart-tooltip {
-  position: absolute;
-  background: #21262d;
-  border: 1px solid #30363d;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  color: #fff;
-  pointer-events: none;
-  display: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transform: translate(-50%, -100%);
-  margin-top: -10px;
-  z-index: 10;
-  white-space: nowrap;
-}
-.chart-cursor-line {
-  stroke: #8b949e;
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-  opacity: 0;
-}
-
-.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px;transition:opacity 0.2s}
-.btn-primary{background:#238636;color:#fff;width:100%}
-.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:8px 12px;font-size:13px}
-.btn-add{background:transparent;color:#58a6ff;border:1px dashed #30363d;width:100%;margin-top:8px;padding:10px;border-radius:8px;font-weight:600;cursor:pointer}
-.btn-add:hover{background:#21262d}
-.btn-del{background:transparent;color:#f85149;border:none;cursor:pointer;font-size:16px;padding:4px;display:flex;align-items:center;justify-content:center}
-
-.action-row {display: flex; gap: 8px; margin-top: 4px;}
-
-/* Styles pour le pop-up / modal */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-}
-.modal-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-.modal {
-  background: #161b22;
-  border: 1px solid #30363d;
-  border-radius: 16px;
-  padding: 20px;
-  width: 90%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-  transform: scale(0.95);
-  transition: transform 0.2s ease;
-}
-.modal-overlay.active .modal {
-  transform: scale(1);
-}
-.modal h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-}
-.modal-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.modal-field label {
-  font-size: 12px;
-  color: #8b949e;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-.modal-field input {
-  width: 100%;
-  padding: 10px 12px;
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 15px;
-  outline: none;
-}
-.modal-buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-</style>
-
-<style>
-#firebaseStatus {
-  position: fixed;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  opacity: .85;
-  background: rgba(0,0,0,.65);
-  color: white;
-  pointer-events: none;
-}
+.tab-btn{flex:1;background:transparent;border:0;color:#8b949e;font-size:14px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;transition:all .2s;text-align:center}
+.tab-btn:hover{color:#fff;background:#21262d}.tab-btn.active{background:#238636;color:#fff}
+.tab-content{display:none;flex-direction:column;gap:16px}.tab-content.active{display:flex}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.top h1{font-size:20px;font-weight:700;color:#fff}
+.card{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:12px}
+.total{font-size:32px;font-weight:800;margin:4px 0;letter-spacing:-.5px;color:#58a6ff}.total.green{color:#3fb950}.total.red{color:#f85149}
+.muted{color:#8b949e;font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+details.card{padding:0;overflow:hidden}details.card summary{padding:16px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:600;color:#fff;user-select:none}
+details.card summary::-webkit-details-marker{display:none}details.card summary::after{content:"▼";font-size:12px;color:#8b949e;transition:transform .2s}details.card[open] summary::after{transform:rotate(180deg)}
+.details-content{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px;border-top:1px solid #21262d;margin-top:-4px;padding-top:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.stat{background:#21262d;border:1px solid #30363d;border-radius:10px;padding:12px}.stat span{font-size:11px;color:#8b949e}.stat strong{display:block;font-size:16px;margin-top:2px;color:#fff}
+.section-header{display:flex;justify-content:space-between;align-items:center}.section-header h2{font-size:16px;font-weight:600;color:#fff}.section-total{font-size:14px;font-weight:600;color:#58a6ff}
+.rows-container{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}.row.paid{background:rgba(35,134,54,.15)}.row:last-child{border-bottom:0}
+.row.patrimoine-row{display:grid;grid-template-columns:minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+.row input[type=text],.row input[type=number]{width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none}.row input[type=number]{padding:8px 6px;text-align:right}
+.row input[type=checkbox]{width:20px;height:20px;accent-color:#238636;cursor:pointer}.amount{text-align:right;font-weight:600;color:#c9d1d9;font-size:13px}
+.history-table{width:100%;border-collapse:collapse;margin-top:6px}.history-table th,.history-table td{padding:8px 6px;text-align:left;border-bottom:1px solid #21262d;font-size:13px}.history-table th{color:#8b949e;font-weight:600;text-transform:uppercase;font-size:11px}.history-table td{color:#c9d1d9}
+.chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d;position:relative}.chart-container h3{font-size:12px;color:#8b949e;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px}
+svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}.chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.chart-area{fill:url(#chart-gradient);opacity:.25}.chart-tooltip{position:absolute;background:#21262d;border:1px solid #30363d;padding:6px 10px;border-radius:6px;font-size:11px;color:#fff;pointer-events:none;display:none;box-shadow:0 4px 12px rgba(0,0,0,.5);transform:translate(-50%,-100%);margin-top:-10px;z-index:10;white-space:nowrap}.chart-cursor-line{stroke:#8b949e;stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px;transition:opacity .2s}.btn-primary{background:#238636;color:#fff;width:100%}.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:8px 12px;font-size:13px}.btn-add{background:transparent;color:#58a6ff;border:1px dashed #30363d;width:100%;margin-top:8px;padding:10px;border-radius:8px;font-weight:600;cursor:pointer}.btn-add:hover{background:#21262d}.btn-del{background:transparent;color:#f85149;border:none;cursor:pointer;font-size:16px;padding:4px;display:flex;align-items:center;justify-content:center}
+.action-row{display:flex;gap:8px;margin-top:4px}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;visibility:hidden;transition:all .2s ease}.modal-overlay.active{opacity:1;visibility:visible}
+.modal{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);transform:scale(.95);transition:transform .2s ease}.modal-overlay.active .modal{transform:scale(1)}
+.modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
+#firebaseStatus{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none}
 </style>
 </head>
 <body>
 <div id="firebaseStatus">Synchronisation…</div>
 
-<!-- POP-UP / MODAL UNIVERSEL -->
+<!-- MODAL UNIVERSEL -->
 <div class="modal-overlay" id="genericModal">
   <div class="modal">
     <h3 id="modalTitle">Ajouter</h3>
@@ -237,8 +53,23 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
       <input type="number" id="modalAmount" placeholder="0">
     </div>
     <div class="modal-buttons">
-      <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1;" onclick="submitModal()">Ajouter</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitModal()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MONTANT PATRIMOINE -->
+<div class="modal-overlay" id="patrimoineAmountModal">
+  <div class="modal">
+    <h3 id="patrimoineAmountTitle">Modifier le montant</h3>
+    <div class="modal-field">
+      <label>Nouveau montant (€)</label>
+      <input type="number" id="patrimoineAmountInput" placeholder="Saisir le montant" inputmode="decimal">
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closePatrimoineAmountModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitPatrimoineAmount()">Valider</button>
     </div>
   </div>
 </div>
@@ -249,96 +80,39 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
     <button class="tab-btn" onclick="switchTab('patrimoine')">📊 Patrimoine</button>
   </div>
 
-  <!-- ONGLET BUDGET -->
   <div id="tab-budget" class="tab-content active">
-    <div class="top">
-      <h1>Budget Mensuel</h1>
-      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px; font-size:12px;">🔒 Clôturer</button>
-    </div>
-    
-    <div class="card">
-      <div class="muted">Reste à vivre estimé</div>
-      <div class="total green" id="budget-reste-vivre">0 €</div>
-    </div>
+    <div class="top"><h1>Budget Mensuel</h1><button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px;font-size:12px">🔒 Clôturer</button></div>
+    <div class="card"><div class="muted">Reste à vivre estimé</div><div class="total green" id="budget-reste-vivre">0 €</div></div>
 
-    <!-- DÉPENSES + BOUTON AU-DESSUS -->
     <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
-    <details class="card" id="details-depenses">
-      <summary>🛒 Dépenses</summary>
-      <div class="details-content">
-        <div class="rows-container" data-key="budgetDepenses" style="margin-top:4px;"></div>
-        <button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
-      </div>
-    </details>
+    <details class="card" id="details-depenses"><summary>🛒 Dépenses</summary><div class="details-content"><div class="rows-container" data-key="budgetDepenses"></div><button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <!-- FRAIS FIXES + BOUTON AU-DESSUS -->
     <button class="btn btn-primary" onclick="openModal('budgetFixes')">+ Ajouter un Frais fixe</button>
-    <details class="card">
-      <summary>🏠 Frais fixes</summary>
-      <div class="details-content">
-        <div class="rows-container" data-key="budgetFixes"></div>
-        <button class="btn btn-secondary" onclick="clearList('budgetFixes')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
-      </div>
-    </details>
+    <details class="card"><summary>🏠 Frais fixes</summary><div class="details-content"><div class="rows-container" data-key="budgetFixes"></div><button class="btn btn-secondary" onclick="clearList('budgetFixes')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <!-- ENTRÉES + BOUTON AU-DESSUS -->
     <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
-    <details class="card">
-      <summary>📥 Entrées</summary>
-      <div class="details-content">
-        <div class="rows-container" data-key="budgetRevenus"></div>
-        <button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%; color:#f85149; margin-top:4px;">🗑️ Vider</button>
-      </div>
-    </details>
+    <details class="card"><summary>📥 Entrées</summary><div class="details-content"><div class="rows-container" data-key="budgetRevenus"></div><button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
     <div class="card">
-      <div class="section-header"><h2>🗓️ Historique</h2></div>
-      <div id="history-container"></div>
-      <div class="action-row">
-        <button class="btn btn-secondary" style="flex:1; color:#f85149;" onclick="resetHistory()">🗑️ Reset</button>
-        <button class="btn btn-secondary" style="flex:1;" onclick="exportData()">⬇️ Exporter</button>
-        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-        <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
-      </div>
+      <div class="section-header"><h2>🗓️ Historique</h2></div><div id="history-container"></div>
+      <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
   </div>
 
-  <!-- ONGLET PATRIMOINE -->
   <div id="tab-patrimoine" class="tab-content">
-    <div class="top">
-      <h1>Patrimoine</h1>
-      <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 10px; font-size:12px;">🖨️ Imprimer</button>
-    </div>
-    
+    <div class="top"><h1>Patrimoine</h1><button class="btn btn-secondary" onclick="window.print()" style="padding:6px 10px;font-size:12px">🖨️ Imprimer</button></div>
     <div class="card">
-      <div>
-        <div class="muted">Patrimoine brut</div>
-        <div class="total" id="gross">0 €</div>
-      </div>
-      <div style="border-top:1px solid #21262d; padding-top:8px;">
-        <div class="muted">Patrimoine net</div>
-        <div class="total" id="net">0 €</div>
-      </div>
-
+      <div><div class="muted">Patrimoine brut</div><div class="total" id="gross">0 €</div></div>
+      <div style="border-top:1px solid #21262d;padding-top:8px"><div class="muted">Patrimoine net</div><div class="total" id="net">0 €</div></div>
       <div class="grid">
-        <div class="stat"><span>Actifs</span><strong id="assets">0 €</strong></div>
-        <div class="stat"><span>Épargne</span><strong id="savings">0 €</strong></div>
-        <div class="stat"><span>Emprunts</span><strong id="debts">0 €</strong></div>
-        <div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
+        <div class="stat"><span>Actifs</span><strong id="assets">0 €</strong></div><div class="stat"><span>Épargne</span><strong id="savings">0 €</strong></div><div class="stat"><span>Emprunts</span><strong id="debts">0 €</strong></div><div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
       </div>
-      
-      <div class="chart-container" style="margin-top:16px;">
+      <div class="chart-container" style="margin-top:16px">
         <h3>Répartition des Actifs (Hors Immo)</h3>
-        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:12px; flex-wrap:wrap;">
-          <div id="asset-pie-chart" style="width:130px; height:130px; flex-shrink:0;"></div>
-          <div id="asset-distribution-legend" style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:#c9d1d9; flex:1; min-width:140px;"></div>
-        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px;flex-wrap:wrap"><div id="asset-pie-chart" style="width:130px;height:130px;flex-shrink:0"></div><div id="asset-distribution-legend" style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#c9d1d9;flex:1;min-width:140px"></div></div>
       </div>
-
       <div class="chart-container">
-        <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3>
-        <div id="chart-wrapper"></div>
-        <button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%; color:#f85149; margin-top:10px; font-size:12px;">🗑️ Reset Graphique</button>
+        <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3><div id="chart-wrapper"></div><button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%;color:#f85149;margin-top:10px;font-size:12px">🗑️ Reset Graphique</button>
       </div>
     </div>
 
@@ -357,625 +131,122 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",
-  authDomain: "finances-royer.firebaseapp.com",
-  projectId: "finances-royer",
-  storageBucket: "finances-royer.firebasestorage.app",
-  messagingSenderId: "9218166802",
-  appId: "1:9218166802:web:2df9abb231684f8c9ec8cb"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
-const sharedRef = doc(db, "budget_shared", "main_account");
-
-window.firebaseReady = false;
-function setFirebaseStatus(message) {
-  const el = document.getElementById("firebaseStatus");
-  if (el) el.textContent = message;
-}
-window.firebaseWriting = false;
-
-let firebaseSaveTimer = null;
-let firebaseSaveInProgress = false;
-let firebaseSavePending = false;
-
-window.firebaseSave = function() {
-  if (!window.firebaseReady) return;
-
-  clearTimeout(firebaseSaveTimer);
-  firebaseSaveTimer = setTimeout(async () => {
-    if (firebaseSaveInProgress) {
-      firebaseSavePending = true;
-      return;
-    }
-
-    firebaseSaveInProgress = true;
-    window.firebaseWriting = true;
-    setFirebaseStatus("Enregistrement…");
-
-    try {
-      await setDoc(sharedRef, {
-        data: JSON.stringify(window.data),
-        monthHistory: JSON.stringify(window.monthHistory),
-        patrimoineHistory: JSON.stringify(window.patrimoineHistory)
-      });
-      setFirebaseStatus("Synchronisé");
-    } catch (e) {
-      console.error("Erreur Firebase :", e);
-      setFirebaseStatus("Erreur Firebase");
-    } finally {
-      firebaseSaveInProgress = false;
-      window.firebaseWriting = false;
-
-      if (firebaseSavePending) {
-        firebaseSavePending = false;
-        window.firebaseSave();
-      }
-    }
-  }, 250);
-};
-
-async function initFirebase() {
-  try {
-    await signInAnonymously(auth);
-  } catch (e) {
-    console.error("Authentification Firebase impossible :", e);
-  }
-}
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  window.firebaseReady = true;
-  setFirebaseStatus("Connecté à Firebase");
-
-  try {
-    const snap = await getDoc(sharedRef);
-
-    if (!snap.exists()) {
-      await window.firebaseSave();
-    } else {
-      const remote = snap.data();
-      if (window.applyFirebaseState) {
-        window.applyFirebaseState({
-          data: remote.data ? JSON.parse(remote.data) : undefined,
-          monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
-          patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
-        });
-      }
-    }
-
-    onSnapshot(sharedRef, (snapshot) => {
-      if (!snapshot.exists() || window.firebaseWriting) return;
-      const remote = snapshot.data();
-      if (window.applyFirebaseState) {
-        window.applyFirebaseState({
-          data: remote.data ? JSON.parse(remote.data) : undefined,
-          monthHistory: remote.monthHistory ? JSON.parse(remote.monthHistory) : undefined,
-          patrimoineHistory: remote.patrimoineHistory ? JSON.parse(remote.patrimoineHistory) : undefined
-        });
-      }
-    });
-  } catch (e) {
-    console.error("Erreur de synchronisation Firebase :", e);
-  }
-});
-
+const firebaseConfig={apiKey:"AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",authDomain:"finances-royer.firebaseapp.com",projectId:"finances-royer",storageBucket:"finances-royer.firebasestorage.app",messagingSenderId:"9218166802",appId:"1:9218166802:web:2df9abb231684f8c9ec8cb"};
+const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),sharedRef=doc(db,"budget_shared","main_account");
+window.firebaseReady=false;
+function setFirebaseStatus(m){const e=document.getElementById("firebaseStatus");if(e)e.textContent=m}
+window.firebaseWriting=false;let firebaseSaveTimer=null,firebaseSaveInProgress=false,firebaseSavePending=false;
+window.firebaseSave=function(){if(!window.firebaseReady)return;clearTimeout(firebaseSaveTimer);firebaseSaveTimer=setTimeout(async()=>{if(firebaseSaveInProgress){firebaseSavePending=true;return}firebaseSaveInProgress=true;window.firebaseWriting=true;setFirebaseStatus("Enregistrement…");try{await setDoc(sharedRef,{data:JSON.stringify(window.data),monthHistory:JSON.stringify(window.monthHistory),patrimoineHistory:JSON.stringify(window.patrimoineHistory)});setFirebaseStatus("Synchronisé")}catch(e){console.error(e);setFirebaseStatus("Erreur Firebase")}finally{firebaseSaveInProgress=false;window.firebaseWriting=false;if(firebaseSavePending){firebaseSavePending=false;window.firebaseSave()}}},250)};
+async function initFirebase(){try{await signInAnonymously(auth)}catch(e){console.error(e)}}
+onAuthStateChanged(auth,async user=>{if(!user)return;window.firebaseReady=true;setFirebaseStatus("Connecté à Firebase");try{const snap=await getDoc(sharedRef);if(!snap.exists())await window.firebaseSave();else{const r=snap.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined})}onSnapshot(sharedRef,snapshot=>{if(!snapshot.exists()||window.firebaseWriting)return;const r=snapshot.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined})})}catch(e){console.error(e)}});
 initFirebase();
 </script>
 
 <script>
-let data = JSON.parse(localStorage.getItem('finaryData')) || {
-  immobilier: [['Résidence principale', 300000]], epargne: [['Livret A', 20000]],
-  assurancevie: [['Assurance-vie Principale', 15000]],
-  bourse: [['ETF World', 2600]], crypto: [['Bitcoin', 30000]], autres: [['Voiture / Divers', 10000]], dettes: [['Crédit Immo', 150000]],
-  budgetRevenus: [['Salaire', 2500, false]], budgetFixes: [['Loyer', 900, false]], budgetDepenses: [['Courses', 400, false]]
-};
-let monthHistory = JSON.parse(localStorage.getItem('finaryHistory')) || [];
-let patrimoineHistory = JSON.parse(localStorage.getItem('finaryPatrimoineHistory')) || [];
-window.data = data;
-window.monthHistory = monthHistory;
-window.patrimoineHistory = patrimoineHistory;
+let data=JSON.parse(localStorage.getItem('finaryData'))||{immobilier:[['Résidence principale',300000]],epargne:[['Livret A',20000]],assurancevie:[['Assurance-vie Principale',15000]],bourse:[['ETF World',2600]],crypto:[['Bitcoin',30000]],autres:[['Voiture / Divers',10000]],dettes:[['Crédit Immo',150000]],budgetRevenus:[['Salaire',2500,false]],budgetFixes:[['Loyer',900,false]],budgetDepenses:[['Courses',400,false]]};
+let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[],patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
+window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;
 
-window.applyFirebaseState = function(remote) {
-  if (remote.data) data = remote.data;
-  if (remote.monthHistory) monthHistory = remote.monthHistory;
-  if (remote.patrimoineHistory) patrimoineHistory = remote.patrimoineHistory;
+window.applyFirebaseState=function(remote){if(remote.data)data=remote.data;if(remote.monthHistory)monthHistory=remote.monthHistory;if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;saveLocalOnly();render()};
+const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);let currentActiveTab='budget';
+function switchTab(t){currentActiveTab=t;document.querySelectorAll('.tab-content').forEach(e=>e.classList.toggle('active',e.id==='tab-'+t));document.querySelectorAll('.tab-btn').forEach(e=>e.classList.toggle('active',e.innerText.includes(t==='budget'?'Budget':'Patrimoine')))}
+let touchStartX=0,touchStartY=0;
+document.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX;touchStartY=e.changedTouches[0].screenY},{passive:true});
+document.addEventListener('touchend',e=>{let x=e.changedTouches[0].screenX,y=e.changedTouches[0].screenY,dx=x-touchStartX,dy=y-touchStartY;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){if(dx<0&&currentActiveTab==='budget')switchTab('patrimoine');else if(dx>0&&currentActiveTab==='patrimoine')switchTab('budget')}},{passive:true});
 
-  window.data = data;
-  window.monthHistory = monthHistory;
-  window.patrimoineHistory = patrimoineHistory;
+let activeModalKey='';
+function openModal(key){activeModalKey=key;const t=document.getElementById('modalTitle');if(key==='budgetDepenses')t.textContent='Ajouter une dépense';else if(key==='budgetFixes')t.textContent='Ajouter un frais fixe';else if(key==='budgetRevenus')t.textContent='Ajouter une entrée';document.getElementById('modalLabel').value='';document.getElementById('modalAmount').value='';document.getElementById('genericModal').classList.add('active');setTimeout(()=>document.getElementById('modalLabel').focus(),50)}
+function closeModal(){document.getElementById('genericModal').classList.remove('active');activeModalKey=''}
+function submitModal(){if(!activeModalKey)return;const label=document.getElementById('modalLabel').value.trim(),amountVal=document.getElementById('modalAmount').value,amount=amountVal===''?0:Number(amountVal);if(!data[activeModalKey])data[activeModalKey]=[];data[activeModalKey].unshift([label,amount,false]);closeModal();render();save()}
 
-  saveLocalOnly();
-  render();
-};
+/* ===== NOUVEAU : MODIFICATION DES MONTANTS PATRIMOINE PAR POP-UP ===== */
+let patrimoineAmountKey='',patrimoineAmountIndex=-1;
+const patrimoineKeys=['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'];
 
-const euro = n => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
-
-let currentActiveTab = 'budget';
-
-function switchTab(t) {
-  currentActiveTab = t;
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === 'tab-'+t));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.innerText.includes(t==='budget'?'Budget':'Patrimoine')));
+function openPatrimoineAmountModal(key,index){
+  if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;
+  patrimoineAmountKey=key;
+  patrimoineAmountIndex=index;
+  document.getElementById('patrimoineAmountTitle').textContent='Modifier le montant';
+  document.getElementById('patrimoineAmountInput').value='';
+  document.getElementById('patrimoineAmountModal').classList.add('active');
+  setTimeout(()=>document.getElementById('patrimoineAmountInput').focus(),50);
 }
-
-/* Gestion du Swipe Tactile entre les onglets */
-let touchStartX = 0;
-let touchStartY = 0;
-
-document.addEventListener('touchstart', e => {
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
-}, {passive: true});
-
-document.addEventListener('touchend', e => {
-  let touchEndX = e.changedTouches[0].screenX;
-  let touchEndY = e.changedTouches[0].screenY;
-  let diffX = touchEndX - touchStartX;
-  let diffY = touchEndY - touchStartY;
-
-  // S'assure que le mouvement est majoritairement horizontal et d'une amplitude suffisante (50px)
-  if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
-    if (diffX < 0 && currentActiveTab === 'budget') {
-      // Swipe vers la gauche -> Aller sur Patrimoine
-      switchTab('patrimoine');
-    } else if (diffX > 0 && currentActiveTab === 'patrimoine') {
-      // Swipe vers la droite -> Aller sur Budget
-      switchTab('budget');
-    }
+function closePatrimoineAmountModal(){
+  document.getElementById('patrimoineAmountModal').classList.remove('active');
+  patrimoineAmountKey='';
+  patrimoineAmountIndex=-1;
+}
+function submitPatrimoineAmount(){
+  if(!patrimoineAmountKey||patrimoineAmountIndex<0)return;
+  const input=document.getElementById('patrimoineAmountInput');
+  if(input.value.trim()===''){input.focus();return}
+  const value=Number(input.value);
+  if(!Number.isFinite(value)||value<0){input.focus();return}
+  if(data[patrimoineAmountKey]&&data[patrimoineAmountKey][patrimoineAmountIndex]){
+    data[patrimoineAmountKey][patrimoineAmountIndex][1]=value;
   }
-}, {passive: true});
-
-/* Gestion du Pop-up Universel (Dépenses, Frais fixes, Entrées) */
-let activeModalKey = '';
-
-function openModal(key) {
-  activeModalKey = key;
-  const titleEl = document.getElementById('modalTitle');
-  
-  if (key === 'budgetDepenses') titleEl.textContent = 'Ajouter une dépense';
-  else if (key === 'budgetFixes') titleEl.textContent = 'Ajouter un frais fixe';
-  else if (key === 'budgetRevenus') titleEl.textContent = 'Ajouter une entrée';
-
-  document.getElementById('modalLabel').value = '';
-  document.getElementById('modalAmount').value = '';
-  document.getElementById('genericModal').classList.add('active');
-  setTimeout(() => document.getElementById('modalLabel').focus(), 50);
-}
-
-function closeModal() {
-  document.getElementById('genericModal').classList.remove('active');
-  activeModalKey = '';
-}
-
-function submitModal() {
-  if (!activeModalKey) return;
-  const label = document.getElementById('modalLabel').value.trim();
-  const amountVal = document.getElementById('modalAmount').value;
-  const amount = amountVal === '' ? 0 : Number(amountVal);
-
-  if (!data[activeModalKey]) data[activeModalKey] = [];
-  data[activeModalKey].unshift([label, amount, false]);
-
-  closeModal();
+  closePatrimoineAmountModal();
   render();
   save();
 }
+/* ===================================================================== */
 
-function render() {
-  ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'autres', 'dettes', 'budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
-    const cont = document.querySelector(`.rows-container[data-key="${key}"]`);
-    if(!cont) return;
-    cont.innerHTML = '';
-    
-    if (!Array.isArray(data[key])) data[key] = [];
-
-    data[key].forEach((item, idx) => {
-      const row = document.createElement('div');
-      const isBudget = key.startsWith('budget');
-      
-      if (isBudget) {
-        row.className = `row ${item[2] ? 'paid' : ''}`;
-        row.innerHTML = `
-          <input type="checkbox" ${item[2] ? 'checked' : ''} onchange="togglePaid('${key}',${idx})">
-          <input type="text" value="${item[0] || ''}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé">
-          <input type="number" value="${item[1] === 0 ? '' : item[1]}" oninput="update('${key}',${idx},1,this.value)" placeholder="0">
-          <button class="btn-del" onclick="del('${key}',${idx})">×</button>`;
-      } else {
-        row.className = 'row patrimoine-row';
-        row.innerHTML = `
-          <input type="text" value="${item[0] || ''}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé">
-          <input type="number" value="${item[1] === 0 ? '' : item[1]}" oninput="update('${key}',${idx},1,this.value)" placeholder="0">
-          <button class="btn-del" onclick="del('${key}',${idx})">×</button>`;
+function render(){
+  ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes','budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
+    const cont=document.querySelector(`.rows-container[data-key="${key}"]`);if(!cont)return;cont.innerHTML='';if(!Array.isArray(data[key]))data[key]=[];
+    data[key].forEach((item,idx)=>{
+      const row=document.createElement('div'),isBudget=key.startsWith('budget');
+      if(isBudget){
+        row.className=`row ${item[2]?'paid':''}`;
+        row.innerHTML=`<input type="checkbox" ${item[2]?'checked':''} onchange="togglePaid('${key}',${idx})"><input type="text" value="${escapeHtml(item[0]||'')}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé"><input type="number" value="${item[1]===0?'':item[1]}" oninput="update('${key}',${idx},1,this.value)" placeholder="0"><button class="btn-del" onclick="del('${key}',${idx})">×</button>`;
+      }else{
+        row.className='row patrimoine-row';
+        row.innerHTML=`<input type="text" value="${escapeHtml(item[0]||'')}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé"><input type="number" value="${item[1]===0?'':item[1]}" placeholder="0" readonly onclick="openPatrimoineAmountModal('${key}',${idx})" title="Cliquer pour modifier le montant"><button class="btn-del" onclick="delPatrimoine('${key}',${idx})">×</button>`;
       }
       cont.appendChild(row);
     });
   });
-  updateTotals();
-  renderHistory();
-  recordPatrimoineSnapshot();
-  renderChart();
-  renderAssetDistribution();
+  updateTotals();renderHistory();recordPatrimoineSnapshot();renderChart();renderAssetDistribution();
 }
+function escapeHtml(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function update(k,i,p,v){if(!data[k][i])return;data[k][i][p]=p===0?v:(v===''?0:Number(v));if(p!==0)updateTotals();save()}
+function togglePaid(k,i){if(!data[k][i])return;data[k][i][2]=!data[k][i][2];render();save()}
+function addItem(k){if(!data[k])data[k]=[];data[k].push(['',0]);render();save();const cs=document.querySelectorAll(`[data-key="${k}"]`),c=cs[cs.length-1];if(c){const i=c.querySelectorAll('input')[0];if(i){i.focus();i.select()}}}
 
-function update(k, i, p, v) { 
-  if(!data[k][i]) return;
-  data[k][i][p] = p === 0 ? v : (v === '' ? 0 : Number(v)); 
-  if(p !== 0) updateTotals();
-  save(); 
-}
-
-function togglePaid(k, i) {
-  if(!data[k][i]) return;
-  data[k][i][2] = !data[k][i][2];
+/* NOUVEAU : confirmation spécifique aux suppressions Patrimoine */
+function delPatrimoine(k,i){
+  if(!data[k]||!data[k][i])return;
+  const label=data[k][i][0]||'cet élément';
+  if(!confirm(`Voulez-vous vraiment supprimer « ${label} » ?`))return;
+  data[k].splice(i,1);
   render();
   save();
 }
 
-function addItem(k) { 
-  if(!data[k]) data[k] = [];
-  data[k].push(['', 0]);
-  render(); 
-  save(); 
+function del(k,i){data[k].splice(i,1);render();save()}
+function clearList(k){data[k]=[];render();save()}
+function saveLocalOnly(){localStorage.setItem('finaryData',JSON.stringify(data));localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory))}
+function save(){window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;saveLocalOnly();if(window.firebaseSave)window.firebaseSave()}
+function calculateNet(){const keys=['immobilier','epargne','assurancevie','bourse','crypto','autres'];const assets=keys.reduce((s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),0),debts=(data.dettes||[]).reduce((s,i)=>s+(i[1]||0),0);return{assets,debts,net:assets-debts}}
+function calculateLiquidInvestments(){return ['epargne','assurancevie','bourse','crypto','autres'].reduce((s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),0)}
+function updateTotals(){const c=calculateNet();document.getElementById('net').textContent=euro(c.net);document.getElementById('gross').textContent=euro(c.assets);document.getElementById('assets').textContent=euro(c.assets);document.getElementById('debts').textContent=euro(c.debts);document.getElementById('savings').textContent=euro((data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0));document.getElementById('investments').textContent=euro((data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+(data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0));['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{const e=document.getElementById(`total-${k}`);if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0))});const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0),rv=rev-fixes-dep,e=document.getElementById('budget-reste-vivre');e.textContent=euro(rv);e.className='total '+(rv>=0?'green':'red')}
+function recordPatrimoineSnapshot(){const today=new Date().toISOString().split('T')[0],currentVal=calculateLiquidInvestments(),existing=patrimoineHistory.find(h=>h.date===today);if(existing)existing.net=currentVal;else{patrimoineHistory.push({date:today,net:currentVal});patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date))}}
+function resetPatrimoineChart(){if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){patrimoineHistory=[];localStorage.removeItem('finaryPatrimoineHistory');recordPatrimoineSnapshot();render();save()}}
+function closeMonth(){if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro."))return;const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);monthHistory.unshift({month:new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),revenus:rev,fixes,depenses:dep,resteVivre:rev-fixes-dep});data.budgetDepenses=[];['budgetRevenus','budgetFixes','budgetDepenses'].forEach(k=>{if(Array.isArray(data[k]))data[k].forEach(item=>{if(item.length>2)item[2]=false})});save();render()}
+function resetHistory(){if(confirm("Supprimer l'historique des budgets ?")){monthHistory=[];localStorage.removeItem('finaryHistory');render();save()}}
+function renderHistory(){const c=document.getElementById('history-container');if(!c)return;c.innerHTML=monthHistory.length===0?'<p style="color:#8b949e;font-size:13px">Aucun historique.</p>':`<table class="history-table"><thead><tr><th>Mois</th><th>Revenus</th><th>Fixes</th><th>Dép.</th><th>Reste</th></tr></thead><tbody>`+monthHistory.map(h=>`<tr><td>${h.month}</td><td>${euro(h.revenus)}</td><td>${euro(h.fixes)}</td><td>${euro(h.depenses)}</td><td style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</td></tr>`).join('')+'</tbody></table>'}
+function renderAssetDistribution(){const p=document.getElementById('asset-pie-chart'),l=document.getElementById('asset-distribution-legend');if(!p||!l)return;const cats=[{key:'epargne',label:'Épargne',color:'#3fb950'},{key:'assurancevie',label:'Assurance-vie',color:'#a371f7'},{key:'bourse',label:'Bourse',color:'#d29922'},{key:'crypto',label:'Crypto',color:'#f85149'},{key:'autres',label:'Autres',color:'#58a6ff'}],totals=cats.map(c=>({...c,sum:(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0)})),total=totals.reduce((a,c)=>a+c.sum,0);if(total===0){p.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:11px;text-align:center">Vide</div>';l.innerHTML='<span style="color:#8b949e;font-size:11px">Aucun actif renseigné</span>';return}let cum=0,slices='';totals.forEach(c=>{if(c.sum<=0)return;const pct=c.sum/total*100,start=cum/100*360;cum+=pct;const end=cum/100*360,x1=50+40*Math.cos((start-90)*Math.PI/180),y1=50+40*Math.sin((start-90)*Math.PI/180),x2=50+40*Math.cos((end-90)*Math.PI/180),y2=50+40*Math.sin((end-90)*Math.PI/180),arc=pct>50?1:0;slices+=pct===100?`<circle cx="50" cy="50" r="40" fill="transparent" stroke="${c.color}" stroke-width="20"/>`:`<path d="M50 50 L${x1} ${y1} A40 40 0 ${arc} 1 ${x2} ${y2} Z" fill="${c.color}"/>`});p.innerHTML=`<svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg)">${slices}<circle cx="50" cy="50" r="25" fill="#161b22"/></svg>`;l.innerHTML=totals.filter(c=>c.sum>0).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span><span style="color:#c9d1d9">${c.label}</span></div><strong style="color:#fff;font-weight:600">${(c.sum/total*100).toFixed(1)}%</strong></div>`).join('')}
+function renderChart(){const c=document.getElementById('chart-wrapper');if(!c)return;if(!patrimoineHistory.length){c.innerHTML='<p style="color:#8b949e;font-size:12px;text-align:center">Chargement...</p>';return}const vals=patrimoineHistory.map(h=>h.net),labels=patrimoineHistory.map(h=>{const p=h.date.split('-');return`${p[2]}/${p[1]}/${p[0]}`}),w=400,h=95,pad=15,min=Math.min(...vals),max=Math.max(...vals),range=max-min||1,pts=vals.map((v,i)=>({x:pad+(i/(vals.length-1||1))*(w-pad*2),y:h-pad-((v-min)/range)*(h-pad*2),val:v,label:labels[i]})),path=pts.length===1?`M${pts[0].x} ${pts[0].y}`:pts.map((p,i)=>(i?'L':'M')+`${p.x} ${p.y}`).join(' '),area=pts.length===1?`M${pts[0].x} ${h} L${pts[0].x} ${pts[0].y} L${pts[0].x} ${h} Z`:`M${pts[0].x} ${h} ${pts.map(p=>`L${p.x} ${p.y}`).join(' ')} L${pts.at(-1).x} ${h} Z`;c.innerHTML=`<div class="chart-tooltip" id="chartTooltip"></div><svg viewBox="0 0 ${w} ${h}" class="patrimoine-chart" id="patrimoineSvg"><defs><linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" class="chart-area"/><path d="${path}" class="chart-line"/><line x1="0" y1="0" x2="0" y2="${h}" class="chart-cursor-line" id="cursorLine"/><circle cx="0" cy="0" r="4" id="cursorDot" fill="#58a6ff" stroke="#161b22" stroke-width="2" style="opacity:0"/></svg>`;const svg=document.getElementById('patrimoineSvg'),tip=document.getElementById('chartTooltip'),line=document.getElementById('cursorLine'),dot=document.getElementById('cursorDot');function handle(e){const r=svg.getBoundingClientRect(),cx=e.touches?e.touches[0].clientX:e.clientX,x=(cx-r.left)/r.width*w;let closest=pts[0],d=Infinity;pts.forEach(p=>{const q=Math.abs(p.x-x);if(q<d){d=q;closest=p}});line.setAttribute('x1',closest.x);line.setAttribute('x2',closest.x);line.style.opacity=1;dot.setAttribute('cx',closest.x);dot.setAttribute('cy',closest.y);dot.style.opacity=1;tip.style.display='block';tip.innerHTML=`<b>${closest.label}</b><br>${euro(closest.val)}`;tip.style.left=`${closest.x/w*100}%`;tip.style.top=`${closest.y/h*100}%`}function hide(){line.style.opacity=0;dot.style.opacity=0;tip.style.display='none'}svg.addEventListener('mousemove',handle);svg.addEventListener('mouseleave',hide);svg.addEventListener('touchstart',e=>{e.preventDefault();handle(e)});svg.addEventListener('touchmove',e=>{e.preventDefault();handle(e)});svg.addEventListener('touchend',hide)}
+function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({data,monthHistory,patrimoineHistory})],{type:'application/json'}));a.download='budget.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){const r=new FileReader();r.onload=e=>{try{const j=JSON.parse(e.target.result);data=j.data;monthHistory=j.monthHistory||[];patrimoineHistory=j.patrimoineHistory||[];window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;render();save()}catch(err){alert('Fichier invalide.')}};r.readAsText(e.target.files[0])}
 
-  const containers = document.querySelectorAll(`[data-key="${k}"]`);
-  const container = containers[containers.length - 1];
-  if (container) {
-    const inputs = container.querySelectorAll('input');
-    const labelInput = inputs[0];
-    if (labelInput) {
-      labelInput.focus();
-      labelInput.select();
-    }
-  }
-}
-
-function del(k, i) { 
-  data[k].splice(i, 1); 
-  render(); 
-  save(); 
-}
-
-function clearList(k) { 
-  data[k] = []; 
-  render(); 
-  save(); 
-}
-
-function saveLocalOnly() {
-  localStorage.setItem('finaryData', JSON.stringify(data));
-  localStorage.setItem('finaryHistory', JSON.stringify(monthHistory));
-  localStorage.setItem('finaryPatrimoineHistory', JSON.stringify(patrimoineHistory));
-}
-
-function save() {
-  window.data = data;
-  window.monthHistory = monthHistory;
-  window.patrimoineHistory = patrimoineHistory;
-  saveLocalOnly();
-  if (window.firebaseSave) window.firebaseSave();
-}
-
-function calculateNet() {
-  const assetKeys = ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'autres'];
-  const assets = assetKeys.reduce((s, k) => {
-    if (!data[k]) return s;
-    return s + data[k].reduce((a, i) => a + (i[1]||0), 0);
-  }, 0);
-  const debts = (data.dettes || []).reduce((s, i) => s + (i[1]||0), 0);
-  return { assets, debts, net: assets - debts };
-}
-
-function calculateLiquidInvestments() {
-  const keys = ['epargne', 'assurancevie', 'bourse', 'crypto', 'autres'];
-  return keys.reduce((s, k) => {
-    if (!data[k]) return s;
-    return s + data[k].reduce((a, i) => a + (i[1]||0), 0);
-  }, 0);
-}
-
-function updateTotals() {
-  const c = calculateNet();
-  document.getElementById('net').textContent = euro(c.net);
-  document.getElementById('gross').textContent = euro(c.assets);
-  document.getElementById('assets').textContent = euro(c.assets);
-  document.getElementById('debts').textContent = euro(c.debts);
-  
-  const savingsTotal = (data.epargne || []).reduce((a, i) => a + (i[1]||0), 0);
-  document.getElementById('savings').textContent = euro(savingsTotal);
-
-  const bourseTotal = (data.bourse || []).reduce((a, i) => a + (i[1]||0), 0);
-  const cryptoTotal = (data.crypto || []).reduce((a, i) => a + (i[1]||0), 0);
-  document.getElementById('investments').textContent = euro(bourseTotal + cryptoTotal);
-
-  const patrimoineKeys = ['immobilier', 'epargne', 'assurancevie', 'bourse', 'crypto', 'autres', 'dettes'];
-  patrimoineKeys.forEach(key => {
-    const totalEl = document.getElementById(`total-${key}`);
-    if (totalEl) {
-      const sum = (data[key] || []).reduce((acc, item) => acc + (item[1] || 0), 0);
-      totalEl.textContent = euro(sum);
-    }
-  });
-
-  const rev = (data.budgetRevenus || []).reduce((s,i)=>s+(i[1]||0),0);
-  const fixes = (data.budgetFixes || []).reduce((s,i)=>s+(i[1]||0),0);
-  const dep = (data.budgetDepenses || []).reduce((s,i)=>s+(i[1]||0),0);
-  const rv = rev - fixes - dep;
-
-  document.getElementById('budget-reste-vivre').textContent = euro(rv);
-  document.getElementById('budget-reste-vivre').className = 'total ' + (rv>=0?'green':'red');
-}
-
-function recordPatrimoineSnapshot() {
-  const today = new Date().toISOString().split('T')[0];
-  const currentVal = calculateLiquidInvestments();
-
-  const existing = patrimoineHistory.find(h => h.date === today);
-  if (existing) {
-    existing.net = currentVal;
-  } else {
-    patrimoineHistory.push({ date: today, net: currentVal });
-    patrimoineHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
-  }
-}
-
-function resetPatrimoineChart() {
-  if (confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")) {
-    patrimoineHistory = [];
-    localStorage.removeItem('finaryPatrimoineHistory');
-    recordPatrimoineSnapshot();
-    render();
-    save();
-  }
-}
-
-function closeMonth() {
-  if (!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro.")) {
-    return;
-  }
-
-  const rev = (data.budgetRevenus || []).reduce((s,i)=>s+(i[1]||0),0);
-  const fixes = (data.budgetFixes || []).reduce((s,i)=>s+(i[1]||0),0);
-  const dep = (data.budgetDepenses || []).reduce((s,i)=>s+(i[1]||0),0);
-  
-  monthHistory.unshift({ 
-    month: new Date().toLocaleDateString('fr-FR', {month:'long', year:'numeric'}), 
-    revenus: rev, 
-    fixes: fixes, 
-    depenses: dep, 
-    resteVivre: rev - fixes - dep
-  });
-
-  data.budgetDepenses = [];
-
-  ['budgetRevenus', 'budgetFixes', 'budgetDepenses'].forEach(key => {
-    if (Array.isArray(data[key])) {
-      data[key].forEach(item => {
-        if (item.length > 2) item[2] = false;
-      });
-    }
-  });
-
-  save(); 
-  render();
-}
-
-function resetHistory() {
-  if (confirm("Supprimer l'historique des budgets ?")) {
-    monthHistory = [];
-    localStorage.removeItem('finaryHistory');
-    render();
-  }
-}
-
-function renderHistory() {
-  const cont = document.getElementById('history-container');
-  if(!cont) return;
-  cont.innerHTML = monthHistory.length === 0 ? '<p style="color:#8b949e; font-size:13px;">Aucun historique.</p>' : 
-    `<table class="history-table"><thead><tr><th>Mois</th><th>Revenus</th><th>Fixes</th><th>Dép.</th><th>Reste</th></tr></thead><tbody>` + 
-    monthHistory.map(h => `<tr><td>${h.month}</td><td>${euro(h.revenus)}</td><td>${euro(h.fixes)}</td><td>${euro(h.depenses)}</td><td style="color:${h.resteVivre>=0?'#3fb950':'#f85149'}">${euro(h.resteVivre)}</td></tr>`).join('') + `</tbody></table>`;
-}
-
-function renderAssetDistribution() {
-  const pieContainer = document.getElementById('asset-pie-chart');
-  const legendContainer = document.getElementById('asset-distribution-legend');
-  if (!pieContainer || !legendContainer) return;
-
-  const categories = [
-    { key: 'epargne', label: 'Épargne', color: '#3fb950' },
-    { key: 'assurancevie', label: 'Assurance-vie', color: '#a371f7' },
-    { key: 'bourse', label: 'Bourse', color: '#d29922' },
-    { key: 'crypto', label: 'Crypto', color: '#f85149' },
-    { key: 'autres', label: 'Autres', color: '#58a6ff' }
-  ];
-
-  const totals = categories.map(cat => {
-    const sum = (data[cat.key] || []).reduce((acc, item) => acc + (item[1] || 0), 0);
-    return { ...cat, sum };
-  });
-
-  const totalAssets = totals.reduce((acc, cat) => acc + cat.sum, 0);
-
-  if (totalAssets === 0) {
-    pieContainer.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#8b949e; font-size:11px; text-align:center;">Vide</div>';
-    legendContainer.innerHTML = '<span style="color:#8b949e; font-size:11px;">Aucun actif renseigné</span>';
-    return;
-  }
-
-  let cumulativePercent = 0;
-  let svgSlices = '';
-
-  totals.forEach(cat => {
-    if (cat.sum <= 0) return;
-    const percent = (cat.sum / totalAssets) * 100;
-    const startAngle = (cumulativePercent / 100) * 360;
-    cumulativePercent += percent;
-    const endAngle = (cumulativePercent / 100) * 360;
-
-    const x1 = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
-    const y1 = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
-    const x2 = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
-    const y2 = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
-    const largeArc = percent > 50 ? 1 : 0;
-
-    if (percent === 100) {
-      svgSlices += `<circle cx="50" cy="50" r="40" fill="transparent" stroke="${cat.color}" stroke-width="20" />`;
-    } else {
-      svgSlices += `<path d="M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${cat.color}" />`;
-    }
-  });
-
-  pieContainer.innerHTML = `
-    <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform: rotate(-90deg);">
-      ${svgSlices}
-      <circle cx="50" cy="50" r="25" fill="#161b22" />
-    </svg>
-  `;
-
-  let legendHTML = '';
-  totals.forEach(cat => {
-    if (cat.sum <= 0) return;
-    const percent = ((cat.sum / totalAssets) * 100).toFixed(1);
-    legendHTML += `
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="width:8px; height:8px; border-radius:50%; background:${cat.color}; display:inline-block;"></span>
-          <span style="color:#c9d1d9;">${cat.label}</span>
-        </div>
-        <strong style="color:#fff; font-weight:600;">${percent}%</strong>
-      </div>`;
-  });
-
-  legendContainer.innerHTML = legendHTML;
-}
-
-function renderChart() {
-  const container = document.getElementById('chart-wrapper');
-  if (!container) return;
-
-  if (patrimoineHistory.length === 0) {
-    container.innerHTML = '<p style="color:#8b949e; font-size:12px; text-align:center;">Chargement...</p>';
-    return;
-  }
-
-  const values = patrimoineHistory.map(h => h.net);
-  const labels = patrimoineHistory.map(h => {
-    const parts = h.date.split('-');
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  });
-
-  const width = 400;
-  const height = 95;
-  const padding = 15;
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min === 0 ? 1 : max - min;
-
-  const points = values.map((val, idx) => {
-    const x = padding + (idx / (values.length - 1 || 1)) * (width - padding * 2);
-    const y = height - padding - ((val - min) / range) * (height - padding * 2);
-    return { x, y, val, label: labels[idx] };
-  });
-
-  const pathD = points.length === 1 
-    ? `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`
-    : points.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, '');
-
-  const areaD = points.length === 1
-    ? `M ${points[0].x} ${height} L ${points[0].x} ${points[0].y} L ${points[0].x} ${height} Z`
-    : `M ${points[0].x} ${height} ${points.map(p => `L ${p.x} ${p.y}`).join(' ')} L ${points[points.length-1].x} ${height} Z`;
-
-  container.innerHTML = `
-    <div class="chart-tooltip" id="chartTooltip"></div>
-    <svg viewBox="0 0 ${width} ${height}" class="patrimoine-chart" id="patrimoineSvg">
-      <defs>
-        <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#58a6ff" />
-          <stop offset="100%" stop-color="#58a6ff" stop-opacity="0" />
-        </linearGradient>
-      </defs>
-      <path d="${areaD}" class="chart-area" />
-      <path d="${pathD}" class="chart-line" />
-      <line x1="0" y1="0" x2="0" y2="${height}" class="chart-cursor-line" id="cursorLine" />
-      <circle cx="0" cy="0" r="4" id="cursorDot" fill="#58a6ff" stroke="#161b22" stroke-width="2" style="opacity:0;" />
-    </svg>
-  `;
-
-  const svg = document.getElementById('patrimoineSvg');
-  const tooltip = document.getElementById('chartTooltip');
-  const cursorLine = document.getElementById('cursorLine');
-  const cursorDot = document.getElementById('cursorDot');
-
-  function handleTouch(e) {
-    const rect = svg.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clickX = clientX - rect.left;
-    const svgX = (clickX / rect.width) * width;
-
-    let closest = points[0];
-    let minDist = Infinity;
-    points.forEach(p => {
-      const dist = Math.abs(p.x - svgX);
-      if (dist < minDist) {
-        minDist = dist;
-        closest = p;
-      }
-    });
-
-    cursorLine.setAttribute('x1', closest.x);
-    cursorLine.setAttribute('x2', closest.x);
-    cursorLine.style.opacity = '1';
-
-    cursorDot.setAttribute('cx', closest.x);
-    cursorDot.setAttribute('cy', closest.y);
-    cursorDot.style.opacity = '1';
-
-    tooltip.style.display = 'block';
-    tooltip.innerHTML = `<b>${closest.label}</b><br>${euro(closest.val)}`;
-
-    const percentX = (closest.x / width) * 100;
-    const percentY = (closest.y / height) * 100;
-    tooltip.style.left = `${percentX}%`;
-    tooltip.style.top = `${percentY}%`;
-  }
-
-  function hideTouch() {
-    cursorLine.style.opacity = '0';
-    cursorDot.style.opacity = '0';
-    tooltip.style.display = 'none';
-  }
-
-  svg.addEventListener('mousemove', handleTouch);
-  svg.addEventListener('mouseleave', hideTouch);
-  svg.addEventListener('touchstart', (e) => { e.preventDefault(); handleTouch(e); });
-  svg.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouch(e); });
-  svg.addEventListener('touchend', hideTouch);
-}
-
-function exportData() {
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({data, monthHistory, patrimoineHistory})])); a.download = 'budget.json'; a.click();
-}
-function importData(e) {
-  const r = new FileReader(); r.onload = (e) => { const j = JSON.parse(e.target.result); data = j.data; monthHistory = j.monthHistory || []; patrimoineHistory = j.patrimoineHistory || []; window.data = data; window.monthHistory = monthHistory; window.patrimoineHistory = patrimoineHistory; render(); save(); }; r.readAsText(e.target.files[0]);
-}
-
+/* Fermeture des modales en cliquant sur le fond */
+document.getElementById('genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});
+document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{if(e.target.id==='patrimoineAmountModal')closePatrimoineAmountModal()});
+document.getElementById('patrimoineAmountInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitPatrimoineAmount()}if(e.key==='Escape')closePatrimoineAmountModal()});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const el=e.target;if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){e.preventDefault();el.blur();if(typeof save==='function')save()}});
 render();
-</script>
-
-<script>
-document.addEventListener('keydown', function(event) {
-  if (event.key !== 'Enter') return;
-  const el = event.target;
-  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
-    event.preventDefault();
-    el.blur();
-    if (typeof save === 'function') save();
-  }
-});
 </script>
 </body>
 </html>
