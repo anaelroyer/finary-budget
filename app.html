@@ -242,7 +242,9 @@ EDF prélevé le 24 du mois" style="
     <details class="card"><summary><span>📥 Entrées</span><span class="budget-summary-total" id="total-budgetRevenus">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetRevenus"></div><button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
     <div class="card">
-      <div class="section-header"><h2>🗓️ Historique</h2></div><div id="history-container"></div>
+      <div class="section-header"><h2>🗓️ Historique</h2></div>
+      <input type="text" id="historySearchInput" placeholder="🔍 Rechercher (mois, libellé, montant)..." oninput="renderHistory()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;margin-top:4px">
+      <div id="history-container"></div>
       <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
   </div>
@@ -469,9 +471,31 @@ function renderHistory(){
     c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun mois clôturé pour l\'instant</div>';
     return;
   }
+
+  const query = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
+
+  // Filtrage intelligent basé sur le mois ou le contenu des détails
+  const filteredHistory = monthHistory.map((m, originalIdx) => ({m, originalIdx})).filter(({m}) => {
+    if(!query) return true;
+    if(m.month.toLowerCase().includes(query)) return true;
+    if(m.resteVivre.toString().includes(query)) return true;
+    
+    // Recherche dans les libellés ou montants des sous-éléments
+    const allItems = [...(m.revenusDetails||[]), ...(m.fixesDetails||[]), ...(m.depensesDetails||[])];
+    return allItems.some(item => 
+      (item[0] && item[0].toLowerCase().includes(query)) || 
+      (item[1] && item[1].toString().includes(query))
+    );
+  });
+
+  if(!filteredHistory.length){
+    c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun résultat trouvé</div>';
+    return;
+  }
+
   let h = '<table class="history-table"><thead><tr><th>Mois</th><th style="text-align:right">Reste à vivre</th><th style="width:30px"></th></tr></thead><tbody>';
-  monthHistory.forEach((m, idx)=>{
-    h += `<tr class="history-clickable" onclick="openHistoryMonthModal(${idx})"><td><strong>${escapeHtml(m.month)}</strong></td><td style="text-align:right;font-weight:600;color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</td><td style="text-align:right;color:#8b949e">➔</td></tr>`;
+  filteredHistory.forEach(({m, originalIdx})=>{
+    h += `<tr class="history-clickable" onclick="openHistoryMonthModal(${originalIdx})"><td><strong>${escapeHtml(m.month)}</strong></td><td style="text-align:right;font-weight:600;color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</td><td style="text-align:right;color:#8b949e">➔</td></tr>`;
   });
   h += '</tbody></table>';
   c.innerHTML = h;
@@ -609,7 +633,7 @@ function renderAssetDistribution(){
   const cats = [
     {key:'epargne', label:'Épargne', color:'#3fb950'},
     {key:'assurancevie', label:'Assurance-vie', color:'#58a6ff'},
-    {key:'bourse', label:'Bourse', color:'#a371f7'},
+    {key:'bourse', label:'Bourse', color:#a371f7},
     {key:'crypto', label:'Crypto', color:'#d29922'},
     {key:'autres', label:'Autres', color:'#f0883e'}
   ];
