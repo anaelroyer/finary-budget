@@ -369,8 +369,7 @@ function submitPatrimoineAmount(){
 }
 
 function openAnnotationsModal(){
-  const saved=data.annotations||'';
-  document.getElementById('annotationsDisplay').textContent=saved||'Aucune annotation enregistrée.';
+  document.getElementById('annotationsDisplay').textContent=annotations||'Aucune annotation enregistrée.';
   document.getElementById('annotationsView').style.display='block';
   document.getElementById('annotationsEdit').style.display='none';
   document.getElementById('annotationsModal').classList.add('active');
@@ -381,7 +380,7 @@ function closeAnnotationsModal(){
 }
 
 function editAnnotations(){
-  document.getElementById('annotationsInput').value=data.annotations||'';
+  document.getElementById('annotationsInput').value=annotations||'';
   document.getElementById('annotationsView').style.display='none';
   document.getElementById('annotationsEdit').style.display='block';
   setTimeout(()=>document.getElementById('annotationsInput').focus(),50);
@@ -393,9 +392,9 @@ function cancelEditAnnotations(){
 }
 
 function saveAnnotations(){
-  data.annotations=document.getElementById('annotationsInput').value;
+  annotations=document.getElementById('annotationsInput').value;
   save();
-  document.getElementById('annotationsDisplay').textContent=data.annotations||'Aucune annotation enregistrée.';
+  document.getElementById('annotationsDisplay').textContent=annotations||'Aucune annotation enregistrée.';
   document.getElementById('annotationsView').style.display='block';
   document.getElementById('annotationsEdit').style.display='none';
 }
