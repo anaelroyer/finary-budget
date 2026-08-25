@@ -47,13 +47,13 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
 #firebaseStatus{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none}
 
-/* Styles pour le schéma minimaliste, grand format et aéré sans bordure */
+/* Schéma minimaliste, épuré, points et traits affinés */
 #patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
 #patternLockOverlay h2{font-size:16px;color:#8b949e;text-align:center;font-weight:400}
 #patternLockOverlay p{font-size:13px;color:#8b949e;text-align:center;max-width:300px;display:none}
 .pattern-container{position:relative;width:340px;height:340px;background:transparent;border:none;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:24px;touch-action:none}
-.pattern-dot{width:14px;height:14px;background:#8b949e;border-radius:50%;margin:auto;cursor:pointer;transition:background .2s,transform .2s}
-.pattern-dot.active{background:#58a6ff;transform:scale(1.5)}
+.pattern-dot{width:10px;height:10px;background:#8b949e;border-radius:50%;margin:auto;cursor:pointer;transition:background .2s,transform .2s}
+.pattern-dot.active{background:#58a6ff;transform:scale(1.4)}
 .pattern-dot.error{background:#f85149}
 #patternSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 
@@ -66,14 +66,14 @@ body.hide-amounts .row input[type=number]{color:transparent !important;text-shad
 <body>
 <div id="firebaseStatus">Synchronisation…</div>
 
-<!-- ÉCRAN DE VERROUILLAGE MINIMALISTE -->
+<!-- ÉCRAN DE VERROUILLAGE -->
 <div id="patternLockOverlay" style="display:none;">
   <h2 id="patternTitle">Dessinez un schéma de déverrouillage :</h2>
   <p id="patternSubtitle">Dessinez votre schéma pour accéder à l'application.</p>
   
   <div id="patternSection" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
     <div class="pattern-container" id="patternContainer">
-      <svg id="patternSvg"><path id="patternPath" d="" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg id="patternSvg"><path id="patternPath" d="" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div class="pattern-dot" data-id="0"></div><div class="pattern-dot" data-id="1"></div><div class="pattern-dot" data-id="2"></div>
       <div class="pattern-dot" data-id="3"></div><div class="pattern-dot" data-id="4"></div><div class="pattern-dot" data-id="5"></div>
       <div class="pattern-dot" data-id="6"></div><div class="pattern-dot" data-id="7"></div><div class="pattern-dot" data-id="8"></div>
@@ -244,7 +244,7 @@ let amountsHidden=localStorage.getItem('finaryHideAmounts')==='true';
 function toggleHideAmounts(){amountsHidden=!amountsHidden;localStorage.setItem('finaryHideAmounts',amountsHidden);applyHideAmountsState()}
 function applyHideAmountsState(){const btns=document.querySelectorAll('.toggleAmountsBtn');if(amountsHidden){document.body.classList.add('hide-amounts');btns.forEach(b=>b.textContent='🙈 Masquer')}else{document.body.classList.remove('hide-amounts');btns.forEach(b=>b.textContent='👁️ Afficher')}}
 
-/* LOGIQUE DU SCHÉMA DE VERROUILLAGE MINIMALISTE */
+/* LOGIQUE DU SCHÉMA DE VERROUILLAGE (TRAITS PERSISTANTS ET ÉLÉMENTS AFFINÉS) */
 let storedPattern = localStorage.getItem('finaryPattern') || '';
 let patternState = storedPattern ? 'unlock' : 'setup_1'; 
 let setupFirstPattern = '';
@@ -302,7 +302,6 @@ function checkFallbackPassword(){
 
 function setupPatternListeners(){
   const container = document.getElementById('patternContainer');
-  const svgPath = document.getElementById('patternPath');
   
   const getDotFromPoint = (x, y) => {
     const dots = container.querySelectorAll('.pattern-dot');
@@ -311,7 +310,7 @@ function setupPatternListeners(){
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const dist = Math.hypot(cx - x, cy - y);
-      if(dist < 45) return dot; // Zone tactile large et confortable
+      if(dist < 45) return dot;
     }
     return null;
   };
@@ -320,7 +319,7 @@ function setupPatternListeners(){
     isDrawing = true;
     currentPatternSequence = [];
     container.querySelectorAll('.pattern-dot').forEach(d => {d.classList.remove('active', 'error');});
-    svgPath.setAttribute('d', '');
+    document.getElementById('patternPath').setAttribute('d', '');
     const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
     const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
     const dot = getDotFromPoint(clientX, clientY);
@@ -339,7 +338,8 @@ function setupPatternListeners(){
   const endDraw = () => {
     if(!isDrawing) return;
     isDrawing = false;
-    svgPath.setAttribute('d', '');
+    // Fige le tracé complet reliant tous les points sélectionnés
+    updateSvgLine(); 
     if(currentPatternSequence.length > 0) evaluatePattern();
   };
 
@@ -357,21 +357,37 @@ function addDotToPattern(dot){
   if(!currentPatternSequence.includes(id)){
     currentPatternSequence.push(id);
     dot.classList.add('active');
+    updateSvgLine();
   }
 }
 
-function updateSvgLine(x, y){
-  if(currentPatternSequence.length === 0) return;
+function getDotCoords(dotId){
   const containerRect = document.getElementById('patternContainer').getBoundingClientRect();
-  const lastDotId = currentPatternSequence[currentPatternSequence.length - 1];
-  const lastDot = document.querySelector(`.pattern-dot[data-id="${lastDotId}"]`);
-  const r = lastDot.getBoundingClientRect();
-  const startX = r.left + r.width / 2 - containerRect.left;
-  const startY = r.top + r.height / 2 - containerRect.top;
-  const endX = x - containerRect.left;
-  const endY = y - containerRect.top;
-  
-  let d = `M ${startX} ${startY} L ${endX} ${endY}`;
+  const dot = document.querySelector(`.pattern-dot[data-id="${dotId}"]`);
+  const r = dot.getBoundingClientRect();
+  return {
+    x: r.left + r.width / 2 - containerRect.left,
+    y: r.top + r.height / 2 - containerRect.top
+  };
+}
+
+function updateSvgLine(currentX, currentY){
+  if(currentPatternSequence.length === 0){
+    document.getElementById('patternPath').setAttribute('d', '');
+    return;
+  }
+  let d = '';
+  for(let i = 0; i < currentPatternSequence.length; i++){
+    const coords = getDotCoords(currentPatternSequence[i]);
+    if(i === 0) d += `M ${coords.x} ${coords.y}`;
+    else d += ` L ${coords.x} ${coords.y}`;
+  }
+  if(currentX !== undefined && currentY !== undefined && isDrawing){
+    const containerRect = document.getElementById('patternContainer').getBoundingClientRect();
+    const endX = currentX - containerRect.left;
+    const endY = currentY - containerRect.top;
+    d += ` L ${endX} ${endY}`;
+  }
   document.getElementById('patternPath').setAttribute('d', d);
 }
 
@@ -390,6 +406,7 @@ function evaluatePattern(){
     title.textContent = 'Dessinez à nouveau pour confirmer :';
     document.getElementById('patternResetBtn').style.display = 'block';
     currentPatternSequence = [];
+    document.getElementById('patternPath').setAttribute('d', '');
     document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active'));
   }else if(patternState === 'setup_2'){
     if(seqStr === setupFirstPattern){
@@ -429,6 +446,7 @@ function markError(){
   setTimeout(() => {
     document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('error'));
     currentPatternSequence = [];
+    document.getElementById('patternPath').setAttribute('d', '');
     document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
   }, 800);
 }
@@ -437,6 +455,7 @@ function resetPatternSetup(){
   patternState = 'setup_1';
   setupFirstPattern = '';
   currentPatternSequence = [];
+  document.getElementById('patternPath').setAttribute('d', '');
   document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
   document.getElementById('patternResetBtn').style.display = 'none';
   document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active', 'error'));
