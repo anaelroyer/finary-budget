@@ -225,12 +225,16 @@ EDF prélevé le 24 du mois" style="
   </div>
 
   <div id="tab-budget" class="tab-content active">
-    <div class="top">
-      <div style="display:flex;gap:6px;">
+    <div class="top" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;">
+      <div style="display:flex;justify-content:flex-start;">
         <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 8px;font-size:11px">📝 Notes</button>
+      </div>
+      <div style="display:flex;justify-content:center;">
         <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 8px;font-size:11px">🔒 Clôturer</button>
       </div>
-      <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Masquer</button>
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button>
+      </div>
     </div>
     <div class="card"><div class="muted">Reste à vivre estimé</div><div class="total green" id="budget-reste-vivre">0 €</div></div>
 
@@ -256,7 +260,7 @@ EDF prélevé le 24 du mois" style="
       <h1>Patrimoine</h1>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
-        <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Masquer</button>
+        <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button>
       </div>
     </div>
     <div class="card">
@@ -324,10 +328,10 @@ function applyHideAmountsState(){
   const btns=document.querySelectorAll('.toggleAmountsBtn');
   if(amountsHidden){
     document.body.classList.add('hide-amounts');
-    btns.forEach(b=>b.textContent='🙈 Afficher');
+    btns.forEach(b=>b.textContent='🙈 Masquer');
   }else{
     document.body.classList.remove('hide-amounts');
-    btns.forEach(b=>b.textContent='👁️ Masquer');
+    btns.forEach(b=>b.textContent='👁️ Afficher');
   }
 }
 
