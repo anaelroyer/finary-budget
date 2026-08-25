@@ -118,20 +118,57 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 
 <!-- MODAL ANNOTATIONS -->
 <div class="modal-overlay" id="annotationsModal">
-  <div class="modal" style="max-width:420px;">
-    <h3>📝 Annotations / Prévisionnel</h3>
-    <div class="modal-field">
-      <label>Notes et frais à venir</label>
-      <textarea id="annotationsInput" placeholder="Exemple :
-2ème prime rideau (2027) : 6019 €
-Transport de bagages retour : 300 €
-Mission : ~8500 €
-Remb essence Mai : 140,08 €
-EDF prélevé le 24" style="width:100%;min-height:220px;resize:vertical;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:14px;line-height:1.5;outline:none;"></textarea>
+  <div class="modal" style="max-width:440px;">
+    <h3>📝 Annotations</h3>
+
+    <div id="annotationsView">
+      <div id="annotationsDisplay" style="
+        white-space:pre-wrap;
+        color:#c9d1d9;
+        font-size:14px;
+        line-height:1.6;
+        background:#0d1117;
+        border:1px solid #30363d;
+        border-radius:8px;
+        padding:12px;
+        min-height:80px;
+        max-height:45vh;
+        overflow-y:auto;
+      "></div>
+
+      <div class="modal-buttons" style="margin-top:12px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="closeAnnotationsModal()">Fermer</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="editAnnotations()">✏️ Modifier</button>
+      </div>
     </div>
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeAnnotationsModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1" onclick="saveAnnotations()">Enregistrer</button>
+
+    <div id="annotationsEdit" style="display:none;">
+      <textarea id="annotationsInput" placeholder="Ex :
+2ème prime rideau (2027) : 6 019 €
+Transport de bagages retour : 300 €
+Mission : ~8 500 €
+
+Remboursement essence Mai : 140,08 €
+Remboursement essence Juin : 285,99 €
+EDF prélevé le 24 du mois" style="
+        width:100%;
+        min-height:220px;
+        resize:vertical;
+        padding:12px;
+        background:#0d1117;
+        border:1px solid #30363d;
+        border-radius:8px;
+        color:#fff;
+        font-family:inherit;
+        font-size:14px;
+        line-height:1.6;
+        outline:none;
+      "></textarea>
+
+      <div class="modal-buttons" style="margin-top:12px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="cancelEditAnnotations()">Annuler</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="saveAnnotations()">💾 Enregistrer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -159,7 +196,7 @@ EDF prélevé le 24" style="width:100%;min-height:220px;resize:vertical;padding:
 
   <div id="tab-budget" class="tab-content active">
     <div class="top" style="position:relative;">
-      <h1>Budget Mensuel</h1>
+      
       <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="position:absolute;left:50%;transform:translateX(-50%);padding:6px 10px;font-size:12px">📝 Annotations</button>
       <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px;font-size:12px">🔒 Clôturer</button>
     </div>
@@ -275,18 +312,35 @@ function submitPatrimoineAmount(){
 /* ===================================================================== */
 
 function openAnnotationsModal(){
-  document.getElementById('annotationsInput').value=annotations||'';
+  const saved=data.annotations||'';
+  document.getElementById('annotationsDisplay').textContent=saved||'Aucune annotation enregistrée.';
+  document.getElementById('annotationsView').style.display='block';
+  document.getElementById('annotationsEdit').style.display='none';
   document.getElementById('annotationsModal').classList.add('active');
-  setTimeout(()=>document.getElementById('annotationsInput').focus(),50);
 }
+
 function closeAnnotationsModal(){
   document.getElementById('annotationsModal').classList.remove('active');
 }
+
+function editAnnotations(){
+  document.getElementById('annotationsInput').value=data.annotations||'';
+  document.getElementById('annotationsView').style.display='none';
+  document.getElementById('annotationsEdit').style.display='block';
+  setTimeout(()=>document.getElementById('annotationsInput').focus(),50);
+}
+
+function cancelEditAnnotations(){
+  document.getElementById('annotationsView').style.display='block';
+  document.getElementById('annotationsEdit').style.display='none';
+}
+
 function saveAnnotations(){
-  annotations=document.getElementById('annotationsInput').value;
-  window.annotations=annotations;
-  closeAnnotationsModal();
+  data.annotations=document.getElementById('annotationsInput').value;
   save();
+  document.getElementById('annotationsDisplay').textContent=data.annotations||'Aucune annotation enregistrée.';
+  document.getElementById('annotationsView').style.display='block';
+  document.getElementById('annotationsEdit').style.display='none';
 }
 function render(){
   ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes','budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
