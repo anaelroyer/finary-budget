@@ -59,6 +59,26 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
   </div>
 </div>
 
+<!-- MODAL ANNOTATIONS -->
+<div class="modal-overlay" id="annotationsModal">
+  <div class="modal" style="max-width:420px;">
+    <h3>📝 Annotations / Prévisionnel</h3>
+    <div class="modal-field">
+      <label>Notes et frais à venir</label>
+      <textarea id="annotationsInput" placeholder="Exemple :
+2ème prime rideau (2027) : 6019 €
+Transport de bagages retour : 300 €
+Mission : ~8500 €
+Remb essence Mai : 140,08 €
+EDF prélevé le 24" style="width:100%;min-height:220px;resize:vertical;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:14px;line-height:1.5;outline:none;"></textarea>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAnnotationsModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveAnnotations()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL MONTANT PATRIMOINE -->
 <div class="modal-overlay" id="patrimoineAmountModal">
   <div class="modal">
@@ -81,7 +101,11 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
   </div>
 
   <div id="tab-budget" class="tab-content active">
-    <div class="top"><h1>Budget Mensuel</h1><button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px;font-size:12px">🔒 Clôturer</button></div>
+    <div class="top" style="position:relative;">
+      <h1>Budget Mensuel</h1>
+      <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="position:absolute;left:50%;transform:translateX(-50%);padding:6px 10px;font-size:12px">📝 Annotations</button>
+      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 10px;font-size:12px">🔒 Clôturer</button>
+    </div>
     <div class="card"><div class="muted">Reste à vivre estimé</div><div class="total green" id="budget-reste-vivre">0 €</div></div>
 
     <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
@@ -136,18 +160,19 @@ const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=get
 window.firebaseReady=false;
 function setFirebaseStatus(m){const e=document.getElementById("firebaseStatus");if(e)e.textContent=m}
 window.firebaseWriting=false;let firebaseSaveTimer=null,firebaseSaveInProgress=false,firebaseSavePending=false;
-window.firebaseSave=function(){if(!window.firebaseReady)return;clearTimeout(firebaseSaveTimer);firebaseSaveTimer=setTimeout(async()=>{if(firebaseSaveInProgress){firebaseSavePending=true;return}firebaseSaveInProgress=true;window.firebaseWriting=true;setFirebaseStatus("Enregistrement…");try{await setDoc(sharedRef,{data:JSON.stringify(window.data),monthHistory:JSON.stringify(window.monthHistory),patrimoineHistory:JSON.stringify(window.patrimoineHistory)});setFirebaseStatus("Synchronisé")}catch(e){console.error(e);setFirebaseStatus("Erreur Firebase")}finally{firebaseSaveInProgress=false;window.firebaseWriting=false;if(firebaseSavePending){firebaseSavePending=false;window.firebaseSave()}}},250)};
+window.firebaseSave=function(){if(!window.firebaseReady)return;clearTimeout(firebaseSaveTimer);firebaseSaveTimer=setTimeout(async()=>{if(firebaseSaveInProgress){firebaseSavePending=true;return}firebaseSaveInProgress=true;window.firebaseWriting=true;setFirebaseStatus("Enregistrement…");try{await setDoc(sharedRef,{data:JSON.stringify(window.data),monthHistory:JSON.stringify(window.monthHistory),patrimoineHistory:JSON.stringify(window.patrimoineHistory),annotations:window.annotations||''});setFirebaseStatus("Synchronisé")}catch(e){console.error(e);setFirebaseStatus("Erreur Firebase")}finally{firebaseSaveInProgress=false;window.firebaseWriting=false;if(firebaseSavePending){firebaseSavePending=false;window.firebaseSave()}}},250)};
 async function initFirebase(){try{await signInAnonymously(auth)}catch(e){console.error(e)}}
-onAuthStateChanged(auth,async user=>{if(!user)return;window.firebaseReady=true;setFirebaseStatus("Connecté à Firebase");try{const snap=await getDoc(sharedRef);if(!snap.exists())await window.firebaseSave();else{const r=snap.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined})}onSnapshot(sharedRef,snapshot=>{if(!snapshot.exists()||window.firebaseWriting)return;const r=snapshot.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined})})}catch(e){console.error(e)}});
+onAuthStateChanged(auth,async user=>{if(!user)return;window.firebaseReady=true;setFirebaseStatus("Connecté à Firebase");try{const snap=await getDoc(sharedRef);if(!snap.exists())await window.firebaseSave();else{const r=snap.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,annotations:typeof r.annotations==='string'?r.annotations:undefined})}onSnapshot(sharedRef,snapshot=>{if(!snapshot.exists()||window.firebaseWriting)return;const r=snapshot.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,annotations:typeof r.annotations==='string'?r.annotations:undefined})})}catch(e){console.error(e)}});
 initFirebase();
 </script>
 
 <script>
+let annotations=localStorage.getItem('finaryAnnotations')||'';
 let data=JSON.parse(localStorage.getItem('finaryData'))||{immobilier:[['Résidence principale',300000]],epargne:[['Livret A',20000]],assurancevie:[['Assurance-vie Principale',15000]],bourse:[['ETF World',2600]],crypto:[['Bitcoin',30000]],autres:[['Voiture / Divers',10000]],dettes:[['Crédit Immo',150000]],budgetRevenus:[['Salaire',2500,false]],budgetFixes:[['Loyer',900,false]],budgetDepenses:[['Courses',400,false]]};
 let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[],patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
-window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;
+window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;
 
-window.applyFirebaseState=function(remote){if(remote.data)data=remote.data;if(remote.monthHistory)monthHistory=remote.monthHistory;if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;saveLocalOnly();render()};
+window.applyFirebaseState=function(remote){if(remote.data)data=remote.data;if(remote.monthHistory)monthHistory=remote.monthHistory;if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;if(typeof remote.annotations==='string')annotations=remote.annotations;window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;saveLocalOnly();render()};
 const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);let currentActiveTab='budget';
 function switchTab(t){currentActiveTab=t;document.querySelectorAll('.tab-content').forEach(e=>e.classList.toggle('active',e.id==='tab-'+t));document.querySelectorAll('.tab-btn').forEach(e=>e.classList.toggle('active',e.innerText.includes(t==='budget'?'Budget':'Patrimoine')))}
 let touchStartX=0,touchStartY=0;
@@ -192,6 +217,20 @@ function submitPatrimoineAmount(){
 }
 /* ===================================================================== */
 
+function openAnnotationsModal(){
+  document.getElementById('annotationsInput').value=annotations||'';
+  document.getElementById('annotationsModal').classList.add('active');
+  setTimeout(()=>document.getElementById('annotationsInput').focus(),50);
+}
+function closeAnnotationsModal(){
+  document.getElementById('annotationsModal').classList.remove('active');
+}
+function saveAnnotations(){
+  annotations=document.getElementById('annotationsInput').value;
+  window.annotations=annotations;
+  closeAnnotationsModal();
+  save();
+}
 function render(){
   ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes','budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
     const cont=document.querySelector(`.rows-container[data-key="${key}"]`);if(!cont)return;cont.innerHTML='';if(!Array.isArray(data[key]))data[key]=[];
@@ -226,8 +265,8 @@ function delPatrimoine(k,i){
 
 function del(k,i){data[k].splice(i,1);render();save()}
 function clearList(k){data[k]=[];render();save()}
-function saveLocalOnly(){localStorage.setItem('finaryData',JSON.stringify(data));localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory))}
-function save(){window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;saveLocalOnly();if(window.firebaseSave)window.firebaseSave()}
+function saveLocalOnly(){localStorage.setItem('finaryData',JSON.stringify(data));localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));localStorage.setItem('finaryAnnotations',annotations)}
+function save(){window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;saveLocalOnly();if(window.firebaseSave)window.firebaseSave()}
 function calculateNet(){const keys=['immobilier','epargne','assurancevie','bourse','crypto','autres'];const assets=keys.reduce((s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),0),debts=(data.dettes||[]).reduce((s,i)=>s+(i[1]||0),0);return{assets,debts,net:assets-debts}}
 function calculateLiquidInvestments(){return ['epargne','assurancevie','bourse','crypto','autres'].reduce((s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),0)}
 function updateTotals(){const c=calculateNet();document.getElementById('net').textContent=euro(c.net);document.getElementById('gross').textContent=euro(c.assets);document.getElementById('assets').textContent=euro(c.assets);document.getElementById('debts').textContent=euro(c.debts);document.getElementById('savings').textContent=euro((data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0));document.getElementById('investments').textContent=euro((data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+(data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0));['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{const e=document.getElementById(`total-${k}`);if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0))});const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0),rv=rev-fixes-dep,e=document.getElementById('budget-reste-vivre');e.textContent=euro(rv);e.className='total '+(rv>=0?'green':'red')}
@@ -243,8 +282,10 @@ function importData(e){const r=new FileReader();r.onload=e=>{try{const j=JSON.pa
 
 /* Fermeture des modales en cliquant sur le fond */
 document.getElementById('genericModal').addEventListener('click',e=>{if(e.target.id==='genericModal')closeModal()});
+document.getElementById('annotationsModal').addEventListener('click',e=>{if(e.target.id==='annotationsModal')closeAnnotationsModal()});
 document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{if(e.target.id==='patrimoineAmountModal')closePatrimoineAmountModal()});
 document.getElementById('patrimoineAmountInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitPatrimoineAmount()}if(e.key==='Escape')closePatrimoineAmountModal()});
+document.getElementById('annotationsInput').addEventListener('keydown',e=>{if(e.key==='Escape')closeAnnotationsModal()});
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const el=e.target;if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){e.preventDefault();el.blur();if(typeof save==='function')save()}});
 render();
 </script>
