@@ -139,6 +139,7 @@ body.hide-amounts .row input[type=number] {
 <div class="modal-overlay" id="historyMonthModal">
   <div class="modal" style="max-width:440px;max-height:85vh;">
     <h3 id="historyMonthTitle">Mois clôturé</h3>
+    <input type="text" id="historyModalSearchInput" placeholder="🔍 Rechercher dans ce mois (libellé, montant)..." oninput="filterHistoryMonthModal()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;">
     <div id="historyMonthContent" style="overflow-y:auto;display:flex;flex-direction:column;gap:14px;"></div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1;" onclick="closeHistoryMonthModal()">Fermer</button>
@@ -502,11 +503,29 @@ function renderHistory(){
   c.innerHTML = h;
 }
 
+let currentOpenedHistoryIndex = null;
+
 function openHistoryMonthModal(index){
+  currentOpenedHistoryIndex = index;
   const m = monthHistory[index];
   if(!m) return;
   document.getElementById('historyMonthTitle').textContent = `Mois : ${m.month}`;
-  
+  const searchInput = document.getElementById('historyModalSearchInput');
+  if(searchInput) searchInput.value = '';
+  renderHistoryMonthModalContent(m);
+  document.getElementById('historyMonthModal').classList.add('active');
+}
+
+function filterHistoryMonthModal(){
+  if(currentOpenedHistoryIndex === null) return;
+  const m = monthHistory[currentOpenedHistoryIndex];
+  if(!m) return;
+  renderHistoryMonthModalContent(m);
+}
+
+function renderHistoryMonthModalContent(m){
+  const query = (document.getElementById('historyModalSearchInput')?.value || '').toLowerCase().trim();
+
   let content = `
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
       <div class="stat"><span>Revenus</span><strong>${euro(m.revenus)}</strong></div>
@@ -517,24 +536,39 @@ function openHistoryMonthModal(index){
   `;
 
   const renderSection = (title, items) => {
+    const filteredItems = (items || []).filter(it => {
+      if(!query) return true;
+      const labelMatch = it[0] && it[0].toLowerCase().includes(query);
+      const amountMatch = it[1] && it[1].toString().includes(query);
+      return labelMatch || amountMatch;
+    });
+
+    if(!filteredItems.length && query) return ''; // Cache la section si aucun résultat pour cette recherche
     if(!items || !items.length) return `<div class="history-view-section"><h4>${title}</h4><div class="history-view-empty">Aucun élément</div></div>`;
+    
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
-    items.forEach(it => {
+    filteredItems.forEach(it => {
       html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
     });
     html += `</div>`;
     return html;
   };
 
-  content += renderSection('📥 Entrées', m.revenusDetails);
-  content += renderSection('🏠 Frais fixes', m.fixesDetails);
-  content += renderSection('🛒 Dépenses', m.depensesDetails);
+  let secRev = renderSection('📥 Entrées', m.revenusDetails);
+  let secFix = renderSection('🏠 Frais fixes', m.fixesDetails);
+  let secDep = renderSection('🛒 Dépenses', m.depensesDetails);
+
+  if(query && !secRev && !secFix && !secDep){
+    content += `<div class="muted" style="text-align:center;padding:12px">Aucun résultat pour "${escapeHtml(query)}"</div>`;
+  }else{
+    content += secRev + secFix + secDep;
+  }
 
   document.getElementById('historyMonthContent').innerHTML = content;
-  document.getElementById('historyMonthModal').classList.add('active');
 }
 
 function closeHistoryMonthModal(){
+  currentOpenedHistoryIndex = null;
   document.getElementById('historyMonthModal').classList.remove('active');
 }
 
