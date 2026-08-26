@@ -187,7 +187,15 @@ body.hide-amounts .budget-line-amount::after{content:"***";color:#c9d1d9;positio
       <div style="display:flex;justify-content:flex-end;"><button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button></div>
     </div>
 
-    <div class="card"><div class="muted">Reste à vivre estimé</div><div class="total green" id="budget-reste-vivre">0 €</div></div>
+    <div class="card">
+      <div class="muted">Reste à vivre estimé</div>
+      <div class="total green" id="budget-reste-vivre">0 €</div>
+
+      <div style="border-top:1px solid #21262d;padding-top:10px;margin-top:4px">
+        <div class="muted">Solde actuel</div>
+        <div class="total green" id="budget-solde-actuel">0 €</div>
+      </div>
+    </div>
 
     <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
     <details class="card" id="details-depenses"><summary><span>🛒 Dépenses</span><span class="budget-summary-total" id="total-budgetDepenses">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetDepenses"></div><button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
@@ -1263,6 +1271,12 @@ function updateTotals(){
   const dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
   const rv=rev-fixes-dep;
 
+  // Solde actuel : uniquement les lignes cochées
+  const revCoches=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[2]?(i[1]||0):0),0);
+  const fixesCoches=(data.budgetFixes||[]).reduce((s,i)=>s+(i[2]?(i[1]||0):0),0);
+  const depCoches=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[2]?(i[1]||0):0),0);
+  const soldeActuel=revCoches-fixesCoches-depCoches;
+
   [
     ['total-budgetRevenus',rev],
     ['total-budgetFixes',-fixes],
@@ -1278,6 +1292,12 @@ function updateTotals(){
   const e=document.getElementById('budget-reste-vivre');
   e.textContent=euro(rv);
   e.className='total '+(rv>=0?'green':'red');
+
+  const soldeEl=document.getElementById('budget-solde-actuel');
+  if(soldeEl){
+    soldeEl.textContent=euro(soldeActuel);
+    soldeEl.className='total '+(soldeActuel>=0?'green':'red');
+  }
 }
 
 function recordPatrimoineSnapshot(){
