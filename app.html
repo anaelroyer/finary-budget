@@ -523,9 +523,9 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 
     <div class="card"><div class="section-header"><h2>🏠 Immobilier</h2><span class="section-total" id="total-immobilier">0 €</span></div><div class="rows-container" data-key="immobilier"></div><button class="btn-add" onclick="addItem('immobilier')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2><span class="section-total" id="total-assurancevie">0 €</span></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>📈 Bourse</h2><span class="section-total" id="total-bourse">0 €</span></div><div class="rows-container" data-key="bourse"></div><button class="btn-add" onclick="addItem('bourse')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>🪙 Crypto</h2><span class="section-total" id="total-crypto">0 €</span></div><div class="rows-container" data-key="crypto"></div><button class="btn-add" onclick="addItem('crypto')">+ Ajouter</button></div>
+    <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2><span class="section-total" id="total-assurancevie">0 €</span></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>📦 Autres Actifs</h2><span class="section-total" id="total-autres">0 €</span></div><div class="rows-container" data-key="autres"></div><button class="btn-add" onclick="addItem('autres')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
   </div>
@@ -3228,7 +3228,7 @@ function renderAssetDistribution(){
 
   const cats=[
     {key:'epargne',label:'Épargne',color:'#3fb950'},
-    {key:'assurancevie',label:'Assurance-vie',color:'#58a6ff'},
+    {key:'assurancevie',label:'AV',color:'#58a6ff'},
     {key:'bourse',label:'Bourse',color:'#a371f7'},
     {key:'crypto',label:'Crypto',color:'#d29922'},
     {key:'autres',label:'Autres',color:'#f0883e'}
