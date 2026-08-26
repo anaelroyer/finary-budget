@@ -160,6 +160,13 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 #invoiceCropModal .cropper-point{background-color:#58a6ff;width:8px;height:8px}
 #invoiceCropModal .cropper-modal{background-color:#000;opacity:.65}
 
+
+.invoice-summary-alert{display:none;border:1px solid rgba(210,153,34,.35);background:rgba(210,153,34,.10);color:#d29922;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:700}
+.invoice-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}
+.invoice-chip{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:700;background:#21262d;color:#8b949e;border:1px solid #30363d;margin-right:5px;margin-top:4px}
+.invoice-export-row{display:flex;gap:8px;flex-wrap:wrap}
+.invoice-export-row .btn{flex:1;min-width:130px}
+
 </style>
 </head>
 <body>
@@ -276,6 +283,11 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
       <img id="invoiceCropImage" alt="Photo de la facture à recadrer" style="display:block;max-width:100%;width:100%;">
     </div>
 
+    <div class="invoice-photo-actions" style="justify-content:center;">
+      <button type="button" class="btn btn-secondary" onclick="rotateInvoiceCrop(-90)">↶ Rotation gauche</button>
+      <button type="button" class="btn btn-secondary" onclick="rotateInvoiceCrop(90)">↷ Rotation droite</button>
+    </div>
+
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="cancelInvoiceCrop()">Annuler</button>
       <button class="btn btn-primary" id="invoiceCropValidateBtn" style="flex:1" onclick="validateInvoiceCrop()">✅ Valider le recadrage</button>
@@ -315,6 +327,33 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
       </div>
     </div>
 
+    <div class="invoice-modal-grid">
+      <div class="modal-field">
+        <label>Catégorie</label>
+        <select id="invoiceCategory" class="invoice-select">
+          <option value="Essence">Essence</option>
+          <option value="Montre">Montre</option>
+          <option value="Électroménager">Électroménager</option>
+          <option value="Auto">Auto</option>
+          <option value="Travaux">Travaux</option>
+          <option value="Informatique">Informatique</option>
+          <option value="Maison">Maison</option>
+          <option value="Voyage">Voyage</option>
+          <option value="Autre" selected>Autre</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Type de justificatif</label>
+        <select id="invoiceReceiptType" class="invoice-select">
+          <option value="Facture">Facture</option>
+          <option value="Ticket de caisse">Ticket de caisse</option>
+          <option value="Reçu">Reçu</option>
+          <option value="Justificatif de remboursement">Justificatif de remboursement</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+    </div>
+
     <div class="modal-field">
       <label>Garantie applicable</label>
       <select id="invoiceWarrantyApplicable" onchange="toggleInvoiceWarrantyField()" style="width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none;">
@@ -344,13 +383,24 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
           >
         </label>
 
+        <label class="btn btn-secondary invoice-photo-btn" id="invoiceImportFileBtn">
+          📁 Importer une facture numérique
+          <input
+            type="file"
+            id="invoiceDigitalFile"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            style="display:none"
+            onchange="handleInvoiceDigitalFileSelected(event)"
+          >
+        </label>
+
         <button
           type="button"
           class="btn btn-secondary"
           id="invoiceViewCurrentPhotoBtn"
           style="display:none"
           onclick="viewCurrentInvoicePhoto()"
-        >📷 Voir la photo actuelle</button>
+        >📄 Voir le justificatif actuel</button>
       </div>
 
       <div id="invoiceUploadStatus" class="invoice-upload-status"></div>
@@ -486,6 +536,8 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 
     <button class="btn btn-primary" onclick="openInvoiceModal()">+ Ajouter un achat / une facture</button>
 
+    <div id="invoice-summary-alert" class="invoice-summary-alert"></div>
+
     <div class="card" id="warranty-watch-card">
       <div class="section-header"><h2>⏳ Garanties à surveiller</h2></div>
       <div id="warranty-watch"></div>
@@ -501,6 +553,10 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
         <button class="chart-filter" data-invoice-filter="none" onclick="setInvoiceFilter('none')">Sans garantie</button>
       </div>
       <div id="invoices-container" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div class="invoice-export-row" style="margin-top:10px">
+        <button class="btn btn-secondary" onclick="exportInvoicesCSV()">⬇️ Exporter CSV</button>
+        <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
+      </div>
     </div>
   </div>
 
@@ -2063,6 +2119,8 @@ function openInvoiceModal(index=-1){
   document.getElementById('invoiceAmount').value=invoice?.amount??'';
   document.getElementById('invoiceSeller').value=invoice?.seller||'';
   document.getElementById('invoiceReference').value=invoice?.reference||'';
+  document.getElementById('invoiceCategory').value=invoice?.category||'Autre';
+  document.getElementById('invoiceReceiptType').value=invoice?.receiptType||'Facture';
 
   const warrantyApplicable=invoice
     ? invoice.warrantyApplicable !== false && (Number(invoice.warrantyMonths)||0)>0
@@ -2078,21 +2136,31 @@ function openInvoiceModal(index=-1){
   const fileInput=document.getElementById('invoicePhotoFile');
   if(fileInput)fileInput.value='';
 
+  const digitalInput=document.getElementById('invoiceDigitalFile');
+  if(digitalInput)digitalInput.value='';
+
   const takeBtn=document.getElementById('invoiceTakePhotoBtn');
   const viewBtn=document.getElementById('invoiceViewCurrentPhotoBtn');
   const status=document.getElementById('invoiceUploadStatus');
 
   if(status){
     status.textContent=invoicePendingPhotoUrl
-      ? '✅ Une photo est déjà enregistrée pour cet achat.'
-      : 'Aucune photo enregistrée.';
+      ? '✅ Un justificatif est déjà enregistré pour cet achat.'
+      : 'Aucun justificatif enregistré.';
     status.className='invoice-upload-status'+(invoicePendingPhotoUrl?' success':'');
   }
 
   if(takeBtn){
     takeBtn.childNodes[0].textContent=invoicePendingPhotoUrl
-      ? '🔄 Remplacer la photo '
+      ? '🔄 Remplacer par une photo '
       : '📷 Photographier la facture ';
+  }
+
+  const importBtn=document.getElementById('invoiceImportFileBtn');
+  if(importBtn){
+    importBtn.childNodes[0].textContent=invoicePendingPhotoUrl
+      ? '🔄 Remplacer par un fichier '
+      : '📁 Importer une facture numérique ';
   }
 
   if(viewBtn){
@@ -2141,6 +2209,101 @@ function handleInvoicePhotoSelected(event){
   invoiceOriginalPhotoFile=file;
   openInvoiceCrop(file);
   event.target.value='';
+}
+
+
+async function handleInvoiceDigitalFileSelected(event){
+  const file=event.target.files?.[0];
+  if(!file)return;
+
+  const allowed=[
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ];
+
+  if(!allowed.includes(file.type)){
+    setInvoiceUploadStatus('❌ Format non pris en charge. Utilise PDF, JPG, PNG ou WEBP.','error');
+    event.target.value='';
+    return;
+  }
+
+  if(file.size>15*1024*1024){
+    setInvoiceUploadStatus('❌ Fichier trop volumineux (maximum 15 Mo).','error');
+    event.target.value='';
+    return;
+  }
+
+  // Les images peuvent être recadrées comme une photo prise avec l'appareil.
+  if(file.type.startsWith('image/')){
+    invoiceOriginalPhotoFile=file;
+    openInvoiceCrop(file);
+    event.target.value='';
+    return;
+  }
+
+  // Un PDF est envoyé directement, sans recadrage.
+  await uploadInvoiceDigitalDocument(file);
+  event.target.value='';
+}
+
+async function uploadInvoiceDigitalDocument(file){
+  invoicePhotoUploading=true;
+  const submitBtn=document.getElementById('invoiceSubmitBtn');
+  if(submitBtn)submitBtn.disabled=true;
+
+  setInvoiceUploadStatus('⏳ Envoi du PDF en cours…','loading');
+
+  try{
+    const formData=new FormData();
+    formData.append('file',file);
+    formData.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
+
+    // "raw" permet de conserver le PDF comme document téléchargeable.
+    const response=await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
+      {
+        method:'POST',
+        body:formData
+      }
+    );
+
+    const result=await response.json();
+
+    if(!response.ok||!result.secure_url){
+      throw new Error(result?.error?.message||"Échec de l'envoi");
+    }
+
+    invoicePendingPhotoUrl=result.secure_url;
+
+    setInvoiceUploadStatus('✅ PDF envoyé et enregistré.','success');
+
+    const takeBtn=document.getElementById('invoiceTakePhotoBtn');
+    if(takeBtn){
+      takeBtn.childNodes[0].textContent='🔄 Remplacer par une photo ';
+    }
+
+    const importBtn=document.getElementById('invoiceImportFileBtn');
+    if(importBtn){
+      importBtn.childNodes[0].textContent='🔄 Remplacer par un fichier ';
+    }
+
+    const importBtn=document.getElementById('invoiceImportFileBtn');
+    if(importBtn){
+      importBtn.childNodes[0].textContent='🔄 Remplacer par un fichier ';
+    }
+
+    const viewBtn=document.getElementById('invoiceViewCurrentPhotoBtn');
+    if(viewBtn)viewBtn.style.display='inline-flex';
+
+  }catch(error){
+    console.error(error);
+    setInvoiceUploadStatus(`❌ Impossible d'envoyer le PDF : ${error.message||'erreur inconnue'}`,'error');
+  }finally{
+    invoicePhotoUploading=false;
+    if(submitBtn)submitBtn.disabled=false;
+  }
 }
 
 function openInvoiceCrop(file){
@@ -2200,6 +2363,12 @@ function cancelInvoiceCrop(){
   }
 
   invoiceOriginalPhotoFile=null;
+}
+
+function rotateInvoiceCrop(degrees){
+  if(invoiceCropper){
+    invoiceCropper.rotate(degrees);
+  }
 }
 
 async function validateInvoiceCrop(){
@@ -2296,7 +2465,7 @@ async function uploadInvoicePhotoBlob(blob){
 
 function viewCurrentInvoicePhoto(){
   if(!invoicePendingPhotoUrl){
-    alert("Aucune photo n'est enregistrée.");
+    alert("Aucun justificatif n'est enregistré.");
     return;
   }
   try{
@@ -2318,6 +2487,8 @@ function submitInvoice(){
   const amountRaw=document.getElementById('invoiceAmount').value;
   const seller=document.getElementById('invoiceSeller').value.trim();
   const reference=document.getElementById('invoiceReference').value.trim();
+  const category=document.getElementById('invoiceCategory').value;
+  const receiptType=document.getElementById('invoiceReceiptType').value;
   const warrantyApplicable=document.getElementById('invoiceWarrantyApplicable').value!=='no';
   const warrantyRaw=document.getElementById('invoiceWarrantyMonths').value;
   const photoUrl=invoicePendingPhotoUrl;
@@ -2347,12 +2518,34 @@ function submitInvoice(){
     return;
   }
 
+
+  const duplicateIndex=(data.factures||[]).findIndex((it,idx)=>{
+    if(idx===invoiceEditIndex)return false;
+    const sameDate=(it.date||'')===date;
+    const sameAmount=Number(it.amount||0)===Number(amount||0);
+    const sameDesc=normalizeText(it.description||'')===normalizeText(description||'');
+    return sameDate&&sameAmount&&sameDesc;
+  });
+
+  if(duplicateIndex>=0){
+    const dup=data.factures[duplicateIndex];
+    const ok=confirm(
+      `Une facture très similaire existe déjà :\n\n`+
+      `${dup.description||'Sans description'}\n`+
+      `${formatDateFR(dup.date)} · ${euro(Number(dup.amount)||0)}\n\n`+
+      `Voulez-vous quand même enregistrer celle-ci ?`
+    );
+    if(!ok)return;
+  }
+
   const invoice={
     description,
     date,
     amount,
     seller,
     reference,
+    category,
+    receiptType,
     warrantyApplicable,
     warrantyMonths,
     photoUrl
@@ -2410,11 +2603,13 @@ async function downloadInvoicePhoto(index){
       .toLowerCase() || 'facture';
 
     const safeDate=(invoice.date||'').replace(/[^0-9-]/g,'');
-    const extension=blob.type==='image/png'
-      ? 'png'
-      : blob.type==='image/webp'
-        ? 'webp'
-        : 'jpg';
+    const extension=blob.type==='application/pdf'
+      ? 'pdf'
+      : blob.type==='image/png'
+        ? 'png'
+        : blob.type==='image/webp'
+          ? 'webp'
+          : 'jpg';
 
     const a=document.createElement('a');
     a.href=objectUrl;
@@ -2450,12 +2645,23 @@ function openInvoicePhoto(index){
 
 function renderWarrantyWatch(){
   const c=document.getElementById('warranty-watch');
+  const alertBox=document.getElementById('invoice-summary-alert');
   if(!c)return;
 
   const items=(data.factures||[])
     .map((invoice,index)=>({invoice,index,warranty:getWarrantyInfo(invoice)}))
     .filter(x=>x.warranty.status==='soon')
     .sort((a,b)=>a.warranty.endDate-b.warranty.endDate);
+
+  if(alertBox){
+    if(items.length){
+      alertBox.style.display='block';
+      alertBox.textContent=`⚠️ ${items.length} garantie${items.length>1?'s':''} arrive${items.length>1?'nt':''} à échéance dans les 3 prochains mois.`;
+    }else{
+      alertBox.style.display='none';
+      alertBox.textContent='';
+    }
+  }
 
   if(!items.length){
     c.innerHTML='<div class="invoice-empty">Aucune garantie n’arrive à échéance dans les 3 prochains mois.</div>';
@@ -2471,6 +2677,67 @@ function renderWarrantyWatch(){
       <span class="warranty-badge warranty-soon">J-${Math.max(0,warranty.days)}</span>
     </div>
   `).join('');
+}
+
+
+function downloadTextFile(content,filename,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+
+function exportInvoicesJSON(){
+  const payload={
+    exportedAt:new Date().toISOString(),
+    factures:data.factures||[]
+  };
+  downloadTextFile(
+    JSON.stringify(payload,null,2),
+    `factures_${dateToLocalISO(new Date())}.json`,
+    'application/json'
+  );
+}
+
+function exportInvoicesCSV(){
+  const rows=[[
+    'Description','Date','Montant','Vendeur','Référence',
+    'Catégorie','Type de justificatif','Garantie applicable',
+    'Durée garantie (mois)','Fin de garantie','URL facture'
+  ]];
+
+  (data.factures||[]).forEach(invoice=>{
+    const w=getWarrantyInfo(invoice);
+    rows.push([
+      invoice.description||'',
+      invoice.date||'',
+      Number(invoice.amount||0),
+      invoice.seller||'',
+      invoice.reference||'',
+      invoice.category||'Autre',
+      invoice.receiptType||'Facture',
+      invoice.warrantyApplicable===false?'Non':'Oui',
+      Number(invoice.warrantyMonths||0),
+      w.endDate?dateToLocalISO(w.endDate):'',
+      invoice.photoUrl||''
+    ]);
+  });
+
+  const csv=rows.map(row=>row.map(v=>{
+    const s=String(v??'').replace(/"/g,'""');
+    return `"${s}"`;
+  }).join(';')).join('\n');
+
+  downloadTextFile(
+    '\ufeff'+csv,
+    `factures_${dateToLocalISO(new Date())}.csv`,
+    'text/csv;charset=utf-8'
+  );
 }
 
 function renderInvoices(){
@@ -2492,6 +2759,8 @@ function renderInvoices(){
         invoice.description,
         invoice.seller,
         invoice.reference,
+        invoice.category,
+        invoice.receiptType,
         invoice.date,
         invoice.amount
       ].join(' '));
@@ -2517,8 +2786,15 @@ function renderInvoices(){
       none:'warranty-none'
     }[warranty.status];
 
+    const months=Number(invoice.warrantyMonths)||0;
+    const warrantyDurationText=months>0
+      ? (months%12===0
+          ? `${months/12} an${months/12>1?'s':''}`
+          : `${months} mois`)
+      : '';
+
     const warrantyEnd=warranty.endDate
-      ? `<div>Fin de garantie : <strong>${formatDateFR(warranty.endDate)}</strong></div>`
+      ? `<div>Garantie : <strong>${warrantyDurationText}</strong> · jusqu’au <strong>${formatDateFR(warranty.endDate)}</strong></div>`
       : '';
 
     return `
@@ -2529,6 +2805,10 @@ function renderInvoices(){
             <div class="invoice-meta">
               <div>Achat : ${formatDateFR(invoice.date)}${invoice.seller?` · ${escapeHtml(invoice.seller)}`:''}</div>
               ${invoice.reference?`<div>Réf. / N° série : ${escapeHtml(invoice.reference)}</div>`:''}
+              <div>
+                <span class="invoice-chip">${escapeHtml(invoice.category||'Autre')}</span>
+                <span class="invoice-chip">${escapeHtml(invoice.receiptType||'Facture')}</span>
+              </div>
               ${warrantyEnd}
             </div>
           </div>
@@ -2539,7 +2819,7 @@ function renderInvoices(){
 
         <div class="invoice-actions">
           ${invoice.photoUrl?`
-          <button class="btn btn-secondary" onclick="openInvoicePhoto(${index})">📷 Voir facture</button>
+          <button class="btn btn-secondary" onclick="openInvoicePhoto(${index})">📄 Voir facture</button>
           <button class="btn btn-secondary" onclick="downloadInvoicePhoto(${index})">⬇️ Télécharger</button>
           `:''}
           <button class="btn btn-secondary" onclick="openInvoiceModal(${index})">✏️ Modifier</button>
