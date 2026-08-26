@@ -1062,14 +1062,18 @@ function openPatrimoineAmountModal(key,index){
   if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;
   patrimoineAmountKey=key;
   patrimoineAmountIndex=index;
+  const input=document.getElementById('patrimoineAmountInput');
+  const currentAmount=Number(data[key][index][1]||0);
+
   document.getElementById('patrimoineAmountTitle').textContent='Modifier le montant';
-  document.getElementById('patrimoineAmountInput').value='';
+  input.value=Number.isFinite(currentAmount)?currentAmount:'';
   document.getElementById('patrimoineAmountModal').classList.add('active');
   adjustPatrimoineModalForKeyboard();
 
   setTimeout(()=>{
     adjustPatrimoineModalForKeyboard();
-    document.getElementById('patrimoineAmountInput').focus();
+    input.focus();
+    input.select();
   },50);
 }
 
@@ -1322,6 +1326,20 @@ function del(k,i){
 }
 
 function clearList(k){
+  if(!data[k]||!data[k].length)return;
+
+  const labels={
+    budgetDepenses:'toutes les dépenses',
+    budgetFixes:'tous les frais fixes',
+    budgetRevenus:'toutes les entrées'
+  };
+
+  const label=labels[k]||'tous les éléments';
+
+  if(!confirm(`Voulez-vous vraiment vider ${label} ?\n\nCette action est irréversible.`)){
+    return;
+  }
+
   data[k]=[];
   render();
   save();
@@ -1526,31 +1544,61 @@ function resetPatrimoineChart(){
 }
 
 function closeMonth(){
-  if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro.")) return;
+  const now=new Date();
+  const monthLabel=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
 
-  const rev = (data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
-  const fixes = (data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0);
-  const dep = (data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(Number(i[1])||0),0);
+  const fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(Number(i[1])||0),0);
+  const dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(Number(i[1])||0),0);
+  const reste=rev-fixes-dep;
+
+  const hasAnyData=
+    (data.budgetRevenus||[]).length>0 ||
+    (data.budgetFixes||[]).length>0 ||
+    (data.budgetDepenses||[]).length>0;
+
+  const alreadyClosed=monthHistory.some(m=>
+    normalizeText(m.month)===normalizeText(monthLabel)
+  );
+
+  if(alreadyClosed){
+    alert(`Le mois de ${monthLabel} a déjà été clôturé.\n\nAucune nouvelle clôture n'a été créée.`);
+    return;
+  }
+
+  let message=`Clôturer ${monthLabel} ?\n\n`;
+  message+=`Revenus : ${euro(rev)}\n`;
+  message+=`Frais fixes : ${euro(fixes)}\n`;
+  message+=`Dépenses : ${euro(dep)}\n`;
+  message+=`Reste à vivre : ${euro(reste)}\n\n`;
+
+  if(!hasAnyData){
+    message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
+  }
+
+  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et remettra les cases à zéro.`;
+
+  if(!confirm(message))return;
 
   monthHistory.unshift({
-    month: new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),
-    revenus: rev,
-    fixes: fixes,
-    depenses: dep,
-    resteVivre: rev - fixes - dep,
-    revenusDetails: JSON.parse(JSON.stringify(data.budgetRevenus || [])),
-    fixesDetails: JSON.parse(JSON.stringify(data.budgetFixes || [])),
-    depensesDetails: JSON.parse(JSON.stringify(data.budgetDepenses || []))
+    month:monthLabel,
+    revenus:rev,
+    fixes:fixes,
+    depenses:dep,
+    resteVivre:reste,
+    revenusDetails:JSON.parse(JSON.stringify(data.budgetRevenus||[])),
+    fixesDetails:JSON.parse(JSON.stringify(data.budgetFixes||[])),
+    depensesDetails:JSON.parse(JSON.stringify(data.budgetDepenses||[]))
   });
 
-  data.budgetDepenses = [];
+  data.budgetDepenses=[];
 
   if(data.budgetFixes){
-    data.budgetFixes.forEach(item => item[2] = false);
+    data.budgetFixes.forEach(item=>item[2]=false);
   }
 
   if(data.budgetRevenus){
-    data.budgetRevenus.forEach(item => item[2] = false);
+    data.budgetRevenus.forEach(item=>item[2]=false);
   }
 
   render();
