@@ -55,12 +55,50 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 
 .history-table{width:100%;border-collapse:collapse;margin-top:6px}.history-table th,.history-table td{padding:8px 6px;text-align:left;border-bottom:1px solid #21262d;font-size:13px}.history-table th{color:#8b949e;font-weight:600;text-transform:uppercase;font-size:11px}.history-table td{color:#c9d1d9}
 .chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d;position:relative}.chart-container h3{font-size:12px;color:#8b949e;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px}
-svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}.chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.chart-area{fill:url(#chart-gradient);opacity:.25}.chart-tooltip{position:absolute;background:#21262d;border:1px solid #30363d;padding:6px 10px;border-radius:6px;font-size:11px;color:#fff;pointer-events:none;display:none;box-shadow:0 4px 12px rgba(0,0,0,.5);transform:translate(-50%,-100%);margin-top:-10px;z-index:10;white-space:nowrap}.chart-cursor-line{stroke:#8b949e;stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.chart-performance{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:6px 0 10px}
+.chart-performance-label{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+.chart-performance-value{font-size:18px;font-weight:800;color:#c9d1d9;margin-top:2px}
+.chart-performance-value.positive{color:#3fb950}.chart-performance-value.negative{color:#f85149}
+.chart-controls{display:flex;gap:5px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.chart-controls::-webkit-scrollbar{display:none}
+.chart-filter{flex:0 0 auto;border:1px solid #30363d;background:#0d1117;color:#8b949e;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.chart-filter.active{background:#238636;border-color:#238636;color:#fff}
+.chart-series-controls{margin-top:3px;margin-bottom:8px}
+.chart-svg-wrap{position:relative;width:100%;padding-top:2px}
+svg.patrimoine-chart{width:100%;height:190px;overflow:visible;touch-action:none;display:block}
+.chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.chart-area{fill:url(#chart-gradient);opacity:.20}
+.chart-grid-line{stroke:#30363d;stroke-width:1;opacity:.7}
+.chart-axis-label{fill:#8b949e;font-size:9px}
+.chart-point{fill:#58a6ff}
+.chart-point-last{fill:#58a6ff;stroke:#161b22;stroke-width:3}
+.chart-tooltip{position:absolute;background:#21262d;border:1px solid #30363d;padding:7px 10px;border-radius:7px;font-size:11px;color:#fff;pointer-events:none;display:none;box-shadow:0 4px 12px rgba(0,0,0,.5);transform:translate(-50%,-100%);margin-top:-10px;z-index:10;white-space:nowrap}
+.chart-cursor-line{stroke:#8b949e;stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.chart-last-label{fill:#c9d1d9;font-size:9px;font-weight:700}
+.chart-empty{color:#8b949e;font-size:12px;text-align:center;padding:24px 8px}
 .btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px;transition:opacity .2s}.btn-primary{background:#238636;color:#fff;width:100%}.btn-secondary{background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:8px 12px;font-size:13px}.btn-add{background:transparent;color:#58a6ff;border:1px dashed #30363d;width:100%;margin-top:8px;padding:10px;border-radius:8px;font-weight:600;cursor:pointer}.btn-add:hover{background:#21262d}.btn-del{background:transparent;color:#f85149;border:none;cursor:pointer;font-size:16px;padding:4px;display:flex;align-items:center;justify-content:center}
 .action-row{display:flex;gap:8px;margin-top:4px}
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;visibility:hidden;transition:all .2s ease}.modal-overlay.active{opacity:1;visibility:visible}
 .modal{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);transform:scale(.95);transition:transform .2s ease}.modal-overlay.active .modal{transform:scale(1)}
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
+
+/* Sur smartphone, la modale Patrimoine reste en haut pour ne pas être masquée par le clavier */
+#patrimoineAmountModal{
+  align-items:flex-start;
+  padding-top:8vh;
+  padding-bottom:20px;
+  overflow-y:auto;
+}
+
+@media (max-width:600px){
+  #patrimoineAmountModal{
+    padding-top:max(18px,calc(env(safe-area-inset-top) + 18px));
+  }
+
+  #patrimoineAmountModal .modal{
+    margin-top:0;
+  }
+}
 #firebaseStatus{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none}
 /* Schéma minimaliste, épuré, points et traits affinés */
 #patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
@@ -72,8 +110,8 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .pattern-dot.error{background:#f85149}
 #patternSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 /* Mode masquage par étoiles (***) généralisé */
-body.hide-amounts .total,body.hide-amounts .budget-summary-total,body.hide-amounts .section-total,body.hide-amounts .stat strong,body.hide-amounts .history-view-amount,body.hide-amounts .history-table td:nth-child(2),body.hide-amounts #asset-distribution-legend strong,body.hide-amounts #patrimoine-variation-value{visibility:hidden;position:relative}
-body.hide-amounts .total::after,body.hide-amounts .budget-summary-total::after,body.hide-amounts .section-total::after,body.hide-amounts .stat strong::after,body.hide-amounts .history-view-amount::after,body.hide-amounts .history-table td:nth-child(2)::after,body.hide-amounts #asset-distribution-legend strong::after,body.hide-amounts #patrimoine-variation-value::after{content:"***";visibility:visible;position:absolute;left:0;top:0;color:inherit}
+body.hide-amounts .total,body.hide-amounts .budget-summary-total,body.hide-amounts .section-total,body.hide-amounts .stat strong,body.hide-amounts .history-view-amount,body.hide-amounts .history-table td:nth-child(2),body.hide-amounts #asset-distribution-legend strong,body.hide-amounts #patrimoine-variation-value,body.hide-amounts #chart-performance-value{visibility:hidden;position:relative}
+body.hide-amounts .total::after,body.hide-amounts .budget-summary-total::after,body.hide-amounts .section-total::after,body.hide-amounts .stat strong::after,body.hide-amounts .history-view-amount::after,body.hide-amounts .history-table td:nth-child(2)::after,body.hide-amounts #asset-distribution-legend strong::after,body.hide-amounts #patrimoine-variation-value::after,body.hide-amounts #chart-performance-value::after{content:"***";visibility:visible;position:absolute;left:0;top:0;color:inherit}
 body.hide-amounts .row input[type=number]{color:transparent !important;text-shadow:0 0 8px rgba(255,255,255,0.6)}
 body.hide-amounts .budget-line-amount{color:transparent !important;position:relative}
 body.hide-amounts .budget-line-amount::after{content:"***";color:#c9d1d9;position:absolute;right:6px;top:8px}
@@ -252,8 +290,34 @@ body.hide-amounts .budget-line-amount::after{content:"***";color:#c9d1d9;positio
       </div>
 
       <div class="chart-container">
-        <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3>
+
+        <div class="chart-performance">
+          <div>
+            <div class="chart-performance-label">Variation sur la période</div>
+            <div class="chart-performance-value" id="chart-performance-value">—</div>
+          </div>
+          <div class="muted" id="chart-period-caption" style="text-align:right;text-transform:none;letter-spacing:0">Tout l'historique</div>
+        </div>
+
+        <div class="chart-controls" id="chart-range-controls">
+          <button class="chart-filter" data-range="1M" onclick="setChartRange('1M')">1M</button>
+          <button class="chart-filter" data-range="3M" onclick="setChartRange('3M')">3M</button>
+          <button class="chart-filter" data-range="6M" onclick="setChartRange('6M')">6M</button>
+          <button class="chart-filter active" data-range="1A" onclick="setChartRange('1A')">1A</button>
+          <button class="chart-filter" data-range="ALL" onclick="setChartRange('ALL')">Tout</button>
+        </div>
+
+        <div class="chart-controls chart-series-controls" id="chart-series-controls">
+          <button class="chart-filter active" data-series="total" onclick="setChartSeries('total')">Total</button>
+          <button class="chart-filter" data-series="epargne" onclick="setChartSeries('epargne')">Épargne</button>
+          <button class="chart-filter" data-series="assurancevie" onclick="setChartSeries('assurancevie')">AV</button>
+          <button class="chart-filter" data-series="bourse" onclick="setChartSeries('bourse')">Bourse</button>
+          <button class="chart-filter" data-series="crypto" onclick="setChartSeries('crypto')">Crypto</button>
+          <button class="chart-filter" data-series="autres" onclick="setChartSeries('autres')">Autres</button>
+        </div>
+
         <div id="chart-wrapper"></div>
+
         <button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%;color:#f85149;margin-top:10px;font-size:12px">🗑️ Reset Graphique</button>
       </div>
     </div>
@@ -972,6 +1036,28 @@ function submitModal(){
 let patrimoineAmountKey='',patrimoineAmountIndex=-1;
 const patrimoineKeys=['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'];
 
+function adjustPatrimoineModalForKeyboard(){
+  const overlay=document.getElementById('patrimoineAmountModal');
+  if(!overlay)return;
+
+  // Sur ordinateur on garde simplement le positionnement CSS.
+  if(window.innerWidth>600){
+    overlay.style.paddingTop='8vh';
+    return;
+  }
+
+  const vv=window.visualViewport;
+
+  if(vv){
+    // La valeur reste volontairement faible : la modale est placée
+    // près du haut de la zone réellement visible, clavier compris.
+    const top=Math.max(16,Math.min(32,vv.height*0.04));
+    overlay.style.paddingTop=`${top}px`;
+  }else{
+    overlay.style.paddingTop='18px';
+  }
+}
+
 function openPatrimoineAmountModal(key,index){
   if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;
   patrimoineAmountKey=key;
@@ -979,7 +1065,12 @@ function openPatrimoineAmountModal(key,index){
   document.getElementById('patrimoineAmountTitle').textContent='Modifier le montant';
   document.getElementById('patrimoineAmountInput').value='';
   document.getElementById('patrimoineAmountModal').classList.add('active');
-  setTimeout(()=>document.getElementById('patrimoineAmountInput').focus(),50);
+  adjustPatrimoineModalForKeyboard();
+
+  setTimeout(()=>{
+    adjustPatrimoineModalForKeyboard();
+    document.getElementById('patrimoineAmountInput').focus();
+  },50);
 }
 
 function closePatrimoineAmountModal(){
@@ -1014,6 +1105,15 @@ function submitPatrimoineAmount(){
   save();
 }
 
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{
+    const modal=document.getElementById('patrimoineAmountModal');
+    if(modal && modal.classList.contains('active')){
+      adjustPatrimoineModalForKeyboard();
+    }
+  });
+}
 
 /* ANNOTATIONS */
 function openAnnotationsModal(){
@@ -1339,18 +1439,28 @@ function recordPatrimoineSnapshot(){
   const today=getLocalDateKey();
   const currentLiquid=calculateLiquidInvestments();
   const currentFullNet=calculateNet().net;
+
+  const currentCategories={
+    epargne:(data.epargne||[]).reduce((s,i)=>s+(i[1]||0),0),
+    assurancevie:(data.assurancevie||[]).reduce((s,i)=>s+(i[1]||0),0),
+    bourse:(data.bourse||[]).reduce((s,i)=>s+(i[1]||0),0),
+    crypto:(data.crypto||[]).reduce((s,i)=>s+(i[1]||0),0),
+    autres:(data.autres||[]).reduce((s,i)=>s+(i[1]||0),0)
+  };
+
   const existing=patrimoineHistory.find(h=>h.date===today);
 
   if(existing){
-    // "net" reste la série historique utilisée par le graphique existant.
+    // "net" reste la série Total (hors immobilier) pour compatibilité.
     existing.net=currentLiquid;
-    // "fullNet" sert à la variation mensuelle du patrimoine net complet.
     existing.fullNet=currentFullNet;
+    Object.assign(existing,currentCategories);
   }else{
     patrimoineHistory.push({
       date:today,
       net:currentLiquid,
-      fullNet:currentFullNet
+      fullNet:currentFullNet,
+      ...currentCategories
     });
     patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date));
   }
@@ -1647,46 +1757,300 @@ function importData(event){
   reader.readAsText(file);
 }
 
+
+let currentChartRange=localStorage.getItem('finaryChartRange')||'1A';
+let currentChartSeries=localStorage.getItem('finaryChartSeries')||'total';
+
+const chartSeriesConfig={
+  total:{label:'Total',field:'net'},
+  epargne:{label:'Épargne',field:'epargne'},
+  assurancevie:{label:'Assurance-vie',field:'assurancevie'},
+  bourse:{label:'Bourse',field:'bourse'},
+  crypto:{label:'Crypto',field:'crypto'},
+  autres:{label:'Autres',field:'autres'}
+};
+
+function setChartRange(range){
+  currentChartRange=range;
+  localStorage.setItem('finaryChartRange',range);
+  renderChart();
+}
+
+function setChartSeries(series){
+  if(!chartSeriesConfig[series])return;
+  currentChartSeries=series;
+  localStorage.setItem('finaryChartSeries',series);
+  renderChart();
+}
+
+function getChartStartDate(range){
+  if(range==='ALL')return null;
+
+  const d=new Date();
+  d.setHours(0,0,0,0);
+
+  if(range==='1M')d.setMonth(d.getMonth()-1);
+  else if(range==='3M')d.setMonth(d.getMonth()-3);
+  else if(range==='6M')d.setMonth(d.getMonth()-6);
+  else d.setFullYear(d.getFullYear()-1);
+
+  return d;
+}
+
+function formatChartCompactEuro(value){
+  const abs=Math.abs(value);
+
+  if(abs>=1000000){
+    return `${(value/1000000).toLocaleString('fr-FR',{maximumFractionDigits:1})} M€`;
+  }
+
+  if(abs>=1000){
+    return `${(value/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})} k€`;
+  }
+
+  return `${Math.round(value).toLocaleString('fr-FR')} €`;
+}
+
+function formatChartDate(dateStr,full=false){
+  const d=new Date(`${dateStr}T12:00:00`);
+  return d.toLocaleDateString('fr-FR',full
+    ? {day:'2-digit',month:'short',year:'numeric'}
+    : {day:'2-digit',month:'short'}
+  );
+}
+
+function getFilteredChartPoints(){
+  const cfg=chartSeriesConfig[currentChartSeries]||chartSeriesConfig.total;
+  const start=getChartStartDate(currentChartRange);
+
+  return (patrimoineHistory||[])
+    .filter(h=>{
+      if(!h || !h.date)return false;
+
+      const value=Number(h[cfg.field]);
+      if(!Number.isFinite(value))return false;
+
+      if(start){
+        const d=new Date(`${h.date}T12:00:00`);
+        if(d<start)return false;
+      }
+
+      return true;
+    })
+    .map(h=>({
+      date:h.date,
+      value:Number(h[cfg.field])
+    }))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+}
+
+function updateChartControls(){
+  document.querySelectorAll('#chart-range-controls .chart-filter').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.range===currentChartRange);
+  });
+
+  document.querySelectorAll('#chart-series-controls .chart-filter').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.series===currentChartSeries);
+  });
+
+  const caption=document.getElementById('chart-period-caption');
+  if(caption){
+    const labels={
+      '1M':'1 mois',
+      '3M':'3 mois',
+      '6M':'6 mois',
+      '1A':'1 an',
+      'ALL':"Tout l'historique"
+    };
+    caption.textContent=labels[currentChartRange]||'1 an';
+  }
+}
+
+function updateChartPerformance(points){
+  const el=document.getElementById('chart-performance-value');
+  if(!el)return;
+
+  if(points.length<2){
+    el.textContent='—';
+    el.className='chart-performance-value';
+    return;
+  }
+
+  const first=points[0].value;
+  const last=points[points.length-1].value;
+  const delta=last-first;
+
+  let percentText='';
+  if(first!==0){
+    const pct=(delta/Math.abs(first))*100;
+    percentText=` (${pct>=0?'+':''}${pct.toLocaleString('fr-FR',{
+      minimumFractionDigits:1,
+      maximumFractionDigits:1
+    })} %)`;
+  }
+
+  el.textContent=`${delta>=0?'+':''}${euro(delta)}${percentText}`;
+  el.className='chart-performance-value '+(delta>=0?'positive':'negative');
+}
+
+function attachChartInteractions(points,w,h,padLeft,padRight,padTop,padBottom){
+  const svg=document.querySelector('#chart-wrapper svg.patrimoine-chart');
+  const tooltip=document.getElementById('chartTooltip');
+  const cursor=document.getElementById('chartCursorLine');
+
+  if(!svg||!tooltip||!cursor||!points.length)return;
+
+  const innerW=w-padLeft-padRight;
+
+  const showAtClientX=(clientX)=>{
+    const rect=svg.getBoundingClientRect();
+    if(!rect.width)return;
+
+    const xSvg=(clientX-rect.left)/rect.width*w;
+    const ratio=Math.max(0,Math.min(1,(xSvg-padLeft)/innerW));
+
+    let index=Math.round(ratio*(points.length-1));
+    index=Math.max(0,Math.min(points.length-1,index));
+
+    const p=points[index];
+    const x=padLeft+(index/(Math.max(1,points.length-1)))*innerW;
+
+    cursor.setAttribute('x1',x);
+    cursor.setAttribute('x2',x);
+    cursor.setAttribute('y1',padTop);
+    cursor.setAttribute('y2',h-padBottom);
+    cursor.style.opacity='1';
+
+    const xPx=(x/w)*rect.width;
+    const yPx=(p.y/h)*rect.height;
+
+    tooltip.style.left=`${xPx}px`;
+    tooltip.style.top=`${yPx}px`;
+    tooltip.style.display='block';
+    tooltip.innerHTML=`<strong>${formatChartDate(p.date,true)}</strong><br>${euro(p.value)}`;
+  };
+
+  const hide=()=>{
+    tooltip.style.display='none';
+    cursor.style.opacity='0';
+  };
+
+  svg.onmousemove=e=>showAtClientX(e.clientX);
+  svg.onmouseleave=hide;
+  svg.ontouchstart=e=>{
+    if(e.touches&&e.touches[0])showAtClientX(e.touches[0].clientX);
+  };
+  svg.ontouchmove=e=>{
+    if(e.touches&&e.touches[0])showAtClientX(e.touches[0].clientX);
+  };
+  svg.ontouchend=()=>setTimeout(hide,900);
+}
+
 function renderChart(){
   const container=document.getElementById('chart-wrapper');
   if(!container)return;
 
-  if(!patrimoineHistory||patrimoineHistory.length<2){
-    container.innerHTML='<div style="color:#8b949e;font-size:12px;text-align:center;padding:20px">Pas assez de données pour afficher l\'évolution (minimum 2 jours différents).</div>';
+  updateChartControls();
+
+  const cfg=chartSeriesConfig[currentChartSeries]||chartSeriesConfig.total;
+  const rawPoints=getFilteredChartPoints();
+
+  updateChartPerformance(rawPoints);
+
+  if(!rawPoints.length){
+    const extra=currentChartSeries==='total'
+      ? ''
+      : '<br><span style="font-size:11px">Le détail par catégorie commence à être enregistré à partir de cette version.</span>';
+
+    container.innerHTML=`<div class="chart-empty">Aucune donnée pour ${cfg.label} sur cette période.${extra}</div>`;
     return;
   }
 
-  let minVal=Math.min(...patrimoineHistory.map(d=>d.net));
-  let maxVal=Math.max(...patrimoineHistory.map(d=>d.net));
-
-  if(minVal===maxVal){
-    minVal-=100;
-    maxVal+=100;
+  if(rawPoints.length===1){
+    container.innerHTML=`
+      <div class="chart-empty">
+        ${cfg.label} : <strong style="color:#c9d1d9">${euro(rawPoints[0].value)}</strong><br>
+        <span style="font-size:11px">Un second relevé est nécessaire pour tracer l'évolution.</span>
+      </div>
+    `;
+    return;
   }
 
-  const w=320,h=100,pad=10;
+  const w=360;
+  const h=190;
+  const padLeft=48;
+  const padRight=18;
+  const padTop=14;
+  const padBottom=30;
+  const innerW=w-padLeft-padRight;
+  const innerH=h-padTop-padBottom;
 
-  const pts=patrimoineHistory.map((d,i)=>{
-    const x=pad+(i/(patrimoineHistory.length-1))*(w-pad*2);
-    const y=h-pad-((d.net-minVal)/(maxVal-minVal))*(h-pad*2);
+  let minVal=Math.min(...rawPoints.map(d=>d.value));
+  let maxVal=Math.max(...rawPoints.map(d=>d.value));
+
+  if(minVal===maxVal){
+    const margin=Math.max(100,Math.abs(minVal)*0.03);
+    minVal-=margin;
+    maxVal+=margin;
+  }else{
+    const margin=(maxVal-minVal)*0.08;
+    minVal-=margin;
+    maxVal+=margin;
+  }
+
+  const pts=rawPoints.map((d,i)=>{
+    const x=padLeft+(i/(rawPoints.length-1))*innerW;
+    const y=padTop+((maxVal-d.value)/(maxVal-minVal))*innerH;
     return{x,y,...d};
   });
 
   let pathD=`M ${pts[0].x} ${pts[0].y}`;
 
   for(let i=0;i<pts.length-1;i++){
-    const xc=(pts[i].x+pts[i+1].x)/2;
-    const yc=(pts[i].y+pts[i+1].y)/2;
-    pathD+=` Q ${pts[i].x} ${pts[i].y}, ${xc} ${yc}`;
+    const p=pts[i];
+    const n=pts[i+1];
+    const midX=(p.x+n.x)/2;
+    pathD+=` C ${midX} ${p.y}, ${midX} ${n.y}, ${n.x} ${n.y}`;
   }
 
-  pathD+=` L ${pts[pts.length-1].x} ${pts[pts.length-1].y}`;
+  const baseY=h-padBottom;
+  const areaD=`${pathD} L ${pts[pts.length-1].x} ${baseY} L ${pts[0].x} ${baseY} Z`;
 
-  let areaD=`${pathD} L ${pts[pts.length-1].x} ${h} L ${pts[0].x} ${h} Z`;
+  // 4 repères horizontaux avec montants
+  const yTicks=4;
+  let grid='';
+  for(let i=0;i<yTicks;i++){
+    const ratio=i/(yTicks-1);
+    const y=padTop+ratio*innerH;
+    const value=maxVal-ratio*(maxVal-minVal);
+
+    grid+=`
+      <line class="chart-grid-line" x1="${padLeft}" y1="${y}" x2="${w-padRight}" y2="${y}"></line>
+      <text class="chart-axis-label" x="${padLeft-6}" y="${y+3}" text-anchor="end">${formatChartCompactEuro(value)}</text>
+    `;
+  }
+
+  // 4 dates maximum sous la courbe
+  const xTickCount=Math.min(4,pts.length);
+  const xTickIndexes=[];
+
+  for(let i=0;i<xTickCount;i++){
+    const idx=Math.round(i*(pts.length-1)/(xTickCount-1));
+    if(!xTickIndexes.includes(idx))xTickIndexes.push(idx);
+  }
+
+  const xLabels=xTickIndexes.map(idx=>{
+    const p=pts[idx];
+    return `<text class="chart-axis-label" x="${p.x}" y="${h-8}" text-anchor="middle">${formatChartDate(p.date,false)}</text>`;
+  }).join('');
+
+  const last=pts[pts.length-1];
+  const lastLabelX=Math.min(w-padRight-2,last.x);
+  const lastLabelY=Math.max(padTop+9,last.y-9);
 
   container.innerHTML=`
-    <div style="position:relative">
-      <svg class="patrimoine-chart" viewBox="0 0 ${w} ${h}">
+    <div class="chart-svg-wrap">
+      <svg class="patrimoine-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
         <defs>
           <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#58a6ff"/>
@@ -1694,26 +2058,44 @@ function renderChart(){
           </linearGradient>
         </defs>
 
+        ${grid}
         <path class="chart-area" d="${areaD}"></path>
         <path class="chart-line" d="${pathD}"></path>
-        <line class="chart-cursor-line" id="chartCursorLine" x1="0" y1="0" x2="0" y2="${h}"></line>
 
-        ${pts.map(p=>`
+        <line
+          class="chart-cursor-line"
+          id="chartCursorLine"
+          x1="0"
+          y1="${padTop}"
+          x2="0"
+          y2="${h-padBottom}"
+        ></line>
+
+        ${pts.map((p,i)=>`
           <circle
+            class="${i===pts.length-1?'chart-point-last':'chart-point'}"
             cx="${p.x}"
             cy="${p.y}"
-            r="3.5"
-            fill="#58a6ff"
-            style="cursor:pointer"
-            data-date="${p.date}"
-            data-net="${p.net}"
+            r="${i===pts.length-1?5:2.5}"
+            data-index="${i}"
           ></circle>
         `).join('')}
+
+        ${xLabels}
+
+        <text
+          class="chart-last-label"
+          x="${lastLabelX}"
+          y="${lastLabelY}"
+          text-anchor="end"
+        >${formatChartCompactEuro(last.value)}</text>
       </svg>
 
       <div class="chart-tooltip" id="chartTooltip"></div>
     </div>
   `;
+
+  attachChartInteractions(pts,w,h,padLeft,padRight,padTop,padBottom);
 }
 
 function renderAssetDistribution(){
