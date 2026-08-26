@@ -37,6 +37,17 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .row.patrimoine-row{display:grid;grid-template-columns:minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
 .row input[type=text],.row input[type=number]{width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none}.row input[type=number]{padding:8px 6px;text-align:right}
 .row input[type=checkbox]{width:20px;height:20px;accent-color:#238636;cursor:pointer}.amount{text-align:right;font-weight:600;color:#c9d1d9;font-size:13px}
+
+/* LIGNES BUDGET EN LECTURE SEULE : CLIC = MODIFICATION PAR MODALE */
+.row.budget-row{cursor:pointer;transition:background .15s}
+.row.budget-row:hover{background:#21262d}
+.row.budget-row.paid:hover{background:rgba(35,134,54,.22)}
+.budget-line-label{min-width:0;padding:8px 10px;color:#fff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.budget-line-amount{padding:8px 6px;text-align:right;font-weight:600;color:#c9d1d9;font-size:13px;white-space:nowrap}
+.modal-current{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 12px;color:#c9d1d9;font-size:13px}
+.modal-current-label{font-weight:600;color:#fff;overflow-wrap:anywhere}
+.modal-current-amount{margin-top:3px;color:#8b949e}
+
 .history-table{width:100%;border-collapse:collapse;margin-top:6px}.history-table th,.history-table td{padding:8px 6px;text-align:left;border-bottom:1px solid #21262d;font-size:13px}.history-table th{color:#8b949e;font-weight:600;text-transform:uppercase;font-size:11px}.history-table td{color:#c9d1d9}
 .chart-container{margin-top:12px;padding-top:10px;border-top:1px solid #21262d;position:relative}.chart-container h3{font-size:12px;color:#8b949e;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px}
 svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}.chart-line{fill:none;stroke:#58a6ff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.chart-area{fill:url(#chart-gradient);opacity:.25}.chart-tooltip{position:absolute;background:#21262d;border:1px solid #30363d;padding:6px 10px;border-radius:6px;font-size:11px;color:#fff;pointer-events:none;display:none;box-shadow:0 4px 12px rgba(0,0,0,.5);transform:translate(-50%,-100%);margin-top:-10px;z-index:10;white-space:nowrap}.chart-cursor-line{stroke:#8b949e;stroke-width:1;stroke-dasharray:3 3;opacity:0}
@@ -46,7 +57,6 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .modal{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);transform:scale(.95);transition:transform .2s ease}.modal-overlay.active .modal{transform:scale(1)}
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
 #firebaseStatus{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none}
-
 /* Schéma minimaliste, épuré, points et traits affinés */
 #patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
 #patternLockOverlay h2{font-size:16px;color:#8b949e;text-align:center;font-weight:400}
@@ -56,11 +66,12 @@ svg.patrimoine-chart{width:100%;height:100px;overflow:visible;touch-action:none}
 .pattern-dot.active{background:#58a6ff;transform:scale(1.4)}
 .pattern-dot.error{background:#f85149}
 #patternSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-
 /* Mode masquage par étoiles (***) généralisé */
 body.hide-amounts .total,body.hide-amounts .budget-summary-total,body.hide-amounts .section-total,body.hide-amounts .stat strong,body.hide-amounts .history-view-amount,body.hide-amounts .history-table td:nth-child(2),body.hide-amounts #asset-distribution-legend strong{visibility:hidden;position:relative}
 body.hide-amounts .total::after,body.hide-amounts .budget-summary-total::after,body.hide-amounts .section-total::after,body.hide-amounts .stat strong::after,body.hide-amounts .history-view-amount::after,body.hide-amounts .history-table td:nth-child(2)::after,body.hide-amounts #asset-distribution-legend strong::after{content:"***";visibility:visible;position:absolute;left:0;top:0;color:inherit}
 body.hide-amounts .row input[type=number]{color:transparent !important;text-shadow:0 0 8px rgba(255,255,255,0.6)}
+body.hide-amounts .budget-line-amount{color:transparent !important;position:relative}
+body.hide-amounts .budget-line-amount::after{content:"***";color:#c9d1d9;position:absolute;right:6px;top:8px}
 </style>
 </head>
 <body>
@@ -70,7 +81,7 @@ body.hide-amounts .row input[type=number]{color:transparent !important;text-shad
 <div id="patternLockOverlay" style="display:none;">
   <h2 id="patternTitle">Dessinez un schéma de déverrouillage :</h2>
   <p id="patternSubtitle">Dessinez votre schéma pour accéder à l'application.</p>
-  
+
   <div id="patternSection" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
     <div class="pattern-container" id="patternContainer">
       <svg id="patternSvg"><path id="patternPath" d="" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -89,15 +100,29 @@ body.hide-amounts .row input[type=number]{color:transparent !important;text-shad
   </div>
 </div>
 
-<!-- MODAL UNIVERSEL -->
+<!-- MODAL AJOUT / MODIFICATION BUDGET -->
 <div class="modal-overlay" id="genericModal">
   <div class="modal">
     <h3 id="modalTitle">Ajouter</h3>
-    <div class="modal-field"><label>Libellé</label><input type="text" id="modalLabel" placeholder="Ex: Loyer, Salaire, Courses..."></div>
-    <div class="modal-field"><label>Montant (€)</label><input type="number" id="modalAmount" placeholder="0"></div>
+
+    <div id="modalCurrent" class="modal-current" style="display:none;">
+      <div id="modalCurrentLabel" class="modal-current-label"></div>
+      <div id="modalCurrentAmount" class="modal-current-amount"></div>
+    </div>
+
+    <div class="modal-field">
+      <label id="modalLabelTitle">Libellé</label>
+      <input type="text" id="modalLabel" placeholder="Ex: Loyer, Salaire, Courses...">
+    </div>
+
+    <div class="modal-field">
+      <label id="modalAmountTitle">Montant (€)</label>
+      <input type="number" id="modalAmount" placeholder="0" inputmode="decimal">
+    </div>
+
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1" onclick="submitModal()">Ajouter</button>
+      <button class="btn btn-primary" id="modalSubmitBtn" style="flex:1" onclick="submitModal()">Ajouter</button>
     </div>
   </div>
 </div>
@@ -161,6 +186,7 @@ body.hide-amounts .row input[type=number]{color:transparent !important;text-shad
       <div style="display:flex;justify-content:center;"><button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 8px;font-size:11px">🔒 Clôturer</button></div>
       <div style="display:flex;justify-content:flex-end;"><button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button></div>
     </div>
+
     <div class="card"><div class="muted">Reste à vivre estimé</div><div class="total green" id="budget-reste-vivre">0 €</div></div>
 
     <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
@@ -185,18 +211,30 @@ body.hide-amounts .row input[type=number]{color:transparent !important;text-shad
       <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Afficher</button>
     </div>
+
     <div class="card">
       <div><div class="muted">Patrimoine brut</div><div class="total" id="gross">0 €</div></div>
       <div style="border-top:1px solid #21262d;padding-top:8px"><div class="muted">Patrimoine net</div><div class="total" id="net">0 €</div></div>
+
       <div class="grid">
-        <div class="stat"><span>Actifs</span><strong id="assets">0 €</strong></div><div class="stat"><span>Épargne</span><strong id="savings">0 €</strong></div><div class="stat"><span>Emprunts</span><strong id="debts">0 €</strong></div><div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
+        <div class="stat"><span>Actifs</span><strong id="assets">0 €</strong></div>
+        <div class="stat"><span>Épargne</span><strong id="savings">0 €</strong></div>
+        <div class="stat"><span>Emprunts</span><strong id="debts">0 €</strong></div>
+        <div class="stat"><span>Invest.</span><strong id="investments">0 €</strong></div>
       </div>
+
       <div class="chart-container" style="margin-top:16px">
         <h3>Répartition des Actifs (Hors Immo)</h3>
-        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px;flex-wrap:wrap"><div id="asset-pie-chart" style="width:130px;height:130px;flex-shrink:0"></div><div id="asset-distribution-legend" style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#c9d1d9;flex:1;min-width:140px"></div></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px;flex-wrap:wrap">
+          <div id="asset-pie-chart" style="width:130px;height:130px;flex-shrink:0"></div>
+          <div id="asset-distribution-legend" style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#c9d1d9;flex:1;min-width:140px"></div>
+        </div>
       </div>
+
       <div class="chart-container">
-        <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3><div id="chart-wrapper"></div><button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%;color:#f85149;margin-top:10px;font-size:12px">🗑️ Reset Graphique</button>
+        <h3>Évolution (Épargne, AV, Bourse, Crypto, Autres)</h3>
+        <div id="chart-wrapper"></div>
+        <button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%;color:#f85149;margin-top:10px;font-size:12px">🗑️ Reset Graphique</button>
       </div>
     </div>
 
@@ -215,67 +253,339 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const firebaseConfig={apiKey:"AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",authDomain:"finances-royer.firebaseapp.com",projectId:"finances-royer",storageBucket:"finances-royer.firebasestorage.app",messagingSenderId:"9218166802",appId:"1:9218166802:web:2df9abb231684f8c9ec8cb"};
-const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),sharedRef=doc(db,"budget_shared","main_account");
+const firebaseConfig={
+  apiKey:"AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",
+  authDomain:"finances-royer.firebaseapp.com",
+  projectId:"finances-royer",
+  storageBucket:"finances-royer.firebasestorage.app",
+  messagingSenderId:"9218166802",
+  appId:"1:9218166802:web:2df9abb231684f8c9ec8cb"
+};
+
+const firebaseApp=initializeApp(firebaseConfig),
+      auth=getAuth(firebaseApp),
+      db=getFirestore(firebaseApp),
+      sharedRef=doc(db,"budget_shared","main_account");
+
 window.firebaseReady=false;
-function setFirebaseStatus(m){const e=document.getElementById("firebaseStatus");if(e)e.textContent=m}
-window.firebaseWriting=false;let firebaseSaveTimer=null,firebaseSaveInProgress=false,firebaseSavePending=false;
-window.firebaseSave=function(){if(!window.firebaseReady)return;clearTimeout(firebaseSaveTimer);firebaseSaveTimer=setTimeout(async()=>{if(firebaseSaveInProgress){firebaseSavePending=true;return}firebaseSaveInProgress=true;window.firebaseWriting=true;setFirebaseStatus("Enregistrement…");try{await setDoc(sharedRef,{data:JSON.stringify(window.data),monthHistory:JSON.stringify(window.monthHistory),patrimoineHistory:JSON.stringify(window.patrimoineHistory),annotations:window.annotations||''});setFirebaseStatus("Synchronisé")}catch(e){console.error(e);setFirebaseStatus("Erreur Firebase")}finally{firebaseSaveInProgress=false;window.firebaseWriting=false;if(firebaseSavePending){firebaseSavePending=false;window.firebaseSave()}}},250)};
-async function initFirebase(){try{await signInAnonymously(auth)}catch(e){console.error(e)}}
-onAuthStateChanged(auth,async user=>{if(!user)return;window.firebaseReady=true;setFirebaseStatus("Connecté à Firebase");try{const snap=await getDoc(sharedRef);if(!snap.exists())await window.firebaseSave();else{const r=snap.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,annotations:typeof r.annotations==='string'?r.annotations:undefined})}onSnapshot(sharedRef,snapshot=>{if(!snapshot.exists()||window.firebaseWriting)return;const r=snapshot.data();if(window.applyFirebaseState)window.applyFirebaseState({data:r.data?JSON.parse(r.data):undefined,monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,annotations:typeof r.annotations==='string'?r.annotations:undefined})})}catch(e){console.error(e)}});
+
+function setFirebaseStatus(m){
+  const e=document.getElementById("firebaseStatus");
+  if(e)e.textContent=m;
+}
+
+window.firebaseWriting=false;
+let firebaseSaveTimer=null,
+    firebaseSaveInProgress=false,
+    firebaseSavePending=false;
+
+window.firebaseSave=function(){
+  if(!window.firebaseReady)return;
+  clearTimeout(firebaseSaveTimer);
+  firebaseSaveTimer=setTimeout(async()=>{
+    if(firebaseSaveInProgress){
+      firebaseSavePending=true;
+      return;
+    }
+    firebaseSaveInProgress=true;
+    window.firebaseWriting=true;
+    setFirebaseStatus("Enregistrement…");
+    try{
+      await setDoc(sharedRef,{
+        data:JSON.stringify(window.data),
+        monthHistory:JSON.stringify(window.monthHistory),
+        patrimoineHistory:JSON.stringify(window.patrimoineHistory),
+        annotations:window.annotations||''
+      });
+      setFirebaseStatus("Synchronisé");
+    }catch(e){
+      console.error(e);
+      setFirebaseStatus("Erreur Firebase");
+    }finally{
+      firebaseSaveInProgress=false;
+      window.firebaseWriting=false;
+      if(firebaseSavePending){
+        firebaseSavePending=false;
+        window.firebaseSave();
+      }
+    }
+  },250);
+};
+
+async function initFirebase(){
+  try{
+    await signInAnonymously(auth);
+  }catch(e){
+    console.error(e);
+  }
+}
+
+onAuthStateChanged(auth,async user=>{
+  if(!user)return;
+  window.firebaseReady=true;
+  setFirebaseStatus("Connecté à Firebase");
+  try{
+    const snap=await getDoc(sharedRef);
+    if(!snap.exists()){
+      await window.firebaseSave();
+    }else{
+      const r=snap.data();
+      if(window.applyFirebaseState){
+        window.applyFirebaseState({
+          data:r.data?JSON.parse(r.data):undefined,
+          monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
+          patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
+          annotations:typeof r.annotations==='string'?r.annotations:undefined
+        });
+      }
+
+      onSnapshot(sharedRef,snapshot=>{
+        if(!snapshot.exists()||window.firebaseWriting)return;
+        const r=snapshot.data();
+        if(window.applyFirebaseState){
+          window.applyFirebaseState({
+            data:r.data?JSON.parse(r.data):undefined,
+            monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
+            patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
+            annotations:typeof r.annotations==='string'?r.annotations:undefined
+          });
+        }
+      });
+    }
+  }catch(e){
+    console.error(e);
+  }
+});
+
 initFirebase();
 </script>
 
 <script>
 let annotations=localStorage.getItem('finaryAnnotations')||'';
-let data=JSON.parse(localStorage.getItem('finaryData'))||{immobilier:[],epargne:[],assurancevie:[],bourse:[],crypto:[],autres:[],dettes:[],budgetRevenus:[],budgetFixes:[],budgetDepenses:[]};
+let data=JSON.parse(localStorage.getItem('finaryData'))||{
+  immobilier:[],
+  epargne:[],
+  assurancevie:[],
+  bourse:[],
+  crypto:[],
+  autres:[],
+  dettes:[],
+  budgetRevenus:[],
+  budgetFixes:[],
+  budgetDepenses:[]
+};
 let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[];
 let patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
-window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;
 
-window.applyFirebaseState=function(remote){if(remote.data)data=remote.data;if(remote.monthHistory)monthHistory=remote.monthHistory;if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;if(typeof remote.annotations==='string')annotations=remote.annotations;window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;saveLocalOnly();render()};
-const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);let currentActiveTab='budget';
-function switchTab(t){currentActiveTab=t;document.querySelectorAll('.tab-content').forEach(e=>e.classList.toggle('active',e.id==='tab-'+t));document.querySelectorAll('.tab-btn').forEach(e=>e.classList.toggle('active',e.innerText.includes(t==='budget'?'Budget':'Patrimoine')))}
+window.data=data;
+window.monthHistory=monthHistory;
+window.patrimoineHistory=patrimoineHistory;
+window.annotations=annotations;
+
+window.applyFirebaseState=function(remote){
+  if(remote.data)data=remote.data;
+  if(remote.monthHistory)monthHistory=remote.monthHistory;
+  if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
+  if(typeof remote.annotations==='string')annotations=remote.annotations;
+  window.data=data;
+  window.monthHistory=monthHistory;
+  window.patrimoineHistory=patrimoineHistory;
+  window.annotations=annotations;
+  saveLocalOnly();
+  render();
+};
+
+const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
+let currentActiveTab='budget';
+
+function switchTab(t){
+  currentActiveTab=t;
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.toggle('active',e.id==='tab-'+t));
+  document.querySelectorAll('.tab-btn').forEach(e=>e.classList.toggle('active',e.innerText.includes(t==='budget'?'Budget':'Patrimoine')));
+}
+
 let touchStartX=0,touchStartY=0;
-document.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX;touchStartY=e.changedTouches[0].screenY},{passive:true});
-document.addEventListener('touchend',e=>{let x=e.changedTouches[0].screenX,y=e.changedTouches[0].screenY,dx=x-touchStartX,dy=y-touchStartY;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){if(dx<0&&currentActiveTab==='budget')switchTab('patrimoine');else if(dx>0&&currentActiveTab==='patrimoine')switchTab('budget')}},{passive:true});
+document.addEventListener('touchstart',e=>{
+  touchStartX=e.changedTouches[0].screenX;
+  touchStartY=e.changedTouches[0].screenY;
+},{passive:true});
+
+document.addEventListener('touchend',e=>{
+  let x=e.changedTouches[0].screenX,
+      y=e.changedTouches[0].screenY,
+      dx=x-touchStartX,
+      dy=y-touchStartY;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0&&currentActiveTab==='budget')switchTab('patrimoine');
+    else if(dx>0&&currentActiveTab==='patrimoine')switchTab('budget');
+  }
+},{passive:true});
 
 let amountsHidden=localStorage.getItem('finaryHideAmounts')==='true';
-function toggleHideAmounts(){amountsHidden=!amountsHidden;localStorage.setItem('finaryHideAmounts',amountsHidden);applyHideAmountsState()}
-function applyHideAmountsState(){const btns=document.querySelectorAll('.toggleAmountsBtn');if(amountsHidden){document.body.classList.add('hide-amounts');btns.forEach(b=>b.textContent='🙈 Masquer')}else{document.body.classList.remove('hide-amounts');btns.forEach(b=>b.textContent='👁️ Afficher')}}
 
-/* LOGIQUE DU SCHÉMA DE VERROUILLAGE (TRAITS PERSISTANTS ET ÉLÉMENTS AFFINÉS) */
+function toggleHideAmounts(){
+  amountsHidden=!amountsHidden;
+  localStorage.setItem('finaryHideAmounts',amountsHidden);
+  applyHideAmountsState();
+}
+
+function applyHideAmountsState(){
+  const btns=document.querySelectorAll('.toggleAmountsBtn');
+  if(amountsHidden){
+    document.body.classList.add('hide-amounts');
+    btns.forEach(b=>b.textContent='🙈 Masquer');
+  }else{
+    document.body.classList.remove('hide-amounts');
+    btns.forEach(b=>b.textContent='👁️ Afficher');
+  }
+}
+
+/* LOGIQUE DU SCHÉMA DE VERROUILLAGE */
 let storedPattern = localStorage.getItem('finaryPattern') || '';
-let patternState = storedPattern ? 'unlock' : 'setup_1'; 
+let patternState = storedPattern ? 'unlock' : 'setup_1';
 let setupFirstPattern = '';
 let currentPatternSequence = [];
 let isDrawing = false;
 
+function isMobileDevice(){
+  // Détection moderne quand elle est disponible
+  if(navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean'){
+    return navigator.userAgentData.mobile;
+  }
+
+  // Compatibilité avec les navigateurs qui n'exposent pas userAgentData
+  return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
+
 function initPatternLock(){
   const overlay = document.getElementById('patternLockOverlay');
-  if(!storedPattern && patternState === 'unlock') patternState = 'setup_1';
-  
+  const patternSec = document.getElementById('patternSection');
+  const passSec = document.getElementById('passwordSection');
+  const title = document.getElementById('patternTitle');
+  const subtitle = document.getElementById('patternSubtitle');
+  const toggleBtn = document.getElementById('togglePasswordModeBtn');
+  const resetBtn = document.getElementById('patternResetBtn');
+
+  const mobile = isMobileDevice();
+
+  // =====================================================
+  // ORDINATEUR : MOT DE PASSE UNIQUEMENT
+  // =====================================================
+  if(!mobile){
+    overlay.style.display = 'flex';
+
+    patternSec.style.display = 'none';
+    passSec.style.display = 'flex';
+
+    title.textContent = 'Entrez votre mot de passe :';
+
+    if(subtitle){
+      subtitle.style.display = 'none';
+    }
+
+    if(toggleBtn){
+      toggleBtn.style.display = 'none';
+    }
+
+    if(resetBtn){
+      resetBtn.style.display = 'none';
+    }
+
+    setTimeout(()=>{
+      const input = document.getElementById('fallbackPasswordInput');
+
+      if(input){
+        input.value = '';
+        input.focus();
+      }
+    },100);
+
+    return;
+  }
+
+  // =====================================================
+  // SMARTPHONE / TABLETTE : SCHÉMA + MOT DE PASSE
+  // =====================================================
+  patternSec.style.display = 'flex';
+  passSec.style.display = 'none';
+
+  if(subtitle){
+    subtitle.style.display = '';
+  }
+
+  if(!storedPattern && patternState === 'unlock'){
+    patternState = 'setup_1';
+  }
+
   if(!storedPattern && patternState === 'setup_1'){
-    document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
-    document.getElementById('patternSubtitle').textContent = 'Dessinez un schéma de sécurité (minimum 4 points).';
-    document.getElementById('patternResetBtn').style.display = 'none';
-    document.getElementById('togglePasswordModeBtn').style.display = 'none';
+    title.textContent = 'Dessinez un schéma de déverrouillage :';
+
+    if(subtitle){
+      subtitle.textContent = 'Dessinez un schéma de sécurité (minimum 4 points).';
+    }
+
+    if(resetBtn){
+      resetBtn.style.display = 'none';
+    }
+
+    if(toggleBtn){
+      toggleBtn.style.display = 'none';
+    }
+
     overlay.style.display = 'flex';
+
   }else if(storedPattern){
-    document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
-    document.getElementById('patternSubtitle').textContent = 'Dessinez votre schéma ou utilisez le mot de passe.';
-    document.getElementById('patternResetBtn').style.display = 'none';
-    document.getElementById('togglePasswordModeBtn').style.display = 'block';
+    title.textContent = 'Dessinez un schéma de déverrouillage :';
+
+    if(subtitle){
+      subtitle.textContent = 'Dessinez votre schéma ou utilisez le mot de passe.';
+    }
+
+    if(resetBtn){
+      resetBtn.style.display = 'none';
+    }
+
+    if(toggleBtn){
+      toggleBtn.style.display = 'block';
+    }
+
     overlay.style.display = 'flex';
+
   }else{
     overlay.style.display = 'none';
   }
 }
 
 function togglePasswordMode(){
+  // Sur ordinateur, l'accès reste exclusivement par mot de passe
+  if(!isMobileDevice()){
+    const patternSec = document.getElementById('patternSection');
+    const passSec = document.getElementById('passwordSection');
+    const title = document.getElementById('patternTitle');
+    const toggleBtn = document.getElementById('togglePasswordModeBtn');
+
+    patternSec.style.display = 'none';
+    passSec.style.display = 'flex';
+    title.textContent = 'Entrez votre mot de passe :';
+
+    if(toggleBtn){
+      toggleBtn.style.display = 'none';
+    }
+
+    setTimeout(()=>{
+      const input=document.getElementById('fallbackPasswordInput');
+      if(input)input.focus();
+    },50);
+
+    return;
+  }
+
   const patternSec = document.getElementById('patternSection');
   const passSec = document.getElementById('passwordSection');
   const title = document.getElementById('patternTitle');
+
   if(patternSec.style.display === 'none'){
     patternSec.style.display = 'flex';
     passSec.style.display = 'none';
@@ -287,6 +597,13 @@ function togglePasswordMode(){
     setTimeout(()=>document.getElementById('fallbackPasswordInput').focus(),50);
   }
 }
+
+document.getElementById('fallbackPasswordInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    checkFallbackPassword();
+  }
+});
 
 function checkFallbackPassword(){
   const input = document.getElementById('fallbackPasswordInput');
@@ -302,7 +619,7 @@ function checkFallbackPassword(){
 
 function setupPatternListeners(){
   const container = document.getElementById('patternContainer');
-  
+
   const getDotFromPoint = (x, y) => {
     const dots = container.querySelectorAll('.pattern-dot');
     for(let dot of dots){
@@ -318,8 +635,11 @@ function setupPatternListeners(){
   const startDraw = (e) => {
     isDrawing = true;
     currentPatternSequence = [];
-    container.querySelectorAll('.pattern-dot').forEach(d => {d.classList.remove('active', 'error');});
+    container.querySelectorAll('.pattern-dot').forEach(d => {
+      d.classList.remove('active', 'error');
+    });
     document.getElementById('patternPath').setAttribute('d', '');
+
     const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
     const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
     const dot = getDotFromPoint(clientX, clientY);
@@ -338,15 +658,13 @@ function setupPatternListeners(){
   const endDraw = () => {
     if(!isDrawing) return;
     isDrawing = false;
-    // Fige le tracé complet reliant tous les points sélectionnés
-    updateSvgLine(); 
+    updateSvgLine();
     if(currentPatternSequence.length > 0) evaluatePattern();
   };
 
   container.addEventListener('mousedown', startDraw);
   container.addEventListener('mousemove', moveDraw);
   window.addEventListener('mouseup', endDraw);
-
   container.addEventListener('touchstart', startDraw, {passive:true});
   container.addEventListener('touchmove', moveDraw, {passive:true});
   window.addEventListener('touchend', endDraw);
@@ -376,31 +694,35 @@ function updateSvgLine(currentX, currentY){
     document.getElementById('patternPath').setAttribute('d', '');
     return;
   }
+
   let d = '';
   for(let i = 0; i < currentPatternSequence.length; i++){
     const coords = getDotCoords(currentPatternSequence[i]);
     if(i === 0) d += `M ${coords.x} ${coords.y}`;
     else d += ` L ${coords.x} ${coords.y}`;
   }
+
   if(currentX !== undefined && currentY !== undefined && isDrawing){
     const containerRect = document.getElementById('patternContainer').getBoundingClientRect();
     const endX = currentX - containerRect.left;
     const endY = currentY - containerRect.top;
     d += ` L ${endX} ${endY}`;
   }
+
   document.getElementById('patternPath').setAttribute('d', d);
 }
 
 function evaluatePattern(){
   const seqStr = currentPatternSequence.join(',');
   const title = document.getElementById('patternTitle');
-  
+
   if(patternState === 'setup_1'){
     if(currentPatternSequence.length < 4){
       title.textContent = '❌ Trop court ! Minimum 4 points.';
       markError();
       return;
     }
+
     setupFirstPattern = seqStr;
     patternState = 'setup_2';
     title.textContent = 'Dessinez à nouveau pour confirmer :';
@@ -408,11 +730,13 @@ function evaluatePattern(){
     currentPatternSequence = [];
     document.getElementById('patternPath').setAttribute('d', '');
     document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active'));
+
   }else if(patternState === 'setup_2'){
     if(seqStr === setupFirstPattern){
       storedPattern = seqStr;
       localStorage.setItem('finaryPattern', storedPattern);
       title.textContent = '✅ Schéma enregistré !';
+
       setTimeout(() => {
         document.getElementById('patternLockOverlay').style.display = 'none';
         patternState = 'unlock';
@@ -425,6 +749,7 @@ function evaluatePattern(){
       setupFirstPattern = '';
       document.getElementById('patternResetBtn').style.display = 'none';
     }
+
   }else if(patternState === 'unlock'){
     if(seqStr === storedPattern){
       title.textContent = '✅ Déverrouillé';
@@ -443,6 +768,7 @@ function markError(){
     d.classList.remove('active');
     d.classList.add('error');
   });
+
   setTimeout(() => {
     document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('error'));
     currentPatternSequence = [];
@@ -477,150 +803,899 @@ function disablePatternLock(){
   alert("Verrouillage désactivé.");
 }
 
-let activeModalKey='';
-function openModal(key){activeModalKey=key;const t=document.getElementById('modalTitle');if(key==='budgetDepenses')t.textContent='Ajouter une dépense';else if(key==='budgetFixes')t.textContent='Ajouter un frais fixe';else if(key==='budgetRevenus')t.textContent='Ajouter une entrée';document.getElementById('modalLabel').value='';document.getElementById('modalAmount').value='';document.getElementById('genericModal').classList.add('active');setTimeout(()=>document.getElementById('modalLabel').focus(),50)}
-function closeModal(){document.getElementById('genericModal').classList.remove('active');activeModalKey=''}
-function submitModal(){if(!activeModalKey)return;const label=document.getElementById('modalLabel').value.trim(),amountVal=document.getElementById('modalAmount').value,amount=amountVal===''?0:Number(amountVal);if(!data[activeModalKey])data[activeModalKey]=[];data[activeModalKey].unshift([label,amount,false]);closeModal();render();save()}
 
+/* =========================================================
+   MODALE BUDGET : AJOUT + MODIFICATION
+   ========================================================= */
+
+let activeModalKey='';
+let activeModalMode='add';
+let activeModalIndex=-1;
+
+function openModal(key){
+  activeModalKey=key;
+  activeModalMode='add';
+  activeModalIndex=-1;
+
+  const title=document.getElementById('modalTitle');
+
+  if(key==='budgetDepenses') title.textContent='Ajouter une dépense';
+  else if(key==='budgetFixes') title.textContent='Ajouter un frais fixe';
+  else if(key==='budgetRevenus') title.textContent='Ajouter une entrée';
+
+  document.getElementById('modalCurrent').style.display='none';
+
+  document.getElementById('modalLabelTitle').textContent='Libellé';
+  document.getElementById('modalAmountTitle').textContent='Montant (€)';
+
+  const labelInput=document.getElementById('modalLabel');
+  const amountInput=document.getElementById('modalAmount');
+
+  labelInput.value='';
+  amountInput.value='';
+  labelInput.placeholder='Ex: Loyer, Salaire, Courses...';
+  amountInput.placeholder='0';
+
+  document.getElementById('modalSubmitBtn').textContent='Ajouter';
+
+  document.getElementById('genericModal').classList.add('active');
+  setTimeout(()=>labelInput.focus(),50);
+}
+
+function openBudgetEditModal(key,index){
+  if(!data[key] || !data[key][index]) return;
+
+  activeModalKey=key;
+  activeModalMode='edit';
+  activeModalIndex=index;
+
+  const item=data[key][index];
+  const title=document.getElementById('modalTitle');
+
+  if(key==='budgetDepenses') title.textContent='Modifier la dépense';
+  else if(key==='budgetFixes') title.textContent='Modifier le frais fixe';
+  else if(key==='budgetRevenus') title.textContent="Modifier l'entrée";
+  else title.textContent='Modifier';
+
+  const currentBox=document.getElementById('modalCurrent');
+  currentBox.style.display='block';
+
+  document.getElementById('modalCurrentLabel').textContent=item[0] || 'Sans libellé';
+  document.getElementById('modalCurrentAmount').textContent='Montant actuel : '+euro(Number(item[1]) || 0);
+
+  document.getElementById('modalLabelTitle').textContent='Libellé';
+  document.getElementById('modalAmountTitle').textContent='Nouveau montant (€)';
+
+  const labelInput=document.getElementById('modalLabel');
+  const amountInput=document.getElementById('modalAmount');
+
+  /* Libellé prérempli et modifiable ; montant volontairement vide */
+  labelInput.value=item[0] || '';
+  amountInput.value='';
+
+  labelInput.placeholder='Modifier le libellé';
+  amountInput.placeholder='Laisser vide pour conserver';
+
+  document.getElementById('modalSubmitBtn').textContent='Enregistrer';
+
+  document.getElementById('genericModal').classList.add('active');
+  setTimeout(()=>labelInput.focus(),50);
+}
+
+function closeModal(){
+  document.getElementById('genericModal').classList.remove('active');
+  activeModalKey='';
+  activeModalMode='add';
+  activeModalIndex=-1;
+}
+
+function submitModal(){
+  if(!activeModalKey) return;
+
+  const labelInput=document.getElementById('modalLabel');
+  const amountInput=document.getElementById('modalAmount');
+
+  const label=labelInput.value.trim();
+  const amountVal=amountInput.value;
+
+  /* MODIFICATION */
+  if(activeModalMode==='edit'){
+    if(
+      activeModalIndex<0 ||
+      !data[activeModalKey] ||
+      !data[activeModalKey][activeModalIndex]
+    ) return;
+
+    const item=data[activeModalKey][activeModalIndex];
+
+    if(label!==''){
+      item[0]=label;
+    }
+
+    if(amountVal!==''){
+      const amount=Number(amountVal);
+
+      if(!Number.isFinite(amount)){
+        amountInput.focus();
+        return;
+      }
+
+      item[1]=amount;
+    }
+
+    closeModal();
+    render();
+    save();
+    return;
+  }
+
+  /* AJOUT */
+  const amount=amountVal==='' ? 0 : Number(amountVal);
+
+  if(!data[activeModalKey]){
+    data[activeModalKey]=[];
+  }
+
+  data[activeModalKey].unshift([
+    label,
+    Number.isFinite(amount) ? amount : 0,
+    false
+  ]);
+
+  closeModal();
+  render();
+  save();
+}
+
+
+/* MODALE MONTANT PATRIMOINE */
 let patrimoineAmountKey='',patrimoineAmountIndex=-1;
 const patrimoineKeys=['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'];
-function openPatrimoineAmountModal(key,index){if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;patrimoineAmountKey=key;patrimoineAmountIndex=index;document.getElementById('patrimoineAmountTitle').textContent='Modifier le montant';document.getElementById('patrimoineAmountInput').value='';document.getElementById('patrimoineAmountModal').classList.add('active');setTimeout(()=>document.getElementById('patrimoineAmountInput').focus(),50)}
-function closePatrimoineAmountModal(){document.getElementById('patrimoineAmountModal').classList.remove('active');patrimoineAmountKey='';patrimoineAmountIndex=-1}
-function submitPatrimoineAmount(){if(!patrimoineAmountKey||patrimoineAmountIndex<0)return;const input=document.getElementById('patrimoineAmountInput');if(input.value.trim()===''){input.focus();return}const value=Number(input.value);if(!Number.isFinite(value)||value<0){input.focus();return}if(data[patrimoineAmountKey]&&data[patrimoineAmountKey][patrimoineAmountIndex]){data[patrimoineAmountKey][patrimoineAmountIndex][1]=value}closePatrimoineAmountModal();render();save()}
 
-function openAnnotationsModal(){document.getElementById('annotationsDisplay').textContent=annotations||'Aucune annotation enregistrée.';document.getElementById('annotationsView').style.display='block';document.getElementById('annotationsEdit').style.display='none';document.getElementById('annotationsModal').classList.add('active')}
-function closeAnnotationsModal(){document.getElementById('annotationsModal').classList.remove('active')}
-function editAnnotations(){document.getElementById('annotationsInput').value=annotations||'';document.getElementById('annotationsView').style.display='none';document.getElementById('annotationsEdit').style.display='block';setTimeout(()=>document.getElementById('annotationsInput').focus(),50)}
-function cancelEditAnnotations(){document.getElementById('annotationsView').style.display='block';document.getElementById('annotationsEdit').style.display='none'}
-function saveAnnotations(){annotations=document.getElementById('annotationsInput').value;save();document.getElementById('annotationsDisplay').textContent=annotations||'Aucune annotation enregistrée.';document.getElementById('annotationsView').style.display='block';document.getElementById('annotationsEdit').style.display='none'}
+function openPatrimoineAmountModal(key,index){
+  if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;
+  patrimoineAmountKey=key;
+  patrimoineAmountIndex=index;
+  document.getElementById('patrimoineAmountTitle').textContent='Modifier le montant';
+  document.getElementById('patrimoineAmountInput').value='';
+  document.getElementById('patrimoineAmountModal').classList.add('active');
+  setTimeout(()=>document.getElementById('patrimoineAmountInput').focus(),50);
+}
 
+function closePatrimoineAmountModal(){
+  document.getElementById('patrimoineAmountModal').classList.remove('active');
+  patrimoineAmountKey='';
+  patrimoineAmountIndex=-1;
+}
+
+function submitPatrimoineAmount(){
+  if(!patrimoineAmountKey||patrimoineAmountIndex<0)return;
+
+  const input=document.getElementById('patrimoineAmountInput');
+
+  if(input.value.trim()===''){
+    input.focus();
+    return;
+  }
+
+  const value=Number(input.value);
+
+  if(!Number.isFinite(value)||value<0){
+    input.focus();
+    return;
+  }
+
+  if(data[patrimoineAmountKey]&&data[patrimoineAmountKey][patrimoineAmountIndex]){
+    data[patrimoineAmountKey][patrimoineAmountIndex][1]=value;
+  }
+
+  closePatrimoineAmountModal();
+  render();
+  save();
+}
+
+
+/* ANNOTATIONS */
+function openAnnotationsModal(){
+  document.getElementById('annotationsDisplay').textContent=annotations||'Aucune annotation enregistrée.';
+  document.getElementById('annotationsView').style.display='block';
+  document.getElementById('annotationsEdit').style.display='none';
+  document.getElementById('annotationsModal').classList.add('active');
+}
+
+function closeAnnotationsModal(){
+  document.getElementById('annotationsModal').classList.remove('active');
+}
+
+function editAnnotations(){
+  document.getElementById('annotationsInput').value=annotations||'';
+  document.getElementById('annotationsView').style.display='none';
+  document.getElementById('annotationsEdit').style.display='block';
+  setTimeout(()=>document.getElementById('annotationsInput').focus(),50);
+}
+
+function cancelEditAnnotations(){
+  document.getElementById('annotationsView').style.display='block';
+  document.getElementById('annotationsEdit').style.display='none';
+}
+
+function saveAnnotations(){
+  annotations=document.getElementById('annotationsInput').value;
+  save();
+  document.getElementById('annotationsDisplay').textContent=annotations||'Aucune annotation enregistrée.';
+  document.getElementById('annotationsView').style.display='block';
+  document.getElementById('annotationsEdit').style.display='none';
+}
+
+
+/* RENDU */
 function render(){
-  ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes','budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
-    const cont=document.querySelector(`.rows-container[data-key="${key}"]`);if(!cont)return;cont.innerHTML='';if(!Array.isArray(data[key]))data[key]=[];
+  [
+    'immobilier',
+    'epargne',
+    'assurancevie',
+    'bourse',
+    'crypto',
+    'autres',
+    'dettes',
+    'budgetRevenus',
+    'budgetFixes',
+    'budgetDepenses'
+  ].forEach(key=>{
+
+    const cont=document.querySelector(`.rows-container[data-key="${key}"]`);
+    if(!cont)return;
+
+    cont.innerHTML='';
+
+    if(!Array.isArray(data[key]))data[key]=[];
+
     data[key].forEach((item,idx)=>{
-      const row=document.createElement('div'),isBudget=key.startsWith('budget');
+      const row=document.createElement('div');
+      const isBudget=key.startsWith('budget');
+
       if(isBudget){
-        row.className=`row ${item[2]?'paid':''}`;
-        row.innerHTML=`<input type="checkbox" ${item[2]?'checked':''} onchange="togglePaid('${key}',${idx})"><input type="text" value="${escapeHtml(item[0]||'')}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé"><input type="number" value="${item[1]===0?'':item[1]}" oninput="update('${key}',${idx},1,this.value)" placeholder="0"><button class="btn-del" onclick="del('${key}',${idx})">×</button>`;
+        row.className=`row budget-row ${item[2]?'paid':''}`;
+
+        row.innerHTML=`
+          <input
+            type="checkbox"
+            ${item[2]?'checked':''}
+            onclick="event.stopPropagation()"
+            onchange="togglePaid('${key}',${idx})"
+            title="Cocher / décocher"
+          >
+
+          <div class="budget-line-label" title="Cliquer pour modifier">
+            ${escapeHtml(item[0] || 'Sans libellé')}
+          </div>
+
+          <div class="budget-line-amount" title="Cliquer pour modifier">
+            ${euro(Number(item[1]) || 0)}
+          </div>
+
+          <button
+            class="btn-del"
+            onclick="event.stopPropagation();del('${key}',${idx})"
+            title="Supprimer"
+          >
+            ×
+          </button>
+        `;
+
+        row.onclick=()=>{
+          openBudgetEditModal(key,idx);
+        };
+
       }else{
         row.className='row patrimoine-row';
-        row.innerHTML=`<input type="text" value="${escapeHtml(item[0]||'')}" oninput="update('${key}',${idx},0,this.value)" placeholder="Libellé"><input type="number" value="${item[1]===0?'':item[1]}" placeholder="0" readonly onclick="openPatrimoineAmountModal('${key}',${idx})" title="Cliquer pour modifier le montant"><button class="btn-del" onclick="delPatrimoine('${key}',${idx})">×</button>`;
+
+        row.innerHTML=`
+          <input
+            type="text"
+            value="${escapeHtml(item[0]||'')}"
+            oninput="update('${key}',${idx},0,this.value)"
+            placeholder="Libellé"
+          >
+
+          <input
+            type="number"
+            value="${item[1]===0?'':item[1]}"
+            placeholder="0"
+            readonly
+            onclick="openPatrimoineAmountModal('${key}',${idx})"
+            title="Cliquer pour modifier le montant"
+          >
+
+          <button
+            class="btn-del"
+            onclick="delPatrimoine('${key}',${idx})"
+          >
+            ×
+          </button>
+        `;
       }
+
       cont.appendChild(row);
     });
   });
-  updateTotals();renderHistory();recordPatrimoineSnapshot();renderChart();renderAssetDistribution();
+
+  updateTotals();
+  renderHistory();
+  recordPatrimoineSnapshot();
+  renderChart();
+  renderAssetDistribution();
 }
 
-function escapeHtml(v){return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function update(k,i,p,v){if(!data[k][i])return;data[k][i][p]=p===0?v:(v===''?0:Number(v));if(p!==0)updateTotals();save()}
-function togglePaid(k,i){if(!data[k][i])return;data[k][i][2]=!data[k][i][2];render();save()}
-function addItem(k){if(!data[k])data[k]=[];data[k].push(['',0]);render();save();const cs=document.querySelectorAll(`[data-key="${k}"]`),c=cs[cs.length-1];if(c){const i=c.querySelectorAll('input')[0];if(i){i.focus();i.select()}}}
-function delPatrimoine(k,i){if(!data[k]||!data[k][i])return;const label=data[k][i][0]||'cet élément';if(!confirm(`Voulez-vous vraiment supprimer « ${label} » ?`))return;data[k].splice(i,1);render();save()}
-function del(k,i){data[k].splice(i,1);render();save()}
-function clearList(k){data[k]=[];render();save()}
-function saveLocalOnly(){localStorage.setItem('finaryData',JSON.stringify(data));localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));localStorage.setItem('finaryAnnotations',annotations)}
-function save(){window.data=data;window.monthHistory=monthHistory;window.patrimoineHistory=patrimoineHistory;window.annotations=annotations;saveLocalOnly();if(window.firebaseSave)window.firebaseSave()}
-function calculateNet(){const keys=['immobilier','epargne','assurancevie','bourse','crypto','autres'];const assets=keys.reduce((s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),0),debts=(data.dettes||[]).reduce((s,i)=>s+(i[1]||0),0);return{assets,debts,net:assets-debts}}
-function calculateLiquidInvestments(){return ['epargne','assurancevie','bourse','crypto','autres'].reduce((s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),0)}
-function updateTotals(){const c=calculateNet();document.getElementById('net').textContent=euro(c.net);document.getElementById('gross').textContent=euro(c.assets);document.getElementById('assets').textContent=euro(c.assets);document.getElementById('debts').textContent=euro(c.debts);document.getElementById('savings').textContent=euro((data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0));document.getElementById('investments').textContent=euro((data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+(data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0));['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{const e=document.getElementById(`total-${k}`);if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0))});const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0),fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0),dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0),rv=rev-fixes-dep;[['total-budgetRevenus',rev],['total-budgetFixes',-fixes],['total-budgetDepenses',-dep]].forEach(([id,value])=>{const el=document.getElementById(id);if(el){el.textContent=euro(value);el.classList.toggle('negative',value<0)}});const e=document.getElementById('budget-reste-vivre');e.textContent=euro(rv);e.className='total '+(rv>=0?'green':'red')}
-function recordPatrimoineSnapshot(){const today=new Date().toISOString().split('T')[0],currentVal=calculateLiquidInvestments(),existing=patrimoineHistory.find(h=>h.date===today);if(existing)existing.net=currentVal;else{patrimoineHistory.push({date:today,net:currentVal});patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date))}}
-function resetPatrimoineChart(){if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){patrimoineHistory=[];localStorage.removeItem('finaryPatrimoineHistory');recordPatrimoineSnapshot();render();save()}}
+function escapeHtml(v){
+  return String(v)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+function update(k,i,p,v){
+  if(!data[k][i])return;
+  data[k][i][p]=p===0?v:(v===''?0:Number(v));
+  if(p!==0)updateTotals();
+  save();
+}
+
+function togglePaid(k,i){
+  if(!data[k][i])return;
+  data[k][i][2]=!data[k][i][2];
+  render();
+  save();
+}
+
+function addItem(k){
+  if(!data[k])data[k]=[];
+  data[k].push(['',0]);
+  render();
+  save();
+
+  const cs=document.querySelectorAll(`[data-key="${k}"]`);
+  const c=cs[cs.length-1];
+
+  if(c){
+    const i=c.querySelectorAll('input')[0];
+    if(i){
+      i.focus();
+      i.select();
+    }
+  }
+}
+
+function delPatrimoine(k,i){
+  if(!data[k]||!data[k][i])return;
+
+  const label=data[k][i][0]||'cet élément';
+
+  if(!confirm(`Voulez-vous vraiment supprimer « ${label} » ?`))return;
+
+  data[k].splice(i,1);
+  render();
+  save();
+}
+
+function del(k,i){
+  data[k].splice(i,1);
+  render();
+  save();
+}
+
+function clearList(k){
+  data[k]=[];
+  render();
+  save();
+}
+
+function saveLocalOnly(){
+  localStorage.setItem('finaryData',JSON.stringify(data));
+  localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));
+  localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));
+  localStorage.setItem('finaryAnnotations',annotations);
+}
+
+function save(){
+  window.data=data;
+  window.monthHistory=monthHistory;
+  window.patrimoineHistory=patrimoineHistory;
+  window.annotations=annotations;
+
+  saveLocalOnly();
+
+  if(window.firebaseSave)window.firebaseSave();
+}
+
+function calculateNet(){
+  const keys=['immobilier','epargne','assurancevie','bourse','crypto','autres'];
+
+  const assets=keys.reduce(
+    (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
+    0
+  );
+
+  const debts=(data.dettes||[]).reduce(
+    (s,i)=>s+(i[1]||0),
+    0
+  );
+
+  return{
+    assets,
+    debts,
+    net:assets-debts
+  };
+}
+
+function calculateLiquidInvestments(){
+  return ['epargne','assurancevie','bourse','crypto','autres'].reduce(
+    (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
+    0
+  );
+}
+
+function updateTotals(){
+  const c=calculateNet();
+
+  document.getElementById('net').textContent=euro(c.net);
+  document.getElementById('gross').textContent=euro(c.assets);
+  document.getElementById('assets').textContent=euro(c.assets);
+  document.getElementById('debts').textContent=euro(c.debts);
+
+  document.getElementById('savings').textContent=euro(
+    (data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0)
+  );
+
+  document.getElementById('investments').textContent=euro(
+    (data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+
+    (data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0)
+  );
+
+  ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{
+    const e=document.getElementById(`total-${k}`);
+    if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0));
+  });
+
+  const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const rv=rev-fixes-dep;
+
+  [
+    ['total-budgetRevenus',rev],
+    ['total-budgetFixes',-fixes],
+    ['total-budgetDepenses',-dep]
+  ].forEach(([id,value])=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.textContent=euro(value);
+      el.classList.toggle('negative',value<0);
+    }
+  });
+
+  const e=document.getElementById('budget-reste-vivre');
+  e.textContent=euro(rv);
+  e.className='total '+(rv>=0?'green':'red');
+}
+
+function recordPatrimoineSnapshot(){
+  const today=new Date().toISOString().split('T')[0];
+  const currentVal=calculateLiquidInvestments();
+  const existing=patrimoineHistory.find(h=>h.date===today);
+
+  if(existing){
+    existing.net=currentVal;
+  }else{
+    patrimoineHistory.push({
+      date:today,
+      net:currentVal
+    });
+    patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  }
+}
+
+function resetPatrimoineChart(){
+  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){
+    patrimoineHistory=[];
+    localStorage.removeItem('finaryPatrimoineHistory');
+    recordPatrimoineSnapshot();
+    render();
+    save();
+  }
+}
 
 function closeMonth(){
   if(!confirm("Voulez-vous vraiment clôturer le mois en cours ? Cela enregistrera l'historique, videra les dépenses et remettra les cases à zéro.")) return;
+
   const rev = (data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
   const fixes = (data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0);
   const dep = (data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
+
   monthHistory.unshift({
     month: new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),
-    revenus: rev, fixes: fixes, depenses: dep, resteVivre: rev - fixes - dep,
+    revenus: rev,
+    fixes: fixes,
+    depenses: dep,
+    resteVivre: rev - fixes - dep,
     revenusDetails: JSON.parse(JSON.stringify(data.budgetRevenus || [])),
     fixesDetails: JSON.parse(JSON.stringify(data.budgetFixes || [])),
     depensesDetails: JSON.parse(JSON.stringify(data.budgetDepenses || []))
   });
+
   data.budgetDepenses = [];
-  if(data.budgetFixes) data.budgetFixes.forEach(item => item[2] = false);
-  if(data.budgetRevenus) data.budgetRevenus.forEach(item => item[2] = false);
-  render(); save();
+
+  if(data.budgetFixes){
+    data.budgetFixes.forEach(item => item[2] = false);
+  }
+
+  if(data.budgetRevenus){
+    data.budgetRevenus.forEach(item => item[2] = false);
+  }
+
+  render();
+  save();
 }
 
-function normalizeText(str){if(!str)return '';return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
-function matchesQuery(label,amount,rawQuery){if(!rawQuery)return true;const q=normalizeText(rawQuery),normalizedLabel=normalizeText(label);if(normalizedLabel.includes(q))return true;const amountStr=String(amount),qNormalized=q.replace(',','.');if(amountStr.includes(qNormalized))return true;if(amountStr.includes(q))return true;return false}
+function normalizeText(str){
+  if(!str)return '';
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase();
+}
+
+function matchesQuery(label,amount,rawQuery){
+  if(!rawQuery)return true;
+
+  const q=normalizeText(rawQuery);
+  const normalizedLabel=normalizeText(label);
+
+  if(normalizedLabel.includes(q))return true;
+
+  const amountStr=String(amount);
+  const qNormalized=q.replace(',','.');
+
+  if(amountStr.includes(qNormalized))return true;
+  if(amountStr.includes(q))return true;
+
+  return false;
+}
 
 function renderHistory(){
   const c = document.getElementById('history-container');
   if(!c) return;
-  if(!monthHistory.length){c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun mois clôturé pour l\'instant</div>';return;}
+
+  if(!monthHistory.length){
+    c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun mois clôturé pour l\'instant</div>';
+    return;
+  }
+
   const query = (document.getElementById('historySearchInput')?.value || '').trim();
-  const filteredHistory = monthHistory.map((m, originalIdx) => ({m, originalIdx})).filter(({m}) => {
-    if(!query) return true;
-    if(normalizeText(m.month).includes(normalizeText(query))) return true;
-    if(m.resteVivre.toString().includes(query.replace(',', '.'))) return true;
-    const allItems = [...(m.revenusDetails||[]), ...(m.fixesDetails||[]), ...(m.depensesDetails||[])];
-    return allItems.some(item => matchesQuery(item[0], item[1], query));
-  });
-  if(!filteredHistory.length){c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun résultat trouvé</div>';return;}
+
+  const filteredHistory = monthHistory
+    .map((m, originalIdx) => ({m, originalIdx}))
+    .filter(({m}) => {
+      if(!query) return true;
+      if(normalizeText(m.month).includes(normalizeText(query))) return true;
+      if(m.resteVivre.toString().includes(query.replace(',', '.'))) return true;
+
+      const allItems = [
+        ...(m.revenusDetails||[]),
+        ...(m.fixesDetails||[]),
+        ...(m.depensesDetails||[])
+      ];
+
+      return allItems.some(item => matchesQuery(item[0], item[1], query));
+    });
+
+  if(!filteredHistory.length){
+    c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun résultat trouvé</div>';
+    return;
+  }
+
   let h = '<table class="history-table"><thead><tr><th>Mois</th><th style="text-align:right">Reste à vivre</th><th style="width:30px"></th></tr></thead><tbody>';
+
   filteredHistory.forEach(({m, originalIdx})=>{
     h += `<tr class="history-clickable" onclick="openHistoryMonthModal(${originalIdx})"><td><strong>${escapeHtml(m.month)}</strong></td><td style="text-align:right;font-weight:600;color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</td><td style="text-align:right;color:#8b949e">➔</td></tr>`;
   });
+
   h += '</tbody></table>';
   c.innerHTML = h;
 }
 
 let currentOpenedHistoryIndex = null;
-function openHistoryMonthModal(index){currentOpenedHistoryIndex=index;const m=monthHistory[index];if(!m)return;document.getElementById('historyMonthTitle').textContent=`Mois : ${m.month}`;const searchInput=document.getElementById('historyModalSearchInput');if(searchInput)searchInput.value='';renderHistoryMonthModalContent(m);document.getElementById('historyMonthModal').classList.add('active')}
-function filterHistoryMonthModal(){if(currentOpenedHistoryIndex===null)return;const m=monthHistory[currentOpenedHistoryIndex];if(!m)return;renderHistoryMonthModalContent(m)}
+
+function openHistoryMonthModal(index){
+  currentOpenedHistoryIndex=index;
+
+  const m=monthHistory[index];
+  if(!m)return;
+
+  document.getElementById('historyMonthTitle').textContent=`Mois : ${m.month}`;
+
+  const searchInput=document.getElementById('historyModalSearchInput');
+  if(searchInput)searchInput.value='';
+
+  renderHistoryMonthModalContent(m);
+  document.getElementById('historyMonthModal').classList.add('active');
+}
+
+function filterHistoryMonthModal(){
+  if(currentOpenedHistoryIndex===null)return;
+
+  const m=monthHistory[currentOpenedHistoryIndex];
+  if(!m)return;
+
+  renderHistoryMonthModalContent(m);
+}
+
 function renderHistoryMonthModalContent(m){
   const query = (document.getElementById('historyModalSearchInput')?.value || '').trim();
-  let content = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;"><div class="stat"><span>Revenus</span><strong>${euro(m.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(m.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(m.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong style="color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</strong></div></div>`;
+
+  let content = `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+      <div class="stat"><span>Revenus</span><strong>${euro(m.revenus)}</strong></div>
+      <div class="stat"><span>Frais fixes</span><strong>${euro(m.fixes)}</strong></div>
+      <div class="stat"><span>Dépenses</span><strong>${euro(m.depenses)}</strong></div>
+      <div class="stat"><span>Reste à vivre</span><strong style="color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</strong></div>
+    </div>
+  `;
+
   const renderSection = (title, items) => {
     const filteredItems = (items || []).filter(it => matchesQuery(it[0], it[1], query));
+
     if(!filteredItems.length && query) return '';
-    if(!items || !items.length) return `<div class="history-view-section"><h4>${title}</h4><div class="history-view-empty">Aucun élément</div></div>`;
+
+    if(!items || !items.length){
+      return `<div class="history-view-section"><h4>${title}</h4><div class="history-view-empty">Aucun élément</div></div>`;
+    }
+
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
-    filteredItems.forEach(it => {html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`});
+
+    filteredItems.forEach(it => {
+      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
+    });
+
     html += `</div>`;
     return html;
   };
+
   let secRev = renderSection('📥 Entrées', m.revenusDetails);
   let secFix = renderSection('🏠 Frais fixes', m.fixesDetails);
   let secDep = renderSection('🛒 Dépenses', m.depensesDetails);
-  if(query && !secRev && !secFix && !secDep) content += `<div class="muted" style="text-align:center;padding:12px">Aucun résultat pour "${escapeHtml(query)}"</div>`;
-  else content += secRev + secFix + secDep;
+
+  if(query && !secRev && !secFix && !secDep){
+    content += `<div class="muted" style="text-align:center;padding:12px">Aucun résultat pour "${escapeHtml(query)}"</div>`;
+  }else{
+    content += secRev + secFix + secDep;
+  }
+
   document.getElementById('historyMonthContent').innerHTML = content;
 }
-function closeHistoryMonthModal(){currentOpenedHistoryIndex=null;document.getElementById('historyMonthModal').classList.remove('active')}
-function resetHistory(){if(!confirm("Voulez-vous vraiment effacer tout l'historique des mois clôturés ?"))return;monthHistory=[];save();renderHistory()}
-function exportData(){const exportObj={data,monthHistory,patrimoineHistory,annotations};const blob=new Blob([JSON.stringify(exportObj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`budget_patrimoine_${new Date().toISOString().split('T')[0]}.json`;a.click();URL.revokeObjectURL(url)}
-function importData(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){try{const imported=JSON.parse(e.target.result);if(imported.data)data=imported.data;if(imported.monthHistory)monthHistory=imported.monthHistory;if(imported.patrimoineHistory)patrimoineHistory=imported.patrimoineHistory;if(typeof imported.annotations==='string')annotations=imported.annotations;save();render();alert("Importation réussie !")}catch(err){alert("Erreur lors de l'importation du fichier.");console.error(err)}};reader.readAsText(file)}
+
+function closeHistoryMonthModal(){
+  currentOpenedHistoryIndex=null;
+  document.getElementById('historyMonthModal').classList.remove('active');
+}
+
+function resetHistory(){
+  if(!confirm("Voulez-vous vraiment effacer tout l'historique des mois clôturés ?"))return;
+  monthHistory=[];
+  save();
+  renderHistory();
+}
+
+function exportData(){
+  const exportObj={
+    data,
+    monthHistory,
+    patrimoineHistory,
+    annotations
+  };
+
+  const blob=new Blob(
+    [JSON.stringify(exportObj,null,2)],
+    {type:'application/json'}
+  );
+
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+
+  a.href=url;
+  a.download=`budget_patrimoine_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function importData(event){
+  const file=event.target.files[0];
+  if(!file)return;
+
+  const reader=new FileReader();
+
+  reader.onload=function(e){
+    try{
+      const imported=JSON.parse(e.target.result);
+
+      if(imported.data)data=imported.data;
+      if(imported.monthHistory)monthHistory=imported.monthHistory;
+      if(imported.patrimoineHistory)patrimoineHistory=imported.patrimoineHistory;
+      if(typeof imported.annotations==='string')annotations=imported.annotations;
+
+      save();
+      render();
+
+      alert("Importation réussie !");
+    }catch(err){
+      alert("Erreur lors de l'importation du fichier.");
+      console.error(err);
+    }
+  };
+
+  reader.readAsText(file);
+}
 
 function renderChart(){
-  const container=document.getElementById('chart-wrapper');if(!container)return;
-  if(!patrimoineHistory||patrimoineHistory.length<2){container.innerHTML='<div style="color:#8b949e;font-size:12px;text-align:center;padding:20px">Pas assez de données pour afficher l\'évolution (minimum 2 jours différents).</div>';return;}
-  let minVal=Math.min(...patrimoineHistory.map(d=>d.net)),maxVal=Math.max(...patrimoineHistory.map(d=>d.net));
-  if(minVal===maxVal){minVal-=100;maxVal+=100}
+  const container=document.getElementById('chart-wrapper');
+  if(!container)return;
+
+  if(!patrimoineHistory||patrimoineHistory.length<2){
+    container.innerHTML='<div style="color:#8b949e;font-size:12px;text-align:center;padding:20px">Pas assez de données pour afficher l\'évolution (minimum 2 jours différents).</div>';
+    return;
+  }
+
+  let minVal=Math.min(...patrimoineHistory.map(d=>d.net));
+  let maxVal=Math.max(...patrimoineHistory.map(d=>d.net));
+
+  if(minVal===maxVal){
+    minVal-=100;
+    maxVal+=100;
+  }
+
   const w=320,h=100,pad=10;
-  const pts=patrimoineHistory.map((d,i)=>{const x=pad+(i/(patrimoineHistory.length-1))*(w-pad*2);const y=h-pad-((d.net-minVal)/(maxVal-minVal))*(h-pad*2);return{x,y,...d}});
+
+  const pts=patrimoineHistory.map((d,i)=>{
+    const x=pad+(i/(patrimoineHistory.length-1))*(w-pad*2);
+    const y=h-pad-((d.net-minVal)/(maxVal-minVal))*(h-pad*2);
+    return{x,y,...d};
+  });
+
   let pathD=`M ${pts[0].x} ${pts[0].y}`;
-  for(let i=0;i<pts.length-1;i++){const xc=(pts[i].x+pts[i+1].x)/2,yc=(pts[i].y+pts[i+1].y)/2;pathD+=` Q ${pts[i].x} ${pts[i].y}, ${xc} ${yc}`}
+
+  for(let i=0;i<pts.length-1;i++){
+    const xc=(pts[i].x+pts[i+1].x)/2;
+    const yc=(pts[i].y+pts[i+1].y)/2;
+    pathD+=` Q ${pts[i].x} ${pts[i].y}, ${xc} ${yc}`;
+  }
+
   pathD+=` L ${pts[pts.length-1].x} ${pts[pts.length-1].y}`;
+
   let areaD=`${pathD} L ${pts[pts.length-1].x} ${h} L ${pts[0].x} ${h} Z`;
-  container.innerHTML=`<div style="position:relative"><svg class="patrimoine-chart" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs><path class="chart-area" d="${areaD}"></path><path class="chart-line" d="${pathD}"></path><line class="chart-cursor-line" id="chartCursorLine" x1="0" y1="0" x2="0" y2="${h}"></line>${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#58a6ff" style="cursor:pointer" data-date="${p.date}" data-net="${p.net}"></circle>`).join('')}</svg><div class="chart-tooltip" id="chartTooltip"></div></div>`;
+
+  container.innerHTML=`
+    <div style="position:relative">
+      <svg class="patrimoine-chart" viewBox="0 0 ${w} ${h}">
+        <defs>
+          <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#58a6ff"/>
+            <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <path class="chart-area" d="${areaD}"></path>
+        <path class="chart-line" d="${pathD}"></path>
+        <line class="chart-cursor-line" id="chartCursorLine" x1="0" y1="0" x2="0" y2="${h}"></line>
+
+        ${pts.map(p=>`
+          <circle
+            cx="${p.x}"
+            cy="${p.y}"
+            r="3.5"
+            fill="#58a6ff"
+            style="cursor:pointer"
+            data-date="${p.date}"
+            data-net="${p.net}"
+          ></circle>
+        `).join('')}
+      </svg>
+
+      <div class="chart-tooltip" id="chartTooltip"></div>
+    </div>
+  `;
 }
 
 function renderAssetDistribution(){
-  const pie=document.getElementById('asset-pie-chart'),legend=document.getElementById('asset-distribution-legend');if(!pie||!legend)return;
-  const cats=[{key:'epargne',label:'Épargne',color:'#3fb950'},{key:'assurancevie',label:'Assurance-vie',color:'#58a6ff'},{key:'bourse',label:'Bourse',color:'#a371f7'},{key:'crypto',label:'Crypto',color:'#d29922'},{key:'autres',label:'Autres',color:'#f0883e'}];
+  const pie=document.getElementById('asset-pie-chart');
+  const legend=document.getElementById('asset-distribution-legend');
+
+  if(!pie||!legend)return;
+
+  const cats=[
+    {key:'epargne',label:'Épargne',color:'#3fb950'},
+    {key:'assurancevie',label:'Assurance-vie',color:'#58a6ff'},
+    {key:'bourse',label:'Bourse',color:'#a371f7'},
+    {key:'crypto',label:'Crypto',color:'#d29922'},
+    {key:'autres',label:'Autres',color:'#f0883e'}
+  ];
+
   let total=0;
-  const items=cats.map(c=>{const val=(data[c.key]||[]).reduce((sum,i)=>sum+(i[1]||0),0);total+=val;return{...c,val}}).filter(c=>c.val>0);
-  if(total===0){pie.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:11px">Aucun actif</div>`;legend.innerHTML='';return}
-  let cumulativeAngle=0,gradientStops=[];
-  items.forEach(i=>{const percentage=(i.val/total)*100,startAngle=cumulativeAngle,endAngle=cumulativeAngle+percentage;gradientStops.push(`${i.color} ${startAngle}% ${endAngle}%`);cumulativeAngle=endAngle});
-  pie.style.background=`conic-gradient(${gradientStops.join(', ')})`;pie.style.borderRadius='50%';
-  legend.innerHTML=items.map(i=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:${i.color}"></div><span>${i.label}</span></div><strong>${euro(i.val)}</strong></div>`).join('');
+
+  const items=cats
+    .map(c=>{
+      const val=(data[c.key]||[]).reduce((sum,i)=>sum+(i[1]||0),0);
+      total+=val;
+      return{...c,val};
+    })
+    .filter(c=>c.val>0);
+
+  if(total===0){
+    pie.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:11px">Aucun actif</div>`;
+    pie.style.background='';
+    pie.style.borderRadius='';
+    legend.innerHTML='';
+    return;
+  }
+
+  let cumulativeAngle=0;
+  let gradientStops=[];
+
+  items.forEach(i=>{
+    const percentage=(i.val/total)*100;
+    const startAngle=cumulativeAngle;
+    const endAngle=cumulativeAngle+percentage;
+
+    gradientStops.push(`${i.color} ${startAngle}% ${endAngle}%`);
+    cumulativeAngle=endAngle;
+  });
+
+  pie.style.background=`conic-gradient(${gradientStops.join(', ')})`;
+  pie.style.borderRadius='50%';
+
+  legend.innerHTML=items.map(i=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:10px;height:10px;border-radius:2px;background:${i.color}"></div>
+        <span>${i.label}</span>
+      </div>
+      <strong>${euro(i.val)}</strong>
+    </div>
+  `).join('');
 }
+
+/* Entrée au clavier dans les modales */
+document.getElementById('genericModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    submitModal();
+  }
+});
+
+document.getElementById('patrimoineAmountModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    submitPatrimoineAmount();
+  }
+});
+
+/* Fermer les modales en cliquant sur le fond */
+document.getElementById('genericModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)closeModal();
+});
+
+document.getElementById('historyMonthModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)closeHistoryMonthModal();
+});
+
+document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)closePatrimoineAmountModal();
+});
+
+document.getElementById('annotationsModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)closeAnnotationsModal();
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   applyHideAmountsState();
