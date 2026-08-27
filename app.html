@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget & Patrimoine — Mobile Optimized</title>
+<title>Budget & Patrimoine</title>
+<meta name="theme-color" content="#0d1117">
+<meta name="application-name" content="Budget & Patrimoine">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Budget & Patrimoine">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -207,12 +214,66 @@ body.hide-amounts .bank-current-value,body.hide-amounts .bank-forecast-value,bod
 body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-value::after,body.hide-amounts .transfer-amount::after{content:"***";color:#c9d1d9;position:absolute;right:0;top:0}
 
 .app-footer{font-size:11px;color:#fff;text-align:center;opacity:.85;padding:6px 0 2px;}
+
+
+/* BÊTA PUBLIQUE — AUTHENTIFICATION UTILISATEUR */
+#authOverlay{position:fixed;inset:0;z-index:30000;background:#0d1117;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.auth-card{width:min(100%,390px);background:#161b22;border:1px solid #30363d;border-radius:18px;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:14px}
+.auth-brand{text-align:center}.auth-brand h1{font-size:22px;color:#fff;margin:0 0 4px}.auth-brand p{font-size:12px;color:#8b949e;margin:0}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0d1117;border:1px solid #30363d;padding:5px;border-radius:10px}
+.auth-tab{border:0;background:transparent;color:#8b949e;padding:9px;border-radius:7px;font-weight:700;cursor:pointer}.auth-tab.active{background:#238636;color:#fff}
+.auth-field{display:flex;flex-direction:column;gap:6px}.auth-field label{font-size:11px;text-transform:uppercase;color:#8b949e;font-weight:700}.auth-field input{width:100%;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:9px;color:#fff;font-size:15px;outline:none}.auth-field input:focus{border-color:#58a6ff}
+.auth-message{min-height:18px;font-size:12px;color:#8b949e;line-height:1.4}.auth-message.error{color:#f85149}.auth-message.success{color:#3fb950}
+.auth-forgot{border:0;background:transparent;color:#58a6ff;font-size:12px;cursor:pointer;padding:0;text-align:center}
+.beta-user-bar{display:none;align-items:center;justify-content:space-between;gap:8px;background:#161b22;border:1px solid #30363d;border-radius:10px;padding:7px 9px;font-size:11px;color:#8b949e}
+.beta-user-email{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.beta-user-email strong{color:#c9d1d9}
+.beta-logout{border:0;background:transparent;color:#f85149;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;padding:3px 4px}
+
+/* PWA : bouton d'installation, masqué tant que l'installation n'est pas proposée */
+.install-app-btn{display:none;align-items:center;justify-content:center;gap:7px}
+
 </style>
 </head>
 <body>
 
+<!-- BÊTA PUBLIQUE : CONNEXION / CRÉATION DE COMPTE -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <h1>Budget & Patrimoine</h1>
+      <p>Chaque compte possède son espace personnel synchronisé.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button id="authLoginTab" class="auth-tab active" type="button" onclick="setBetaAuthMode('login')">Connexion</button>
+      <button id="authRegisterTab" class="auth-tab" type="button" onclick="setBetaAuthMode('register')">Créer un compte</button>
+    </div>
+
+    <div class="auth-field">
+      <label>Adresse e-mail</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="exemple@email.fr">
+    </div>
+
+    <div class="auth-field">
+      <label>Mot de passe</label>
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="6 caractères minimum">
+    </div>
+
+    <div class="auth-field" id="authConfirmField" style="display:none">
+      <label>Confirmer le mot de passe</label>
+      <input id="authPasswordConfirm" type="password" autocomplete="new-password" placeholder="Retapez votre mot de passe">
+    </div>
+
+    <div id="authMessage" class="auth-message"></div>
+    <button id="authSubmitBtn" class="btn btn-primary" type="button" onclick="submitBetaAuth()">Se connecter</button>
+    <button id="authForgotBtn" class="auth-forgot" type="button" onclick="resetBetaPassword()">Mot de passe oublié ?</button>
+    <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
+  </div>
+</div>
+
+
 <!-- ÉCRAN DE VERROUILLAGE -->
-<div id="patternLockOverlay" style="display:none;">
+<div id="patternLockOverlay" style="display:none !important;">
   <h2 id="patternTitle">Dessinez un schéma de déverrouillage :</h2>
   <p id="patternSubtitle">Dessinez votre schéma pour accéder à l'application.</p>
 
@@ -325,13 +386,10 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 <!-- MODAL ANNOTATIONS -->
 <div class="modal-overlay" id="annotationsModal">
   <div class="modal" style="max-width:440px;">
-    <h3>📝 Annotations & Sécurité</h3>
+    <h3>📝 Annotations</h3>
     <div id="annotationsView">
       <div id="annotationsDisplay" style="white-space:pre-wrap;color:#c9d1d9;font-size:14px;line-height:1.6;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;min-height:80px;max-height:40vh;overflow-y:auto;"></div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #30363d;display:flex;flex-direction:column;gap:8px;">
-        <button class="btn btn-secondary" onclick="triggerChangePattern()" style="color:#58a6ff">🔑 Modifier le schéma de verrouillage</button>
-        <button class="btn btn-secondary" onclick="disablePatternLock()" style="color:#f85149">🔓 Désactiver le verrouillage</button>
-      </div>
+      
       <div class="modal-buttons" style="margin-top:12px;">
         <button class="btn btn-secondary" style="flex:1;" onclick="closeAnnotationsModal()">Fermer</button>
         <button class="btn btn-primary" style="flex:1;" onclick="editAnnotations()">✏️ Modifier</button>
@@ -511,6 +569,11 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
   </div>
 
   <div id="firebaseStatus">Synchronisation…</div>
+  <div id="betaUserBar" class="beta-user-bar">
+    <div class="beta-user-email">Connecté : <strong id="betaUserEmail">—</strong></div>
+    <button class="beta-logout" type="button" onclick="betaLogout()">Déconnexion</button>
+  </div>
+  <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
 
   <div id="tab-budget" class="tab-content active">
 
@@ -550,7 +613,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       <div id="history-container"></div>
       <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
   </div>
 
   <div id="tab-patrimoine" class="tab-content">
@@ -628,7 +691,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2><span class="section-total" id="total-assurancevie">0 €</span></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>📦 Autres Actifs</h2><span class="section-total" id="total-autres">0 €</span></div><div class="rows-container" data-key="autres"></div><button class="btn-add" onclick="addItem('autres')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
   </div>
 
   <div id="tab-factures" class="tab-content">
@@ -661,92 +724,161 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
         <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
       </div>
     </div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
   </div>
 
 </div>
 
+<script src="./firebase-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const firebaseConfig={
-  apiKey:"AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",
-  authDomain:"finances-royer.firebaseapp.com",
-  projectId:"finances-royer",
-  storageBucket:"finances-royer.firebasestorage.app",
-  messagingSenderId:"9218166802",
-  appId:"1:9218166802:web:2df9abb231684f8c9ec8cb"
-};
-
-const firebaseApp=initializeApp(firebaseConfig),
-      auth=getAuth(firebaseApp),
-      db=getFirestore(firebaseApp),
-      sharedRef=doc(db,"budget_shared","main_account");
+const firebaseConfig=window.BETA_FIREBASE_CONFIG||{};
+const configMissing=!firebaseConfig.apiKey || String(firebaseConfig.apiKey).includes('REMPLACER');
+let firebaseApp=null,auth=null,db=null,userRef=null,snapshotUnsubscribe=null,currentUser=null;
 
 window.firebaseReady=false;
+window.betaAuthMode='login';
 
 function setFirebaseStatus(m){
-  const e=document.getElementById("firebaseStatus");
+  const e=document.getElementById('firebaseStatus');
   if(e)e.textContent=m;
 }
 
+function setAuthMessage(message,type=''){
+  const e=document.getElementById('authMessage');
+  if(!e)return;
+  e.textContent=message||'';
+  e.className='auth-message'+(type?' '+type:'');
+}
+
+function authErrorMessage(error){
+  const code=error?.code||'';
+  const map={
+    'auth/email-already-in-use':'Cette adresse e-mail possède déjà un compte.',
+    'auth/invalid-email':'Adresse e-mail invalide.',
+    'auth/weak-password':'Le mot de passe doit contenir au moins 6 caractères.',
+    'auth/invalid-credential':'E-mail ou mot de passe incorrect.',
+    'auth/user-disabled':'Ce compte a été désactivé.',
+    'auth/too-many-requests':'Trop de tentatives. Réessayez un peu plus tard.',
+    'auth/network-request-failed':'Connexion réseau impossible.',
+    'auth/operation-not-allowed':'La connexion E-mail/Mot de passe doit être activée dans Firebase Authentication.'
+  };
+  return map[code]||error?.message||'Une erreur est survenue.';
+}
+
+window.setBetaAuthMode=function(mode){
+  window.betaAuthMode=mode==='register'?'register':'login';
+  document.getElementById('authLoginTab')?.classList.toggle('active',window.betaAuthMode==='login');
+  document.getElementById('authRegisterTab')?.classList.toggle('active',window.betaAuthMode==='register');
+  const confirm=document.getElementById('authConfirmField');
+  const submit=document.getElementById('authSubmitBtn');
+  const forgot=document.getElementById('authForgotBtn');
+  const pass=document.getElementById('authPassword');
+  if(confirm)confirm.style.display=window.betaAuthMode==='register'?'flex':'none';
+  if(submit)submit.textContent=window.betaAuthMode==='register'?'Créer mon compte':'Se connecter';
+  if(forgot)forgot.style.display=window.betaAuthMode==='login'?'block':'none';
+  if(pass)pass.autocomplete=window.betaAuthMode==='register'?'new-password':'current-password';
+  setAuthMessage('');
+};
+
+window.submitBetaAuth=async function(){
+  if(configMissing){
+    setAuthMessage('La bêta n’est pas encore reliée à son projet Firebase. Consultez INSTALLATION_BETA.md.','error');
+    return;
+  }
+  const email=(document.getElementById('authEmail')?.value||'').trim();
+  const password=document.getElementById('authPassword')?.value||'';
+  const confirm=document.getElementById('authPasswordConfirm')?.value||'';
+  if(!email||!password){setAuthMessage('Saisissez votre e-mail et votre mot de passe.','error');return;}
+  if(window.betaAuthMode==='register' && password!==confirm){setAuthMessage('Les deux mots de passe ne correspondent pas.','error');return;}
+  const btn=document.getElementById('authSubmitBtn');
+  if(btn)btn.disabled=true;
+  setAuthMessage(window.betaAuthMode==='register'?'Création du compte…':'Connexion…');
+  try{
+    if(window.betaAuthMode==='register')await createUserWithEmailAndPassword(auth,email,password);
+    else await signInWithEmailAndPassword(auth,email,password);
+  }catch(error){
+    console.error(error);
+    setAuthMessage(authErrorMessage(error),'error');
+  }finally{if(btn)btn.disabled=false;}
+};
+
+window.resetBetaPassword=async function(){
+  if(configMissing){setAuthMessage('Firebase n’est pas encore configuré.','error');return;}
+  const email=(document.getElementById('authEmail')?.value||'').trim();
+  if(!email){setAuthMessage('Saisissez d’abord votre adresse e-mail.','error');return;}
+  try{
+    await sendPasswordResetEmail(auth,email);
+    setAuthMessage('E-mail de réinitialisation envoyé.','success');
+  }catch(error){setAuthMessage(authErrorMessage(error),'error');}
+};
+
+window.betaLogout=async function(){
+  if(!auth)return;
+  try{await signOut(auth);}catch(error){console.error(error);}
+};
+
 window.firebaseWriting=false;
-let firebaseSaveTimer=null,
-    firebaseSaveInProgress=false,
-    firebaseSavePending=false;
+let firebaseSaveTimer=null,firebaseSaveInProgress=false,firebaseSavePending=false;
 
 window.firebaseSave=function(){
-  if(!window.firebaseReady)return;
+  if(!window.firebaseReady||!userRef||!currentUser)return;
   clearTimeout(firebaseSaveTimer);
   firebaseSaveTimer=setTimeout(async()=>{
-    if(firebaseSaveInProgress){
-      firebaseSavePending=true;
-      return;
-    }
+    if(firebaseSaveInProgress){firebaseSavePending=true;return;}
     firebaseSaveInProgress=true;
     window.firebaseWriting=true;
-    setFirebaseStatus("Enregistrement…");
+    setFirebaseStatus('Enregistrement…');
     try{
-      await setDoc(sharedRef,{
+      await setDoc(userRef,{
         data:JSON.stringify(window.data),
         monthHistory:JSON.stringify(window.monthHistory),
         patrimoineHistory:JSON.stringify(window.patrimoineHistory),
-        annotations:window.annotations||''
-      });
-      setFirebaseStatus("Synchronisé");
+        annotations:window.annotations||'',
+        email:currentUser.email||'',
+        updatedAt:new Date().toISOString()
+      },{merge:true});
+      setFirebaseStatus('Synchronisé');
     }catch(e){
       console.error(e);
-      setFirebaseStatus("Erreur Firebase");
+      setFirebaseStatus('Erreur Firebase');
     }finally{
       firebaseSaveInProgress=false;
       window.firebaseWriting=false;
-      if(firebaseSavePending){
-        firebaseSavePending=false;
-        window.firebaseSave();
-      }
+      if(firebaseSavePending){firebaseSavePending=false;window.firebaseSave();}
     }
   },250);
 };
 
-async function initFirebase(){
-  try{
-    await signInAnonymously(auth);
-  }catch(e){
-    console.error(e);
-  }
-}
+async function loadUserSpace(user){
+  currentUser=user;
+  window.firebaseReady=false;
+  if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
+  userRef=doc(db,'budget_users',user.uid);
 
-onAuthStateChanged(auth,async user=>{
-  if(!user)return;
-  window.firebaseReady=true;
-  setFirebaseStatus("Connecté à Firebase");
+  if(window.prepareBetaUserSession)window.prepareBetaUserSession(user.uid,user.email||'');
+  const emailEl=document.getElementById('betaUserEmail');
+  const bar=document.getElementById('betaUserBar');
+  if(emailEl)emailEl.textContent=user.email||'Compte utilisateur';
+  if(bar)bar.style.display='flex';
+  setFirebaseStatus('Chargement…');
+
   try{
-    const snap=await getDoc(sharedRef);
-    if(!snap.exists()){
-      await window.firebaseSave();
-    }else{
+    const snap=await getDoc(userRef);
+    window.firebaseReady=true;
+    if(snap.exists()){
       const r=snap.data();
       if(window.applyFirebaseState){
         window.applyFirebaseState({
@@ -756,57 +888,117 @@ onAuthStateChanged(auth,async user=>{
           annotations:typeof r.annotations==='string'?r.annotations:undefined
         });
       }
-
-      onSnapshot(sharedRef,snapshot=>{
-        if(!snapshot.exists()||window.firebaseWriting)return;
-        const r=snapshot.data();
-        if(window.applyFirebaseState){
-          window.applyFirebaseState({
-            data:r.data?JSON.parse(r.data):undefined,
-            monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
-            patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
-            annotations:typeof r.annotations==='string'?r.annotations:undefined
-          });
-        }
+    }else{
+      if(window.resetBetaData)window.resetBetaData();
+      await setDoc(userRef,{
+        data:JSON.stringify(window.data),
+        monthHistory:JSON.stringify(window.monthHistory),
+        patrimoineHistory:JSON.stringify(window.patrimoineHistory),
+        annotations:window.annotations||'',
+        email:user.email||'',
+        createdAt:new Date().toISOString(),
+        updatedAt:new Date().toISOString()
       });
     }
-  }catch(e){
-    console.error(e);
-  }
-});
 
-initFirebase();
+    setFirebaseStatus('Synchronisé');
+    snapshotUnsubscribe=onSnapshot(userRef,snapshot=>{
+      if(!snapshot.exists()||window.firebaseWriting)return;
+      const r=snapshot.data();
+      if(window.applyFirebaseState){
+        window.applyFirebaseState({
+          data:r.data?JSON.parse(r.data):undefined,
+          monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
+          patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
+          annotations:typeof r.annotations==='string'?r.annotations:undefined
+        });
+      }
+    });
+    document.getElementById('authOverlay').style.display='none';
+  }catch(error){
+    console.error(error);
+    window.firebaseReady=false;
+    setFirebaseStatus('Erreur Firebase');
+    setAuthMessage('Impossible d’ouvrir votre espace : '+(error?.message||error),'error');
+    document.getElementById('authOverlay').style.display='flex';
+  }
+}
+
+async function initBetaFirebase(){
+  if(configMissing){
+    setFirebaseStatus('Firebase bêta à configurer');
+    setAuthMessage('Configuration Firebase manquante. Le propriétaire doit compléter firebase-config.js avant le test.','error');
+    return;
+  }
+  try{
+    firebaseApp=initializeApp(firebaseConfig);
+    auth=getAuth(firebaseApp);
+    db=getFirestore(firebaseApp);
+    await setPersistence(auth,browserLocalPersistence);
+    onAuthStateChanged(auth,async user=>{
+      if(user){
+        await loadUserSpace(user);
+      }else{
+        currentUser=null;userRef=null;window.firebaseReady=false;
+        if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
+        if(window.clearBetaUserSession)window.clearBetaUserSession();
+        const bar=document.getElementById('betaUserBar');
+        if(bar)bar.style.display='none';
+        setFirebaseStatus('Non connecté');
+        document.getElementById('authOverlay').style.display='flex';
+        setAuthMessage('');
+      }
+    });
+  }catch(error){
+    console.error(error);
+    setAuthMessage('Erreur de configuration Firebase : '+(error?.message||error),'error');
+  }
+}
+
+initBetaFirebase();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
-let annotations=localStorage.getItem('finaryAnnotations')||'';
-let data=JSON.parse(localStorage.getItem('finaryData'))||{
-  immobilier:[],
-  epargne:[],
-  assurancevie:[],
-  bourse:[],
-  crypto:[],
-  autres:[],
-  dettes:[],
-  budgetRevenus:[],
-  budgetFixes:[],
-  budgetDepenses:[],
-  bankAccounts:[
-    {id:'fortuneo',name:'Fortuneo',active:true},
-    {id:'ca',name:'Crédit Agricole',active:true}
-  ],
-  bankTransfers:[],
-  factures:[]
-};
-let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[];
-let patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
+function createEmptyBetaData(){
+  return{
+    immobilier:[],
+    epargne:[],
+    assurancevie:[],
+    bourse:[],
+    crypto:[],
+    autres:[],
+    dettes:[],
+    budgetRevenus:[],
+    budgetFixes:[],
+    budgetDepenses:[],
+    bankAccounts:[
+      {id:'fortuneo',name:'Compte principal',active:true},
+      {id:'ca',name:'Compte secondaire',active:true}
+    ],
+    bankTransfers:[],
+    factures:[]
+  };
+}
+
+let betaUserUid='';
+let betaStoragePrefix='';
+let annotations='';
+let data=createEmptyBetaData();
+let monthHistory=[];
+let patrimoineHistory=[];
+
+function betaStorageKey(name){return betaStoragePrefix?`${betaStoragePrefix}${name}`:'';}
+function safeLocalJSON(key,fallback){
+  if(!key)return fallback;
+  try{const value=localStorage.getItem(key);return value?JSON.parse(value):fallback;}catch{return fallback;}
+}
 
 function ensureBankingData(){
   if(!Array.isArray(data.bankAccounts)||!data.bankAccounts.length){
     data.bankAccounts=[
-      {id:'fortuneo',name:'Fortuneo',active:true},
-      {id:'ca',name:'Crédit Agricole',active:true}
+      {id:'fortuneo',name:'Compte principal',active:true},
+      {id:'ca',name:'Compte secondaire',active:true}
     ];
   }
 
@@ -819,10 +1011,10 @@ function ensureBankingData(){
     }));
 
   if(!data.bankAccounts.some(a=>a.id==='fortuneo')){
-    data.bankAccounts.unshift({id:'fortuneo',name:'Fortuneo',active:true});
+    data.bankAccounts.unshift({id:'fortuneo',name:'Compte principal',active:true});
   }
   if(!data.bankAccounts.some(a=>a.id==='ca')){
-    data.bankAccounts.push({id:'ca',name:'Crédit Agricole',active:true});
+    data.bankAccounts.push({id:'ca',name:'Compte secondaire',active:true});
   }
 
   if(!Array.isArray(data.bankTransfers))data.bankTransfers=[];
@@ -847,6 +1039,50 @@ function ensureBankingData(){
 }
 
 ensureBankingData();
+
+window.prepareBetaUserSession=function(uid,email){
+  betaUserUid=String(uid||'');
+  betaStoragePrefix=betaUserUid?`finaryBeta_${betaUserUid}_`:'';
+  data=safeLocalJSON(betaStorageKey('data'),createEmptyBetaData());
+  monthHistory=safeLocalJSON(betaStorageKey('history'),[]);
+  patrimoineHistory=safeLocalJSON(betaStorageKey('patrimoineHistory'),[]);
+  annotations=betaStoragePrefix?(localStorage.getItem(betaStorageKey('annotations'))||''):'';
+  ensureBankingData();
+  window.data=data;
+  window.monthHistory=monthHistory;
+  window.patrimoineHistory=patrimoineHistory;
+  window.annotations=annotations;
+  render();
+};
+
+window.resetBetaData=function(){
+  data=createEmptyBetaData();
+  monthHistory=[];
+  patrimoineHistory=[];
+  annotations='';
+  ensureBankingData();
+  window.data=data;
+  window.monthHistory=monthHistory;
+  window.patrimoineHistory=patrimoineHistory;
+  window.annotations=annotations;
+  saveLocalOnly();
+  render();
+};
+
+window.clearBetaUserSession=function(){
+  betaUserUid='';
+  betaStoragePrefix='';
+  data=createEmptyBetaData();
+  monthHistory=[];
+  patrimoineHistory=[];
+  annotations='';
+  ensureBankingData();
+  window.data=data;
+  window.monthHistory=monthHistory;
+  window.patrimoineHistory=patrimoineHistory;
+  window.annotations=annotations;
+  render();
+};
 
 window.data=data;
 window.monthHistory=monthHistory;
@@ -2064,10 +2300,11 @@ function clearList(k){
 }
 
 function saveLocalOnly(){
-  localStorage.setItem('finaryData',JSON.stringify(data));
-  localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));
-  localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));
-  localStorage.setItem('finaryAnnotations',annotations);
+  if(!betaStoragePrefix)return;
+  localStorage.setItem(betaStorageKey('data'),JSON.stringify(data));
+  localStorage.setItem(betaStorageKey('history'),JSON.stringify(monthHistory));
+  localStorage.setItem(betaStorageKey('patrimoineHistory'),JSON.stringify(patrimoineHistory));
+  localStorage.setItem(betaStorageKey('annotations'),annotations);
 }
 
 function save(){
@@ -2247,8 +2484,9 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
   ${chartBlock}
   ${details}
 
-  <div class="footer">Application crée par ROYER Anaël</div>
+  <div class="footer">Application crée par ROYER Anaël · Bêta</div>
 </main>
+
 </body>
 </html>`;
 }
@@ -2488,7 +2726,7 @@ function updatePatrimoineMonthlyVariation(){
 function resetPatrimoineChart(){
   if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){
     patrimoineHistory=[];
-    localStorage.removeItem('finaryPatrimoineHistory');
+    if(betaStoragePrefix)localStorage.removeItem(betaStorageKey('patrimoineHistory'));
     recordPatrimoineSnapshot();
     render();
     save();
@@ -2529,7 +2767,7 @@ function closeMonth(){
     message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
   }
 
-  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, conservera uniquement les entrées récurrentes prévues, puis remettra les cases à zéro.`;
+  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, reconduira les entrées en les remettant à zéro, puis remettra les cases à zéro.`;
 
   if(!confirm(message))return;
 
@@ -2558,24 +2796,13 @@ function closeMonth(){
   }
 
   if(data.budgetRevenus){
-    // Après clôture, seules les entrées récurrentes ci-dessous sont conservées.
-    // La comparaison ignore les majuscules/minuscules et les accents.
-    const revenusAConserver=new Set([
-      'salaire anael',
-      'salaire laurene',
-      'negatif/positif',
-      'allocations familliales',
-      'allocations familiales',
-      'papa av enfants'
-    ]);
-
-    data.budgetRevenus=data.budgetRevenus
-      .filter(item=>revenusAConserver.has(normalizeText(item[0]).trim()))
-      .map(item=>{
-        const next=[...item];
-        next[2]=false;
-        return next;
-      });
+    // Bêta publique : aucune appellation personnelle n'est imposée.
+    // Les entrées sont reconduites et simplement décochées ; l'utilisateur peut supprimer les entrées occasionnelles.
+    data.budgetRevenus=data.budgetRevenus.map(item=>{
+      const next=[...item];
+      next[2]=false;
+      return next;
+    });
   }
 
   render();
@@ -4057,6 +4284,18 @@ function renderAssetDistribution(){
   }).join('');
 }
 
+
+
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('authOverlay')?.style.display!=='none' && e.key==='Enter'){
+    const active=document.activeElement?.id||'';
+    if(['authEmail','authPassword','authPasswordConfirm'].includes(active)){
+      e.preventDefault();
+      if(window.submitBetaAuth)window.submitBetaAuth();
+    }
+  }
+});
+
 /* Entrée au clavier dans les modales */
 document.getElementById('genericModal').addEventListener('keydown',e=>{
   if(e.key==='Enter'){
@@ -4099,10 +4338,76 @@ document.getElementById('annotationsModal').addEventListener('click',e=>{
 
 document.addEventListener('DOMContentLoaded', () => {
   applyHideAmountsState();
-  initPatternLock();
-  setupPatternListeners();
   render();
 });
+
+
+/* PWA : installation depuis l'interface */
+let deferredInstallPrompt=null;
+
+function betaAppIsInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone===true;
+}
+
+function betaIsIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+
+function updateBetaInstallButtons(){
+  const show=!betaAppIsInstalled() && (!!deferredInstallPrompt || betaIsIOS());
+  document.querySelectorAll('.install-app-btn').forEach(btn=>{
+    btn.style.display=show?'flex':'none';
+  });
+}
+
+window.addEventListener('beforeinstallprompt',event=>{
+  // Chrome/Android : on remplace l'infobulle automatique par notre propre bouton.
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  updateBetaInstallButtons();
+});
+
+window.installBetaApp=async function(){
+  if(betaAppIsInstalled()){
+    updateBetaInstallButtons();
+    return;
+  }
+
+  if(deferredInstallPrompt){
+    const promptEvent=deferredInstallPrompt;
+    deferredInstallPrompt=null;
+    await promptEvent.prompt();
+    try{ await promptEvent.userChoice; }catch(_e){}
+    updateBetaInstallButtons();
+    return;
+  }
+
+  if(betaIsIOS()){
+    alert("Sur iPhone/iPad : ouvre cette page dans Safari, touche le bouton Partager ↗ puis « Sur l’écran d’accueil » et enfin « Ajouter ». Le bouton d’installation disparaîtra quand tu ouvriras l’application depuis son icône.");
+    return;
+  }
+
+  alert("L’installation n’est pas encore proposée par ce navigateur. Utilise son menu puis « Installer l’application » ou « Ajouter à l’écran d’accueil ».");
+};
+
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  updateBetaInstallButtons();
+});
+
+window.matchMedia('(display-mode: standalone)').addEventListener?.('change',updateBetaInstallButtons);
+window.addEventListener('DOMContentLoaded',updateBetaInstallButtons);
+
+/* PWA : enregistrement du Service Worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(err => {
+      console.warn('Service Worker non enregistré :', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
