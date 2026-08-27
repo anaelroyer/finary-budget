@@ -3,14 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget & Patrimoine</title>
-<meta name="theme-color" content="#0d1117">
-<meta name="application-name" content="Budget & Patrimoine">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Budget & Patrimoine">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/icon-180.png">
+<title>Budget & Patrimoine — Mobile Optimized</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -2256,16 +2249,6 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
 
   <div class="footer">Application crée par ROYER Anaël</div>
 </main>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(err => {
-      console.warn('Service Worker non enregistré :', err);
-    });
-  });
-}
-</script>
 </body>
 </html>`;
 }
