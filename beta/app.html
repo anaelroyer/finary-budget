@@ -230,6 +230,9 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .beta-user-email{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.beta-user-email strong{color:#c9d1d9}
 .beta-logout{border:0;background:transparent;color:#f85149;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;padding:3px 4px}
 
+/* PWA : bouton d'installation, masqué tant que l'installation n'est pas proposée */
+.install-app-btn{display:none;align-items:center;justify-content:center;gap:7px}
+
 </style>
 </head>
 <body>
@@ -266,6 +269,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div id="authMessage" class="auth-message"></div>
     <button id="authSubmitBtn" class="btn btn-primary" type="button" onclick="submitBetaAuth()">Se connecter</button>
     <button id="authForgotBtn" class="auth-forgot" type="button" onclick="resetBetaPassword()">Mot de passe oublié ?</button>
+    <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
   </div>
 </div>
 
@@ -571,6 +575,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div class="beta-user-email">Connecté : <strong id="betaUserEmail">—</strong></div>
     <button class="beta-logout" type="button" onclick="betaLogout()">Déconnexion</button>
   </div>
+  <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
 
   <div id="tab-budget" class="tab-content active">
 
@@ -4338,6 +4343,64 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
 });
 
+
+/* PWA : installation depuis l'interface */
+let deferredInstallPrompt=null;
+
+function betaAppIsInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone===true;
+}
+
+function betaIsIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+
+function updateBetaInstallButtons(){
+  const show=!betaAppIsInstalled() && (!!deferredInstallPrompt || betaIsIOS());
+  document.querySelectorAll('.install-app-btn').forEach(btn=>{
+    btn.style.display=show?'flex':'none';
+  });
+}
+
+window.addEventListener('beforeinstallprompt',event=>{
+  // Chrome/Android : on remplace l'infobulle automatique par notre propre bouton.
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  updateBetaInstallButtons();
+});
+
+window.installBetaApp=async function(){
+  if(betaAppIsInstalled()){
+    updateBetaInstallButtons();
+    return;
+  }
+
+  if(deferredInstallPrompt){
+    const promptEvent=deferredInstallPrompt;
+    deferredInstallPrompt=null;
+    await promptEvent.prompt();
+    try{ await promptEvent.userChoice; }catch(_e){}
+    updateBetaInstallButtons();
+    return;
+  }
+
+  if(betaIsIOS()){
+    alert("Sur iPhone/iPad : ouvre cette page dans Safari, touche le bouton Partager ↗ puis « Sur l’écran d’accueil » et enfin « Ajouter ». Le bouton d’installation disparaîtra quand tu ouvriras l’application depuis son icône.");
+    return;
+  }
+
+  alert("L’installation n’est pas encore proposée par ce navigateur. Utilise son menu puis « Installer l’application » ou « Ajouter à l’écran d’accueil ».");
+};
+
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  updateBetaInstallButtons();
+});
+
+window.matchMedia('(display-mode: standalone)').addEventListener?.('change',updateBetaInstallButtons);
+window.addEventListener('DOMContentLoaded',updateBetaInstallButtons);
 
 /* PWA : enregistrement du Service Worker */
 if ('serviceWorker' in navigator) {
