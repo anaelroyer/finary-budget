@@ -205,6 +205,8 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .history-account{display:block;color:#8b949e;font-size:10px;margin-top:2px}
 body.hide-amounts .bank-current-value,body.hide-amounts .bank-forecast-value,body.hide-amounts .transfer-amount{color:transparent !important;position:relative}
 body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-value::after,body.hide-amounts .transfer-amount::after{content:"***";color:#c9d1d9;position:absolute;right:0;top:0}
+
+.app-footer{font-size:11px;color:#fff;text-align:center;opacity:.85;padding:6px 0 2px;}
 </style>
 </head>
 <body>
@@ -546,6 +548,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       <div id="history-container"></div>
       <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
+    <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
 
   <div id="tab-patrimoine" class="tab-content">
@@ -620,6 +623,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2><span class="section-total" id="total-assurancevie">0 €</span></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>📦 Autres Actifs</h2><span class="section-total" id="total-autres">0 €</span></div><div class="rows-container" data-key="autres"></div><button class="btn-add" onclick="addItem('autres')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
+    <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
 
   <div id="tab-factures" class="tab-content">
@@ -652,6 +656,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
         <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
       </div>
     </div>
+    <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
 
 </div>
