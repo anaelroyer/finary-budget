@@ -181,7 +181,6 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .bank-current-value.negative,.bank-forecast-value.negative{color:#f85149}
 .bank-current-value.positive,.bank-forecast-value.positive{color:#3fb950}
 .bank-warning{grid-column:1/-1;margin-top:5px;padding:6px 8px;border-radius:7px;background:rgba(210,153,34,.10);border:1px solid rgba(210,153,34,.30);color:#d29922;font-size:11px;font-weight:700}
-.bank-summary-help{font-size:10px;color:#8b949e;margin-top:6px;line-height:1.4}
 .budget-line-main{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .budget-line-account{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .budget-line-account .bank-dot{width:6px;height:6px}
@@ -523,7 +522,6 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
         <div class="muted">Solde actuel — opérations cochées</div>
         <div class="total green" id="budget-solde-actuel">0 €</div>
         <div id="bank-balances" class="bank-balances"></div>
-        <div class="bank-summary-help">La prévision inclut toutes les opérations prévues du cycle. Les virements internes sont neutres pour le reste à vivre.</div>
       </div>
     </div>
 
@@ -536,7 +534,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
     <details class="card"><summary><span>📥 Entrées</span><span class="budget-summary-total" id="total-budgetRevenus">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetRevenus"></div><button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <button class="btn btn-secondary" onclick="openBankTransferModal()" style="width:100%;color:#58a6ff">⇄ Ajouter un virement interne</button>
+    <button class="btn btn-primary" onclick="openBankTransferModal()">⇄ Ajouter un virement interne</button>
     <details class="card" id="details-bank-transfers"><summary><span>⇄ Virements internes</span><span class="budget-summary-total" id="bank-transfer-count">0</span></summary><div class="details-content"><div id="bank-transfers-container"></div><button class="btn btn-secondary" onclick="clearBankTransfers()" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
     <div class="card">
