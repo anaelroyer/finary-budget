@@ -83,8 +83,9 @@ svg.patrimoine-chart{width:100%;height:190px;overflow:visible;touch-action:none;
 .modal{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);transform:scale(.95);transition:transform .2s ease}.modal-overlay.active .modal{transform:scale(1)}
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
 
-/* Sur smartphone, la modale Patrimoine reste en haut pour ne pas être masquée par le clavier */
-#patrimoineAmountModal{
+/* Sur smartphone, les modales de modification restent en haut pour ne pas être masquées par le clavier */
+#patrimoineAmountModal,
+#genericModal.budget-edit-position{
   align-items:flex-start;
   padding-top:8vh;
   padding-bottom:20px;
@@ -92,11 +93,13 @@ svg.patrimoine-chart{width:100%;height:190px;overflow:visible;touch-action:none;
 }
 
 @media (max-width:600px){
-  #patrimoineAmountModal{
+  #patrimoineAmountModal,
+  #genericModal.budget-edit-position{
     padding-top:max(18px,calc(env(safe-area-inset-top) + 18px));
   }
 
-  #patrimoineAmountModal .modal{
+  #patrimoineAmountModal .modal,
+  #genericModal.budget-edit-position .modal{
     margin-top:0;
   }
 }
@@ -1550,10 +1553,32 @@ let activeModalKey='';
 let activeModalMode='add';
 let activeModalIndex=-1;
 
+function adjustGenericModalForKeyboard(){
+  const overlay=document.getElementById('genericModal');
+  if(!overlay || !overlay.classList.contains('budget-edit-position'))return;
+
+  if(window.innerWidth>600){
+    overlay.style.paddingTop='8vh';
+    return;
+  }
+
+  const vv=window.visualViewport;
+  if(vv){
+    const top=Math.max(16,Math.min(32,vv.height*0.04));
+    overlay.style.paddingTop=`${top}px`;
+  }else{
+    overlay.style.paddingTop='18px';
+  }
+}
+
 function openModal(key){
   activeModalKey=key;
   activeModalMode='add';
   activeModalIndex=-1;
+
+  const genericModal=document.getElementById('genericModal');
+  genericModal.classList.remove('budget-edit-position');
+  genericModal.style.paddingTop='';
 
   const title=document.getElementById('modalTitle');
 
@@ -1610,22 +1635,32 @@ function openBudgetEditModal(key,index){
   const amountInput=document.getElementById('modalAmount');
   const accountSelect=document.getElementById('modalAccount');
 
-  /* Libellé prérempli et modifiable ; montant volontairement vide */
+  /* Comme dans Patrimoine : les valeurs actuelles sont directement préremplies. */
   labelInput.value=item[0] || '';
-  amountInput.value='';
+  const currentAmount=Number(item[1]||0);
+  amountInput.value=Number.isFinite(currentAmount)?currentAmount:'';
   populateBankSelect(accountSelect,item[3]||'ca');
 
   labelInput.placeholder='Modifier le libellé';
-  amountInput.placeholder='Laisser vide pour conserver';
+  amountInput.placeholder='0';
 
   document.getElementById('modalSubmitBtn').textContent='Enregistrer';
 
-  document.getElementById('genericModal').classList.add('active');
-  setTimeout(()=>labelInput.focus(),50);
+  const genericModal=document.getElementById('genericModal');
+  genericModal.classList.add('budget-edit-position','active');
+  adjustGenericModalForKeyboard();
+
+  setTimeout(()=>{
+    adjustGenericModalForKeyboard();
+    amountInput.focus();
+    amountInput.select();
+  },50);
 }
 
 function closeModal(){
-  document.getElementById('genericModal').classList.remove('active');
+  const genericModal=document.getElementById('genericModal');
+  genericModal.classList.remove('active','budget-edit-position');
+  genericModal.style.paddingTop='';
   activeModalKey='';
   activeModalMode='add';
   activeModalIndex=-1;
@@ -1776,9 +1811,14 @@ function submitPatrimoineAmount(){
 
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',()=>{
-    const modal=document.getElementById('patrimoineAmountModal');
-    if(modal && modal.classList.contains('active')){
+    const patrimoineModal=document.getElementById('patrimoineAmountModal');
+    if(patrimoineModal && patrimoineModal.classList.contains('active')){
       adjustPatrimoineModalForKeyboard();
+    }
+
+    const budgetModal=document.getElementById('genericModal');
+    if(budgetModal && budgetModal.classList.contains('active') && budgetModal.classList.contains('budget-edit-position')){
+      adjustGenericModalForKeyboard();
     }
   });
 }
@@ -2244,7 +2284,7 @@ function closeMonth(){
     message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
   }
 
-  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, puis remettra les cases à zéro.`;
+  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, conservera uniquement les entrées récurrentes prévues, puis remettra les cases à zéro.`;
 
   if(!confirm(message))return;
 
@@ -2273,7 +2313,24 @@ function closeMonth(){
   }
 
   if(data.budgetRevenus){
-    data.budgetRevenus.forEach(item=>item[2]=false);
+    // Après clôture, seules les entrées récurrentes ci-dessous sont conservées.
+    // La comparaison ignore les majuscules/minuscules et les accents.
+    const revenusAConserver=new Set([
+      'salaire anael',
+      'salaire laurene',
+      'negatif/positif',
+      'allocations familliales',
+      'allocations familiales',
+      'papa av enfants'
+    ]);
+
+    data.budgetRevenus=data.budgetRevenus
+      .filter(item=>revenusAConserver.has(normalizeText(item[0]).trim()))
+      .map(item=>{
+        const next=[...item];
+        next[2]=false;
+        return next;
+      });
   }
 
   render();
