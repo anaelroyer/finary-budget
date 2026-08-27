@@ -169,6 +169,40 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 
 
 #asset-distribution-legend .legend-label{white-space:nowrap}
+
+/* GESTION MULTI-COMPTES BANCAIRES */
+.bank-balances{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.bank-balance-card{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.bank-name{font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:7px;min-width:0}
+.bank-dot{width:8px;height:8px;border-radius:50%;background:#8b949e;flex:0 0 auto}
+.bank-dot.fortuneo{background:#3fb950}.bank-dot.ca{background:#58a6ff}
+.bank-current-label,.bank-forecast-label{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.35px;font-weight:700}
+.bank-current-value,.bank-forecast-value{font-size:14px;font-weight:800;color:#c9d1d9;text-align:right;white-space:nowrap}
+.bank-current-value.negative,.bank-forecast-value.negative{color:#f85149}
+.bank-current-value.positive,.bank-forecast-value.positive{color:#3fb950}
+.bank-warning{grid-column:1/-1;margin-top:5px;padding:6px 8px;border-radius:7px;background:rgba(210,153,34,.10);border:1px solid rgba(210,153,34,.30);color:#d29922;font-size:11px;font-weight:700}
+.bank-summary-help{font-size:10px;color:#8b949e;margin-top:6px;line-height:1.4}
+.budget-line-main{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.budget-line-account{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.budget-line-account .bank-dot{width:6px;height:6px}
+.bank-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}
+.bank-account-settings{display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow-y:auto}
+.bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.bank-account-setting-row input[type=text]{width:100%;padding:8px 9px;background:#161b22;border:1px solid #30363d;border-radius:7px;color:#fff;outline:none}
+.bank-active-toggle{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:11px;white-space:nowrap}
+.bank-active-toggle input{width:18px;height:18px;accent-color:#238636}
+.transfer-row{display:grid;grid-template-columns:28px minmax(0,1fr) 90px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+.transfer-row.done{background:rgba(35,134,54,.15)}
+.transfer-main{min-width:0;cursor:pointer}
+.transfer-label{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transfer-route{font-size:10px;color:#8b949e;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transfer-cycle{display:inline-flex;align-items:center;width:max-content;margin-top:4px;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;border:1px solid #30363d;background:#21262d;color:#8b949e}
+.transfer-cycle.permanent{color:#3fb950;border-color:rgba(63,185,80,.35);background:rgba(35,134,54,.13)}
+.transfer-amount{text-align:right;font-weight:700;color:#c9d1d9;font-size:12px;white-space:nowrap;cursor:pointer}
+.transfer-empty{color:#8b949e;text-align:center;padding:10px 4px;font-size:12px}
+.history-account{display:block;color:#8b949e;font-size:10px;margin-top:2px}
+body.hide-amounts .bank-current-value,body.hide-amounts .bank-forecast-value,body.hide-amounts .transfer-amount{color:transparent !important;position:relative}
+body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-value::after,body.hide-amounts .transfer-amount::after{content:"***";color:#c9d1d9;position:absolute;right:0;top:0}
 </style>
 </head>
 <body>
@@ -217,9 +251,60 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
       <input type="number" id="modalAmount" placeholder="0" inputmode="decimal">
     </div>
 
+    <div class="modal-field">
+      <label>Compte bancaire</label>
+      <select id="modalAccount" class="bank-select"></select>
+    </div>
+
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Annuler</button>
       <button class="btn btn-primary" id="modalSubmitBtn" style="flex:1" onclick="submitModal()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GESTION DES COMPTES BANCAIRES -->
+<div class="modal-overlay" id="bankAccountsModal">
+  <div class="modal" style="max-width:440px;">
+    <h3>🏦 Comptes bancaires</h3>
+    <div style="font-size:12px;color:#8b949e;line-height:1.45;">Renomme ou masque un compte. Les comptes déjà utilisés restent visibles dans les anciennes opérations.</div>
+    <div id="bankAccountsSettings" class="bank-account-settings"></div>
+    <button class="btn btn-secondary" onclick="addBankAccount()" style="width:100%;color:#58a6ff">+ Ajouter un compte</button>
+    <div class="modal-buttons"><button class="btn btn-primary" style="flex:1" onclick="closeBankAccountsModal()">Terminer</button></div>
+  </div>
+</div>
+
+<!-- MODAL VIREMENT INTERNE -->
+<div class="modal-overlay" id="bankTransferModal">
+  <div class="modal">
+    <h3 id="bankTransferTitle">Ajouter un virement interne</h3>
+    <div class="modal-field">
+      <label>Libellé</label>
+      <input type="text" id="bankTransferLabel" placeholder="Ex : Alimentation Crédit Agricole">
+    </div>
+    <div class="modal-field">
+      <label>Montant (€)</label>
+      <input type="number" id="bankTransferAmount" placeholder="0" inputmode="decimal">
+    </div>
+    <div class="modal-field">
+      <label>Depuis</label>
+      <select id="bankTransferFrom" class="bank-select"></select>
+    </div>
+    <div class="modal-field">
+      <label>Vers</label>
+      <select id="bankTransferTo" class="bank-select"></select>
+    </div>
+    <div class="modal-field">
+      <label>Récurrence</label>
+      <select id="bankTransferRecurrence" class="bank-select">
+        <option value="occasional">Occasionnel — supprimé après la clôture</option>
+        <option value="permanent">Permanent — reconduit chaque mois</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:#8b949e;line-height:1.4;">Le virement modifie les soldes des deux comptes mais ne compte ni comme dépense ni comme entrée. Un virement permanent est reconduit au cycle suivant jusqu'à sa suppression manuelle.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeBankTransferModal()">Annuler</button>
+      <button class="btn btn-primary" id="bankTransferSubmitBtn" style="flex:1" onclick="submitBankTransfer()">Ajouter</button>
     </div>
   </div>
 </div>
@@ -423,10 +508,11 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
   </div>
 
   <div id="tab-budget" class="tab-content active">
-    <div class="top" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;">
-      <div style="display:flex;justify-content:flex-start;"><button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 8px;font-size:11px">📝 Notes</button></div>
-      <div style="display:flex;justify-content:center;"><button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 8px;font-size:11px">🔒 Clôturer</button></div>
-      <div style="display:flex;justify-content:flex-end;"><button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Affiché</button></div>
+    <div class="top" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:center;">
+      <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 5px;font-size:10px">📝 Notes</button>
+      <button class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
+      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 5px;font-size:10px">🔒 Clôturer</button>
+      <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 5px;font-size:10px">👁️ Affiché</button>
     </div>
 
     <div class="card">
@@ -434,8 +520,10 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
       <div class="total green" id="budget-reste-vivre">0 €</div>
 
       <div style="border-top:1px solid #21262d;padding-top:10px;margin-top:4px">
-        <div class="muted">Solde actuel</div>
+        <div class="muted">Solde actuel — opérations cochées</div>
         <div class="total green" id="budget-solde-actuel">0 €</div>
+        <div id="bank-balances" class="bank-balances"></div>
+        <div class="bank-summary-help">La prévision inclut toutes les opérations prévues du cycle. Les virements internes sont neutres pour le reste à vivre.</div>
       </div>
     </div>
 
@@ -447,6 +535,9 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 
     <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
     <details class="card"><summary><span>📥 Entrées</span><span class="budget-summary-total" id="total-budgetRevenus">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetRevenus"></div><button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
+
+    <button class="btn btn-secondary" onclick="openBankTransferModal()" style="width:100%;color:#58a6ff">⇄ Ajouter un virement interne</button>
+    <details class="card" id="details-bank-transfers"><summary><span>⇄ Virements internes</span><span class="budget-summary-total" id="bank-transfer-count">0</span></summary><div class="details-content"><div id="bank-transfers-container"></div><button class="btn btn-secondary" onclick="clearBankTransfers()" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
     <div class="card">
       <div class="section-header"><h2>🗓️ Historique</h2></div>
@@ -690,10 +781,61 @@ let data=JSON.parse(localStorage.getItem('finaryData'))||{
   budgetRevenus:[],
   budgetFixes:[],
   budgetDepenses:[],
+  bankAccounts:[
+    {id:'fortuneo',name:'Fortuneo',active:true},
+    {id:'ca',name:'Crédit Agricole',active:true}
+  ],
+  bankTransfers:[],
   factures:[]
 };
 let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[];
 let patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
+
+function ensureBankingData(){
+  if(!Array.isArray(data.bankAccounts)||!data.bankAccounts.length){
+    data.bankAccounts=[
+      {id:'fortuneo',name:'Fortuneo',active:true},
+      {id:'ca',name:'Crédit Agricole',active:true}
+    ];
+  }
+
+  data.bankAccounts=data.bankAccounts
+    .filter(a=>a&&a.id)
+    .map(a=>({
+      id:String(a.id),
+      name:String(a.name||'Compte bancaire'),
+      active:a.active!==false
+    }));
+
+  if(!data.bankAccounts.some(a=>a.id==='fortuneo')){
+    data.bankAccounts.unshift({id:'fortuneo',name:'Fortuneo',active:true});
+  }
+  if(!data.bankAccounts.some(a=>a.id==='ca')){
+    data.bankAccounts.push({id:'ca',name:'Crédit Agricole',active:true});
+  }
+
+  if(!Array.isArray(data.bankTransfers))data.bankTransfers=[];
+  data.bankTransfers=data.bankTransfers
+    .filter(t=>t&&typeof t==='object')
+    .map(t=>({
+      ...t,
+      recurrence:t.recurrence==='permanent'?'permanent':'occasional'
+    }));
+
+  // Les anciens virements internes gardent le comportement historique : occasionnels.
+  // Les lignes créées avant le multi-comptes provenaient du Crédit Agricole.
+  // On les rattache donc au CA sans toucher aux historiques déjà clôturés.
+  ['budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
+    if(!Array.isArray(data[key]))data[key]=[];
+    data[key].forEach(item=>{
+      if(!Array.isArray(item))return;
+      const accountExists=data.bankAccounts.some(a=>a.id===item[3]);
+      if(!accountExists)item[3]='ca';
+    });
+  });
+}
+
+ensureBankingData();
 
 window.data=data;
 window.monthHistory=monthHistory;
@@ -703,6 +845,7 @@ window.annotations=annotations;
 window.applyFirebaseState=function(remote){
   if(remote.data)data=remote.data;
   if(!Array.isArray(data.factures))data.factures=[];
+  ensureBankingData();
   if(remote.monthHistory)monthHistory=remote.monthHistory;
   if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
   if(typeof remote.annotations==='string')annotations=remote.annotations;
@@ -1130,6 +1273,278 @@ function disablePatternLock(){
 
 
 /* =========================================================
+   COMPTES BANCAIRES & VIREMENTS INTERNES
+   ========================================================= */
+function getBankAccount(id){
+  return (data.bankAccounts||[]).find(a=>a.id===id)||null;
+}
+
+function getBankAccountName(id){
+  return getBankAccount(id)?.name||'Compte inconnu';
+}
+
+function getBankDotClass(id){
+  if(id==='fortuneo')return 'fortuneo';
+  if(id==='ca')return 'ca';
+  return '';
+}
+
+function accountIsUsed(id){
+  const usedByBudget=['budgetRevenus','budgetFixes','budgetDepenses'].some(key=>(data[key]||[]).some(i=>i[3]===id));
+  const usedByTransfers=(data.bankTransfers||[]).some(t=>t.from===id||t.to===id);
+  return usedByBudget||usedByTransfers;
+}
+
+function getVisibleBankAccounts(){
+  ensureBankingData();
+  return (data.bankAccounts||[]).filter(a=>a.active!==false||accountIsUsed(a.id));
+}
+
+function getSelectableBankAccounts(selectedId=''){
+  ensureBankingData();
+  return (data.bankAccounts||[]).filter(a=>a.active!==false||a.id===selectedId);
+}
+
+function populateBankSelect(select,selectedId=''){
+  if(!select)return;
+  const accounts=getSelectableBankAccounts(selectedId);
+  let selected=selectedId;
+  if(!accounts.some(a=>a.id===selected)){
+    const saved=localStorage.getItem('finaryLastBudgetAccount')||'fortuneo';
+    selected=accounts.some(a=>a.id===saved)?saved:(accounts[0]?.id||'ca');
+  }
+  select.innerHTML=accounts.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
+  select.value=selected;
+}
+
+function openBankAccountsModal(){
+  ensureBankingData();
+  renderBankAccountsSettings();
+  document.getElementById('bankAccountsModal').classList.add('active');
+}
+
+function closeBankAccountsModal(){
+  document.getElementById('bankAccountsModal').classList.remove('active');
+  render();
+  save();
+}
+
+function renderBankAccountsSettings(){
+  const c=document.getElementById('bankAccountsSettings');
+  if(!c)return;
+  c.innerHTML=(data.bankAccounts||[]).map((a,index)=>`
+    <div class="bank-account-setting-row">
+      <input type="text" value="${escapeHtml(a.name)}" onchange="renameBankAccount(${index},this.value)" aria-label="Nom du compte">
+      <label class="bank-active-toggle"><input type="checkbox" ${a.active!==false?'checked':''} onchange="setBankAccountActive(${index},this.checked)"> Actif</label>
+    </div>
+  `).join('');
+}
+
+function renameBankAccount(index,value){
+  const account=data.bankAccounts?.[index];
+  if(!account)return;
+  const name=String(value||'').trim();
+  if(name)account.name=name;
+  renderBankAccountsSettings();
+  render();
+  save();
+}
+
+function setBankAccountActive(index,active){
+  const account=data.bankAccounts?.[index];
+  if(!account)return;
+  if(!active){
+    const otherActive=(data.bankAccounts||[]).some((a,i)=>i!==index&&a.active!==false);
+    if(!otherActive){
+      alert('Il faut conserver au moins un compte actif.');
+      renderBankAccountsSettings();
+      return;
+    }
+  }
+  account.active=Boolean(active);
+  renderBankAccountsSettings();
+  render();
+  save();
+}
+
+function addBankAccount(){
+  const next=(data.bankAccounts||[]).length+1;
+  data.bankAccounts.push({
+    id:`bank_${Date.now()}`,
+    name:`Compte ${next}`,
+    active:true
+  });
+  renderBankAccountsSettings();
+  render();
+  save();
+}
+
+let bankTransferEditIndex=-1;
+
+function openBankTransferModal(index=-1){
+  ensureBankingData();
+  const active=(data.bankAccounts||[]).filter(a=>a.active!==false);
+  if(active.length<2){
+    alert('Il faut au moins deux comptes actifs pour créer un virement interne.');
+    return;
+  }
+
+  bankTransferEditIndex=index;
+  const editing=index>=0&&data.bankTransfers?.[index];
+  const t=editing?data.bankTransfers[index]:null;
+  document.getElementById('bankTransferTitle').textContent=editing?'Modifier le virement interne':'Ajouter un virement interne';
+  document.getElementById('bankTransferSubmitBtn').textContent=editing?'Enregistrer':'Ajouter';
+  document.getElementById('bankTransferLabel').value=t?.label||'';
+  document.getElementById('bankTransferAmount').value=t?.amount??'';
+
+  populateBankSelect(document.getElementById('bankTransferFrom'),t?.from||active[0].id);
+  populateBankSelect(document.getElementById('bankTransferTo'),t?.to||active[1].id);
+  document.getElementById('bankTransferRecurrence').value=t?.recurrence==='permanent'?'permanent':'occasional';
+
+  document.getElementById('bankTransferModal').classList.add('active');
+  setTimeout(()=>document.getElementById('bankTransferLabel').focus(),50);
+}
+
+function closeBankTransferModal(){
+  document.getElementById('bankTransferModal').classList.remove('active');
+  bankTransferEditIndex=-1;
+}
+
+function submitBankTransfer(){
+  const label=document.getElementById('bankTransferLabel').value.trim();
+  const amount=Number(document.getElementById('bankTransferAmount').value);
+  const from=document.getElementById('bankTransferFrom').value;
+  const to=document.getElementById('bankTransferTo').value;
+  const recurrence=document.getElementById('bankTransferRecurrence').value==='permanent'?'permanent':'occasional';
+
+  if(!Number.isFinite(amount)||amount<=0){
+    alert('Saisis un montant supérieur à 0.');
+    return;
+  }
+  if(from===to){
+    alert('Le compte de départ et le compte d’arrivée doivent être différents.');
+    return;
+  }
+
+  if(bankTransferEditIndex>=0&&data.bankTransfers[bankTransferEditIndex]){
+    const done=Boolean(data.bankTransfers[bankTransferEditIndex].done);
+    data.bankTransfers[bankTransferEditIndex]={label:label||'Virement interne',amount,from,to,done,recurrence};
+  }else{
+    data.bankTransfers.unshift({label:label||'Virement interne',amount,from,to,done:false,recurrence});
+  }
+
+  closeBankTransferModal();
+  render();
+  save();
+}
+
+function toggleBankTransferDone(index){
+  if(!data.bankTransfers?.[index])return;
+  data.bankTransfers[index].done=!data.bankTransfers[index].done;
+  render();
+  save();
+}
+
+function deleteBankTransfer(index){
+  if(!data.bankTransfers?.[index])return;
+  data.bankTransfers.splice(index,1);
+  render();
+  save();
+}
+
+function clearBankTransfers(){
+  if(!data.bankTransfers?.length)return;
+  if(!confirm('Voulez-vous vraiment vider tous les virements internes ?'))return;
+  data.bankTransfers=[];
+  render();
+  save();
+}
+
+function renderBankTransfers(){
+  const c=document.getElementById('bank-transfers-container');
+  const count=document.getElementById('bank-transfer-count');
+  if(count)count.textContent=String((data.bankTransfers||[]).length);
+  if(!c)return;
+
+  if(!data.bankTransfers?.length){
+    c.innerHTML='<div class="transfer-empty">Aucun virement interne prévu.</div>';
+    return;
+  }
+
+  c.innerHTML=data.bankTransfers.map((t,index)=>`
+    <div class="transfer-row ${t.done?'done':''}">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleBankTransferDone(${index})" title="Virement effectué">
+      <div class="transfer-main" onclick="openBankTransferModal(${index})">
+        <div class="transfer-label">${escapeHtml(t.label||'Virement interne')}</div>
+        <div class="transfer-route">${escapeHtml(getBankAccountName(t.from))} → ${escapeHtml(getBankAccountName(t.to))}</div>
+        <div class="transfer-cycle ${t.recurrence==='permanent'?'permanent':''}">${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</div>
+      </div>
+      <div class="transfer-amount" onclick="openBankTransferModal(${index})">${euro(Number(t.amount)||0)}</div>
+      <button class="btn-del" onclick="deleteBankTransfer(${index})" title="Supprimer">×</button>
+    </div>
+  `).join('');
+}
+
+function calculateBankBalances(){
+  const result={};
+  getVisibleBankAccounts().forEach(a=>{
+    result[a.id]={current:0,forecast:0};
+  });
+
+  const ensure=id=>{
+    if(!result[id])result[id]={current:0,forecast:0};
+    return result[id];
+  };
+
+  const applyBudget=(key,sign)=>{
+    (data[key]||[]).forEach(item=>{
+      const id=item[3]||'ca';
+      const amount=Number(item[1])||0;
+      ensure(id).forecast+=sign*amount;
+      if(item[2])ensure(id).current+=sign*amount;
+    });
+  };
+
+  applyBudget('budgetRevenus',1);
+  applyBudget('budgetFixes',-1);
+  applyBudget('budgetDepenses',-1);
+
+  (data.bankTransfers||[]).forEach(t=>{
+    const amount=Number(t.amount)||0;
+    ensure(t.from).forecast-=amount;
+    ensure(t.to).forecast+=amount;
+    if(t.done){
+      ensure(t.from).current-=amount;
+      ensure(t.to).current+=amount;
+    }
+  });
+
+  return result;
+}
+
+function renderBankBalances(){
+  const c=document.getElementById('bank-balances');
+  if(!c)return;
+  const balances=calculateBankBalances();
+  const accounts=getVisibleBankAccounts();
+
+  c.innerHTML=accounts.map(a=>{
+    const b=balances[a.id]||{current:0,forecast:0};
+    const warning=b.forecast<0
+      ? `<div class="bank-warning">⚠️ Prévision négative : il manque ${euro(Math.abs(b.forecast))} sur ce compte.</div>`
+      : '';
+    return `
+      <div class="bank-balance-card">
+        <div class="bank-name"><span class="bank-dot ${getBankDotClass(a.id)}"></span>${escapeHtml(a.name)}</div>
+        <div class="bank-current-value ${b.current<0?'negative':b.current>0?'positive':''}">${euro(b.current)}</div>
+        <div class="bank-forecast-label">Prévision fin de cycle</div>
+        <div class="bank-forecast-value ${b.forecast<0?'negative':b.forecast>0?'positive':''}">${euro(b.forecast)}</div>
+        ${warning}
+      </div>`;
+  }).join('');
+}
+
+/* =========================================================
    MODALE BUDGET : AJOUT + MODIFICATION
    ========================================================= */
 
@@ -1155,9 +1570,11 @@ function openModal(key){
 
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
+  const accountSelect=document.getElementById('modalAccount');
 
   labelInput.value='';
   amountInput.value='';
+  populateBankSelect(accountSelect,localStorage.getItem('finaryLastBudgetAccount')||'fortuneo');
   labelInput.placeholder='Ex: Loyer, Salaire, Courses...';
   amountInput.placeholder='0';
 
@@ -1193,10 +1610,12 @@ function openBudgetEditModal(key,index){
 
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
+  const accountSelect=document.getElementById('modalAccount');
 
   /* Libellé prérempli et modifiable ; montant volontairement vide */
   labelInput.value=item[0] || '';
   amountInput.value='';
+  populateBankSelect(accountSelect,item[3]||'ca');
 
   labelInput.placeholder='Modifier le libellé';
   amountInput.placeholder='Laisser vide pour conserver';
@@ -1219,9 +1638,12 @@ function submitModal(){
 
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
+  const accountSelect=document.getElementById('modalAccount');
 
   const label=labelInput.value.trim();
   const amountVal=amountInput.value;
+  const accountId=accountSelect?.value||'ca';
+  localStorage.setItem('finaryLastBudgetAccount',accountId);
 
   /* MODIFICATION */
   if(activeModalMode==='edit'){
@@ -1248,6 +1670,8 @@ function submitModal(){
       item[1]=amount;
     }
 
+    item[3]=accountId;
+
     closeModal();
     render();
     save();
@@ -1264,7 +1688,8 @@ function submitModal(){
   data[activeModalKey].unshift([
     label,
     Number.isFinite(amount) ? amount : 0,
-    false
+    false,
+    accountId
   ]);
 
   closeModal();
@@ -1447,7 +1872,8 @@ function render(){
           >
 
           <div class="budget-line-label" title="Cliquer pour modifier">
-            ${escapeHtml(item[0] || 'Sans libellé')}
+            <div class="budget-line-main">${escapeHtml(item[0] || 'Sans libellé')}</div>
+            <div class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</div>
           </div>
 
           <div class="budget-line-amount" title="Cliquer pour modifier">
@@ -1501,6 +1927,8 @@ function render(){
   });
 
   updateTotals();
+  renderBankBalances();
+  renderBankTransfers();
   renderHistory();
   recordPatrimoineSnapshot();
   updatePatrimoineMonthlyVariation();
@@ -1659,11 +2087,10 @@ function updateTotals(){
   const dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
   const rv=rev-fixes-dep;
 
-  // Solde actuel : uniquement les lignes cochées
-  const revCoches=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[2]?(i[1]||0):0),0);
-  const fixesCoches=(data.budgetFixes||[]).reduce((s,i)=>s+(i[2]?(i[1]||0):0),0);
-  const depCoches=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[2]?(i[1]||0):0),0);
-  const soldeActuel=revCoches-fixesCoches-depCoches;
+  // Solde actuel : opérations cochées, ventilées par compte.
+  // Les virements internes se compensent dans le total global.
+  const bankBalances=calculateBankBalances();
+  const soldeActuel=Object.values(bankBalances).reduce((s,b)=>s+(Number(b.current)||0),0);
 
   [
     ['total-budgetRevenus',rev],
@@ -1797,7 +2224,8 @@ function closeMonth(){
   const hasAnyData=
     (data.budgetRevenus||[]).length>0 ||
     (data.budgetFixes||[]).length>0 ||
-    (data.budgetDepenses||[]).length>0;
+    (data.budgetDepenses||[]).length>0 ||
+    (data.bankTransfers||[]).length>0;
 
   const alreadyClosed=monthHistory.some(m=>
     normalizeText(m.month)===normalizeText(monthLabel)
@@ -1818,7 +2246,7 @@ function closeMonth(){
     message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
   }
 
-  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et remettra les cases à zéro.`;
+  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, puis remettra les cases à zéro.`;
 
   if(!confirm(message))return;
 
@@ -1830,10 +2258,17 @@ function closeMonth(){
     resteVivre:reste,
     revenusDetails:JSON.parse(JSON.stringify(data.budgetRevenus||[])),
     fixesDetails:JSON.parse(JSON.stringify(data.budgetFixes||[])),
-    depensesDetails:JSON.parse(JSON.stringify(data.budgetDepenses||[]))
+    depensesDetails:JSON.parse(JSON.stringify(data.budgetDepenses||[])),
+    transfersDetails:JSON.parse(JSON.stringify(data.bankTransfers||[]))
   });
 
   data.budgetDepenses=[];
+
+  // Les virements occasionnels disparaissent après la clôture.
+  // Les permanents sont reconduits pour le nouveau cycle et repassent en "non effectué".
+  data.bankTransfers=(data.bankTransfers||[])
+    .filter(t=>t.recurrence==='permanent')
+    .map(t=>({...t,done:false}));
 
   if(data.budgetFixes){
     data.budgetFixes.forEach(item=>item[2]=false);
@@ -1896,7 +2331,18 @@ function renderHistory(){
         ...(m.depensesDetails||[])
       ];
 
-      return allItems.some(item => matchesQuery(item[0], item[1], query));
+      const budgetMatch=allItems.some(item =>
+        matchesQuery(item[0], item[1], query) ||
+        Boolean(item[3]) && normalizeText(getBankAccountName(item[3])).includes(normalizeText(query))
+      );
+
+      const transferMatch=(m.transfersDetails||[]).some(t=>
+        matchesQuery(t.label,t.amount,query) ||
+        normalizeText(getBankAccountName(t.from)).includes(normalizeText(query)) ||
+        normalizeText(getBankAccountName(t.to)).includes(normalizeText(query))
+      );
+
+      return budgetMatch||transferMatch;
     });
 
   if(!filteredHistory.length){
@@ -1953,7 +2399,10 @@ function renderHistoryMonthModalContent(m){
   `;
 
   const renderSection = (title, items) => {
-    const filteredItems = (items || []).filter(it => matchesQuery(it[0], it[1], query));
+    const filteredItems = (items || []).filter(it =>
+      matchesQuery(it[0], it[1], query) ||
+      (it[3] && normalizeText(getBankAccountName(it[3])).includes(normalizeText(query)))
+    );
 
     if(!filteredItems.length && query) return '';
 
@@ -1964,7 +2413,8 @@ function renderHistoryMonthModalContent(m){
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
 
     filteredItems.forEach(it => {
-      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
+      const accountText=it[3]?`<span class="history-account">${escapeHtml(getBankAccountName(it[3]))}</span>`:'';
+      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
     });
 
     html += `</div>`;
@@ -1975,10 +2425,27 @@ function renderHistoryMonthModalContent(m){
   let secFix = renderSection('🏠 Frais fixes', m.fixesDetails);
   let secDep = renderSection('🛒 Dépenses', m.depensesDetails);
 
-  if(query && !secRev && !secFix && !secDep){
+  const filteredTransfers=(m.transfersDetails||[]).filter(t=>
+    matchesQuery(t.label,t.amount,query) ||
+    normalizeText(getBankAccountName(t.from)).includes(normalizeText(query)) ||
+    normalizeText(getBankAccountName(t.to)).includes(normalizeText(query))
+  );
+
+  let secTransfers='';
+  if(filteredTransfers.length){
+    secTransfers='<div class="history-view-section"><h4>⇄ Virements internes</h4>';
+    filteredTransfers.forEach(t=>{
+      secTransfers+=`<div class="history-view-row"><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getBankAccountName(t.from))} → ${escapeHtml(getBankAccountName(t.to))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
+    });
+    secTransfers+='</div>';
+  }else if((m.transfersDetails||[]).length&&!query){
+    secTransfers='<div class="history-view-section"><h4>⇄ Virements internes</h4><div class="history-view-empty">Aucun élément</div></div>';
+  }
+
+  if(query && !secRev && !secFix && !secDep && !secTransfers){
     content += `<div class="muted" style="text-align:center;padding:12px">Aucun résultat pour "${escapeHtml(query)}"</div>`;
   }else{
-    content += secRev + secFix + secDep;
+    content += secRev + secFix + secDep + secTransfers;
   }
 
   document.getElementById('historyMonthContent').innerHTML = content;
@@ -2862,6 +3329,7 @@ function importData(event){
       const imported=JSON.parse(e.target.result);
 
       if(imported.data)data=imported.data;
+      ensureBankingData();
       if(imported.monthHistory)monthHistory=imported.monthHistory;
       if(imported.patrimoineHistory)patrimoineHistory=imported.patrimoineHistory;
       if(typeof imported.annotations==='string')annotations=imported.annotations;
