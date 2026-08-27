@@ -1,4 +1,4 @@
-const CACHE_NAME = 'budget-patrimoine-beta-v2';
+const CACHE_NAME = 'budget-patrimoine-beta-v3';
 const APP_SHELL = [
   './app.html',
   './firebase-config.js',
