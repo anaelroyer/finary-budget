@@ -103,7 +103,7 @@ svg.patrimoine-chart{width:100%;height:190px;overflow:visible;touch-action:none;
     margin-top:0;
   }
 }
-#firebaseStatus{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:9999;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none}
+#firebaseStatus{align-self:center;width:max-content;max-width:100%;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none;margin:-6px auto 0}
 /* Schéma minimaliste, épuré, points et traits affinés */
 #patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
 #patternLockOverlay h2{font-size:16px;color:#8b949e;text-align:center;font-weight:400}
@@ -210,7 +210,6 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 </style>
 </head>
 <body>
-<div id="firebaseStatus">Synchronisation…</div>
 
 <!-- ÉCRAN DE VERROUILLAGE -->
 <div id="patternLockOverlay" style="display:none;">
@@ -511,7 +510,10 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <button class="tab-btn" onclick="switchTab('factures')">🧾 Factures</button>
   </div>
 
+  <div id="firebaseStatus">Synchronisation…</div>
+
   <div id="tab-budget" class="tab-content active">
+
     <div class="top" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:center;">
       <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 5px;font-size:10px">📝 Notes</button>
       <button class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
@@ -552,8 +554,11 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
   </div>
 
   <div id="tab-patrimoine" class="tab-content">
-    <div class="top" style="justify-content:space-between;">
-      <button class="btn btn-secondary" onclick="window.print()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
+    <div class="top" style="justify-content:space-between;gap:8px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="printPatrimoineReport()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
+        <button class="btn btn-secondary" onclick="sharePatrimoineReport()" style="padding:6px 8px;font-size:11px">↗️ Partager</button>
+      </div>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Affiché</button>
     </div>
 
@@ -2101,6 +2106,241 @@ function calculateLiquidInvestments(){
     (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
     0
   );
+}
+
+
+/* RAPPORT PATRIMOINE : IMPRESSION / PARTAGE */
+function getPatrimoineReportModel(){
+  const totals=calculateNet();
+  const categories=[
+    {key:'immobilier',label:'Immobilier'},
+    {key:'epargne',label:'Épargne'},
+    {key:'bourse',label:'Bourse'},
+    {key:'crypto',label:'Crypto'},
+    {key:'assurancevie',label:'Assurance-vie'},
+    {key:'autres',label:'Autres actifs'},
+    {key:'dettes',label:'Emprunts'}
+  ].map(c=>({
+    ...c,
+    items:(data[c.key]||[]).map(i=>({label:String(i?.[0]||'Sans libellé'),amount:Number(i?.[1])||0})),
+    total:(data[c.key]||[]).reduce((sum,i)=>sum+(Number(i?.[1])||0),0)
+  }));
+
+  const savings=categories.find(c=>c.key==='epargne')?.total||0;
+  const investments=(categories.find(c=>c.key==='bourse')?.total||0)+(categories.find(c=>c.key==='crypto')?.total||0);
+  const variation=document.getElementById('patrimoine-variation-value')?.textContent?.trim()||'—';
+  const now=new Date();
+
+  const liquidKeys=new Set(['epargne','assurancevie','bourse','crypto','autres']);
+  const liquidCategories=categories.filter(c=>liquidKeys.has(c.key) && c.total>0);
+  const liquidTotal=liquidCategories.reduce((s,c)=>s+c.total,0);
+
+  return{
+    dateLabel:now.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}),
+    fileDate:getLocalDateKey(now),
+    gross:totals.assets,
+    net:totals.net,
+    debts:totals.debts,
+    savings,
+    investments,
+    variation,
+    categories,
+    liquidCategories,
+    liquidTotal,
+    chartHtml:document.getElementById('chart-wrapper')?.innerHTML||'',
+    chartPeriod:document.getElementById('chart-period-caption')?.textContent?.trim()||'',
+    chartPerformance:document.getElementById('chart-performance-value')?.textContent?.trim()||'—',
+    chartSeriesLabel:(chartSeriesConfig[currentChartSeries]||chartSeriesConfig.total)?.label||'Total'
+  };
+}
+
+function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
+  const esc=v=>escapeHtml(v);
+
+  const categorySummary=model.categories.map(c=>`
+    <tr>
+      <td>${esc(c.label)}</td>
+      <td class="num ${c.key==='dettes'?'debt':''}">${euro(c.total)}</td>
+    </tr>
+  `).join('');
+
+  const details=model.categories.map(c=>{
+    const rows=c.items.length
+      ? c.items.map(i=>`<tr><td>${esc(i.label)}</td><td class="num">${euro(i.amount)}</td></tr>`).join('')
+      : `<tr><td colspan="2" class="empty">Aucune ligne</td></tr>`;
+
+    return `
+      <section class="detail-section">
+        <div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div>
+        <table class="detail-table"><tbody>${rows}</tbody></table>
+      </section>
+    `;
+  }).join('');
+
+  const liquidSummary=model.liquidCategories.length
+    ? model.liquidCategories.map(c=>{
+        const pct=model.liquidTotal>0?(c.total/model.liquidTotal)*100:0;
+        return `<tr><td>${esc(c.label)}</td><td class="num">${pct.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</td><td class="num">${euro(c.total)}</td></tr>`;
+      }).join('')
+    : `<tr><td colspan="3" class="empty">Aucun actif hors immobilier</td></tr>`;
+
+  const pieColors={epargne:'#3fb950',assurancevie:'#58a6ff',bourse:'#a371f7',crypto:'#d29922',autres:'#f0883e'};
+  let pieCursor=0;
+  const pieStops=model.liquidCategories.map(c=>{
+    const pct=model.liquidTotal>0?(c.total/model.liquidTotal)*100:0;
+    const start=pieCursor;
+    pieCursor+=pct;
+    return `${pieColors[c.key]||'#777'} ${start}% ${pieCursor}%`;
+  });
+  const pieHtml=model.liquidTotal>0
+    ? `<div class="report-pie" style="background:conic-gradient(${pieStops.join(',')})"></div>`
+    : '';
+
+  const chartBlock=model.chartHtml
+    ? `<section class="chart-section">
+         <div class="section-title"><span>Évolution — ${esc(model.chartSeriesLabel)}</span><strong>${esc(model.chartPerformance)}</strong></div>
+         <div class="chart-caption">${esc(model.chartPeriod)}</div>
+         <div class="report-chart">${model.chartHtml}</div>
+       </section>`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Rapport Patrimoine - ${esc(model.dateLabel)}</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:12px;line-height:1.4}
+  .report{max-width:820px;margin:0 auto;padding:28px}
+  .report-header{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px;display:flex;justify-content:space-between;gap:18px;align-items:flex-end}
+  h1{font-size:25px;margin:0;letter-spacing:-.3px}.date{font-size:12px;color:#555;text-align:right}
+  .summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+  .summary-card{border:1px solid #bbb;border-radius:9px;padding:11px 13px}.summary-card .label{font-size:10px;text-transform:uppercase;color:#666;font-weight:700;letter-spacing:.4px}.summary-card .value{font-size:21px;font-weight:800;margin-top:3px}.summary-card .sub{font-size:10px;color:#666;margin-top:3px}
+  .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-bottom:18px}
+  .panel{border:1px solid #bbb;border-radius:9px;overflow:hidden}.panel-title{font-size:12px;font-weight:800;padding:9px 11px;background:#f2f2f2;border-bottom:1px solid #bbb}.distribution-wrap{display:flex;align-items:center;gap:12px;padding:10px}.distribution-wrap table{flex:1}.report-pie{width:92px;height:92px;border-radius:50%;flex:0 0 auto}
+  table{width:100%;border-collapse:collapse}td,th{padding:7px 9px;border-bottom:1px solid #ddd;text-align:left}tr:last-child td{border-bottom:0}.num{text-align:right;font-weight:700;white-space:nowrap}.debt{color:#9b1c1c}.empty{color:#777;font-style:italic;text-align:center}
+  .detail-section,.chart-section{break-inside:avoid;margin:0 0 14px;border:1px solid #bbb;border-radius:9px;overflow:hidden}.section-title{background:#f2f2f2;padding:9px 11px;display:flex;justify-content:space-between;gap:12px;font-size:12px}.detail-table td{padding:6px 11px}
+  .chart-caption{font-size:10px;color:#666;padding:7px 11px 0;text-align:right}.report-chart{padding:6px 10px 10px;overflow:hidden}.report-chart .chart-tooltip{display:none!important}.report-chart svg{width:100%;height:210px;display:block}.report-chart .chart-line{fill:none;stroke:#222;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.report-chart .chart-area{fill:#ddd;opacity:.45}.report-chart .chart-grid-line{stroke:#ccc;stroke-width:1}.report-chart .chart-axis-label,.report-chart .chart-last-label{fill:#555;font-size:9px}.report-chart .chart-point,.report-chart .chart-point-last{fill:#222}.report-chart .chart-cursor-line{display:none}
+  .footer{text-align:center;color:#555;font-size:10px;margin-top:20px;padding-top:10px;border-top:1px solid #ddd}
+  @media(max-width:640px){.report{padding:18px}.two-cols{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}}
+  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.report{max-width:none;padding:10mm}.detail-section,.chart-section,.panel{break-inside:avoid}@page{size:A4;margin:8mm}}
+</style>
+</head>
+<body>
+<main class="report">
+  <header class="report-header"><div><h1>Rapport Patrimoine</h1><div style="color:#555;margin-top:3px">Situation patrimoniale du foyer</div></div><div class="date">${esc(model.dateLabel)}</div></header>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="label">Patrimoine brut</div><div class="value">${euro(model.gross)}</div></div>
+    <div class="summary-card"><div class="label">Patrimoine net</div><div class="value">${euro(model.net)}</div><div class="sub">Variation depuis le mois précédent : ${esc(model.variation)}</div></div>
+    <div class="summary-card"><div class="label">Épargne</div><div class="value">${euro(model.savings)}</div></div>
+    <div class="summary-card"><div class="label">Investissements Bourse + Crypto</div><div class="value">${euro(model.investments)}</div><div class="sub">Emprunts : ${euro(model.debts)}</div></div>
+  </div>
+
+  <div class="two-cols">
+    <div class="panel"><div class="panel-title">Synthèse par catégorie</div><table><tbody>${categorySummary}</tbody></table></div>
+    <div class="panel"><div class="panel-title">Répartition des actifs hors immobilier</div><div class="distribution-wrap">${pieHtml}<table><tbody>${liquidSummary}</tbody></table></div></div>
+  </div>
+
+  ${chartBlock}
+  ${details}
+
+  <div class="footer">Application crée par ROYER Anaël</div>
+</main>
+</body>
+</html>`;
+}
+
+function buildPatrimoineReportText(model=getPatrimoineReportModel()){
+  const lines=[
+    `RAPPORT PATRIMOINE — ${model.dateLabel}`,
+    '',
+    `Patrimoine brut : ${euro(model.gross)}`,
+    `Patrimoine net : ${euro(model.net)}`,
+    `Variation depuis le mois précédent : ${model.variation}`,
+    `Épargne : ${euro(model.savings)}`,
+    `Investissements Bourse + Crypto : ${euro(model.investments)}`,
+    `Emprunts : ${euro(model.debts)}`,
+    '',
+    'SYNTHÈSE PAR CATÉGORIE'
+  ];
+
+  model.categories.forEach(c=>lines.push(`${c.label} : ${euro(c.total)}`));
+
+  model.categories.forEach(c=>{
+    lines.push('',c.label.toUpperCase());
+    if(!c.items.length)lines.push('Aucune ligne');
+    else c.items.forEach(i=>lines.push(`• ${i.label} : ${euro(i.amount)}`));
+  });
+
+  lines.push('','Application crée par ROYER Anaël');
+  return lines.join('\n');
+}
+
+function printPatrimoineReport(){
+  const reportHtml=buildPatrimoineReportHtml();
+  const w=window.open('','_blank');
+
+  if(!w){
+    alert("L'ouverture de la fenêtre d'impression a été bloquée par le navigateur.");
+    return;
+  }
+
+  w.document.open();
+  w.document.write(reportHtml);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),300);
+}
+
+async function sharePatrimoineReport(){
+  const model=getPatrimoineReportModel();
+  const reportHtml=buildPatrimoineReportHtml(model);
+  const reportText=buildPatrimoineReportText(model);
+  const fileName=`patrimoine_${model.fileDate}.html`;
+
+  try{
+    const file=new File([reportHtml],fileName,{type:'text/html'});
+
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({
+        title:`Rapport Patrimoine — ${model.dateLabel}`,
+        text:'Rapport Patrimoine',
+        files:[file]
+      });
+      return;
+    }
+
+    if(navigator.share){
+      await navigator.share({
+        title:`Rapport Patrimoine — ${model.dateLabel}`,
+        text:reportText
+      });
+      return;
+    }
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(reportText);
+      alert('Le rapport Patrimoine a été copié dans le presse-papiers.');
+      return;
+    }
+
+    const ta=document.createElement('textarea');
+    ta.value=reportText;
+    ta.style.position='fixed';
+    ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    alert('Le rapport Patrimoine a été copié dans le presse-papiers.');
+  }catch(err){
+    if(err && err.name==='AbortError')return;
+    console.error(err);
+    alert("Le partage n'a pas pu être lancé sur ce navigateur.");
+  }
 }
 
 function updateTotals(){
