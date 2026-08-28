@@ -43,6 +43,29 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .rows-container{display:flex;flex-direction:column;gap:8px}
 .row{display:grid;grid-template-columns:28px minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}.row.paid{background:rgba(35,134,54,.15)}.row:last-child{border-bottom:0}
 .row.patrimoine-row{display:grid;grid-template-columns:minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+
+/* FICHES EMPRUNTS */
+.loan-card{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:10px}
+.loan-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.loan-card-title{font-size:14px;font-weight:700;color:#fff;overflow-wrap:anywhere}
+.loan-card-current{font-size:17px;font-weight:800;color:#f85149;white-space:nowrap;text-align:right}
+.loan-card-current small{display:block;color:#8b949e;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+.loan-card-sub{font-size:12px;color:#8b949e}
+.loan-progress-line{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:#8b949e}
+.loan-progress-line strong{color:#c9d1d9;font-size:11px}
+.loan-progress{height:7px;background:#21262d;border-radius:999px;overflow:hidden;border:1px solid #30363d}
+.loan-progress-bar{height:100%;background:#238636;border-radius:999px;min-width:0}
+.loan-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.loan-meta{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:8px}
+.loan-meta span{display:block;color:#8b949e;font-size:10px;text-transform:uppercase;letter-spacing:.35px;font-weight:600}
+.loan-meta strong{display:block;color:#c9d1d9;font-size:12px;margin-top:2px;overflow-wrap:anywhere}
+.loan-card-actions{display:flex;gap:7px}
+.loan-card-actions .btn{flex:1;padding:8px 10px;font-size:12px}
+.loan-legacy{font-size:11px;color:#d29922;background:rgba(210,153,34,.09);border:1px solid rgba(210,153,34,.25);border-radius:8px;padding:8px 9px}
+#loanModal{align-items:flex-start;padding-top:5vh;padding-bottom:20px;overflow-y:auto}
+#loanModal .modal{max-width:430px;max-height:90vh;overflow-y:auto}
+.loan-fields-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:480px){.loan-fields-grid{grid-template-columns:1fr 1fr}.loan-card-current{font-size:15px}}
 .row input[type=text],.row input[type=number]{width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none}.row input[type=number]{padding:8px 6px;text-align:right}
 .row input[type=checkbox]{width:20px;height:20px;accent-color:#238636;cursor:pointer}.amount{text-align:right;font-weight:600;color:#c9d1d9;font-size:13px}
 
@@ -418,6 +441,26 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 </div>
 
 
+
+<!-- MODAL EMPRUNT -->
+<div class="modal-overlay" id="loanModal">
+  <div class="modal">
+    <h3 id="loanModalTitle">Ajouter un emprunt</h3>
+    <div class="modal-field"><label>Libellé</label><input type="text" id="loanLabel" placeholder="Ex : Prêt immobilier"></div>
+    <div class="loan-fields-grid">
+      <div class="modal-field"><label>Montant initial (€)</label><input type="number" id="loanInitialAmount" inputmode="decimal" placeholder="150000"></div>
+      <div class="modal-field"><label>Capital restant dû (€)</label><input type="number" id="loanCurrentAmount" inputmode="decimal" placeholder="120000"></div>
+      <div class="modal-field"><label>Date de début</label><input type="date" id="loanStartDate"></div>
+      <div class="modal-field"><label>Date de fin</label><input type="date" id="loanEndDate"></div>
+      <div class="modal-field"><label>Mensualité (€)</label><input type="number" id="loanMonthlyPayment" inputmode="decimal" placeholder="779.47"></div>
+      <div class="modal-field"><label>Taux (%)</label><input type="number" id="loanRate" inputmode="decimal" step="0.01" placeholder="1.45"></div>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeLoanModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitLoanModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL RECADRAGE FACTURE -->
 <div class="modal-overlay" id="invoiceCropModal">
@@ -2102,6 +2145,68 @@ function saveAnnotations(){
 }
 
 
+/* EMPRUNTS */
+let activeLoanIndex=-1;
+function getLoanMeta(item){
+  const raw=item && typeof item[2]==='object' && item[2]!==null ? item[2] : {};
+  return {initialAmount:Number(raw.initialAmount)||0,startDate:raw.startDate||'',endDate:raw.endDate||'',monthlyPayment:Number(raw.monthlyPayment)||0,rate:Number(raw.rate)||0};
+}
+function calculateLoanProgress(initialAmount,currentAmount){
+  const initial=Number(initialAmount)||0,current=Number(currentAmount)||0;
+  if(initial<=0)return 0;
+  return Math.max(0,Math.min(100,((initial-current)/initial)*100));
+}
+function formatLoanDate(value){
+  if(!value)return '—';
+  const d=new Date(value+'T12:00:00');
+  if(Number.isNaN(d.getTime()))return '—';
+  return d.toLocaleDateString('fr-FR',{month:'2-digit',year:'numeric'});
+}
+function openLoanModal(index=-1){
+  activeLoanIndex=index;
+  const editing=index>=0 && data.dettes && data.dettes[index];
+  const item=editing?data.dettes[index]:['',0,{}],meta=getLoanMeta(item);
+  document.getElementById('loanModalTitle').textContent=editing?'Modifier l’emprunt':'Ajouter un emprunt';
+  document.getElementById('loanLabel').value=item[0]||'';
+  document.getElementById('loanInitialAmount').value=meta.initialAmount||'';
+  document.getElementById('loanCurrentAmount').value=Number(item[1])||'';
+  document.getElementById('loanStartDate').value=meta.startDate||'';
+  document.getElementById('loanEndDate').value=meta.endDate||'';
+  document.getElementById('loanMonthlyPayment').value=meta.monthlyPayment||'';
+  document.getElementById('loanRate').value=meta.rate||'';
+  document.getElementById('loanModal').classList.add('active');
+  setTimeout(()=>document.getElementById('loanLabel').focus(),50);
+}
+function closeLoanModal(){document.getElementById('loanModal').classList.remove('active');activeLoanIndex=-1;}
+function submitLoanModal(){
+  const label=document.getElementById('loanLabel').value.trim();
+  const initial=Number(document.getElementById('loanInitialAmount').value||0);
+  const current=Number(document.getElementById('loanCurrentAmount').value||0);
+  const startDate=document.getElementById('loanStartDate').value||'';
+  const endDate=document.getElementById('loanEndDate').value||'';
+  const monthly=Number(document.getElementById('loanMonthlyPayment').value||0);
+  const rate=Number(document.getElementById('loanRate').value||0);
+  if(!label){document.getElementById('loanLabel').focus();return;}
+  if(!Number.isFinite(initial)||initial<0){document.getElementById('loanInitialAmount').focus();return;}
+  if(!Number.isFinite(current)||current<0){document.getElementById('loanCurrentAmount').focus();return;}
+  if(!Number.isFinite(monthly)||monthly<0){document.getElementById('loanMonthlyPayment').focus();return;}
+  if(!Number.isFinite(rate)||rate<0){document.getElementById('loanRate').focus();return;}
+  const newItem=[label,current,{initialAmount:initial,startDate,endDate,monthlyPayment:monthly,rate}];
+  if(!Array.isArray(data.dettes))data.dettes=[];
+  if(activeLoanIndex>=0 && data.dettes[activeLoanIndex])data.dettes[activeLoanIndex]=newItem; else data.dettes.push(newItem);
+  closeLoanModal();render();save();
+}
+function renderLoanCards(cont){
+  const items=Array.isArray(data.dettes)?data.dettes:[];
+  items.forEach((item,idx)=>{
+    const meta=getLoanMeta(item),current=Number(item[1])||0,progress=calculateLoanProgress(meta.initialAmount,current);
+    const complete=meta.initialAmount>0||meta.startDate||meta.endDate||meta.monthlyPayment>0||meta.rate>0;
+    const card=document.createElement('div');card.className='loan-card';
+    card.innerHTML=`<div class="loan-card-head"><div><div class="loan-card-title">${escapeHtml(item[0]||'Emprunt')}</div><div class="loan-card-sub">${meta.initialAmount>0?'sur '+euro(meta.initialAmount)+' empruntés':'Montant initial à renseigner'}</div></div><div class="loan-card-current">${euro(current)}<small>restant dû</small></div></div>${complete?`<div><div class="loan-progress-line"><span>Capital remboursé</span><strong>${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</strong></div><div class="loan-progress"><div class="loan-progress-bar" style="width:${progress}%"></div></div></div><div class="loan-meta-grid"><div class="loan-meta"><span>Mensualité</span><strong>${meta.monthlyPayment>0?euro(meta.monthlyPayment):'—'}</strong></div><div class="loan-meta"><span>Taux</span><strong>${meta.rate>0?meta.rate.toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div class="loan-meta"><span>Début</span><strong>${formatLoanDate(meta.startDate)}</strong></div><div class="loan-meta"><span>Fin</span><strong>${formatLoanDate(meta.endDate)}</strong></div></div>`:`<div class="loan-legacy">Ancien emprunt : ouvre « Modifier » pour compléter les informations.</div>`}<div class="loan-card-actions"><button class="btn btn-secondary" onclick="openLoanModal(${idx})">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="delPatrimoine('dettes',${idx})">🗑 Supprimer</button></div>`;
+    cont.appendChild(card);
+  });
+}
+
 /* RENDU */
 function render(){
   [
@@ -2125,6 +2230,8 @@ function render(){
     if(!Array.isArray(data[key]))data[key]=[];
 
     const isBudget=key.startsWith('budget');
+
+    if(key==='dettes'){renderLoanCards(cont);return;}
 
     // Dans le budget, les lignes non cochées restent en haut et
     // les lignes cochées sont affichées en bas, sans modifier data.
@@ -2244,6 +2351,7 @@ function togglePaid(k,i){
 }
 
 function addItem(k){
+  if(k==='dettes'){openLoanModal(-1);return;}
   if(!data[k])data[k]=[];
   data[k].push(['',0]);
   render();
@@ -4319,6 +4427,9 @@ document.getElementById('genericModal').addEventListener('click',e=>{
 document.getElementById('historyMonthModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closeHistoryMonthModal();
 });
+
+document.getElementById('loanModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLoanModal();});
+document.getElementById('loanModal').addEventListener('keydown',e=>{if(e.key==='Escape')closeLoanModal();});
 
 document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closePatrimoineAmountModal();
