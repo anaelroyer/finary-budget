@@ -296,6 +296,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .vehicle-alert.soon{border-color:rgba(210,153,34,.38);background:rgba(210,153,34,.08)}
 .vehicle-alert.overdue{border-color:rgba(248,81,73,.38);background:rgba(248,81,73,.08)}
 .vehicle-alert-title{font-size:13px;font-weight:800;color:#fff}.vehicle-alert-meta{font-size:11px;color:#8b949e;margin-top:3px;line-height:1.45}
+.vehicle-alert-vehicle{display:inline-flex;align-items:center;gap:5px;margin-bottom:5px;padding:3px 7px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;font-size:10px;font-weight:800}
 .vehicle-list{display:flex;flex-direction:column;gap:8px}
 .vehicle-entry{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:11px}
 .vehicle-entry-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
@@ -923,16 +924,16 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       <button class="btn btn-primary" onclick="openVehicleModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
     </div>
 
+    <div class="card" id="vehicle-alerts-card" style="display:none">
+      <div class="section-header"><h2>🔔 Échéances & alertes</h2><button class="btn btn-secondary" id="vehicle-add-schedule-btn" onclick="openVehicleScheduleModal()" style="padding:6px 8px;font-size:10px">＋ Échéance</button></div>
+      <div id="vehicle-alerts"></div>
+    </div>
+
     <div id="vehicle-tabs" class="vehicle-tabs"></div>
     <div id="vehicle-empty" class="card vehicle-empty" style="display:none">Aucun véhicule enregistré.<br><br><button class="btn btn-primary" onclick="openVehicleModal()">＋ Créer mon premier véhicule</button></div>
 
     <div id="vehicle-content" style="display:none">
       <div class="card" id="vehicle-summary-card"></div>
-
-      <div class="card">
-        <div class="section-header"><h2>🔔 Échéances & alertes</h2><button class="btn btn-secondary" onclick="openVehicleScheduleModal()" style="padding:6px 8px;font-size:10px">＋ Échéance</button></div>
-        <div id="vehicle-alerts"></div>
-      </div>
 
       <div class="card">
         <div class="section-header"><h2>🔧 Carnet d'entretien</h2><button class="btn btn-secondary" onclick="openMaintenanceModal()" style="padding:6px 8px;font-size:10px">＋ Intervention</button></div>
@@ -3714,7 +3715,7 @@ function openVehicleScheduleModal(id=''){
   const v=getCurrentGarageVehicle();if(!v)return;
   scheduleEditId=id||'';
   const sc=(v.schedules||[]).find(x=>x.id===scheduleEditId)||null;
-  document.getElementById('vehicleScheduleModalTitle').textContent=sc?'Modifier l’échéance':'Ajouter une échéance';
+  document.getElementById('vehicleScheduleModalTitle').textContent=(sc?'Modifier l’échéance':'Ajouter une échéance')+' · '+getGarageVehicleLabel(v.id);
   document.getElementById('vehicleScheduleTitle').value=sc?.title||'';
   document.getElementById('vehicleScheduleDate').value=sc?.dueDate||'';
   document.getElementById('vehicleScheduleMileage').value=sc?.dueMileage??'';
@@ -3738,6 +3739,19 @@ function deleteVehicleSchedule(id){
   const sc=(v.schedules||[]).find(x=>x.id===id);if(!sc)return;
   if(!confirm(`Supprimer l’échéance « ${sc.title} » ?`))return;
   v.schedules=v.schedules.filter(x=>x.id!==id);save();renderVehicles();
+}
+
+function openVehicleScheduleForVehicle(vehicleId,id=''){
+  if(!getGarageVehicleById(vehicleId))return;
+  currentGarageVehicleId=vehicleId;
+  renderVehicles();
+  openVehicleScheduleModal(id);
+}
+
+function deleteVehicleScheduleForVehicle(vehicleId,id){
+  if(!getGarageVehicleById(vehicleId))return;
+  currentGarageVehicleId=vehicleId;
+  deleteVehicleSchedule(id);
 }
 
 function getScheduleStatus(v,sc){
@@ -3800,12 +3814,50 @@ function renderVehicles(){
   const tabs=document.getElementById('vehicle-tabs');
   const empty=document.getElementById('vehicle-empty');
   const content=document.getElementById('vehicle-content');
-  if(!tabs||!empty||!content)return;
+  const alertsCard=document.getElementById('vehicle-alerts-card');
+  const alerts=document.getElementById('vehicle-alerts');
+  const addScheduleBtn=document.getElementById('vehicle-add-schedule-btn');
+  if(!tabs||!empty||!content||!alertsCard||!alerts)return;
 
-  if(!data.garageVehicles.length){tabs.innerHTML='';empty.style.display='block';content.style.display='none';return;}
+  // La zone d'alertes reste toujours en tête de l'onglet et synthétise TOUS les véhicules.
+  alertsCard.style.display='block';
+
+  if(!data.garageVehicles.length){
+    tabs.innerHTML='';
+    empty.style.display='block';
+    content.style.display='none';
+    if(addScheduleBtn)addScheduleBtn.disabled=true;
+    alerts.innerHTML='<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>0</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule pour commencer à suivre ses échéances.</div>';
+    return;
+  }
+
+  if(addScheduleBtn)addScheduleBtn.disabled=false;
   const v=getCurrentGarageVehicle();if(!v)return;
   empty.style.display='none';content.style.display='block';
   tabs.innerHTML=data.garageVehicles.map(x=>`<button class="vehicle-tab ${x.id===v.id?'active':''}" onclick="selectGarageVehicle('${x.id}')">${escapeHtml(getGarageVehicleLabel(x.id))}</button>`).join('');
+
+  // Échéances globales : chaque ligne garde le véhicule auquel elle appartient.
+  const alertRows=[];
+  data.garageVehicles.forEach(vehicle=>{
+    const schedules=[...(vehicle.schedules||[])];
+    if(vehicle.technicalInspectionDate)schedules.unshift({id:'__ct__',title:'Contrôle technique',dueDate:vehicle.technicalInspectionDate,dueMileage:0,notes:''});
+    schedules.forEach(sc=>alertRows.push({vehicle,sc,st:getScheduleStatus(vehicle,sc)}));
+  });
+  const priority={overdue:0,soon:1,ok:2};
+  alertRows.sort((a,b)=>{
+    const statusDiff=priority[a.st.status]-priority[b.st.status];
+    if(statusDiff)return statusDiff;
+    const ad=a.sc.dueDate||'9999-12-31',bd=b.sc.dueDate||'9999-12-31';
+    if(ad!==bd)return ad.localeCompare(bd);
+    const ak=Number(a.sc.dueMileage)||Number.MAX_SAFE_INTEGER,bk=Number(b.sc.dueMileage)||Number.MAX_SAFE_INTEGER;
+    return ak-bk;
+  });
+  const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
+  alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>${counts.ok}</strong><span>À jour</span></div></div>`+(alertRows.length?`<div class="vehicle-alert-list">${alertRows.map(({vehicle,sc,st})=>{
+    const vehicleLabel=getGarageVehicleLabel(vehicle.id);
+    const registration=vehicle.registration?` · ${escapeHtml(vehicle.registration)}`:'';
+    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${sc.dueDate?`Échéance : ${formatDateFR(sc.dueDate)}`:''}${sc.dueDate&&Number(sc.dueMileage)>0?' · ':''}${Number(sc.dueMileage)>0?`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`:''}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${sc.notes?` · ${escapeHtml(sc.notes)}`:''}</div></div>${sc.id!=='__ct__'?`<div class="vehicle-entry-actions"><button class="btn btn-secondary" onclick="openVehicleScheduleForVehicle('${vehicle.id}','${sc.id}')">✏️</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteVehicleScheduleForVehicle('${vehicle.id}','${sc.id}')">×</button></div>`:''}</div></div>`;
+  }).join('')}</div>`:'<div class="vehicle-empty">Aucune échéance renseignée sur vos véhicules.</div>');
 
   const linkedInvoices=(data.factures||[]).filter(i=>i.vehicleId===v.id);
   const maint=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===v.id);
@@ -3818,13 +3870,6 @@ function renderVehicles(){
     </div>
     <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretien 12 mois</span><strong class="invoice-amount">${euro(total12m)}</strong></div><div class="stat"><span>Interventions</span><strong>${maint.length}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
     <div class="vehicle-actions"><button class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Kilométrage</button><button class="btn btn-secondary" onclick="openVehicleModal('${v.id}')">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')">🗑️ Supprimer</button></div>`;
-
-  const schedules=[...(v.schedules||[])];
-  if(v.technicalInspectionDate)schedules.unshift({id:'__ct__',title:'Contrôle technique',dueDate:v.technicalInspectionDate,dueMileage:0,notes:''});
-  const alertRows=schedules.map(sc=>({sc,st:getScheduleStatus(v,sc)})).sort((a,b)=>({overdue:0,soon:1,ok:2}[a.st.status]-({overdue:0,soon:1,ok:2}[b.st.status])));
-  const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
-  const alerts=document.getElementById('vehicle-alerts');
-  alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>${counts.ok}</strong><span>À jour</span></div></div>`+(alertRows.length?`<div class="vehicle-alert-list">${alertRows.map(({sc,st})=>`<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${sc.dueDate?`Échéance : ${formatDateFR(sc.dueDate)}`:''}${sc.dueDate&&Number(sc.dueMileage)>0?' · ':''}${Number(sc.dueMileage)>0?`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`:''}<br>${escapeHtml(scheduleMeta(v,sc,st))}${sc.notes?` · ${escapeHtml(sc.notes)}`:''}</div></div>${sc.id!=='__ct__'?`<div class="vehicle-entry-actions"><button class="btn btn-secondary" onclick="openVehicleScheduleModal('${sc.id}')">✏️</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteVehicleSchedule('${sc.id}')">×</button></div>`:''}</div></div>`).join('')}</div>`:'<div class="vehicle-empty">Aucune échéance renseignée.</div>');
 
   const mhost=document.getElementById('vehicle-maintenance');
   const sortedMaint=maint.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
