@@ -219,10 +219,12 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .budget-line-account .bank-dot{width:6px;height:6px}
 .bank-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}
 .bank-account-settings{display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow-y:auto}
-.bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto 36px;gap:8px;align-items:center}
 .bank-account-setting-row input[type=text]{width:100%;padding:8px 9px;background:#161b22;border:1px solid #30363d;border-radius:7px;color:#fff;outline:none}
 .bank-active-toggle{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:11px;white-space:nowrap}
 .bank-active-toggle input{width:18px;height:18px;accent-color:#238636}
+.bank-delete-btn{width:36px;height:36px;border:1px solid rgba(248,81,73,.35);border-radius:8px;background:rgba(248,81,73,.08);color:#f85149;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.bank-delete-btn:hover{background:rgba(248,81,73,.16)}
 .transfer-row{display:grid;grid-template-columns:28px minmax(0,1fr) 90px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
 .transfer-row.done{background:rgba(35,134,54,.15)}
 .transfer-main{min-width:0;cursor:pointer}
@@ -403,7 +405,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 <div class="modal-overlay" id="bankAccountsModal">
   <div class="modal" style="max-width:440px;">
     <h3>🏦 Comptes bancaires</h3>
-    <div style="font-size:12px;color:#8b949e;line-height:1.45;">Renomme ou masque un compte. Les comptes déjà utilisés restent visibles dans les anciennes opérations.</div>
+    <div style="font-size:12px;color:#8b949e;line-height:1.45;">Renomme, masque ou supprime un compte. Les mois déjà clôturés conservent leurs opérations et le nom du compte utilisé.</div>
     <div id="bankAccountsSettings" class="bank-account-settings"></div>
     <button class="btn btn-secondary" onclick="addBankAccount()" style="width:100%;color:#58a6ff">+ Ajouter un compte</button>
     <div class="modal-buttons"><button class="btn btn-primary" style="flex:1" onclick="closeBankAccountsModal()">Terminer</button></div>
@@ -838,15 +840,6 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
         </div>
       </div>
 
-      <div class="asset-category-manager">
-        <button class="btn asset-category-manager-toggle" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actifs</button>
-        <div class="asset-category-add-panel" id="asset-category-add-panel">
-          <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
-          <button class="btn btn-primary asset-category-add-btn" onclick="addSelectedAssetCategory()">Ajouter</button>
-        </div>
-        <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
-      </div>
-
       <div class="chart-container">
 
         <div class="chart-performance">
@@ -871,6 +864,15 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 
         <button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%;color:#f85149;margin-top:10px;font-size:12px">🗑️ Reset Graphique</button>
       </div>
+    </div>
+
+    <div class="asset-category-manager">
+      <button class="btn asset-category-manager-toggle" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actifs</button>
+      <div class="asset-category-add-panel" id="asset-category-add-panel">
+        <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
+        <button class="btn btn-primary asset-category-add-btn" onclick="addSelectedAssetCategory()">Ajouter</button>
+      </div>
+      <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
     </div>
 
     <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
@@ -1325,13 +1327,6 @@ function ensureBankingData(){
       active:a.active!==false
     }));
 
-  if(!data.bankAccounts.some(a=>a.id==='fortuneo')){
-    data.bankAccounts.unshift({id:'fortuneo',name:'Compte principal',active:true});
-  }
-  if(!data.bankAccounts.some(a=>a.id==='ca')){
-    data.bankAccounts.push({id:'ca',name:'Compte secondaire',active:true});
-  }
-
   if(!Array.isArray(data.bankTransfers))data.bankTransfers=[];
   data.bankTransfers=data.bankTransfers
     .filter(t=>t&&typeof t==='object')
@@ -1341,14 +1336,15 @@ function ensureBankingData(){
     }));
 
   // Les anciens virements internes gardent le comportement historique : occasionnels.
-  // Les lignes créées avant le multi-comptes provenaient du Crédit Agricole.
-  // On les rattache donc au CA sans toucher aux historiques déjà clôturés.
+  // Une ligne courante qui référence un ancien identifiant de compte est rattachée
+  // au premier compte encore disponible, sans jamais modifier les mois déjà clôturés.
+  const fallbackAccountId=(data.bankAccounts.find(a=>a.active!==false)||data.bankAccounts[0])?.id||'';
   ['budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
     if(!Array.isArray(data[key]))data[key]=[];
     data[key].forEach(item=>{
       if(!Array.isArray(item))return;
       const accountExists=data.bankAccounts.some(a=>a.id===item[3]);
-      if(!accountExists)item[3]='ca';
+      if(!accountExists)item[3]=fallbackAccountId;
     });
   });
 
@@ -1849,6 +1845,39 @@ function getBankAccountName(id){
   return getBankAccount(id)?.name||'Compte inconnu';
 }
 
+function getHistoricalBudgetAccountName(item){
+  if(!Array.isArray(item))return '';
+  return String(item[4]||getBankAccountName(item[3])||'Compte inconnu');
+}
+
+function getHistoricalTransferAccountName(transfer,side){
+  if(!transfer||!side)return 'Compte inconnu';
+  const stored=side==='from'?transfer.fromName:transfer.toName;
+  return String(stored||getBankAccountName(transfer[side])||'Compte inconnu');
+}
+
+function snapshotBankAccountInHistory(account){
+  if(!account?.id)return;
+  const id=String(account.id);
+  const name=String(account.name||'Compte bancaire');
+  (monthHistory||[]).forEach(month=>{
+    ['revenusDetails','fixesDetails','depensesDetails'].forEach(key=>{
+      (month?.[key]||[]).forEach(item=>{
+        if(Array.isArray(item)&&String(item[3]||'')===id&&!item[4])item[4]=name;
+      });
+    });
+    (month?.transfersDetails||[]).forEach(t=>{
+      if(!t||typeof t!=='object')return;
+      if(String(t.from||'')===id&&!t.fromName)t.fromName=name;
+      if(String(t.to||'')===id&&!t.toName)t.toName=name;
+    });
+  });
+}
+
+function snapshotAllBankAccountNamesInHistory(){
+  (data.bankAccounts||[]).forEach(snapshotBankAccountInHistory);
+}
+
 function getBankDotClass(id){
   if(id==='fortuneo')return 'fortuneo';
   if(id==='ca')return 'ca';
@@ -1877,7 +1906,7 @@ function populateBankSelect(select,selectedId=''){
   let selected=selectedId;
   if(!accounts.some(a=>a.id===selected)){
     const saved=localStorage.getItem('finaryLastBudgetAccount')||'fortuneo';
-    selected=accounts.some(a=>a.id===saved)?saved:(accounts[0]?.id||'ca');
+    selected=accounts.some(a=>a.id===saved)?saved:(accounts[0]?.id||'');
   }
   select.innerHTML=accounts.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
   select.value=selected;
@@ -1902,6 +1931,7 @@ function renderBankAccountsSettings(){
     <div class="bank-account-setting-row">
       <input type="text" value="${escapeHtml(a.name)}" onchange="renameBankAccount(${index},this.value)" aria-label="Nom du compte">
       <label class="bank-active-toggle"><input type="checkbox" ${a.active!==false?'checked':''} onchange="setBankAccountActive(${index},this.checked)"> Actif</label>
+      <button type="button" class="bank-delete-btn" onclick="deleteBankAccount(${index})" title="Supprimer ce compte" aria-label="Supprimer ${escapeHtml(a.name)}">×</button>
     </div>
   `).join('');
 }
@@ -1910,7 +1940,55 @@ function renameBankAccount(index,value){
   const account=data.bankAccounts?.[index];
   if(!account)return;
   const name=String(value||'').trim();
-  if(name)account.name=name;
+  if(name&&name!==account.name){
+    // Fige l'ancien nom dans les mois déjà clôturés avant de renommer le compte courant.
+    snapshotBankAccountInHistory(account);
+    account.name=name;
+  }
+  renderBankAccountsSettings();
+  render();
+  save();
+}
+
+function deleteBankAccount(index){
+  const account=data.bankAccounts?.[index];
+  if(!account)return;
+
+  if((data.bankAccounts||[]).length<=1){
+    alert('Il faut conserver au moins un compte bancaire.');
+    return;
+  }
+
+  if(accountIsUsed(account.id)){
+    alert(`Le compte « ${account.name} » est encore utilisé dans le cycle en cours ou dans un virement interne.\n\nDéplacez ou supprimez d’abord ces opérations avant de supprimer le compte.`);
+    return;
+  }
+
+  if(account.active!==false){
+    const otherActive=(data.bankAccounts||[]).some((a,i)=>i!==index&&a.active!==false);
+    if(!otherActive){
+      alert('Activez au moins un autre compte avant de supprimer celui-ci.');
+      return;
+    }
+  }
+
+  const historicalMonths=(monthHistory||[]).filter(month=>{
+    const usedInDetails=['revenusDetails','fixesDetails','depensesDetails'].some(key=>(month?.[key]||[]).some(item=>Array.isArray(item)&&String(item[3]||'')===String(account.id)));
+    const usedInTransfers=(month?.transfersDetails||[]).some(t=>String(t?.from||'')===String(account.id)||String(t?.to||'')===String(account.id));
+    return usedInDetails||usedInTransfers;
+  }).length;
+
+  const historyText=historicalMonths
+    ? `\n\n${historicalMonths} mois clôturé(s) utilisent ce compte : ils seront conservés intégralement avec le nom « ${account.name} ».`
+    : '';
+
+  if(!confirm(`Supprimer définitivement le compte « ${account.name} » ?${historyText}\n\nCette action retire uniquement le compte de la configuration actuelle.`))return;
+
+  // Avant suppression, mémorise son nom dans chaque historique où il apparaît.
+  snapshotBankAccountInHistory(account);
+  data.bankAccounts.splice(index,1);
+  if(localStorage.getItem('finaryLastBudgetAccount')===account.id)localStorage.removeItem('finaryLastBudgetAccount');
+
   renderBankAccountsSettings();
   render();
   save();
@@ -3255,10 +3333,14 @@ function closeMonth(){
     fixes:fixes,
     depenses:dep,
     resteVivre:reste,
-    revenusDetails:JSON.parse(JSON.stringify(data.budgetRevenus||[])),
-    fixesDetails:JSON.parse(JSON.stringify(data.budgetFixes||[])),
-    depensesDetails:JSON.parse(JSON.stringify(data.budgetDepenses||[])),
-    transfersDetails:JSON.parse(JSON.stringify(data.bankTransfers||[]))
+    revenusDetails:(data.budgetRevenus||[]).map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    fixesDetails:(data.budgetFixes||[]).map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    depensesDetails:(data.budgetDepenses||[]).map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    transfersDetails:(data.bankTransfers||[]).map(t=>({
+      ...JSON.parse(JSON.stringify(t)),
+      fromName:getBankAccountName(t.from),
+      toName:getBankAccountName(t.to)
+    }))
   });
 
   data.budgetDepenses=[];
@@ -3338,13 +3420,13 @@ function renderHistory(){
 
       const budgetMatch=allItems.some(item =>
         matchesQuery(item[0], item[1], query) ||
-        Boolean(item[3]) && normalizeText(getBankAccountName(item[3])).includes(normalizeText(query))
+        Boolean(item[3]) && normalizeText(getHistoricalBudgetAccountName(item)).includes(normalizeText(query))
       );
 
       const transferMatch=(m.transfersDetails||[]).some(t=>
         matchesQuery(t.label,t.amount,query) ||
-        normalizeText(getBankAccountName(t.from)).includes(normalizeText(query)) ||
-        normalizeText(getBankAccountName(t.to)).includes(normalizeText(query))
+        normalizeText(getHistoricalTransferAccountName(t,'from')).includes(normalizeText(query)) ||
+        normalizeText(getHistoricalTransferAccountName(t,'to')).includes(normalizeText(query))
       );
 
       return budgetMatch||transferMatch;
@@ -3406,7 +3488,7 @@ function renderHistoryMonthModalContent(m){
   const renderSection = (title, items) => {
     const filteredItems = (items || []).filter(it =>
       matchesQuery(it[0], it[1], query) ||
-      (it[3] && normalizeText(getBankAccountName(it[3])).includes(normalizeText(query)))
+      (it[3] && normalizeText(getHistoricalBudgetAccountName(it)).includes(normalizeText(query)))
     );
 
     if(!filteredItems.length && query) return '';
@@ -3418,7 +3500,7 @@ function renderHistoryMonthModalContent(m){
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
 
     filteredItems.forEach(it => {
-      const accountText=it[3]?`<span class="history-account">${escapeHtml(getBankAccountName(it[3]))}</span>`:'';
+      const accountText=it[3]?`<span class="history-account">${escapeHtml(getHistoricalBudgetAccountName(it))}</span>`:'';
       html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
     });
 
@@ -3432,15 +3514,15 @@ function renderHistoryMonthModalContent(m){
 
   const filteredTransfers=(m.transfersDetails||[]).filter(t=>
     matchesQuery(t.label,t.amount,query) ||
-    normalizeText(getBankAccountName(t.from)).includes(normalizeText(query)) ||
-    normalizeText(getBankAccountName(t.to)).includes(normalizeText(query))
+    normalizeText(getHistoricalTransferAccountName(t,'from')).includes(normalizeText(query)) ||
+    normalizeText(getHistoricalTransferAccountName(t,'to')).includes(normalizeText(query))
   );
 
   let secTransfers='';
   if(filteredTransfers.length){
     secTransfers='<div class="history-view-section"><h4>⇄ Virements internes</h4>';
     filteredTransfers.forEach(t=>{
-      secTransfers+=`<div class="history-view-row"><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getBankAccountName(t.from))} → ${escapeHtml(getBankAccountName(t.to))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
+      secTransfers+=`<div class="history-view-row"><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getHistoricalTransferAccountName(t,'from'))} → ${escapeHtml(getHistoricalTransferAccountName(t,'to'))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
     });
     secTransfers+='</div>';
   }else if((m.transfersDetails||[]).length&&!query){
