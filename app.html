@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget & Patrimoine — Mobile Optimized</title>
+<title>Budget & Patrimoine</title>
+<meta name="theme-color" content="#0d1117">
+<meta name="application-name" content="Budget & Patrimoine">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Budget & Patrimoine">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -36,6 +43,29 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .rows-container{display:flex;flex-direction:column;gap:8px}
 .row{display:grid;grid-template-columns:28px minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}.row.paid{background:rgba(35,134,54,.15)}.row:last-child{border-bottom:0}
 .row.patrimoine-row{display:grid;grid-template-columns:minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+
+/* FICHES EMPRUNTS */
+.loan-card{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:10px}
+.loan-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.loan-card-title{font-size:14px;font-weight:700;color:#fff;overflow-wrap:anywhere}
+.loan-card-current{font-size:17px;font-weight:800;color:#f85149;white-space:nowrap;text-align:right}
+.loan-card-current small{display:block;color:#8b949e;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+.loan-card-sub{font-size:12px;color:#8b949e}
+.loan-progress-line{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:#8b949e}
+.loan-progress-line strong{color:#c9d1d9;font-size:11px}
+.loan-progress{height:7px;background:#21262d;border-radius:999px;overflow:hidden;border:1px solid #30363d}
+.loan-progress-bar{height:100%;background:#238636;border-radius:999px;min-width:0}
+.loan-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.loan-meta{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:8px}
+.loan-meta span{display:block;color:#8b949e;font-size:10px;text-transform:uppercase;letter-spacing:.35px;font-weight:600}
+.loan-meta strong{display:block;color:#c9d1d9;font-size:12px;margin-top:2px;overflow-wrap:anywhere}
+.loan-card-actions{display:flex;gap:7px}
+.loan-card-actions .btn{flex:1;padding:8px 10px;font-size:12px}
+.loan-legacy{font-size:11px;color:#d29922;background:rgba(210,153,34,.09);border:1px solid rgba(210,153,34,.25);border-radius:8px;padding:8px 9px}
+#loanModal{align-items:flex-start;padding-top:5vh;padding-bottom:20px;overflow-y:auto}
+#loanModal .modal{max-width:430px;max-height:90vh;overflow-y:auto}
+.loan-fields-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:480px){.loan-fields-grid{grid-template-columns:1fr 1fr}.loan-card-current{font-size:15px}}
 .row input[type=text],.row input[type=number]{width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;outline:none}.row input[type=number]{padding:8px 6px;text-align:right}
 .row input[type=checkbox]{width:20px;height:20px;accent-color:#238636;cursor:pointer}.amount{text-align:right;font-weight:600;color:#c9d1d9;font-size:13px}
 
@@ -189,10 +219,13 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .budget-line-account .bank-dot{width:6px;height:6px}
 .bank-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}
 .bank-account-settings{display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow-y:auto}
-.bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto 36px;gap:8px;align-items:center}
 .bank-account-setting-row input[type=text]{width:100%;padding:8px 9px;background:#161b22;border:1px solid #30363d;border-radius:7px;color:#fff;outline:none}
 .bank-active-toggle{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:11px;white-space:nowrap}
 .bank-active-toggle input{width:18px;height:18px;accent-color:#238636}
+.bank-delete-btn{width:36px;height:36px;border:1px solid rgba(248,81,73,.35);border-radius:8px;background:rgba(248,81,73,.08);color:#f85149;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.bank-delete-btn:hover{background:rgba(248,81,73,.16)}
+.bank-delete-btn:disabled{cursor:not-allowed;opacity:.28;background:#161b22;border-color:#30363d;color:#8b949e}
 .transfer-row{display:grid;grid-template-columns:28px minmax(0,1fr) 90px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
 .transfer-row.done{background:rgba(35,134,54,.15)}
 .transfer-main{min-width:0;cursor:pointer}
@@ -207,9 +240,160 @@ body.hide-amounts .bank-current-value,body.hide-amounts .bank-forecast-value,bod
 body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-value::after,body.hide-amounts .transfer-amount::after{content:"***";color:#c9d1d9;position:absolute;right:0;top:0}
 
 .app-footer{font-size:11px;color:#fff;text-align:center;opacity:.85;padding:6px 0 2px;}
+
+
+/* BÊTA PUBLIQUE — AUTHENTIFICATION UTILISATEUR */
+#authOverlay{position:fixed;inset:0;z-index:30000;background:#0d1117;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.auth-card{width:min(100%,390px);background:#161b22;border:1px solid #30363d;border-radius:18px;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:14px}
+.auth-brand{text-align:center}.auth-brand h1{font-size:22px;color:#fff;margin:0 0 4px}.auth-brand p{font-size:12px;color:#8b949e;margin:0}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0d1117;border:1px solid #30363d;padding:5px;border-radius:10px}
+.auth-tab{border:0;background:transparent;color:#8b949e;padding:9px;border-radius:7px;font-weight:700;cursor:pointer}.auth-tab.active{background:#238636;color:#fff}
+.auth-field{display:flex;flex-direction:column;gap:6px}.auth-field label{font-size:11px;text-transform:uppercase;color:#8b949e;font-weight:700}.auth-field input{width:100%;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:9px;color:#fff;font-size:15px;outline:none}.auth-field input:focus{border-color:#58a6ff}
+.auth-message{min-height:18px;font-size:12px;color:#8b949e;line-height:1.4}.auth-message.error{color:#f85149}.auth-message.success{color:#3fb950}
+.auth-forgot{border:0;background:transparent;color:#58a6ff;font-size:12px;cursor:pointer;padding:0;text-align:center}
+.beta-user-bar{display:none;align-items:center;justify-content:space-between;gap:8px;background:#161b22;border:1px solid #30363d;border-radius:10px;padding:7px 9px;font-size:11px;color:#8b949e}
+.beta-user-email{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.beta-user-email strong{color:#c9d1d9}
+.beta-logout{border:0;background:transparent;color:#f85149;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;padding:3px 4px}
+
+/* PWA : bouton d'installation, masqué tant que l'installation n'est pas proposée */
+.install-app-btn{display:none;align-items:center;justify-content:center;gap:7px}
+
+
+/* Gestion dynamique des catégories d’actifs */
+.asset-category-manager{margin:10px 0 14px}
+.asset-category-manager-toggle{width:100%;background:#238636;border:1px solid #2ea043;color:#fff;font-weight:800}
+.asset-category-manager-toggle:hover{background:#2ea043}
+.asset-category-add-panel{display:none;margin-top:9px;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+.asset-category-add-panel.active{display:grid}
+.asset-category-add-panel select{width:100%;min-width:0;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:10px 12px;font-size:16px}
+.asset-category-add-panel .asset-category-add-btn{width:auto;min-width:82px;padding:8px 12px;white-space:nowrap}
+.category-remove-btn{border:0;background:transparent;color:#f85149;font-size:18px;line-height:1;padding:7px 8px;border-radius:8px;cursor:pointer}
+.category-remove-btn:hover{background:rgba(248,81,73,.10)}
+.category-header-actions{display:flex;align-items:center;gap:6px;min-width:0}
+@media(max-width:360px){.asset-category-add-panel{grid-template-columns:minmax(0,1fr) 76px}.asset-category-add-panel .asset-category-add-btn{min-width:76px;padding-left:8px;padding-right:8px}}
+
+
+/* =========================================================
+   VÉHICULES / PLAN D'ENTRETIEN
+   ========================================================= */
+.vehicle-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.vehicle-tabs::-webkit-scrollbar{display:none}
+.vehicle-tab{border:1px solid #30363d;background:#161b22;color:#c9d1d9;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
+.vehicle-tab.active{background:#238636;border-color:#2ea043;color:#fff}
+.vehicle-hero{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.vehicle-name{font-size:18px;font-weight:800;color:#fff;line-height:1.25}
+.vehicle-subtitle{font-size:12px;color:#8b949e;margin-top:3px;line-height:1.5}
+.vehicle-mileage{font-size:24px;font-weight:800;color:#fff;text-align:right;white-space:nowrap}
+.vehicle-mileage small{display:block;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px}
+.vehicle-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.vehicle-maintenance-main{width:100%;font-size:12px;padding:9px 10px}
+.vehicle-secondary-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.vehicle-secondary-actions .btn{font-size:11px;padding:7px 10px}
+.vehicle-icon-actions{margin-left:auto;display:flex;gap:6px}
+.vehicle-icon-btn{min-width:40px;padding:7px 10px;display:flex;align-items:center;justify-content:center}
+.vehicle-alert-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.vehicle-alert-stat{appearance:none;width:100%;font-family:inherit;background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px;text-align:center;color:inherit}
+button.vehicle-alert-stat{cursor:pointer;transition:transform .15s ease,border-color .15s ease,background .15s ease}
+button.vehicle-alert-stat:active{transform:scale(.97)}
+.vehicle-alert-stat strong{display:block;font-size:17px;color:#fff}.vehicle-alert-stat span{font-size:10px;color:#8b949e}
+.vehicle-alert-stat.overdue.has-alert{border-color:rgba(248,81,73,.7);background:rgba(248,81,73,.13)}
+.vehicle-alert-stat.overdue.has-alert strong,.vehicle-alert-stat.overdue.has-alert span{color:#f85149}
+.vehicle-alert-stat.soon.has-alert{border-color:rgba(210,153,34,.7);background:rgba(210,153,34,.13)}
+.vehicle-alert-stat.soon.has-alert strong,.vehicle-alert-stat.soon.has-alert span{color:#d29922}
+.vehicle-alert-stat.active{box-shadow:0 0 0 2px rgba(255,255,255,.10) inset}
+.vehicle-alert-stat.has-alert{animation:vehicleAlertPulse 1.6s ease-in-out infinite}
+@keyframes vehicleAlertPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@media(prefers-reduced-motion:reduce){.vehicle-alert-stat.has-alert{animation:none}}
+.vehicle-alert-list{display:flex;flex-direction:column;gap:7px}
+.vehicle-alert-list-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;color:#c9d1d9;font-size:11px;font-weight:800}
+.vehicle-alert-list-title button{border:0;background:transparent;color:#8b949e;cursor:pointer;font-size:11px;padding:4px 0}
+.vehicle-alert{border-radius:10px;padding:10px 11px;border:1px solid #30363d;background:#161b22}
+.vehicle-alert.ok{border-color:rgba(63,185,80,.28);background:rgba(63,185,80,.06)}
+.vehicle-alert.soon{border-color:rgba(210,153,34,.38);background:rgba(210,153,34,.08)}
+.vehicle-alert.overdue{border-color:rgba(248,81,73,.38);background:rgba(248,81,73,.08)}
+.vehicle-alert-title{font-size:13px;font-weight:800;color:#fff}.vehicle-alert-meta{font-size:11px;color:#8b949e;margin-top:3px;line-height:1.45}
+.vehicle-alert-vehicle{display:inline-flex;align-items:center;gap:5px;margin-bottom:5px;padding:3px 7px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;font-size:10px;font-weight:800}
+.vehicle-list{display:flex;flex-direction:column;gap:8px}
+.vehicle-entry{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:11px}
+.vehicle-entry-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.vehicle-entry-title{font-size:13px;font-weight:800;color:#fff}.vehicle-entry-meta{font-size:11px;color:#8b949e;line-height:1.5;margin-top:3px}
+.vehicle-entry-amount{font-size:13px;font-weight:800;color:#c9d1d9;white-space:nowrap}
+.vehicle-entry-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.vehicle-entry-actions .btn{font-size:10px;padding:6px 8px}
+.vehicle-empty{color:#8b949e;text-align:center;padding:20px 8px;font-size:12px}
+.vehicle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vehicle-section-note{font-size:11px;color:#8b949e;line-height:1.5;margin-top:3px}
+.vehicle-link-badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:700;background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.vehicle-maintenance-plan-block{margin-top:16px;padding-top:14px;border-top:1px solid #30363d}
+.vehicle-maintenance-plan-editor{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.maintenance-plan-row{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:11px}
+.maintenance-plan-row-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
+.maintenance-plan-row-head strong{font-size:12px;color:#fff}
+.maintenance-plan-toggle{display:flex;align-items:center;gap:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;min-width:0}
+.maintenance-plan-toggle input{width:18px;height:18px;accent-color:#238636;cursor:pointer;flex:0 0 auto}
+.maintenance-plan-row.is-disabled{padding-top:9px;padding-bottom:9px;opacity:.76}
+.maintenance-plan-row.is-disabled .maintenance-plan-row-head{margin-bottom:0}
+.maintenance-plan-preview{margin-top:8px;padding:8px 9px;border-radius:8px;background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;line-height:1.45}
+.maintenance-plan-preview strong{color:#c9d1d9}
+.maintenance-plan-legacy{color:#d29922}
+.vehicle-plan-summary{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.vehicle-plan-summary-item{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px 10px}
+.vehicle-plan-summary-item-title{font-size:12px;font-weight:800;color:#fff}
+.vehicle-plan-summary-item-meta{font-size:10px;color:#8b949e;line-height:1.45;margin-top:3px}
+.vehicle-plan-modal-tools{display:flex;gap:6px;margin-top:10px;margin-bottom:2px}
+.vehicle-plan-modal-tools .btn{font-size:10px;padding:6px 8px}
+.performed-maintenance-list{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow-y:auto;padding:2px}
+.performed-maintenance-choice{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid #30363d;border-radius:10px;background:#0d1117;color:#e6edf3;font-size:13px;font-weight:700;cursor:pointer}
+.performed-maintenance-choice input{width:19px;height:19px;accent-color:#238636;flex:0 0 auto}
+.performed-maintenance-choice:has(input:checked){border-color:#2ea043;background:rgba(35,134,54,.12)}
+.maintenance-relevance-badge{margin-left:auto;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;border:1px solid #30363d;color:#8b949e;background:#161b22;white-space:nowrap}
+.maintenance-relevance-badge.recommended{color:#3fb950;border-color:rgba(63,185,80,.35);background:rgba(35,134,54,.12)}
+.maintenance-relevance-badge.secondary{color:#d29922;border-color:rgba(210,153,34,.35);background:rgba(210,153,34,.10)}
+.vehicle-cost-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+.vehicle-cost-mini{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:8px 7px;text-align:center;min-width:0}
+.vehicle-cost-mini span{display:block;font-size:9px;color:#8b949e;line-height:1.25}
+.vehicle-cost-mini strong{display:block;font-size:12px;color:#c9d1d9;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.maintenance-history-group{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:11px 12px}
+.maintenance-history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.maintenance-history-date{font-size:13px;font-weight:900;color:#fff}
+.maintenance-history-meta{font-size:10px;color:#8b949e;margin-top:2px}
+.maintenance-history-actions{display:flex;gap:5px;flex:0 0 auto}
+.maintenance-history-action{width:34px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.maintenance-history-label{margin-top:10px;color:#8b949e;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.55px}
+.maintenance-history-types{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.maintenance-history-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:9px;background:rgba(35,134,54,.13);border:1px solid rgba(63,185,80,.38);color:#e6edf3;font-size:12px;font-weight:900;line-height:1.2}
+.maintenance-history-chip::before{content:'🔧';font-size:11px}
+.maintenance-history-count{display:inline-flex;align-items:center;margin-left:5px;padding:2px 6px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#8b949e;font-size:9px;font-weight:800;vertical-align:1px}
+@media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Assistant d'aide 100 % hors ligne */
+.offline-assistant-launcher{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;border:1px solid #2ea043;background:#238636;color:#fff;border-radius:999px;padding:10px 14px;min-height:44px;display:flex;align-items:center;gap:7px;font-weight:800;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.36);cursor:pointer}
+.offline-assistant-launcher:hover{background:#2ea043}.offline-assistant-launcher:focus-visible{outline:2px solid #58a6ff;outline-offset:2px}
+.offline-assistant-panel{position:fixed;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9500;width:min(390px,calc(100vw - 24px));max-height:min(650px,72vh);background:#161b22;border:1px solid #30363d;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.58);display:none;flex-direction:column;overflow:hidden}
+.offline-assistant-panel.active{display:flex}
+.offline-assistant-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border-bottom:1px solid #30363d;background:#0d1117}
+.offline-assistant-head-main{min-width:0}.offline-assistant-title{font-size:13px;font-weight:900;color:#fff}.offline-assistant-subtitle{font-size:9px;color:#8b949e;margin-top:2px}
+.offline-assistant-local{display:inline-flex;align-items:center;gap:4px;margin-left:5px;padding:2px 6px;border-radius:999px;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.25);color:#56d364;font-size:8px;font-weight:800;vertical-align:1px}
+.offline-assistant-close{border:0;background:transparent;color:#8b949e;font-size:22px;line-height:1;padding:5px 7px;border-radius:8px;cursor:pointer}.offline-assistant-close:hover{background:#21262d;color:#fff}
+.offline-assistant-messages{display:flex;flex-direction:column;gap:9px;padding:12px;overflow-y:auto;min-height:150px;max-height:350px;scroll-behavior:smooth}
+.offline-assistant-message{max-width:88%;padding:9px 10px;border-radius:12px;font-size:11px;line-height:1.5;white-space:pre-line}
+.offline-assistant-message.bot{align-self:flex-start;background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-bottom-left-radius:4px}
+.offline-assistant-message.user{align-self:flex-end;background:#1f6f35;border:1px solid #2ea043;color:#fff;border-bottom-right-radius:4px}
+.offline-assistant-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.offline-assistant-action{border:1px solid #3d444d;background:#0d1117;color:#c9d1d9;border-radius:8px;padding:6px 8px;font-size:10px;font-weight:700;cursor:pointer}.offline-assistant-action:hover{border-color:#58a6ff;color:#fff}
+.offline-assistant-quick{border-top:1px solid #21262d;padding:9px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;background:#161b22}
+.offline-assistant-quick button{flex:0 0 auto;border:1px solid #30363d;background:#0d1117;color:#c9d1d9;border-radius:999px;padding:6px 9px;font-size:9px;cursor:pointer;white-space:nowrap}.offline-assistant-quick button:hover{border-color:#2ea043;color:#fff}
+.offline-assistant-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:10px;border-top:1px solid #30363d;background:#0d1117}
+.offline-assistant-input{width:100%;min-width:0;border:1px solid #30363d;background:#161b22;color:#fff;border-radius:10px;padding:9px 10px;font-size:16px;outline:none}.offline-assistant-input:focus{border-color:#58a6ff}
+.offline-assistant-send{border:1px solid #2ea043;background:#238636;color:#fff;border-radius:10px;min-width:44px;padding:8px 10px;font-weight:900;cursor:pointer}.offline-assistant-send:hover{background:#2ea043}
+.offline-assistant-note{padding:0 10px 9px;background:#0d1117;color:#6e7681;font-size:8px;line-height:1.35}
+.offline-assistant-highlight{position:relative;z-index:4;outline:3px solid #58a6ff!important;outline-offset:4px;border-radius:10px;animation:offlineAssistantHighlight 1s ease-in-out 3}
+@keyframes offlineAssistantHighlight{0%,100%{outline-color:rgba(88,166,255,.35);transform:scale(1)}50%{outline-color:#58a6ff;transform:scale(1.015)}}
+@media(max-width:480px){.offline-assistant-launcher{right:10px;bottom:calc(10px + env(safe-area-inset-bottom));padding:10px 12px}.offline-assistant-panel{right:8px;width:calc(100vw - 16px);bottom:calc(64px + env(safe-area-inset-bottom));max-height:75vh}.offline-assistant-messages{max-height:330px}}
+@media(prefers-reduced-motion:reduce){.offline-assistant-highlight{animation:none}.offline-assistant-messages{scroll-behavior:auto}}
 </style>
 </head>
 <body>
+
 
 <!-- ÉCRAN DE VERROUILLAGE -->
 <div id="patternLockOverlay" style="display:none;">
@@ -270,7 +454,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 <div class="modal-overlay" id="bankAccountsModal">
   <div class="modal" style="max-width:440px;">
     <h3>🏦 Comptes bancaires</h3>
-    <div style="font-size:12px;color:#8b949e;line-height:1.45;">Renomme ou masque un compte. Les comptes déjà utilisés restent visibles dans les anciennes opérations.</div>
+    <div style="font-size:12px;color:#8b949e;line-height:1.45;">Renomme, masque ou supprime un compte. Les mois déjà clôturés conservent leurs opérations et le nom du compte utilisé.</div>
     <div id="bankAccountsSettings" class="bank-account-settings"></div>
     <button class="btn btn-secondary" onclick="addBankAccount()" style="width:100%;color:#58a6ff">+ Ajouter un compte</button>
     <div class="modal-buttons"><button class="btn btn-primary" style="flex:1" onclick="closeBankAccountsModal()">Terminer</button></div>
@@ -325,13 +509,10 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 <!-- MODAL ANNOTATIONS -->
 <div class="modal-overlay" id="annotationsModal">
   <div class="modal" style="max-width:440px;">
-    <h3>📝 Annotations & Sécurité</h3>
+    <h3>📝 Annotations</h3>
     <div id="annotationsView">
       <div id="annotationsDisplay" style="white-space:pre-wrap;color:#c9d1d9;font-size:14px;line-height:1.6;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;min-height:80px;max-height:40vh;overflow-y:auto;"></div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #30363d;display:flex;flex-direction:column;gap:8px;">
-        <button class="btn btn-secondary" onclick="triggerChangePattern()" style="color:#58a6ff">🔑 Modifier le schéma de verrouillage</button>
-        <button class="btn btn-secondary" onclick="disablePatternLock()" style="color:#f85149">🔓 Désactiver le verrouillage</button>
-      </div>
+      
       <div class="modal-buttons" style="margin-top:12px;">
         <button class="btn btn-secondary" style="flex:1;" onclick="closeAnnotationsModal()">Fermer</button>
         <button class="btn btn-primary" style="flex:1;" onclick="editAnnotations()">✏️ Modifier</button>
@@ -360,6 +541,155 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 </div>
 
 
+
+<!-- MODAL EMPRUNT -->
+<div class="modal-overlay" id="loanModal">
+  <div class="modal">
+    <h3 id="loanModalTitle">Ajouter un emprunt</h3>
+    <div class="modal-field"><label>Libellé</label><input type="text" id="loanLabel" placeholder="Ex : Prêt immobilier"></div>
+    <div class="loan-fields-grid">
+      <div class="modal-field"><label>Montant initial (€)</label><input type="number" id="loanInitialAmount" inputmode="decimal" placeholder="150000"></div>
+      <div class="modal-field"><label>Capital restant dû (€)</label><input type="number" id="loanCurrentAmount" inputmode="decimal" placeholder="120000"></div>
+      <div class="modal-field"><label>Date de début</label><input type="date" id="loanStartDate"></div>
+      <div class="modal-field"><label>Date de fin</label><input type="date" id="loanEndDate"></div>
+      <div class="modal-field"><label>Mensualité (€)</label><input type="number" id="loanMonthlyPayment" inputmode="decimal" placeholder="779.47"></div>
+      <div class="modal-field"><label>Taux (%)</label><input type="number" id="loanRate" inputmode="decimal" step="0.01" placeholder="1.45"></div>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeLoanModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitLoanModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL VÉHICULE -->
+<div class="modal-overlay" id="vehicleModal">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehicleModalTitle">Ajouter un véhicule</h3>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Marque</label><input type="text" id="vehicleMake" placeholder="Ex : Skoda"></div>
+      <div class="modal-field"><label>Modèle</label><input type="text" id="vehicleModel" placeholder="Ex : Kodiaq"></div>
+      <div class="modal-field"><label>Immatriculation</label><input type="text" id="vehicleRegistration" placeholder="AA-123-BB"></div>
+      <div class="modal-field"><label>Année</label><input type="number" id="vehicleYear" inputmode="numeric" min="1900" max="2100" placeholder="2019"></div>
+      <div class="modal-field"><label>Type de véhicule</label><select id="vehiclePowertrainType" class="invoice-select"><option value="">Sélectionner</option><option value="Thermique">Thermique</option><option value="Hybride">Hybride</option><option value="Électrique">Électrique</option></select></div>
+      <div class="modal-field"><label>Motorisation</label><input type="text" id="vehicleFuel" placeholder="Ex : Essence 1.5 TSI / 100 % électrique"></div>
+      <div class="modal-field"><label>1re mise en circulation</label><input type="date" id="vehicleFirstRegistration"></div>
+      <div class="modal-field"><label>Kilométrage actuel</label><input type="number" id="vehicleMileage" inputmode="numeric" min="0" placeholder="91250"></div>
+      <div class="modal-field"><label>Date du relevé</label><input type="date" id="vehicleMileageDate"></div>
+      <div class="modal-field" style="grid-column:1/-1"><label>Prochain contrôle technique</label><input type="date" id="vehicleTechnicalInspection"></div>
+    </div>
+
+    <div class="vehicle-maintenance-plan-block">
+      <div class="section-header">
+        <h2 style="font-size:14px">🔧 Plan d'entretien</h2>
+        <button id="assistantTargetMaintenancePlan" type="button" class="btn btn-primary" onclick="openVehiclePlanModal()" style="padding:6px 9px;font-size:10px">Créer un plan d'entretien</button>
+      </div>
+      <div class="vehicle-section-note">Choisis les entretiens à suivre et définis leur périodicité. Les prochaines échéances seront ensuite calculées automatiquement.</div>
+      <div id="vehicleMaintenancePlanSummary" class="vehicle-plan-summary"></div>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLAN D'ENTRETIEN -->
+<div class="modal-overlay" id="vehiclePlanModal">
+  <div class="modal" style="max-width:560px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehiclePlanModalTitle">Créer un plan d'entretien</h3>
+    <div class="vehicle-section-note">Coche les entretiens à suivre. Pour chacun, indique la date et le kilométrage du dernier entretien, puis sa périodicité en durée et/ou en kilomètres.</div>
+    <div class="vehicle-plan-modal-tools">
+      <button type="button" class="btn btn-primary" onclick="selectRecommendedVehiclePlanItems()">Sélection recommandée</button>
+      <button type="button" class="btn btn-secondary" onclick="setAllVehiclePlanItems(true)">Tout sélectionner</button>
+      <button type="button" class="btn btn-secondary" onclick="setAllVehiclePlanItems(false)">Tout désélectionner</button>
+    </div>
+    <div id="vehiclePlanEditor" class="vehicle-maintenance-plan-editor"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehiclePlanModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehiclePlanModal()">Valider le plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KILOMÉTRAGE -->
+<div class="modal-overlay" id="vehicleMileageModal">
+  <div class="modal">
+    <h3>Mettre à jour le kilométrage</h3>
+    <div class="modal-field"><label>Kilométrage actuel</label><input type="number" id="vehicleMileageQuick" inputmode="numeric" min="0" placeholder="0"></div>
+    <div class="modal-field"><label>Date du relevé</label><input type="date" id="vehicleMileageQuickDate"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMileageModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleMileage()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENTRETIEN EFFECTUÉ -->
+<div class="modal-overlay" id="performedMaintenanceModal">
+  <div class="modal" style="max-width:440px;">
+    <h3 id="performedMaintenanceModalTitle">Ajouter un entretien</h3>
+    <div class="modal-field">
+      <label>Entretiens réalisés</label>
+      <div id="performedMaintenancePlanList" class="performed-maintenance-list"></div>
+    </div>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Date effectuée</label><input type="date" id="performedMaintenanceDate"></div>
+      <div class="modal-field"><label>Kilométrage</label><input type="number" id="performedMaintenanceMileage" inputmode="numeric" min="0" placeholder="Ex : 97000"></div>
+    </div>
+    <div class="vehicle-section-note">Sélectionne tous les entretiens réalisés lors de cette intervention. La même date et le même kilométrage mettront à jour chaque type sélectionné et recalculeront leurs prochaines échéances.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closePerformedMaintenanceModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitPerformedMaintenance()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTORIQUE ENTRETIENS -->
+<div class="modal-overlay" id="vehicleMaintenanceHistoryModal">
+  <div class="modal" style="max-width:480px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehicleMaintenanceHistoryTitle">Historique des entretiens</h3>
+    <div id="vehicleMaintenanceHistoryList" class="vehicle-list"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMaintenanceHistoryModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODIFICATION HISTORIQUE ENTRETIEN -->
+<div class="modal-overlay" id="vehicleMaintenanceHistoryEditModal">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehicleMaintenanceHistoryEditTitle">Modifier l'intervention</h3>
+    <div class="modal-field">
+      <label>Entretiens réalisés</label>
+      <div id="vehicleMaintenanceHistoryEditTypes" class="performed-maintenance-list"></div>
+    </div>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Date effectuée</label><input type="date" id="vehicleMaintenanceHistoryEditDate"></div>
+      <div class="modal-field"><label>Kilométrage</label><input type="number" id="vehicleMaintenanceHistoryEditMileage" inputmode="numeric" min="0"></div>
+    </div>
+    <div class="vehicle-section-note">La correction de cette intervention recalculera le dernier entretien et les prochaines échéances des types concernés.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMaintenanceHistoryEditModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleMaintenanceHistoryEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LIAISON FACTURE / VÉHICULE -->
+<div class="modal-overlay" id="vehicleInvoiceLinkModal">
+  <div class="modal">
+    <h3>Associer une facture</h3>
+    <div class="modal-field"><label>Facture existante</label><select id="vehicleInvoiceLinkSelect" class="invoice-select"></select></div>
+    <div class="vehicle-section-note">La facture reste stockée dans l'onglet Factures. Seule son association au véhicule est enregistrée.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleInvoiceLinkModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleInvoiceLink()">Associer</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL RECADRAGE FACTURE -->
 <div class="modal-overlay" id="invoiceCropModal">
@@ -444,6 +774,14 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       </div>
     </div>
 
+
+    <div class="modal-field">
+      <label>Véhicule associé</label>
+      <select id="invoiceVehicle" class="invoice-select">
+        <option value="">Aucun véhicule</option>
+      </select>
+    </div>
+
     <div class="modal-field">
       <label>Garantie applicable</label>
       <select id="invoiceWarrantyApplicable" onchange="toggleInvoiceWarrantyField()" style="width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none;">
@@ -503,21 +841,42 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
   </div>
 </div>
 
+<!-- ASSISTANT D'AIDE HORS LIGNE -->
+<button id="offlineAssistantLauncher" class="offline-assistant-launcher" type="button" aria-controls="offlineAssistantPanel" aria-expanded="false">💬 <span>Assistant</span></button>
+<section id="offlineAssistantPanel" class="offline-assistant-panel" aria-label="Assistant d'aide de l'application" aria-hidden="true">
+  <div class="offline-assistant-head">
+    <div class="offline-assistant-head-main">
+      <div class="offline-assistant-title">💬 Assistant <span class="offline-assistant-local">● hors ligne</span></div>
+      <div class="offline-assistant-subtitle">Guide intégré à Budget & Patrimoine</div>
+    </div>
+    <button id="offlineAssistantClose" class="offline-assistant-close" type="button" aria-label="Fermer l'assistant">×</button>
+  </div>
+  <div id="offlineAssistantMessages" class="offline-assistant-messages" aria-live="polite"></div>
+  <div id="offlineAssistantQuick" class="offline-assistant-quick" aria-label="Questions suggérées"></div>
+  <form id="offlineAssistantForm" class="offline-assistant-compose">
+    <input id="offlineAssistantInput" class="offline-assistant-input" type="text" autocomplete="off" placeholder="Pose une question sur l'application…" aria-label="Question à l'assistant">
+    <button class="offline-assistant-send" type="submit" aria-label="Envoyer">➤</button>
+  </form>
+  <div class="offline-assistant-note">Aucune question n'est envoyée sur Internet. Cet assistant répond uniquement à partir du guide intégré à l'application.</div>
+</section>
+
 <div class="wrap">
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
     <button class="tab-btn" onclick="switchTab('patrimoine')">📊 Patrimoine</button>
     <button class="tab-btn" onclick="switchTab('factures')">🧾 Factures</button>
+    <button class="tab-btn" onclick="switchTab('vehicles')">🚗 Véhicules</button>
   </div>
 
   <div id="firebaseStatus">Synchronisation…</div>
+  <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
 
   <div id="tab-budget" class="tab-content active">
 
     <div class="top" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:center;">
-      <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 5px;font-size:10px">📝 Notes</button>
-      <button class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
-      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 5px;font-size:10px">🔒 Clôturer</button>
+      <button id="assistantTargetNotes" class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 5px;font-size:10px">📝 Notes</button>
+      <button id="assistantTargetAccounts" class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
+      <button id="assistantTargetCloseMonth" class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 5px;font-size:10px">🔒 Clôturer</button>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 5px;font-size:10px">👁️ Affiché</button>
     </div>
 
@@ -544,7 +903,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <button class="btn btn-primary" onclick="openBankTransferModal()">⇄ Ajouter un virement interne</button>
     <details class="card" id="details-bank-transfers"><summary><span>⇄ Virements internes</span><span class="budget-summary-total" id="bank-transfer-count">0</span></summary><div class="details-content"><div id="bank-transfers-container"></div><button class="btn btn-secondary" onclick="clearBankTransfers()" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <div class="card">
+    <div class="card" id="assistantTargetBudgetHistory">
       <div class="section-header"><h2>🗓️ Historique</h2></div>
       <input type="text" id="historySearchInput" placeholder="🔍 Rechercher (mois, libellé, montant)..." oninput="renderHistory()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;margin-top:4px">
       <div id="history-container"></div>
@@ -606,14 +965,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
           <button class="chart-filter" data-range="ALL" onclick="setChartRange('ALL')">Tout</button>
         </div>
 
-        <div class="chart-controls chart-series-controls" id="chart-series-controls">
-          <button class="chart-filter active" data-series="total" onclick="setChartSeries('total')">Total</button>
-          <button class="chart-filter" data-series="epargne" onclick="setChartSeries('epargne')">Épargne</button>
-          <button class="chart-filter" data-series="assurancevie" onclick="setChartSeries('assurancevie')">AV</button>
-          <button class="chart-filter" data-series="bourse" onclick="setChartSeries('bourse')">Bourse</button>
-          <button class="chart-filter" data-series="crypto" onclick="setChartSeries('crypto')">Crypto</button>
-          <button class="chart-filter" data-series="autres" onclick="setChartSeries('autres')">Autres</button>
-        </div>
+        <div class="chart-controls chart-series-controls" id="chart-series-controls"></div>
 
         <div id="chart-wrapper"></div>
 
@@ -621,12 +973,19 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       </div>
     </div>
 
-    <div class="card"><div class="section-header"><h2>🏠 Immobilier</h2><span class="section-total" id="total-immobilier">0 €</span></div><div class="rows-container" data-key="immobilier"></div><button class="btn-add" onclick="addItem('immobilier')">+ Ajouter</button></div>
+    <div class="asset-category-manager">
+      <button class="btn asset-category-manager-toggle" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actifs</button>
+      <div class="asset-category-add-panel" id="asset-category-add-panel">
+        <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
+        <button class="btn btn-primary asset-category-add-btn" onclick="addSelectedAssetCategory()">Ajouter</button>
+      </div>
+      <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
+    </div>
+
     <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>📈 Bourse</h2><span class="section-total" id="total-bourse">0 €</span></div><div class="rows-container" data-key="bourse"></div><button class="btn-add" onclick="addItem('bourse')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>🪙 Crypto</h2><span class="section-total" id="total-crypto">0 €</span></div><div class="rows-container" data-key="crypto"></div><button class="btn-add" onclick="addItem('crypto')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2><span class="section-total" id="total-assurancevie">0 €</span></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>📦 Autres Actifs</h2><span class="section-total" id="total-autres">0 €</span></div><div class="rows-container" data-key="autres"></div><button class="btn-add" onclick="addItem('autres')">+ Ajouter</button></div>
+
+    <div id="optional-asset-categories"></div>
+
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
     <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
@@ -637,7 +996,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Affiché</button>
     </div>
 
-    <button class="btn btn-primary" onclick="openInvoiceModal()">+ Ajouter un achat / une facture</button>
+    <button id="assistantTargetAddInvoice" class="btn btn-primary" onclick="openInvoiceModal()">+ Ajouter un achat / une facture</button>
 
     <div id="invoice-summary-alert" class="invoice-summary-alert"></div>
 
@@ -664,6 +1023,33 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
 
+  <div id="tab-vehicles" class="tab-content">
+    <div class="top" style="justify-content:space-between;gap:8px;">
+      <div style="font-weight:700;color:#fff">🚗 Véhicules</div>
+      <button id="assistantTargetAddVehicle" class="btn btn-primary" onclick="openVehicleModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
+    </div>
+
+    <div class="card" id="vehicle-alerts-card" style="display:none">
+      <div class="section-header"><h2>🔔 Échéances & alertes</h2></div>
+      <div id="vehicle-alerts"></div>
+    </div>
+
+    <div id="vehicle-tabs" class="vehicle-tabs"></div>
+    <div id="vehicle-empty" class="card vehicle-empty" style="display:none">Aucun véhicule enregistré.<br><br><button class="btn btn-primary" onclick="openVehicleModal()">＋ Créer mon premier véhicule</button></div>
+
+    <div id="vehicle-content" style="display:none">
+      <div class="card" id="vehicle-summary-card"></div>
+
+
+      <div class="card" id="assistantTargetVehicleInvoices">
+        <div class="section-header"><h2>🧾 Factures associées</h2><button class="btn btn-secondary" onclick="openVehicleInvoiceLinkModal()" style="padding:6px 8px;font-size:10px">＋ Associer</button></div>
+        <div id="vehicle-invoices" class="vehicle-list"></div>
+      </div>
+    </div>
+
+    <div class="app-footer">Application crée par ROYER Anaël</div>
+  </div>
+
 </div>
 
 <script type="module">
@@ -671,6 +1057,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+// Configuration personnelle historique : conservée pour utiliser exactement
+// le même espace Firebase et les mêmes données qu'avant la mise à niveau.
 const firebaseConfig={
   apiKey:"AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0",
   authDomain:"finances-royer.firebaseapp.com",
@@ -686,16 +1074,16 @@ const firebaseApp=initializeApp(firebaseConfig),
       sharedRef=doc(db,"budget_shared","main_account");
 
 window.firebaseReady=false;
-
-function setFirebaseStatus(m){
-  const e=document.getElementById("firebaseStatus");
-  if(e)e.textContent=m;
-}
-
 window.firebaseWriting=false;
 let firebaseSaveTimer=null,
     firebaseSaveInProgress=false,
-    firebaseSavePending=false;
+    firebaseSavePending=false,
+    snapshotUnsubscribe=null;
+
+function setFirebaseStatus(message){
+  const el=document.getElementById('firebaseStatus');
+  if(el)el.textContent=message;
+}
 
 window.firebaseSave=function(){
   if(!window.firebaseReady)return;
@@ -707,18 +1095,18 @@ window.firebaseSave=function(){
     }
     firebaseSaveInProgress=true;
     window.firebaseWriting=true;
-    setFirebaseStatus("Enregistrement…");
+    setFirebaseStatus('Enregistrement…');
     try{
       await setDoc(sharedRef,{
         data:JSON.stringify(window.data),
         monthHistory:JSON.stringify(window.monthHistory),
         patrimoineHistory:JSON.stringify(window.patrimoineHistory),
         annotations:window.annotations||''
-      });
-      setFirebaseStatus("Synchronisé");
-    }catch(e){
-      console.error(e);
-      setFirebaseStatus("Erreur Firebase");
+      },{merge:true});
+      setFirebaseStatus('Synchronisé');
+    }catch(error){
+      console.error(error);
+      setFirebaseStatus('Erreur Firebase');
     }finally{
       firebaseSaveInProgress=false;
       window.firebaseWriting=false;
@@ -730,83 +1118,239 @@ window.firebaseSave=function(){
   },250);
 };
 
-async function initFirebase(){
-  try{
-    await signInAnonymously(auth);
-  }catch(e){
-    console.error(e);
+async function applyRemoteSnapshot(snapshot){
+  if(!snapshot?.exists())return false;
+  const r=snapshot.data();
+  if(window.applyFirebaseState){
+    window.applyFirebaseState({
+      data:r.data?JSON.parse(r.data):undefined,
+      monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
+      patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
+      annotations:typeof r.annotations==='string'?r.annotations:undefined
+    });
   }
+  return true;
 }
 
 onAuthStateChanged(auth,async user=>{
   if(!user)return;
-  window.firebaseReady=true;
-  setFirebaseStatus("Connecté à Firebase");
+  setFirebaseStatus('Chargement…');
   try{
     const snap=await getDoc(sharedRef);
-    if(!snap.exists()){
-      await window.firebaseSave();
-    }else{
-      const r=snap.data();
-      if(window.applyFirebaseState){
-        window.applyFirebaseState({
-          data:r.data?JSON.parse(r.data):undefined,
-          monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
-          patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
-          annotations:typeof r.annotations==='string'?r.annotations:undefined
-        });
-      }
-
-      onSnapshot(sharedRef,snapshot=>{
-        if(!snapshot.exists()||window.firebaseWriting)return;
-        const r=snapshot.data();
-        if(window.applyFirebaseState){
-          window.applyFirebaseState({
-            data:r.data?JSON.parse(r.data):undefined,
-            monthHistory:r.monthHistory?JSON.parse(r.monthHistory):undefined,
-            patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):undefined,
-            annotations:typeof r.annotations==='string'?r.annotations:undefined
-          });
-        }
-      });
+    window.firebaseReady=true;
+    const existed=await applyRemoteSnapshot(snap);
+    if(!existed){
+      // Premier démarrage seulement : envoie l'état local déjà chargé.
+      window.firebaseSave();
     }
-  }catch(e){
-    console.error(e);
+    setFirebaseStatus('Synchronisé');
+    if(snapshotUnsubscribe) snapshotUnsubscribe();
+    snapshotUnsubscribe=onSnapshot(sharedRef,snapshot=>{
+      if(!snapshot.exists()||window.firebaseWriting)return;
+      applyRemoteSnapshot(snapshot).catch(console.error);
+    });
+  }catch(error){
+    console.error(error);
+    window.firebaseReady=false;
+    setFirebaseStatus('Hors ligne');
   }
 });
 
-initFirebase();
+(async function initFirebase(){
+  try{
+    await signInAnonymously(auth);
+  }catch(error){
+    console.error(error);
+    setFirebaseStatus('Hors ligne');
+  }
+})();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
+function createEmptyBetaData(){
+  return{
+    immobilier:[],
+    epargne:[],
+    assurancevie:[],
+    scpi:[],
+    bourse:[],
+    crypto:[],
+    per:[],
+    crowdfunding:[],
+    privateequity:[],
+    metaux:[],
+    partssociales:[],
+    collection:[],
+    vehicules:[],
+    autres:[],
+    activeAssetCategories:[],
+    dettes:[],
+    budgetRevenus:[],
+    budgetFixes:[],
+    budgetDepenses:[],
+    bankAccounts:[
+      {id:'fortuneo',name:'Compte principal',active:true},
+      {id:'ca',name:'Compte secondaire',active:true}
+    ],
+    bankTransfers:[],
+    factures:[],
+    garageVehicles:[],
+    vehicleMaintenance:[]
+  };
+}
+
+const ASSET_CATEGORY_DEFINITIONS=[
+  {key:'immobilier',label:'Immobilier',shortLabel:'Immobilier',icon:'🏠',color:'#8b949e'},
+  {key:'assurancevie',label:'Assurance-vie',shortLabel:'AV',icon:'🛡️',color:'#58a6ff'},
+  {key:'bourse',label:'Bourse',shortLabel:'Bourse',icon:'📈',color:'#a371f7'},
+  {key:'scpi',label:'SCPI',shortLabel:'SCPI',icon:'🏢',color:'#39c5bb'},
+  {key:'crypto',label:'Crypto',shortLabel:'Crypto',icon:'🪙',color:'#d29922'},
+  {key:'per',label:'PER / Retraite',shortLabel:'PER',icon:'🏦',color:'#db6d28'},
+  {key:'crowdfunding',label:'Crowdfunding / Crowdlending',shortLabel:'Crowdfunding',icon:'🤝',color:'#2f81f7'},
+  {key:'privateequity',label:'Private Equity / Non coté',shortLabel:'Non coté',icon:'🏭',color:'#bc8cff'},
+  {key:'metaux',label:'Métaux précieux',shortLabel:'Métaux',icon:'🥇',color:'#d4a72c'},
+  {key:'partssociales',label:'Parts sociales',shortLabel:'Parts sociales',icon:'🏛️',color:'#56d364'},
+  {key:'collection',label:'Objets de valeur / Collection',shortLabel:'Collection',icon:'⌚',color:'#f778ba'},
+  {key:'vehicules',label:'Véhicules',shortLabel:'Véhicules',icon:'🚗',color:'#8b949e'},
+  {key:'autres',label:'Autres actifs',shortLabel:'Autres',icon:'📦',color:'#f0883e'}
+];
+const ASSET_CATEGORY_MAP=Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c]));
+const NATIVE_PATRIMOINE_KEYS=['epargne','dettes'];
+
+function ensureAssetCategoryData(){
+  ASSET_CATEGORY_DEFINITIONS.forEach(c=>{if(!Array.isArray(data[c.key]))data[c.key]=[];});
+
+  // Migration douce : sur un ancien compte sans préférence enregistrée,
+  // toute catégorie contenant déjà des lignes reste automatiquement visible.
+  if(!Array.isArray(data.activeAssetCategories)){
+    data.activeAssetCategories=ASSET_CATEGORY_DEFINITIONS
+      .filter(c=>Array.isArray(data[c.key])&&data[c.key].length>0)
+      .map(c=>c.key);
+  }
+
+  data.activeAssetCategories=[...new Set(data.activeAssetCategories)]
+    .filter(key=>ASSET_CATEGORY_MAP[key]);
+
+  // Migration de la version où Immobilier était natif : si un compte possède
+  // déjà des biens, la catégorie reste visible automatiquement. Un compte sans
+  // immobilier ne l'affiche pas et pourra l'ajouter depuis le menu.
+  if(Array.isArray(data.immobilier)&&data.immobilier.length>0&&!data.activeAssetCategories.includes('immobilier')){
+    data.activeAssetCategories.unshift('immobilier');
+  }
+}
+
+function getActiveAssetCategoryKeys(){
+  ensureAssetCategoryData();
+  const active=new Set(data.activeAssetCategories);
+  return ASSET_CATEGORY_DEFINITIONS.filter(c=>active.has(c.key)).map(c=>c.key);
+}
+
+function getActiveInvestmentCategoryKeys(){
+  return getActiveAssetCategoryKeys().filter(key=>key!=='immobilier');
+}
+
+function getAllAssetKeys(){
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key)];
+}
+
+function getPatrimoineKeys(){
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key),'dettes'];
+}
+
+let betaUserUid='personal';
+let betaStoragePrefix='personal';
 let annotations=localStorage.getItem('finaryAnnotations')||'';
-let data=JSON.parse(localStorage.getItem('finaryData'))||{
-  immobilier:[],
-  epargne:[],
-  assurancevie:[],
-  bourse:[],
-  crypto:[],
-  autres:[],
-  dettes:[],
-  budgetRevenus:[],
-  budgetFixes:[],
-  budgetDepenses:[],
-  bankAccounts:[
-    {id:'fortuneo',name:'Fortuneo',active:true},
-    {id:'ca',name:'Crédit Agricole',active:true}
-  ],
-  bankTransfers:[],
-  factures:[]
-};
-let monthHistory=JSON.parse(localStorage.getItem('finaryHistory'))||[];
-let patrimoineHistory=JSON.parse(localStorage.getItem('finaryPatrimoineHistory'))||[];
+let data=safeLocalJSON('finaryData',createEmptyBetaData());
+let monthHistory=safeLocalJSON('finaryHistory',[]);
+let patrimoineHistory=safeLocalJSON('finaryPatrimoineHistory',[]);
+
+// Compatibilité avec le moteur de la bêta, tout en conservant exactement les
+// clés de stockage utilisées par l'application personnelle historique.
+function betaStorageKey(name){
+  const keys={
+    data:'finaryData',
+    history:'finaryHistory',
+    patrimoineHistory:'finaryPatrimoineHistory',
+    annotations:'finaryAnnotations'
+  };
+  return keys[name]||`finary_${name}`;
+}
+function safeLocalJSON(key,fallback){
+  if(!key)return fallback;
+  try{const value=localStorage.getItem(key);return value?JSON.parse(value):fallback;}catch{return fallback;}
+}
+
+
+function makeLocalId(prefix='id'){
+  if(window.crypto&&typeof window.crypto.randomUUID==='function')return `${prefix}_${window.crypto.randomUUID()}`;
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
+}
+
+function normalizeMaintenancePlanItem(item={}){
+  const lastMileage=(item.lastMileage===''||item.lastMileage===null||item.lastMileage===undefined)?'':Math.max(0,Math.round(Number(item.lastMileage)||0));
+  return {
+    ...item,
+    id:String(item.id||makeLocalId('plan')),
+    type:String(item.type||item.title||'').trim(),
+    lastDate:String(item.lastDate||''),
+    lastMileage,
+    intervalMonths:Math.max(0,Math.round(Number(item.intervalMonths)||0)),
+    intervalKm:Math.max(0,Math.round(Number(item.intervalKm)||0)),
+    notes:String(item.notes||''),
+    legacyDueDate:String(item.legacyDueDate||''),
+    legacyDueMileage:Math.max(0,Math.round(Number(item.legacyDueMileage)||0)),
+    legacy:Boolean(item.legacy)
+  };
+}
+
+function ensureVehicleData(){
+  if(!Array.isArray(data.garageVehicles))data.garageVehicles=[];
+  // Ancien historique d'interventions conservé pour compatibilité, mais il n'est plus utilisé par l'interface.
+  if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
+  if(!Array.isArray(data.factures))data.factures=[];
+
+  data.garageVehicles=data.garageVehicles.filter(v=>v&&typeof v==='object').map(v=>{
+    const oldSchedules=Array.isArray(v.schedules)?v.schedules:[];
+    let plan;
+    if(Array.isArray(v.maintenancePlan)){
+      plan=v.maintenancePlan.map(normalizeMaintenancePlanItem);
+    }else{
+      // Migration douce des anciennes échéances manuelles : elles restent visibles jusqu'à
+      // ce que l'utilisateur renseigne un dernier entretien et une périodicité.
+      plan=oldSchedules.map(sc=>normalizeMaintenancePlanItem({
+        id:sc?.id||makeLocalId('plan'),
+        type:sc?.title||'Entretien',
+        notes:sc?.notes||'',
+        legacyDueDate:sc?.dueDate||'',
+        legacyDueMileage:Number(sc?.dueMileage)||0,
+        legacy:true
+      }));
+    }
+    return {
+      ...v,
+      id:String(v.id||makeLocalId('veh')),
+      schedules:oldSchedules,
+      maintenancePlan:plan,
+      mileageHistory:Array.isArray(v.mileageHistory)?v.mileageHistory:[]
+    };
+  });
+
+  data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m&&typeof m==='object').map(m=>({
+    ...m,
+    id:String(m.id||makeLocalId('mnt'))
+  }));
+
+  data.factures.forEach(inv=>{
+    if(inv&&typeof inv==='object'&&!inv.id)inv.id=makeLocalId('inv');
+  });
+}
 
 function ensureBankingData(){
   if(!Array.isArray(data.bankAccounts)||!data.bankAccounts.length){
     data.bankAccounts=[
-      {id:'fortuneo',name:'Fortuneo',active:true},
-      {id:'ca',name:'Crédit Agricole',active:true}
+      {id:'fortuneo',name:'Compte principal',active:true},
+      {id:'ca',name:'Compte secondaire',active:true}
     ];
   }
 
@@ -818,13 +1362,6 @@ function ensureBankingData(){
       active:a.active!==false
     }));
 
-  if(!data.bankAccounts.some(a=>a.id==='fortuneo')){
-    data.bankAccounts.unshift({id:'fortuneo',name:'Fortuneo',active:true});
-  }
-  if(!data.bankAccounts.some(a=>a.id==='ca')){
-    data.bankAccounts.push({id:'ca',name:'Crédit Agricole',active:true});
-  }
-
   if(!Array.isArray(data.bankTransfers))data.bankTransfers=[];
   data.bankTransfers=data.bankTransfers
     .filter(t=>t&&typeof t==='object')
@@ -834,19 +1371,45 @@ function ensureBankingData(){
     }));
 
   // Les anciens virements internes gardent le comportement historique : occasionnels.
-  // Les lignes créées avant le multi-comptes provenaient du Crédit Agricole.
-  // On les rattache donc au CA sans toucher aux historiques déjà clôturés.
+  // Une ligne courante qui référence un ancien identifiant de compte est rattachée
+  // au premier compte encore disponible, sans jamais modifier les mois déjà clôturés.
+  const fallbackAccountId=(data.bankAccounts.find(a=>a.active!==false)||data.bankAccounts[0])?.id||'';
   ['budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
     if(!Array.isArray(data[key]))data[key]=[];
     data[key].forEach(item=>{
       if(!Array.isArray(item))return;
       const accountExists=data.bankAccounts.some(a=>a.id===item[3]);
-      if(!accountExists)item[3]='ca';
+      if(!accountExists)item[3]=fallbackAccountId;
     });
   });
+
+  ensureAssetCategoryData();
+  ensureVehicleData();
 }
 
 ensureBankingData();
+
+window.prepareBetaUserSession=function(){
+  // Non utilisé en version personnelle : l'espace reste le document partagé historique.
+};
+
+window.resetBetaData=function(){
+  data=createEmptyBetaData();
+  monthHistory=[];
+  patrimoineHistory=[];
+  annotations='';
+  ensureBankingData();
+  window.data=data;
+  window.monthHistory=monthHistory;
+  window.patrimoineHistory=patrimoineHistory;
+  window.annotations=annotations;
+  saveLocalOnly();
+  render();
+};
+
+window.clearBetaUserSession=function(){
+  // Non utilisé en version personnelle. Ne jamais vider les données à cause d'une déconnexion Firebase.
+};
 
 window.data=data;
 window.monthHistory=monthHistory;
@@ -879,6 +1442,8 @@ function switchTab(t){
     e.classList.toggle('active',target.includes(`'${t}'`));
   });
   if(t==='factures')renderInvoices();
+  if(t==='vehicles')renderVehicles();
+  if(typeof updateOfflineAssistantContext==='function')updateOfflineAssistantContext();
 }
 
 let touchStartX=0,touchStartY=0;
@@ -893,7 +1458,7 @@ document.addEventListener('touchend',e=>{
       dx=x-touchStartX,
       dy=y-touchStartY;
   if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
-    const tabs=['budget','patrimoine','factures'];
+    const tabs=['budget','patrimoine','factures','vehicles'];
     const idx=tabs.indexOf(currentActiveTab);
     if(dx<0&&idx<tabs.length-1)switchTab(tabs[idx+1]);
     else if(dx>0&&idx>0)switchTab(tabs[idx-1]);
@@ -1294,6 +1859,39 @@ function getBankAccountName(id){
   return getBankAccount(id)?.name||'Compte inconnu';
 }
 
+function getHistoricalBudgetAccountName(item){
+  if(!Array.isArray(item))return '';
+  return String(item[4]||getBankAccountName(item[3])||'Compte inconnu');
+}
+
+function getHistoricalTransferAccountName(transfer,side){
+  if(!transfer||!side)return 'Compte inconnu';
+  const stored=side==='from'?transfer.fromName:transfer.toName;
+  return String(stored||getBankAccountName(transfer[side])||'Compte inconnu');
+}
+
+function snapshotBankAccountInHistory(account){
+  if(!account?.id)return;
+  const id=String(account.id);
+  const name=String(account.name||'Compte bancaire');
+  (monthHistory||[]).forEach(month=>{
+    ['revenusDetails','fixesDetails','depensesDetails'].forEach(key=>{
+      (month?.[key]||[]).forEach(item=>{
+        if(Array.isArray(item)&&String(item[3]||'')===id&&!item[4])item[4]=name;
+      });
+    });
+    (month?.transfersDetails||[]).forEach(t=>{
+      if(!t||typeof t!=='object')return;
+      if(String(t.from||'')===id&&!t.fromName)t.fromName=name;
+      if(String(t.to||'')===id&&!t.toName)t.toName=name;
+    });
+  });
+}
+
+function snapshotAllBankAccountNamesInHistory(){
+  (data.bankAccounts||[]).forEach(snapshotBankAccountInHistory);
+}
+
 function getBankDotClass(id){
   if(id==='fortuneo')return 'fortuneo';
   if(id==='ca')return 'ca';
@@ -1322,7 +1920,7 @@ function populateBankSelect(select,selectedId=''){
   let selected=selectedId;
   if(!accounts.some(a=>a.id===selected)){
     const saved=localStorage.getItem('finaryLastBudgetAccount')||'fortuneo';
-    selected=accounts.some(a=>a.id===saved)?saved:(accounts[0]?.id||'ca');
+    selected=accounts.some(a=>a.id===saved)?saved:(accounts[0]?.id||'');
   }
   select.innerHTML=accounts.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
   select.value=selected;
@@ -1347,6 +1945,7 @@ function renderBankAccountsSettings(){
     <div class="bank-account-setting-row">
       <input type="text" value="${escapeHtml(a.name)}" onchange="renameBankAccount(${index},this.value)" aria-label="Nom du compte">
       <label class="bank-active-toggle"><input type="checkbox" ${a.active!==false?'checked':''} onchange="setBankAccountActive(${index},this.checked)"> Actif</label>
+      <button type="button" class="bank-delete-btn" onclick="deleteBankAccount(${index})" ${a.active!==false?'disabled':''} title="${a.active!==false?'Désactivez ce compte avant de le supprimer':'Supprimer ce compte'}" aria-label="${a.active!==false?'Compte actif : désactivez-le avant suppression':'Supprimer '+escapeHtml(a.name)}">×</button>
     </div>
   `).join('');
 }
@@ -1355,7 +1954,52 @@ function renameBankAccount(index,value){
   const account=data.bankAccounts?.[index];
   if(!account)return;
   const name=String(value||'').trim();
-  if(name)account.name=name;
+  if(name&&name!==account.name){
+    // Fige l'ancien nom dans les mois déjà clôturés avant de renommer le compte courant.
+    snapshotBankAccountInHistory(account);
+    account.name=name;
+  }
+  renderBankAccountsSettings();
+  render();
+  save();
+}
+
+function deleteBankAccount(index){
+  const account=data.bankAccounts?.[index];
+  if(!account)return;
+
+  if((data.bankAccounts||[]).length<=1){
+    alert('Il faut conserver au moins un compte bancaire.');
+    return;
+  }
+
+  if(account.active!==false){
+    alert(`Le compte « ${account.name} » est encore actif.\n\nDécochez d’abord « Actif » avant de pouvoir le supprimer.`);
+    return;
+  }
+
+  if(accountIsUsed(account.id)){
+    alert(`Le compte « ${account.name} » est encore utilisé dans le cycle en cours ou dans un virement interne.\n\nDéplacez ou supprimez d’abord ces opérations avant de supprimer le compte.`);
+    return;
+  }
+
+  const historicalMonths=(monthHistory||[]).filter(month=>{
+    const usedInDetails=['revenusDetails','fixesDetails','depensesDetails'].some(key=>(month?.[key]||[]).some(item=>Array.isArray(item)&&String(item[3]||'')===String(account.id)));
+    const usedInTransfers=(month?.transfersDetails||[]).some(t=>String(t?.from||'')===String(account.id)||String(t?.to||'')===String(account.id));
+    return usedInDetails||usedInTransfers;
+  }).length;
+
+  const historyText=historicalMonths
+    ? `\n\n${historicalMonths} mois clôturé(s) utilisent ce compte : ils seront conservés intégralement avec le nom « ${account.name} ».`
+    : '';
+
+  if(!confirm(`Supprimer définitivement le compte « ${account.name} » ?${historyText}\n\nCette action retire uniquement le compte de la configuration actuelle.`))return;
+
+  // Avant suppression, mémorise son nom dans chaque historique où il apparaît.
+  snapshotBankAccountInHistory(account);
+  data.bankAccounts.splice(index,1);
+  if(localStorage.getItem('finaryLastBudgetAccount')===account.id)localStorage.removeItem('finaryLastBudgetAccount');
+
   renderBankAccountsSettings();
   render();
   save();
@@ -1743,7 +2387,7 @@ function submitModal(){
 
 /* MODALE MONTANT PATRIMOINE */
 let patrimoineAmountKey='',patrimoineAmountIndex=-1;
-const patrimoineKeys=['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'];
+const patrimoineKeys=getPatrimoineKeys();
 
 function adjustPatrimoineModalForKeyboard(){
   const overlay=document.getElementById('patrimoineAmountModal');
@@ -1866,15 +2510,175 @@ function saveAnnotations(){
 }
 
 
+/* EMPRUNTS */
+let activeLoanIndex=-1;
+function getLoanMeta(item){
+  const raw=item && typeof item[2]==='object' && item[2]!==null ? item[2] : {};
+  return {initialAmount:Number(raw.initialAmount)||0,startDate:raw.startDate||'',endDate:raw.endDate||'',monthlyPayment:Number(raw.monthlyPayment)||0,rate:Number(raw.rate)||0};
+}
+function calculateLoanProgress(initialAmount,currentAmount){
+  const initial=Number(initialAmount)||0,current=Number(currentAmount)||0;
+  if(initial<=0)return 0;
+  return Math.max(0,Math.min(100,((initial-current)/initial)*100));
+}
+function formatLoanDate(value){
+  if(!value)return '—';
+  const d=new Date(value+'T12:00:00');
+  if(Number.isNaN(d.getTime()))return '—';
+  return d.toLocaleDateString('fr-FR',{month:'2-digit',year:'numeric'});
+}
+function openLoanModal(index=-1){
+  activeLoanIndex=index;
+  const editing=index>=0 && data.dettes && data.dettes[index];
+  const item=editing?data.dettes[index]:['',0,{}],meta=getLoanMeta(item);
+  document.getElementById('loanModalTitle').textContent=editing?'Modifier l’emprunt':'Ajouter un emprunt';
+  document.getElementById('loanLabel').value=item[0]||'';
+  document.getElementById('loanInitialAmount').value=meta.initialAmount||'';
+  document.getElementById('loanCurrentAmount').value=Number(item[1])||'';
+  document.getElementById('loanStartDate').value=meta.startDate||'';
+  document.getElementById('loanEndDate').value=meta.endDate||'';
+  document.getElementById('loanMonthlyPayment').value=meta.monthlyPayment||'';
+  document.getElementById('loanRate').value=meta.rate||'';
+  document.getElementById('loanModal').classList.add('active');
+  setTimeout(()=>document.getElementById('loanLabel').focus(),50);
+}
+function closeLoanModal(){document.getElementById('loanModal').classList.remove('active');activeLoanIndex=-1;}
+function submitLoanModal(){
+  const label=document.getElementById('loanLabel').value.trim();
+  const initial=Number(document.getElementById('loanInitialAmount').value||0);
+  const current=Number(document.getElementById('loanCurrentAmount').value||0);
+  const startDate=document.getElementById('loanStartDate').value||'';
+  const endDate=document.getElementById('loanEndDate').value||'';
+  const monthly=Number(document.getElementById('loanMonthlyPayment').value||0);
+  const rate=Number(document.getElementById('loanRate').value||0);
+  if(!label){document.getElementById('loanLabel').focus();return;}
+  if(!Number.isFinite(initial)||initial<0){document.getElementById('loanInitialAmount').focus();return;}
+  if(!Number.isFinite(current)||current<0){document.getElementById('loanCurrentAmount').focus();return;}
+  if(!Number.isFinite(monthly)||monthly<0){document.getElementById('loanMonthlyPayment').focus();return;}
+  if(!Number.isFinite(rate)||rate<0){document.getElementById('loanRate').focus();return;}
+  const newItem=[label,current,{initialAmount:initial,startDate,endDate,monthlyPayment:monthly,rate}];
+  if(!Array.isArray(data.dettes))data.dettes=[];
+  if(activeLoanIndex>=0 && data.dettes[activeLoanIndex])data.dettes[activeLoanIndex]=newItem; else data.dettes.push(newItem);
+  closeLoanModal();render();save();
+}
+function renderLoanCards(cont){
+  const items=Array.isArray(data.dettes)?data.dettes:[];
+  items.forEach((item,idx)=>{
+    const meta=getLoanMeta(item),current=Number(item[1])||0,progress=calculateLoanProgress(meta.initialAmount,current);
+    const complete=meta.initialAmount>0||meta.startDate||meta.endDate||meta.monthlyPayment>0||meta.rate>0;
+    const card=document.createElement('div');card.className='loan-card';
+    card.innerHTML=`<div class="loan-card-head"><div><div class="loan-card-title">${escapeHtml(item[0]||'Emprunt')}</div><div class="loan-card-sub">${meta.initialAmount>0?'sur '+euro(meta.initialAmount)+' empruntés':'Montant initial à renseigner'}</div></div><div class="loan-card-current">${euro(current)}<small>restant dû</small></div></div>${complete?`<div><div class="loan-progress-line"><span>Capital remboursé</span><strong>${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</strong></div><div class="loan-progress"><div class="loan-progress-bar" style="width:${progress}%"></div></div></div><div class="loan-meta-grid"><div class="loan-meta"><span>Mensualité</span><strong>${meta.monthlyPayment>0?euro(meta.monthlyPayment):'—'}</strong></div><div class="loan-meta"><span>Taux</span><strong>${meta.rate>0?meta.rate.toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div class="loan-meta"><span>Début</span><strong>${formatLoanDate(meta.startDate)}</strong></div><div class="loan-meta"><span>Fin</span><strong>${formatLoanDate(meta.endDate)}</strong></div></div>`:`<div class="loan-legacy">Ancien emprunt : ouvre « Modifier » pour compléter les informations.</div>`}<div class="loan-card-actions"><button class="btn btn-secondary" onclick="openLoanModal(${idx})">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="delPatrimoine('dettes',${idx})">🗑 Supprimer</button></div>`;
+    cont.appendChild(card);
+  });
+}
+
+/* CATÉGORIES D’ACTIFS CONFIGURABLES */
+function renderAssetCategoryPicker(){
+  const select=document.getElementById('asset-category-select');
+  const message=document.getElementById('asset-category-picker-message');
+  if(!select)return;
+
+  const active=new Set(getActiveAssetCategoryKeys());
+  const available=ASSET_CATEGORY_DEFINITIONS.filter(c=>!active.has(c.key));
+
+  select.innerHTML=available.length
+    ? available.map(c=>`<option value="${c.key}">${c.icon} ${escapeHtml(c.label)}</option>`).join('')
+    : '<option value="">Toutes les catégories sont déjà ajoutées</option>';
+  select.disabled=!available.length;
+
+  if(message){
+    message.textContent=available.length?'':'Toutes les catégories disponibles sont déjà affichées.';
+    message.style.display=available.length?'none':'block';
+  }
+}
+
+function toggleAssetCategoryPicker(){
+  const panel=document.getElementById('asset-category-add-panel');
+  if(!panel)return;
+  renderAssetCategoryPicker();
+  panel.classList.toggle('active');
+}
+
+function addSelectedAssetCategory(){
+  const select=document.getElementById('asset-category-select');
+  if(!select||!select.value||!ASSET_CATEGORY_MAP[select.value])return;
+  ensureAssetCategoryData();
+  if(!data.activeAssetCategories.includes(select.value)){
+    data.activeAssetCategories.push(select.value);
+  }
+  document.getElementById('asset-category-add-panel')?.classList.remove('active');
+  render();
+  save();
+}
+
+function removeAssetCategory(key){
+  const cfg=ASSET_CATEGORY_MAP[key];
+  if(!cfg)return;
+  if(!getActiveAssetCategoryKeys().includes(key))return;
+
+  if(Array.isArray(data[key])&&data[key].length>0){
+    alert(`La catégorie « ${cfg.label} » contient encore des éléments.\n\nSupprime d’abord toutes ses lignes avant de retirer la catégorie.`);
+    return;
+  }
+
+  if(!confirm(`Voulez-vous vraiment supprimer la catégorie « ${cfg.label} » ?\n\nLa catégorie sera retirée de votre patrimoine. Vous pourrez l’ajouter de nouveau plus tard.`))return;
+
+  data.activeAssetCategories=data.activeAssetCategories.filter(k=>k!==key);
+  if(currentChartSeries===key){
+    currentChartSeries='total';
+    localStorage.setItem('finaryChartSeries','total');
+  }
+  render();
+  save();
+}
+
+function renderOptionalAssetCategorySections(){
+  const host=document.getElementById('optional-asset-categories');
+  if(!host)return;
+  ensureAssetCategoryData();
+
+  host.innerHTML=getActiveAssetCategoryKeys().map(key=>{
+    const c=ASSET_CATEGORY_MAP[key];
+    return `<div class="card">
+      <div class="section-header">
+        <h2>${c.icon} ${escapeHtml(c.label)}</h2>
+        <div class="category-header-actions">
+          <span class="section-total" id="total-${c.key}">0 €</span>
+          <button class="category-remove-btn" onclick="removeAssetCategory('${c.key}')" title="Supprimer cette catégorie" aria-label="Supprimer la catégorie ${escapeHtml(c.label)}">×</button>
+        </div>
+      </div>
+      <div class="rows-container" data-key="${c.key}"></div>
+      <button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>
+    </div>`;
+  }).join('');
+
+  renderAssetCategoryPicker();
+}
+
+function renderChartSeriesControls(){
+  const host=document.getElementById('chart-series-controls');
+  if(!host)return;
+  const allowed=['total','epargne',...getActiveInvestmentCategoryKeys()];
+  if(!allowed.includes(currentChartSeries))currentChartSeries='total';
+
+  const series=[
+    {key:'total',label:'Total'},
+    {key:'epargne',label:'Épargne'},
+    ...getActiveInvestmentCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label}))
+  ];
+
+  host.innerHTML=series.map(s=>`<button class="chart-filter ${s.key===currentChartSeries?'active':''}" data-series="${s.key}" onclick="setChartSeries('${s.key}')">${escapeHtml(s.label)}</button>`).join('');
+}
+
 /* RENDU */
 function render(){
+  ensureAssetCategoryData();
+  renderOptionalAssetCategorySections();
+  renderChartSeriesControls();
+
   [
-    'immobilier',
     'epargne',
-    'assurancevie',
-    'bourse',
-    'crypto',
-    'autres',
+    ...getActiveAssetCategoryKeys(),
     'dettes',
     'budgetRevenus',
     'budgetFixes',
@@ -1889,6 +2693,8 @@ function render(){
     if(!Array.isArray(data[key]))data[key]=[];
 
     const isBudget=key.startsWith('budget');
+
+    if(key==='dettes'){renderLoanCards(cont);return;}
 
     // Dans le budget, les lignes non cochées restent en haut et
     // les lignes cochées sont affichées en bas, sans modifier data.
@@ -1983,6 +2789,7 @@ function render(){
   renderChart();
   renderAssetDistribution();
   renderInvoices();
+  renderVehicles();
 }
 
 function escapeHtml(v){
@@ -2008,6 +2815,7 @@ function togglePaid(k,i){
 }
 
 function addItem(k){
+  if(k==='dettes'){openLoanModal(-1);return;}
   if(!data[k])data[k]=[];
   data[k].push(['',0]);
   render();
@@ -2082,7 +2890,7 @@ function save(){
 }
 
 function calculateNet(){
-  const keys=['immobilier','epargne','assurancevie','bourse','crypto','autres'];
+  const keys=getAllAssetKeys();
 
   const assets=keys.reduce(
     (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
@@ -2102,7 +2910,7 @@ function calculateNet(){
 }
 
 function calculateLiquidInvestments(){
-  return ['epargne','assurancevie','bourse','crypto','autres'].reduce(
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').map(c=>c.key)].reduce(
     (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
     0
   );
@@ -2113,12 +2921,8 @@ function calculateLiquidInvestments(){
 function getPatrimoineReportModel(){
   const totals=calculateNet();
   const categories=[
-    {key:'immobilier',label:'Immobilier'},
     {key:'epargne',label:'Épargne'},
-    {key:'bourse',label:'Bourse'},
-    {key:'crypto',label:'Crypto'},
-    {key:'assurancevie',label:'Assurance-vie'},
-    {key:'autres',label:'Autres actifs'},
+    ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].label})),
     {key:'dettes',label:'Emprunts'}
   ].map(c=>({
     ...c,
@@ -2127,11 +2931,11 @@ function getPatrimoineReportModel(){
   }));
 
   const savings=categories.find(c=>c.key==='epargne')?.total||0;
-  const investments=(categories.find(c=>c.key==='bourse')?.total||0)+(categories.find(c=>c.key==='crypto')?.total||0);
+  const investments=getActiveInvestmentCategoryKeys().reduce((sum,key)=>sum+(categories.find(c=>c.key===key)?.total||0),0);
   const variation=document.getElementById('patrimoine-variation-value')?.textContent?.trim()||'—';
   const now=new Date();
 
-  const liquidKeys=new Set(['epargne','assurancevie','bourse','crypto','autres']);
+  const liquidKeys=new Set(['epargne',...getActiveInvestmentCategoryKeys()]);
   const liquidCategories=categories.filter(c=>liquidKeys.has(c.key) && c.total>0);
   const liquidTotal=liquidCategories.reduce((s,c)=>s+c.total,0);
 
@@ -2184,7 +2988,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
       }).join('')
     : `<tr><td colspan="3" class="empty">Aucun actif hors immobilier</td></tr>`;
 
-  const pieColors={epargne:'#3fb950',assurancevie:'#58a6ff',bourse:'#a371f7',crypto:'#d29922',autres:'#f0883e'};
+  const pieColors={epargne:'#3fb950',...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c.color]))};
   let pieCursor=0;
   const pieStops=model.liquidCategories.map(c=>{
     const pct=model.liquidTotal>0?(c.total/model.liquidTotal)*100:0;
@@ -2249,6 +3053,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
 
   <div class="footer">Application crée par ROYER Anaël</div>
 </main>
+
 </body>
 </html>`;
 }
@@ -2356,11 +3161,10 @@ function updateTotals(){
   );
 
   document.getElementById('investments').textContent=euro(
-    (data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+
-    (data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0)
+    ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').reduce((sum,c)=>sum+(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0),0)
   );
 
-  ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{
+  ['epargne',...getActiveAssetCategoryKeys(),'dettes'].forEach(k=>{
     const e=document.getElementById(`total-${k}`);
     if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0));
   });
@@ -2412,10 +3216,10 @@ function recordPatrimoineSnapshot(){
 
   const currentCategories={
     epargne:(data.epargne||[]).reduce((s,i)=>s+(i[1]||0),0),
-    assurancevie:(data.assurancevie||[]).reduce((s,i)=>s+(i[1]||0),0),
-    bourse:(data.bourse||[]).reduce((s,i)=>s+(i[1]||0),0),
-    crypto:(data.crypto||[]).reduce((s,i)=>s+(i[1]||0),0),
-    autres:(data.autres||[]).reduce((s,i)=>s+(i[1]||0),0)
+    ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[
+      c.key,
+      (data[c.key]||[]).reduce((s,i)=>s+(i[1]||0),0)
+    ]))
   };
 
   const existing=patrimoineHistory.find(h=>h.date===today);
@@ -2529,7 +3333,7 @@ function closeMonth(){
     message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
   }
 
-  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, conservera uniquement les entrées récurrentes prévues, puis remettra les cases à zéro.`;
+  message+=`La clôture enregistrera le mois dans l'historique, videra les dépenses et les virements occasionnels, reconduira les virements permanents, reconduira les entrées en les remettant à zéro, puis remettra les cases à zéro.`;
 
   if(!confirm(message))return;
 
@@ -2539,10 +3343,14 @@ function closeMonth(){
     fixes:fixes,
     depenses:dep,
     resteVivre:reste,
-    revenusDetails:JSON.parse(JSON.stringify(data.budgetRevenus||[])),
-    fixesDetails:JSON.parse(JSON.stringify(data.budgetFixes||[])),
-    depensesDetails:JSON.parse(JSON.stringify(data.budgetDepenses||[])),
-    transfersDetails:JSON.parse(JSON.stringify(data.bankTransfers||[]))
+    revenusDetails:(data.budgetRevenus||[]).map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    fixesDetails:(data.budgetFixes||[]).map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    depensesDetails:(data.budgetDepenses||[]).map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    transfersDetails:(data.bankTransfers||[]).map(t=>({
+      ...JSON.parse(JSON.stringify(t)),
+      fromName:getBankAccountName(t.from),
+      toName:getBankAccountName(t.to)
+    }))
   });
 
   data.budgetDepenses=[];
@@ -2558,24 +3366,13 @@ function closeMonth(){
   }
 
   if(data.budgetRevenus){
-    // Après clôture, seules les entrées récurrentes ci-dessous sont conservées.
-    // La comparaison ignore les majuscules/minuscules et les accents.
-    const revenusAConserver=new Set([
-      'salaire anael',
-      'salaire laurene',
-      'negatif/positif',
-      'allocations familliales',
-      'allocations familiales',
-      'papa av enfants'
-    ]);
-
-    data.budgetRevenus=data.budgetRevenus
-      .filter(item=>revenusAConserver.has(normalizeText(item[0]).trim()))
-      .map(item=>{
-        const next=[...item];
-        next[2]=false;
-        return next;
-      });
+    // Bêta publique : aucune appellation personnelle n'est imposée.
+    // Les entrées sont reconduites et simplement décochées ; l'utilisateur peut supprimer les entrées occasionnelles.
+    data.budgetRevenus=data.budgetRevenus.map(item=>{
+      const next=[...item];
+      next[2]=false;
+      return next;
+    });
   }
 
   render();
@@ -2633,13 +3430,13 @@ function renderHistory(){
 
       const budgetMatch=allItems.some(item =>
         matchesQuery(item[0], item[1], query) ||
-        Boolean(item[3]) && normalizeText(getBankAccountName(item[3])).includes(normalizeText(query))
+        Boolean(item[3]) && normalizeText(getHistoricalBudgetAccountName(item)).includes(normalizeText(query))
       );
 
       const transferMatch=(m.transfersDetails||[]).some(t=>
         matchesQuery(t.label,t.amount,query) ||
-        normalizeText(getBankAccountName(t.from)).includes(normalizeText(query)) ||
-        normalizeText(getBankAccountName(t.to)).includes(normalizeText(query))
+        normalizeText(getHistoricalTransferAccountName(t,'from')).includes(normalizeText(query)) ||
+        normalizeText(getHistoricalTransferAccountName(t,'to')).includes(normalizeText(query))
       );
 
       return budgetMatch||transferMatch;
@@ -2701,7 +3498,7 @@ function renderHistoryMonthModalContent(m){
   const renderSection = (title, items) => {
     const filteredItems = (items || []).filter(it =>
       matchesQuery(it[0], it[1], query) ||
-      (it[3] && normalizeText(getBankAccountName(it[3])).includes(normalizeText(query)))
+      (it[3] && normalizeText(getHistoricalBudgetAccountName(it)).includes(normalizeText(query)))
     );
 
     if(!filteredItems.length && query) return '';
@@ -2713,7 +3510,7 @@ function renderHistoryMonthModalContent(m){
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
 
     filteredItems.forEach(it => {
-      const accountText=it[3]?`<span class="history-account">${escapeHtml(getBankAccountName(it[3]))}</span>`:'';
+      const accountText=it[3]?`<span class="history-account">${escapeHtml(getHistoricalBudgetAccountName(it))}</span>`:'';
       html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
     });
 
@@ -2727,15 +3524,15 @@ function renderHistoryMonthModalContent(m){
 
   const filteredTransfers=(m.transfersDetails||[]).filter(t=>
     matchesQuery(t.label,t.amount,query) ||
-    normalizeText(getBankAccountName(t.from)).includes(normalizeText(query)) ||
-    normalizeText(getBankAccountName(t.to)).includes(normalizeText(query))
+    normalizeText(getHistoricalTransferAccountName(t,'from')).includes(normalizeText(query)) ||
+    normalizeText(getHistoricalTransferAccountName(t,'to')).includes(normalizeText(query))
   );
 
   let secTransfers='';
   if(filteredTransfers.length){
     secTransfers='<div class="history-view-section"><h4>⇄ Virements internes</h4>';
     filteredTransfers.forEach(t=>{
-      secTransfers+=`<div class="history-view-row"><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getBankAccountName(t.from))} → ${escapeHtml(getBankAccountName(t.to))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
+      secTransfers+=`<div class="history-view-row"><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getHistoricalTransferAccountName(t,'from'))} → ${escapeHtml(getHistoricalTransferAccountName(t,'to'))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
     });
     secTransfers+='</div>';
   }else if((m.transfersDetails||[]).length&&!query){
@@ -2763,6 +3560,1001 @@ function resetHistory(){
   renderHistory();
 }
 
+
+
+/* =========================================================
+   VÉHICULES / PLAN D'ENTRETIEN
+   ========================================================= */
+let currentGarageVehicleId='';
+let vehicleEditId='';
+let maintenanceEditId='';
+let scheduleEditId='';
+let vehicleAlertDetailFilter='';
+
+function getGarageVehicleById(id){
+  ensureVehicleData();
+  return data.garageVehicles.find(v=>v.id===id)||null;
+}
+
+function getGarageVehicleLabel(id){
+  const v=getGarageVehicleById(id);
+  if(!v)return '';
+  return [v.make,v.model].filter(Boolean).join(' ')||v.registration||'Véhicule';
+}
+
+function getCurrentGarageVehicle(){
+  ensureVehicleData();
+  if(!data.garageVehicles.length)return null;
+  if(!data.garageVehicles.some(v=>v.id===currentGarageVehicleId))currentGarageVehicleId=data.garageVehicles[0].id;
+  return getGarageVehicleById(currentGarageVehicleId);
+}
+
+function selectGarageVehicle(id){
+  if(!getGarageVehicleById(id))return;
+  currentGarageVehicleId=id;
+  renderVehicles();
+}
+
+function setVehicleAlertDetailFilter(status){
+  if(status!=='overdue'&&status!=='soon')return;
+  vehicleAlertDetailFilter=vehicleAlertDetailFilter===status?'':status;
+  renderVehicles();
+}
+
+function closeVehicleAlertDetails(){
+  vehicleAlertDetailFilter='';
+  renderVehicles();
+}
+
+function populateInvoiceVehicleSelect(selected=''){
+  ensureVehicleData();
+  const select=document.getElementById('invoiceVehicle');
+  if(!select)return;
+  select.innerHTML='<option value="">Aucun véhicule</option>'+data.garageVehicles.map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml(getGarageVehicleLabel(v.id))}${v.registration?` · ${escapeHtml(v.registration)}`:''}</option>`).join('');
+  select.value=data.garageVehicles.some(v=>v.id===selected)?selected:'';
+}
+
+let vehicleMaintenancePlanDraft=[];
+let vehiclePlanModalDraft=[];
+
+const VEHICLE_MAINTENANCE_TYPES=[
+  'Vidange moteur',
+  'Filtre à huile',
+  'Filtre à air',
+  'Filtre habitacle',
+  'Bougies',
+  'Liquide de frein',
+  'Liquide de refroidissement',
+  'Courroie de distribution',
+  'Pompe à eau',
+  'Disques de freins',
+  'Plaquettes de freins',
+  'Courroie accessoires',
+  'Entretien boîte de vitesses',
+  'Pneus',
+  'Batterie'
+];
+
+function maintenanceTypeKey(value){
+  return String(value||'').trim().toLocaleLowerCase('fr-FR');
+}
+
+const ELECTRIC_RECOMMENDED_MAINTENANCE=new Set([
+  'Filtre habitacle','Liquide de frein','Liquide de refroidissement','Pompe à eau',
+  'Disques de freins','Plaquettes de freins','Pneus','Batterie'
+].map(maintenanceTypeKey));
+
+function getVehiclePlanPowertrain(){
+  const value=document.getElementById('vehiclePowertrainType')?.value||'';
+  return ['Thermique','Hybride','Électrique'].includes(value)?value:'';
+}
+
+function getMaintenanceRelevance(type,powertrain){
+  if(!powertrain)return {recommended:false,label:'Tous véhicules',className:''};
+  if(powertrain==='Électrique'){
+    const recommended=ELECTRIC_RECOMMENDED_MAINTENANCE.has(maintenanceTypeKey(type));
+    return recommended
+      ? {recommended:true,label:'Recommandé',className:'recommended'}
+      : {recommended:false,label:'Thermique / hybride',className:'secondary'};
+  }
+  return {recommended:true,label:'Recommandé',className:'recommended'};
+}
+
+function selectRecommendedVehiclePlanItems(){
+  const powertrain=getVehiclePlanPowertrain();
+  if(!powertrain){
+    alert("Sélectionne d'abord le type de véhicule : thermique, hybride ou électrique.");
+    return;
+  }
+  vehiclePlanModalDraft.forEach(item=>{
+    const relevance=getMaintenanceRelevance(item.type,powertrain);
+    if(item.builtin!==false)item.enabled=relevance.recommended;
+  });
+  renderVehiclePlanModalEditor();
+}
+
+function getMaintenancePlanComputedSchedule(vehicle,item){
+  const plan=normalizeMaintenancePlanItem(item);
+  let dueDate='';
+  let dueMileage=0;
+  if(plan.intervalMonths>0&&plan.lastDate){
+    const d=parseLocalDate(plan.lastDate);
+    if(d)dueDate=dateToLocalISO(addMonthsSafe(d,plan.intervalMonths));
+  }
+  if(plan.intervalKm>0&&plan.lastMileage!==''){
+    dueMileage=Math.max(0,Number(plan.lastMileage)||0)+plan.intervalKm;
+  }
+  // Anciennes échéances : on conserve la date/km historiques tant que le plan n'a pas été converti.
+  if(!dueDate&&plan.legacyDueDate)dueDate=plan.legacyDueDate;
+  if(!dueMileage&&plan.legacyDueMileage>0)dueMileage=plan.legacyDueMileage;
+  return {
+    id:`plan_${plan.id}`,
+    planId:plan.id,
+    source:'maintenance-plan',
+    title:plan.type||'Entretien',
+    dueDate,
+    dueMileage,
+    notes:plan.notes||'',
+    lastDate:plan.lastDate||'',
+    lastMileage:plan.lastMileage,
+    intervalMonths:plan.intervalMonths,
+    intervalKm:plan.intervalKm,
+    legacy:plan.legacy&&!(plan.intervalMonths>0||plan.intervalKm>0)
+  };
+}
+
+function getVehicleGeneratedSchedules(vehicle){
+  const rows=[];
+  if(vehicle.technicalInspectionDate){
+    rows.push({id:'__ct__',source:'technical',title:'Contrôle technique',dueDate:vehicle.technicalInspectionDate,dueMileage:0,notes:''});
+  }
+  (vehicle.maintenancePlan||[]).forEach(item=>{
+    const sc=getMaintenancePlanComputedSchedule(vehicle,item);
+    if(sc.dueDate||Number(sc.dueMileage)>0)rows.push(sc);
+  });
+  return rows;
+}
+
+function maintenancePlanPreviewHtml(item){
+  const plan=normalizeMaintenancePlanItem(item);
+  const fakeVehicle={mileage:Number(document.getElementById('vehicleMileage')?.value)||0};
+  const sc=getMaintenancePlanComputedSchedule(fakeVehicle,plan);
+  const parts=[];
+  if(sc.dueDate)parts.push(`prochaine date : <strong>${escapeHtml(formatDateFR(sc.dueDate))}</strong>`);
+  if(Number(sc.dueMileage)>0)parts.push(`prochain kilométrage : <strong>${Number(sc.dueMileage).toLocaleString('fr-FR')} km</strong>`);
+  if(plan.legacy&&!(plan.intervalMonths>0||plan.intervalKm>0)){
+    return `<span class="maintenance-plan-legacy">Ancienne échéance conservée.</span> ${parts.length?parts.join(' · '):'Renseigne le dernier entretien et une périodicité pour passer au calcul automatique.'}`;
+  }
+  return parts.length?`Calcul automatique : ${parts.join(' · ')}`:'La prochaine échéance sera calculée dès qu’une périodicité valide sera renseignée.';
+}
+
+function renderVehicleMaintenancePlanSummary(){
+  const host=document.getElementById('vehicleMaintenancePlanSummary');
+  if(!host)return;
+  const plan=(vehicleMaintenancePlanDraft||[]).map(normalizeMaintenancePlanItem);
+  if(!plan.length){
+    host.innerHTML='<div class="vehicle-empty" style="padding:12px 6px">Aucun plan d’entretien défini.</div>';
+    return;
+  }
+  const fakeVehicle={mileage:Number(document.getElementById('vehicleMileage')?.value)||0};
+  host.innerHTML=plan.map(item=>{
+    const sc=getMaintenancePlanComputedSchedule(fakeVehicle,item);
+    const last=[];
+    if(item.lastDate)last.push(formatDateFR(item.lastDate));
+    if(item.lastMileage!=='')last.push(`${Number(item.lastMileage).toLocaleString('fr-FR')} km`);
+    const period=[];
+    if(item.intervalMonths>0)period.push(`${item.intervalMonths} mois`);
+    if(item.intervalKm>0)period.push(`${Number(item.intervalKm).toLocaleString('fr-FR')} km`);
+    const next=[];
+    if(sc.dueDate)next.push(formatDateFR(sc.dueDate));
+    if(Number(sc.dueMileage)>0)next.push(`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`);
+    const lines=[];
+    if(last.length)lines.push(`Dernier : ${last.join(' · ')}`);
+    if(period.length)lines.push(`Périodicité : ${period.join(' / ')}`);
+    if(next.length)lines.push(`Prochaine échéance : ${next.join(' ou ')}`);
+    if(item.legacy&&!(item.intervalMonths>0||item.intervalKm>0))lines.push('Ancienne échéance conservée à convertir.');
+    return `<div class="vehicle-plan-summary-item"><div class="vehicle-plan-summary-item-title">${escapeHtml(item.type||'Entretien')}</div><div class="vehicle-plan-summary-item-meta">${lines.map(escapeHtml).join('<br>')||'Configuration à compléter.'}</div></div>`;
+  }).join('');
+}
+
+function buildVehiclePlanModalDraft(){
+  const existing=(vehicleMaintenancePlanDraft||[]).map(normalizeMaintenancePlanItem);
+  const standardKeys=new Set(VEHICLE_MAINTENANCE_TYPES.map(maintenanceTypeKey));
+  const rows=VEHICLE_MAINTENANCE_TYPES.map(type=>{
+    const found=existing.find(item=>maintenanceTypeKey(item.type)===maintenanceTypeKey(type));
+    if(found)return {...found,type,enabled:true,builtin:true};
+    return {...normalizeMaintenancePlanItem({id:makeLocalId('plan'),type,lastDate:'',lastMileage:'',intervalMonths:0,intervalKm:0,notes:''}),enabled:false,builtin:true};
+  });
+  // Conserve également les anciens entretiens personnalisés/issus d'une migration.
+  existing.filter(item=>!standardKeys.has(maintenanceTypeKey(item.type))).forEach(item=>rows.push({...item,enabled:true,builtin:false}));
+  vehiclePlanModalDraft=rows;
+}
+
+function renderVehiclePlanModalEditor(){
+  const host=document.getElementById('vehiclePlanEditor');
+  if(!host)return;
+  const powertrain=getVehiclePlanPowertrain();
+  const rows=vehiclePlanModalDraft.slice().sort((a,b)=>{
+    const rank=item=>item.builtin===false?1:(getMaintenanceRelevance(item.type,powertrain).recommended?0:2);
+    return rank(a)-rank(b);
+  });
+  host.innerHTML=rows.map(raw=>{
+    const p=normalizeMaintenancePlanItem(raw);
+    const enabled=raw.enabled!==false;
+    const relevance=raw.builtin===false?{recommended:true,label:'Personnalisé',className:''}:getMaintenanceRelevance(p.type,powertrain);
+    return `<div class="maintenance-plan-row ${enabled?'':'is-disabled'}">
+      <div class="maintenance-plan-row-head">
+        <label class="maintenance-plan-toggle"><input type="checkbox" ${enabled?'checked':''} onchange="toggleVehiclePlanItem('${p.id}',this.checked)"><strong>${escapeHtml(p.type||'Entretien')}</strong></label>
+        <span class="maintenance-relevance-badge ${relevance.className}">${escapeHtml(relevance.label)}</span>
+      </div>
+      ${enabled?`<div class="vehicle-grid">
+        <div class="modal-field"><label>Date du dernier entretien</label><input type="date" value="${escapeHtml(p.lastDate)}" onchange="updateVehiclePlanModalDraft('${p.id}','lastDate',this.value,true)"></div>
+        <div class="modal-field"><label>Kilométrage du dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehiclePlanModalDraft('${p.id}','lastMileage',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité durée (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehiclePlanModalDraft('${p.id}','intervalMonths',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehiclePlanModalDraft('${p.id}','intervalKm',this.value,true)"></div>
+      </div>
+      <div class="maintenance-plan-preview" id="vehicle-plan-preview-${p.id}">${maintenancePlanPreviewHtml(p)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function updateVehiclePlanPreview(id){
+  const row=vehiclePlanModalDraft.find(item=>String(item.id)===String(id));
+  const el=document.getElementById(`vehicle-plan-preview-${id}`);
+  if(row&&el)el.innerHTML=maintenancePlanPreviewHtml(row);
+}
+
+function updateVehiclePlanModalDraft(id,field,value,refreshPreview=false){
+  const row=vehiclePlanModalDraft.find(item=>String(item.id)===String(id));
+  if(!row)return;
+  if(field==='lastMileage')row[field]=value===''?'':Math.max(0,Math.round(Number(value)||0));
+  else if(field==='intervalMonths'||field==='intervalKm')row[field]=Math.max(0,Math.round(Number(value)||0));
+  else row[field]=value;
+  if(refreshPreview)updateVehiclePlanPreview(id);
+}
+
+function toggleVehiclePlanItem(id,enabled){
+  const row=vehiclePlanModalDraft.find(item=>String(item.id)===String(id));
+  if(!row)return;
+  row.enabled=Boolean(enabled);
+  renderVehiclePlanModalEditor();
+}
+
+function setAllVehiclePlanItems(enabled){
+  vehiclePlanModalDraft.forEach(item=>item.enabled=Boolean(enabled));
+  renderVehiclePlanModalEditor();
+}
+
+function openVehiclePlanModal(){
+  buildVehiclePlanModalDraft();
+  const label=[document.getElementById('vehicleMake')?.value.trim(),document.getElementById('vehicleModel')?.value.trim()].filter(Boolean).join(' ')||document.getElementById('vehicleRegistration')?.value.trim()||'Nouveau véhicule';
+  const powertrain=getVehiclePlanPowertrain();
+  document.getElementById('vehiclePlanModalTitle').textContent=`Créer un plan d'entretien · ${label}${powertrain?' · '+powertrain:''}`;
+  renderVehiclePlanModalEditor();
+  document.getElementById('vehiclePlanModal').classList.add('active');
+}
+
+function closeVehiclePlanModal(){
+  const modal=document.getElementById('vehiclePlanModal');
+  if(modal)modal.classList.remove('active');
+  vehiclePlanModalDraft=[];
+}
+
+function validateSelectedVehiclePlan(rows){
+  const cleaned=[];
+  for(const raw of rows){
+    const p=normalizeMaintenancePlanItem(raw);
+    const hasLegacy=Boolean(p.legacyDueDate||p.legacyDueMileage>0);
+    if(!p.type){alert("Un type d'entretien est manquant.");return null;}
+    if(p.legacy&&hasLegacy&&p.intervalMonths<=0&&p.intervalKm<=0){
+      cleaned.push(p);
+      continue;
+    }
+    if(!p.lastDate){alert(`Renseigne la date du dernier entretien pour « ${p.type} ».`);return null;}
+    if(p.lastMileage===''){alert(`Renseigne le kilométrage du dernier entretien pour « ${p.type} ».`);return null;}
+    if(p.intervalMonths<=0&&p.intervalKm<=0){alert(`Renseigne une périodicité en durée et/ou en kilomètres pour « ${p.type} ».`);return null;}
+    p.legacy=false;
+    p.legacyDueDate='';
+    p.legacyDueMileage=0;
+    cleaned.push(p);
+  }
+  return cleaned;
+}
+
+function submitVehiclePlanModal(){
+  const selected=vehiclePlanModalDraft.filter(item=>item.enabled!==false);
+  const cleaned=validateSelectedVehiclePlan(selected);
+  if(cleaned===null)return;
+  vehicleMaintenancePlanDraft=cleaned;
+  renderVehicleMaintenancePlanSummary();
+  closeVehiclePlanModal();
+}
+
+function validateVehicleMaintenancePlan(){
+  // Dernière sécurité avant l'enregistrement du véhicule.
+  return validateSelectedVehiclePlan(vehicleMaintenancePlanDraft||[]);
+}
+
+function openVehicleModal(id=''){
+  ensureVehicleData();
+  vehicleEditId=id||'';
+  const v=vehicleEditId?getGarageVehicleById(vehicleEditId):null;
+  document.getElementById('vehicleModalTitle').textContent=v?'Modifier le véhicule':'Ajouter un véhicule';
+  document.getElementById('vehicleMake').value=v?.make||'';
+  document.getElementById('vehicleModel').value=v?.model||'';
+  document.getElementById('vehicleRegistration').value=v?.registration||'';
+  document.getElementById('vehicleYear').value=v?.year||'';
+  document.getElementById('vehiclePowertrainType').value=['Thermique','Hybride','Électrique'].includes(v?.powertrainType)?v.powertrainType:'';
+  document.getElementById('vehicleFuel').value=v?.fuel||'';
+  document.getElementById('vehicleFirstRegistration').value=v?.firstRegistration||'';
+  document.getElementById('vehicleMileage').value=v?.mileage??'';
+  document.getElementById('vehicleMileageDate').value=v?.mileageDate||dateToLocalISO(new Date());
+  document.getElementById('vehicleTechnicalInspection').value=v?.technicalInspectionDate||'';
+  vehicleMaintenancePlanDraft=JSON.parse(JSON.stringify(v?.maintenancePlan||[])).map(normalizeMaintenancePlanItem);
+  renderVehicleMaintenancePlanSummary();
+  document.getElementById('vehicleModal').classList.add('active');
+  setTimeout(()=>document.getElementById('vehicleMake').focus(),50);
+}
+
+function closeVehicleModal(){
+  document.getElementById('vehicleModal').classList.remove('active');
+  const planModal=document.getElementById('vehiclePlanModal');
+  if(planModal)planModal.classList.remove('active');
+  vehicleEditId='';
+  vehicleMaintenancePlanDraft=[];
+  vehiclePlanModalDraft=[];
+}
+
+function submitVehicleModal(){
+  ensureVehicleData();
+  const make=document.getElementById('vehicleMake').value.trim();
+  const model=document.getElementById('vehicleModel').value.trim();
+  const registration=document.getElementById('vehicleRegistration').value.trim().toUpperCase();
+  const yearRaw=document.getElementById('vehicleYear').value;
+  const powertrainType=document.getElementById('vehiclePowertrainType').value;
+  const mileageRaw=document.getElementById('vehicleMileage').value;
+  if(!make&&!model&&!registration){document.getElementById('vehicleMake').focus();return;}
+  if(!powertrainType){alert('Sélectionne si le véhicule est thermique, hybride ou électrique.');document.getElementById('vehiclePowertrainType').focus();return;}
+  const maintenancePlan=validateVehicleMaintenancePlan();
+  if(maintenancePlan===null)return;
+  const year=yearRaw===''?'':Math.max(1900,Math.min(2100,Math.round(Number(yearRaw)||0)));
+  const mileage=mileageRaw===''?0:Math.max(0,Math.round(Number(mileageRaw)||0));
+  const existing=vehicleEditId?getGarageVehicleById(vehicleEditId):null;
+  const obj={
+    ...(existing||{}),
+    id:existing?.id||makeLocalId('veh'),
+    make,model,registration,year,powertrainType,
+    fuel:document.getElementById('vehicleFuel').value.trim(),
+    firstRegistration:document.getElementById('vehicleFirstRegistration').value,
+    mileage,
+    mileageDate:document.getElementById('vehicleMileageDate').value||dateToLocalISO(new Date()),
+    technicalInspectionDate:document.getElementById('vehicleTechnicalInspection').value,
+    maintenancePlan,
+    schedules:Array.isArray(existing?.schedules)?existing.schedules:[],
+    mileageHistory:Array.isArray(existing?.mileageHistory)?existing.mileageHistory:[]
+  };
+  if(mileage>0){
+    const last=obj.mileageHistory[obj.mileageHistory.length-1];
+    if(!last||Number(last.mileage)!==mileage||last.date!==obj.mileageDate)obj.mileageHistory.push({date:obj.mileageDate,mileage});
+  }
+  if(existing){Object.assign(existing,obj);}else{data.garageVehicles.push(obj);currentGarageVehicleId=obj.id;}
+  document.getElementById('vehicleModal').classList.remove('active');
+  const planModal=document.getElementById('vehiclePlanModal');
+  if(planModal)planModal.classList.remove('active');
+  vehicleEditId='';vehicleMaintenancePlanDraft=[];vehiclePlanModalDraft=[];save();renderVehicles();renderInvoices();
+}
+
+function deleteGarageVehicle(id){
+  const v=getGarageVehicleById(id);if(!v)return;
+  const linked=(data.factures||[]).filter(i=>i.vehicleId===id).length;
+  const maintenance=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===id).length;
+  const extra=(linked||maintenance)?`\n\n${maintenance} ancienne(s) intervention(s) seront supprimée(s). ${linked} facture(s) resteront enregistrée(s) mais seront dissociée(s) du véhicule.`:'';
+  if(!confirm(`Supprimer le véhicule « ${getGarageVehicleLabel(id)} » ?${extra}`))return;
+  data.garageVehicles=data.garageVehicles.filter(x=>x.id!==id);
+  data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m.vehicleId!==id);
+  (data.factures||[]).forEach(inv=>{if(inv.vehicleId===id)inv.vehicleId='';});
+  currentGarageVehicleId=data.garageVehicles[0]?.id||'';
+  save();renderVehicles();renderInvoices();
+}
+
+function openVehicleMileageModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  document.getElementById('vehicleMileageQuick').value=v.mileage||'';
+  document.getElementById('vehicleMileageQuickDate').value=dateToLocalISO(new Date());
+  document.getElementById('vehicleMileageModal').classList.add('active');
+  setTimeout(()=>document.getElementById('vehicleMileageQuick').focus(),50);
+}
+function closeVehicleMileageModal(){document.getElementById('vehicleMileageModal').classList.remove('active');}
+function submitVehicleMileage(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const raw=document.getElementById('vehicleMileageQuick').value;
+  const mileage=Math.max(0,Math.round(Number(raw)||0));
+  const date=document.getElementById('vehicleMileageQuickDate').value||dateToLocalISO(new Date());
+  v.mileage=mileage;v.mileageDate=date;
+  if(!Array.isArray(v.mileageHistory))v.mileageHistory=[];
+  const last=v.mileageHistory[v.mileageHistory.length-1];
+  if(!last||Number(last.mileage)!==mileage||last.date!==date)v.mileageHistory.push({date,mileage});
+  closeVehicleMileageModal();save();renderVehicles();
+}
+
+function openPerformedMaintenanceModal(preselectedPlanIds=[]){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  ensureVehicleData();
+  const plan=(v.maintenancePlan||[]).map(normalizeMaintenancePlanItem).filter(p=>p.type);
+  if(!plan.length){
+    alert("Aucun entretien n'est encore défini pour ce véhicule.\n\nCrée d'abord le plan d'entretien dans « Modifier le véhicule ».");
+    return;
+  }
+
+  const host=document.getElementById('performedMaintenancePlanList');
+  if(!host)return;
+  const selectedSet=new Set((Array.isArray(preselectedPlanIds)?preselectedPlanIds:[preselectedPlanIds]).map(String));
+  host.innerHTML=plan.map((p,index)=>{
+    const checked=selectedSet.size?selectedSet.has(String(p.id)):(plan.length===1&&index===0);
+    return `<label class="performed-maintenance-choice"><input type="checkbox" name="performedMaintenancePlan" value="${escapeHtml(p.id)}" ${checked?'checked':''}><span>${escapeHtml(p.type)}</span></label>`;
+  }).join('');
+
+  document.getElementById('performedMaintenanceDate').value=dateToLocalISO(new Date());
+  document.getElementById('performedMaintenanceMileage').value=Number(v.mileage)||'';
+  document.getElementById('performedMaintenanceModalTitle').textContent=`Ajouter un entretien · ${getGarageVehicleLabel(v.id)}`;
+  document.getElementById('performedMaintenanceModal').classList.add('active');
+  setTimeout(()=>host.querySelector('input[type="checkbox"]')?.focus(),30);
+}
+
+function closePerformedMaintenanceModal(){
+  document.getElementById('performedMaintenanceModal').classList.remove('active');
+}
+
+function submitPerformedMaintenance(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+
+  const selectedIds=new Set(
+    [...document.querySelectorAll('#performedMaintenancePlanList input[name="performedMaintenancePlan"]:checked')]
+      .map(input=>String(input.value||''))
+      .filter(Boolean)
+  );
+  if(!selectedIds.size){
+    alert('Sélectionne au moins un entretien réalisé.');
+    return;
+  }
+
+  const selectedPlans=(v.maintenancePlan||[]).filter(p=>selectedIds.has(String(p.id||'')));
+  if(!selectedPlans.length){
+    alert('Aucun entretien sélectionné ne correspond au plan de ce véhicule.');
+    return;
+  }
+
+  const date=document.getElementById('performedMaintenanceDate')?.value||'';
+  const mileageRaw=document.getElementById('performedMaintenanceMileage')?.value??'';
+  if(!date){alert("Renseigne la date à laquelle l'entretien a été effectué.");return;}
+  if(mileageRaw===''){alert("Renseigne le kilométrage auquel l'entretien a été effectué.");return;}
+  const mileage=Math.max(0,Math.round(Number(mileageRaw)||0));
+  const today=dateToLocalISO(new Date());
+  if(date>today){alert("La date de l'entretien ne peut pas être dans le futur.");return;}
+
+  // Validation de tous les entretiens avant toute modification pour éviter une mise à jour partielle.
+  const toUpdate=[];
+  const duplicates=[];
+  for(const plan of selectedPlans){
+    const currentPlan=normalizeMaintenancePlanItem(plan);
+    if(currentPlan.lastDate&&date<currentPlan.lastDate){
+      alert(`Pour « ${currentPlan.type} », la date saisie est antérieure au dernier entretien enregistré (${formatDateFR(currentPlan.lastDate)}).\n\nPour corriger une ancienne valeur, utilise « Modifier le véhicule ».`);
+      return;
+    }
+    if(currentPlan.lastMileage!==''&&mileage<Number(currentPlan.lastMileage)){
+      alert(`Pour « ${currentPlan.type} », le kilométrage saisi est inférieur au dernier entretien enregistré (${Number(currentPlan.lastMileage).toLocaleString('fr-FR')} km).\n\nPour corriger une ancienne valeur, utilise « Modifier le véhicule ».`);
+      return;
+    }
+    if(currentPlan.lastDate===date&&currentPlan.lastMileage!==''&&Number(currentPlan.lastMileage)===mileage){
+      duplicates.push(currentPlan.type||'Entretien');
+      continue;
+    }
+    toUpdate.push(plan);
+  }
+
+  if(!toUpdate.length){
+    alert('Tous les entretiens sélectionnés sont déjà enregistrés à cette date et à ce kilométrage.');
+    return;
+  }
+
+  if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
+  toUpdate.forEach(plan=>{
+    const before=normalizeMaintenancePlanItem(plan);
+    plan.lastDate=date;
+    plan.lastMileage=mileage;
+    plan.legacy=false;
+    plan.legacyDueDate='';
+    plan.legacyDueMileage=0;
+
+    // Une ligne d'historique par type permet de conserver le détail d'une intervention multiple.
+    // On mémorise également l'état précédent pour permettre une correction/suppression propre.
+    data.vehicleMaintenance.unshift({
+      id:makeLocalId('mnt'),
+      vehicleId:v.id,
+      planId:String(plan.id||''),
+      title:String(plan.type||'Entretien'),
+      date,
+      mileage,
+      previousLastDate:before.lastDate||'',
+      previousLastMileage:before.lastMileage,
+      amount:0,
+      notes:'',
+      invoiceId:'',
+      source:'performed-maintenance'
+    });
+  });
+
+  // Un entretien à un kilométrage plus récent peut aussi servir de nouveau relevé kilométrique.
+  const currentMileage=Number(v.mileage)||0;
+  const currentMileageDate=String(v.mileageDate||'');
+  if(mileage>currentMileage||(mileage===currentMileage&&(!currentMileageDate||date>currentMileageDate))){
+    v.mileage=mileage;
+    v.mileageDate=date;
+    if(!Array.isArray(v.mileageHistory))v.mileageHistory=[];
+    const last=v.mileageHistory[v.mileageHistory.length-1];
+    if(!last||Number(last.mileage)!==mileage||last.date!==date)v.mileageHistory.push({date,mileage});
+  }
+
+  closePerformedMaintenanceModal();
+  save();
+  renderVehicles();
+
+  if(duplicates.length){
+    alert(`${duplicates.length} entretien(s) étaient déjà enregistrés à cette date et ce kilométrage et n'ont pas été dupliqués :\n\n${duplicates.join('\n')}`);
+  }
+}
+
+function getVehicleMileageRate(vehicle){
+  const points=[];
+  (vehicle.mileageHistory||[]).forEach(row=>{
+    const d=parseLocalDate(row?.date||'');
+    const km=Number(row?.mileage);
+    if(d&&Number.isFinite(km)&&km>=0)points.push({date:d,km});
+  });
+  const currentDate=parseLocalDate(vehicle.mileageDate||'');
+  const currentKm=Number(vehicle.mileage);
+  if(currentDate&&Number.isFinite(currentKm)&&currentKm>=0)points.push({date:currentDate,km:currentKm});
+  points.sort((a,b)=>a.date-b.date||a.km-b.km);
+  const unique=[];
+  points.forEach(point=>{
+    const key=dateToLocalISO(point.date);
+    const prev=unique[unique.length-1];
+    if(prev&&dateToLocalISO(prev.date)===key){if(point.km>prev.km)prev.km=point.km;}
+    else unique.push({...point});
+  });
+  if(unique.length<2)return null;
+  const latest=unique[unique.length-1];
+  let candidates=unique.filter(point=>(latest.date-point.date)<=366*86400000);
+  if(candidates.length<2)candidates=unique;
+  const first=candidates[0],last=candidates[candidates.length-1];
+  const days=(last.date-first.date)/86400000;
+  const distance=last.km-first.km;
+  if(days<=0||distance<=0)return null;
+  const kmPerDay=distance/days;
+  return kmPerDay>0?kmPerDay:null;
+}
+
+function estimateVehicleMileageDueDate(vehicle,dueMileage){
+  const currentKm=Number(vehicle.mileage)||0;
+  const remaining=Number(dueMileage)-currentKm;
+  if(remaining<=0)return '';
+  const kmPerDay=getVehicleMileageRate(vehicle);
+  if(!kmPerDay)return '';
+  const days=Math.ceil(remaining/kmPerDay);
+  if(!Number.isFinite(days)||days<0||days>3650)return '';
+  const base=parseLocalDate(dateToLocalISO(new Date()));
+  base.setDate(base.getDate()+days);
+  return dateToLocalISO(base);
+}
+
+function formatMonthYearFR(iso){
+  const d=parseLocalDate(iso);
+  if(!d)return '';
+  return new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(d);
+}
+
+function getVehicleExpenses(vehicle){
+  const now=new Date();
+  const limit=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  limit.setFullYear(limit.getFullYear()-1);
+  const rows=[];
+  (data.factures||[]).filter(inv=>inv?.vehicleId===vehicle.id).forEach(inv=>rows.push({date:inv.date||'',amount:Number(inv.amount)||0}));
+  (data.vehicleMaintenance||[]).filter(m=>m?.vehicleId===vehicle.id&&Number(m.amount)>0&&!m.invoiceId).forEach(m=>rows.push({date:m.date||'',amount:Number(m.amount)||0}));
+  const total=rows.reduce((sum,row)=>sum+Math.max(0,row.amount),0);
+  const last12m=rows.reduce((sum,row)=>{
+    const d=parseLocalDate(row.date);
+    return sum+(d&&d>=limit?Math.max(0,row.amount):0);
+  },0);
+  const history=(vehicle.mileageHistory||[]).map(row=>({date:parseLocalDate(row?.date||''),km:Number(row?.mileage)})).filter(row=>row.date&&Number.isFinite(row.km)&&row.km>=0).sort((a,b)=>a.date-b.date);
+  let distance=0;
+  if(history.length){
+    const firstKm=history[0].km;
+    const currentKm=Number(vehicle.mileage)||history[history.length-1].km;
+    if(currentKm>firstKm)distance=currentKm-firstKm;
+  }
+  return {total,last12m,costPerKm:distance>0?total/distance:null,distance};
+}
+
+let maintenanceHistoryEditContext=null;
+
+function getVehicleMaintenanceHistoryGroups(vehicle){
+  const rows=(data.vehicleMaintenance||[]).filter(m=>m?.vehicleId===vehicle.id&&m.date).slice();
+  const groups=new Map();
+  rows.forEach(row=>{
+    const mileage=Math.max(0,Math.round(Number(row.mileage)||0));
+    const key=`${row.date}|${mileage}`;
+    if(!groups.has(key))groups.set(key,{key,date:row.date,mileage,titles:[],amount:0,rows:[]});
+    const group=groups.get(key);
+    group.rows.push(row);
+    const title=String(row.title||'Entretien').trim()||'Entretien';
+    if(!group.titles.includes(title))group.titles.push(title);
+    if(Number(row.amount)>0&&!row.invoiceId)group.amount+=Number(row.amount)||0;
+  });
+  return [...groups.values()].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.mileage-a.mileage);
+}
+
+function resolveMaintenanceRowPlanId(vehicle,row){
+  const direct=String(row?.planId||'');
+  if(direct&&(vehicle.maintenancePlan||[]).some(p=>String(p.id)===direct))return direct;
+  const title=String(row?.title||'').trim().toLowerCase();
+  const match=(vehicle.maintenancePlan||[]).find(p=>String(p.type||'').trim().toLowerCase()===title);
+  return match?String(match.id):'';
+}
+
+function getLatestMaintenanceHistoryForPlan(vehicle,planId){
+  return (data.vehicleMaintenance||[])
+    .filter(row=>row?.vehicleId===vehicle.id&&row.date&&resolveMaintenanceRowPlanId(vehicle,row)===String(planId))
+    .slice()
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(Number(b.mileage)||0)-(Number(a.mileage)||0))[0]||null;
+}
+
+function syncVehicleMaintenancePlansFromHistory(vehicle,planIds,fallbacks={}){
+  const ids=[...new Set((planIds||[]).map(String).filter(Boolean))];
+  ids.forEach(planId=>{
+    const plan=(vehicle.maintenancePlan||[]).find(p=>String(p.id)===planId);
+    if(!plan)return;
+    const latest=getLatestMaintenanceHistoryForPlan(vehicle,planId);
+    if(latest){
+      plan.lastDate=latest.date||'';
+      plan.lastMileage=(latest.mileage===''||latest.mileage===null||latest.mileage===undefined)?'':Math.max(0,Math.round(Number(latest.mileage)||0));
+      plan.legacy=false;
+      plan.legacyDueDate='';
+      plan.legacyDueMileage=0;
+      return;
+    }
+    const fallback=fallbacks[planId];
+    if(fallback){
+      plan.lastDate=fallback.lastDate||'';
+      plan.lastMileage=(fallback.lastMileage===''||fallback.lastMileage===null||fallback.lastMileage===undefined)?'':Math.max(0,Math.round(Number(fallback.lastMileage)||0));
+    }else{
+      plan.lastDate='';
+      plan.lastMileage='';
+    }
+  });
+}
+
+function findVehicleMaintenanceHistoryGroup(vehicle,date,mileage){
+  const targetMileage=Math.max(0,Math.round(Number(mileage)||0));
+  return getVehicleMaintenanceHistoryGroups(vehicle).find(group=>group.date===date&&group.mileage===targetMileage)||null;
+}
+
+function renderVehicleMaintenanceHistoryModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const host=document.getElementById('vehicleMaintenanceHistoryList');
+  const title=document.getElementById('vehicleMaintenanceHistoryTitle');
+  if(!host||!title)return;
+  title.textContent=`Historique des entretiens · ${getGarageVehicleLabel(v.id)}`;
+  const groups=getVehicleMaintenanceHistoryGroups(v);
+  host.innerHTML=groups.length?groups.map(group=>`<div class="maintenance-history-group">
+    <div class="maintenance-history-head">
+      <div><div class="maintenance-history-date">${escapeHtml(formatDateFR(group.date))}<span class="maintenance-history-count">${group.titles.length} entretien${group.titles.length>1?'s':''}</span></div><div class="maintenance-history-meta">${group.mileage?`${group.mileage.toLocaleString('fr-FR')} km`:'Kilométrage non renseigné'}${group.amount>0?` · ${euro(group.amount)}`:''}</div></div>
+      <div class="maintenance-history-actions"><button class="btn btn-secondary maintenance-history-action" onclick="openVehicleMaintenanceHistoryEditModal('${escapeHtml(group.date)}',${group.mileage})" title="Modifier l'intervention" aria-label="Modifier l'intervention">✏️</button><button class="btn btn-secondary maintenance-history-action" style="color:#f85149" onclick="deleteVehicleMaintenanceHistoryGroup('${escapeHtml(group.date)}',${group.mileage})" title="Supprimer l'intervention" aria-label="Supprimer l'intervention">🗑️</button></div>
+    </div>
+    <div class="maintenance-history-label">Entretiens réalisés</div>
+    <div class="maintenance-history-types">${group.titles.map(type=>`<span class="maintenance-history-chip">${escapeHtml(type)}</span>`).join('')}</div>
+  </div>`).join(''):'<div class="vehicle-empty">Aucun entretien effectué n’est encore enregistré pour ce véhicule.</div>';
+}
+
+function openVehicleMaintenanceHistoryModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  renderVehicleMaintenanceHistoryModal();
+  document.getElementById('vehicleMaintenanceHistoryModal').classList.add('active');
+}
+
+function closeVehicleMaintenanceHistoryModal(){
+  document.getElementById('vehicleMaintenanceHistoryModal')?.classList.remove('active');
+}
+
+function openVehicleMaintenanceHistoryEditModal(date,mileage){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const group=findVehicleMaintenanceHistoryGroup(v,date,mileage);if(!group)return;
+  maintenanceHistoryEditContext={vehicleId:v.id,date:group.date,mileage:group.mileage,rowIds:group.rows.map(row=>String(row.id||''))};
+  const selectedIds=new Set(group.rows.map(row=>resolveMaintenanceRowPlanId(v,row)).filter(Boolean));
+  const selectedTitles=new Set(group.rows.map(row=>String(row.title||'').trim().toLowerCase()).filter(Boolean));
+  const host=document.getElementById('vehicleMaintenanceHistoryEditTypes');
+  const plans=(v.maintenancePlan||[]).map(normalizeMaintenancePlanItem).filter(p=>p.type);
+  host.innerHTML=plans.map(plan=>{
+    const checked=selectedIds.has(String(plan.id))||selectedTitles.has(String(plan.type||'').trim().toLowerCase());
+    return `<label class="performed-maintenance-choice"><input type="checkbox" name="maintenanceHistoryEditPlan" value="${escapeHtml(plan.id)}" ${checked?'checked':''}><span>${escapeHtml(plan.type)}</span></label>`;
+  }).join('');
+  document.getElementById('vehicleMaintenanceHistoryEditDate').value=group.date||'';
+  document.getElementById('vehicleMaintenanceHistoryEditMileage').value=group.mileage||'';
+  document.getElementById('vehicleMaintenanceHistoryEditTitle').textContent=`Modifier l'intervention · ${getGarageVehicleLabel(v.id)}`;
+  document.getElementById('vehicleMaintenanceHistoryEditModal').classList.add('active');
+}
+
+function closeVehicleMaintenanceHistoryEditModal(){
+  document.getElementById('vehicleMaintenanceHistoryEditModal')?.classList.remove('active');
+  maintenanceHistoryEditContext=null;
+}
+
+function submitVehicleMaintenanceHistoryEdit(){
+  const ctx=maintenanceHistoryEditContext;if(!ctx)return;
+  const v=getGarageVehicleById(ctx.vehicleId);if(!v)return;
+  const selectedIds=[...document.querySelectorAll('#vehicleMaintenanceHistoryEditTypes input[name="maintenanceHistoryEditPlan"]:checked')].map(input=>String(input.value||'')).filter(Boolean);
+  if(!selectedIds.length){alert('Sélectionne au moins un entretien réalisé.');return;}
+  const date=document.getElementById('vehicleMaintenanceHistoryEditDate')?.value||'';
+  const mileageRaw=document.getElementById('vehicleMaintenanceHistoryEditMileage')?.value??'';
+  if(!date){alert("Renseigne la date de l'intervention.");return;}
+  if(mileageRaw===''){alert("Renseigne le kilométrage de l'intervention.");return;}
+  const mileage=Math.max(0,Math.round(Number(mileageRaw)||0));
+  if(date>dateToLocalISO(new Date())){alert("La date de l'intervention ne peut pas être dans le futur.");return;}
+
+  const rowIdSet=new Set(ctx.rowIds);
+  const oldRows=(data.vehicleMaintenance||[]).filter(row=>rowIdSet.has(String(row.id||'')));
+  const affectedPlanIds=new Set(oldRows.map(row=>resolveMaintenanceRowPlanId(v,row)).filter(Boolean));
+  selectedIds.forEach(id=>affectedPlanIds.add(id));
+  const fallbacks={};
+  oldRows.forEach(row=>{
+    const pid=resolveMaintenanceRowPlanId(v,row);if(!pid||fallbacks[pid])return;
+    if(row.previousLastDate!==undefined||row.previousLastMileage!==undefined){fallbacks[pid]={lastDate:row.previousLastDate||'',lastMileage:row.previousLastMileage};}
+  });
+
+  const metadataByPlan=new Map();
+  oldRows.forEach(row=>{
+    const pid=resolveMaintenanceRowPlanId(v,row);
+    if(pid&&!metadataByPlan.has(pid))metadataByPlan.set(pid,row);
+  });
+  data.vehicleMaintenance=(data.vehicleMaintenance||[]).filter(row=>!rowIdSet.has(String(row.id||'')));
+
+  selectedIds.forEach(planId=>{
+    const plan=(v.maintenancePlan||[]).find(p=>String(p.id)===planId);if(!plan)return;
+    const previous=metadataByPlan.get(planId);
+    data.vehicleMaintenance.unshift({
+      ...(previous||{}),
+      id:previous?.id||makeLocalId('mnt'),
+      vehicleId:v.id,
+      planId:String(plan.id||''),
+      title:String(plan.type||'Entretien'),
+      date,
+      mileage,
+      previousLastDate:previous?.previousLastDate??'',
+      previousLastMileage:previous?.previousLastMileage??'',
+      amount:Number(previous?.amount)||0,
+      notes:String(previous?.notes||''),
+      invoiceId:String(previous?.invoiceId||''),
+      source:previous?.source||'performed-maintenance'
+    });
+  });
+
+  syncVehicleMaintenancePlansFromHistory(v,[...affectedPlanIds],fallbacks);
+  closeVehicleMaintenanceHistoryEditModal();
+  save();renderVehicles();renderVehicleMaintenanceHistoryModal();
+}
+
+function deleteVehicleMaintenanceHistoryGroup(date,mileage){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const group=findVehicleMaintenanceHistoryGroup(v,date,mileage);if(!group)return;
+  const label=group.titles.join(' + ');
+  if(!confirm(`Supprimer cette intervention du ${formatDateFR(group.date)}${group.mileage?` à ${group.mileage.toLocaleString('fr-FR')} km`:''} ?\n\n${label}\n\nLes prochaines échéances des entretiens concernés seront recalculées.`))return;
+  const rowIds=new Set(group.rows.map(row=>String(row.id||'')));
+  const affectedPlanIds=new Set();
+  const fallbacks={};
+  group.rows.forEach(row=>{
+    const pid=resolveMaintenanceRowPlanId(v,row);if(!pid)return;
+    affectedPlanIds.add(pid);
+    if(!fallbacks[pid]&&(row.previousLastDate!==undefined||row.previousLastMileage!==undefined))fallbacks[pid]={lastDate:row.previousLastDate||'',lastMileage:row.previousLastMileage};
+  });
+  data.vehicleMaintenance=(data.vehicleMaintenance||[]).filter(row=>!rowIds.has(String(row.id||'')));
+  syncVehicleMaintenancePlansFromHistory(v,[...affectedPlanIds],fallbacks);
+  save();renderVehicles();renderVehicleMaintenanceHistoryModal();
+}
+
+function openPerformedMaintenanceFromAlert(vehicleId,planId){
+  if(!getGarageVehicleById(vehicleId))return;
+  currentGarageVehicleId=vehicleId;
+  renderVehicles();
+  openPerformedMaintenanceModal([planId]);
+}
+
+function getScheduleStatus(v,sc){
+  const today=parseLocalDate(dateToLocalISO(new Date()));
+  const due=parseLocalDate(sc.dueDate);
+  const days=due?Math.ceil((due-today)/86400000):null;
+  const currentKm=Number(v.mileage)||0;
+  const dueKm=Number(sc.dueMileage)||0;
+  const km=dueKm>0?dueKm-currentKm:null;
+
+  // En retard uniquement lorsque l'échéance est réellement dépassée.
+  // Le jour exact / kilométrage exact de l'échéance reste donc en « Bientôt ».
+  const overdue=(days!==null&&days<0)||(km!==null&&km<0);
+
+  // Pour un entretien périodique, « Bientôt » débute dans le dernier huitième
+  // de la périodicité enregistrée : ex. 12 mois => ~1,5 mois, 15 000 km => 1 875 km.
+  let soonDaysThreshold=null;
+  if(days!==null){
+    const last=parseLocalDate(sc.lastDate);
+    if(Number(sc.intervalMonths)>0&&last&&due){
+      const periodDays=Math.max(1,Math.ceil((due-last)/86400000));
+      soonDaysThreshold=Math.ceil(periodDays/8);
+    }else if(sc.source==='technical'||sc.legacy){
+      // Le contrôle technique et les anciennes échéances n'ont pas encore
+      // de périodicité enregistrée : on conserve le seuil historique de 60 jours.
+      soonDaysThreshold=60;
+    }
+  }
+
+  let soonKmThreshold=null;
+  if(km!==null){
+    if(Number(sc.intervalKm)>0){
+      soonKmThreshold=Math.ceil(Number(sc.intervalKm)/8);
+    }else if(sc.legacy){
+      soonKmThreshold=2000;
+    }
+  }
+
+  const soon=!overdue&&(
+    (days!==null&&soonDaysThreshold!==null&&days<=soonDaysThreshold)||
+    (km!==null&&soonKmThreshold!==null&&km<=soonKmThreshold)
+  );
+
+  return {status:overdue?'overdue':soon?'soon':'ok',days,km,soonDaysThreshold,soonKmThreshold};
+}
+
+function scheduleMeta(v,sc,status){
+  const parts=[];
+  if(sc.dueDate){
+    if(status.days<0)parts.push(`date dépassée de ${Math.abs(status.days)} j`);
+    else if(status.days===0)parts.push('échéance aujourd’hui');
+    else parts.push(`${status.days} j restants`);
+  }
+  if(Number(sc.dueMileage)>0){
+    if(status.km<0)parts.push(`dépassé de ${Math.abs(status.km).toLocaleString('fr-FR')} km`);
+    else parts.push(`${status.km.toLocaleString('fr-FR')} km restants`);
+  }
+  return parts.join(' · ');
+}
+
+function maintenanceLastMeta(sc){
+  if(sc.source!=='maintenance-plan')return '';
+  const parts=[];
+  if(sc.lastDate)parts.push(formatDateFR(sc.lastDate));
+  if(sc.lastMileage!==''&&sc.lastMileage!==null&&sc.lastMileage!==undefined)parts.push(`${Number(sc.lastMileage).toLocaleString('fr-FR')} km`);
+  return parts.length?`Dernier entretien : ${parts.join(' · ')}`:'';
+}
+
+function openVehicleInvoiceLinkModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const select=document.getElementById('vehicleInvoiceLinkSelect');
+  const invoices=(data.factures||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!invoices.length){alert("Aucune facture n'est encore enregistrée dans l'onglet Factures.");return;}
+  select.innerHTML=invoices.map(inv=>{
+    const linked=inv.vehicleId&&inv.vehicleId!==v.id?` · liée à ${getGarageVehicleLabel(inv.vehicleId)}`:inv.vehicleId===v.id?' · déjà associée':'';
+    return `<option value="${escapeHtml(inv.id)}">${escapeHtml(inv.description||'Facture')} · ${formatDateFR(inv.date)} · ${euro(Number(inv.amount)||0)}${escapeHtml(linked)}</option>`;
+  }).join('');
+  document.getElementById('vehicleInvoiceLinkModal').classList.add('active');
+}
+function closeVehicleInvoiceLinkModal(){document.getElementById('vehicleInvoiceLinkModal').classList.remove('active');}
+function submitVehicleInvoiceLink(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const id=document.getElementById('vehicleInvoiceLinkSelect').value;
+  const inv=(data.factures||[]).find(i=>i.id===id);if(!inv)return;
+  if(inv.vehicleId&&inv.vehicleId!==v.id&&!confirm(`Cette facture est déjà liée à « ${getGarageVehicleLabel(inv.vehicleId)} ». La réaffecter à « ${getGarageVehicleLabel(v.id)} » ?`))return;
+  inv.vehicleId=v.id;closeVehicleInvoiceLinkModal();save();renderVehicles();renderInvoices();
+}
+function unlinkInvoiceFromVehicle(invoiceId){
+  const inv=(data.factures||[]).find(i=>i.id===invoiceId);if(!inv)return;
+  if(!confirm(`Dissocier la facture « ${inv.description||'Facture'} » de ce véhicule ?`))return;
+  inv.vehicleId='';(data.vehicleMaintenance||[]).forEach(m=>{if(m.invoiceId===invoiceId)m.invoiceId='';});save();renderVehicles();renderInvoices();
+}
+function openInvoiceById(invoiceId){
+  const idx=(data.factures||[]).findIndex(i=>i.id===invoiceId);if(idx<0)return;
+  switchTab('factures');openInvoiceModal(idx);
+}
+
+function renderVehicles(){
+  ensureVehicleData();
+  const tabs=document.getElementById('vehicle-tabs');
+  const empty=document.getElementById('vehicle-empty');
+  const content=document.getElementById('vehicle-content');
+  const alertsCard=document.getElementById('vehicle-alerts-card');
+  const alerts=document.getElementById('vehicle-alerts');
+  if(!tabs||!empty||!content||!alertsCard||!alerts)return;
+
+  // Zone globale : les échéances sont calculées à partir du plan d'entretien de chaque véhicule.
+  alertsCard.style.display='block';
+
+  if(!data.garageVehicles.length){
+    tabs.innerHTML='';
+    empty.style.display='block';
+    content.style.display='none';
+    vehicleAlertDetailFilter='';
+    alerts.innerHTML='<div class="vehicle-alert-summary"><button type="button" class="vehicle-alert-stat overdue" disabled><strong>0</strong><span>En retard</span></button><button type="button" class="vehicle-alert-stat soon" disabled><strong>0</strong><span>À prévoir</span></button><div class="vehicle-alert-stat ok"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
+    return;
+  }
+
+  const v=getCurrentGarageVehicle();if(!v)return;
+  empty.style.display='none';content.style.display='block';
+  tabs.innerHTML=data.garageVehicles.map(x=>`<button class="vehicle-tab ${x.id===v.id?'active':''}" onclick="selectGarageVehicle('${x.id}')">${escapeHtml(getGarageVehicleLabel(x.id))}</button>`).join('');
+
+  const alertRows=[];
+  data.garageVehicles.forEach(vehicle=>{
+    getVehicleGeneratedSchedules(vehicle).forEach(sc=>alertRows.push({vehicle,sc,st:getScheduleStatus(vehicle,sc)}));
+  });
+  const priority={overdue:0,soon:1,ok:2};
+  alertRows.sort((a,b)=>{
+    const statusDiff=priority[a.st.status]-priority[b.st.status];
+    if(statusDiff)return statusDiff;
+    const ad=a.sc.dueDate||'9999-12-31',bd=b.sc.dueDate||'9999-12-31';
+    if(ad!==bd)return ad.localeCompare(bd);
+    const ak=Number(a.sc.dueMileage)||Number.MAX_SAFE_INTEGER,bk=Number(b.sc.dueMileage)||Number.MAX_SAFE_INTEGER;
+    return ak-bk;
+  });
+  const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
+  if(vehicleAlertDetailFilter&&counts[vehicleAlertDetailFilter]===0)vehicleAlertDetailFilter='';
+  const detailRows=vehicleAlertDetailFilter?alertRows.filter(x=>x.st.status===vehicleAlertDetailFilter):[];
+  const overdueActive=vehicleAlertDetailFilter==='overdue';
+  const soonActive=vehicleAlertDetailFilter==='soon';
+  const summaryHtml=`<div class="vehicle-alert-summary">
+    <button type="button" class="vehicle-alert-stat overdue ${counts.overdue?'has-alert':''} ${overdueActive?'active':''}" onclick="setVehicleAlertDetailFilter('overdue')" ${counts.overdue?'':'disabled'} aria-pressed="${overdueActive}"><strong>${counts.overdue}</strong><span>En retard</span></button>
+    <button type="button" class="vehicle-alert-stat soon ${counts.soon?'has-alert':''} ${soonActive?'active':''}" onclick="setVehicleAlertDetailFilter('soon')" ${counts.soon?'':'disabled'} aria-pressed="${soonActive}"><strong>${counts.soon}</strong><span>À prévoir</span></button>
+    <div class="vehicle-alert-stat ok"><strong>${counts.ok}</strong><span>À jour</span></div>
+  </div>`;
+
+  const renderAlertRow=({vehicle,sc,st})=>{
+    const vehicleLabel=getGarageVehicleLabel(vehicle.id);
+    const registration=vehicle.registration?` · ${escapeHtml(vehicle.registration)}`:'';
+    const last=maintenanceLastMeta(sc);
+    const dueParts=[];
+    if(sc.dueDate)dueParts.push(`Échéance : ${formatDateFR(sc.dueDate)}`);
+    if(Number(sc.dueMileage)>0)dueParts.push(`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`);
+    const estimatedMileageDate=Number(sc.dueMileage)>0?estimateVehicleMileageDueDate(vehicle,sc.dueMileage):'';
+    const estimate=estimatedMileageDate?`<br>📅 Au rythme actuel : vers ${escapeHtml(formatMonthYearFR(estimatedMileageDate))}`:'';
+    const legacy=sc.legacy?'<br><span class="maintenance-plan-legacy">Ancienne échéance à convertir dans le plan d’entretien.</span>':'';
+    const performedAction=sc.source==='maintenance-plan'&&!sc.legacy?`<button class="btn btn-primary" onclick="openPerformedMaintenanceFromAlert('${vehicle.id}','${sc.planId}')">✓ Effectué</button>`:'';
+    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':'🟠'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️</button></div></div></div>`;
+  };
+
+  let detailsHtml='';
+  if(vehicleAlertDetailFilter&&detailRows.length){
+    const label=vehicleAlertDetailFilter==='overdue'?'Entretiens en retard':'Entretiens à prévoir';
+    detailsHtml=`<div class="vehicle-alert-list-title"><span>${label} · ${detailRows.length}</span><button type="button" onclick="closeVehicleAlertDetails()">Fermer ×</button></div><div class="vehicle-alert-list">${detailRows.map(renderAlertRow).join('')}</div>`;
+  }else if(counts.overdue||counts.soon){
+    detailsHtml='<div class="vehicle-empty" style="padding:8px 4px 2px">Touchez « En retard » ou « À prévoir » pour afficher la liste correspondante.</div>';
+  }else{
+    detailsHtml='<div class="vehicle-empty">✅ Aucune échéance à prévoir ou dépassée. Tout est à jour.</div>';
+  }
+  alerts.innerHTML=summaryHtml+detailsHtml;
+
+  const linkedInvoices=(data.factures||[]).filter(i=>i.vehicleId===v.id);
+  const vehicleSchedules=getVehicleGeneratedSchedules(v);
+  const warningCount=vehicleSchedules.reduce((n,sc)=>n+(getScheduleStatus(v,sc).status==='ok'?0:1),0);
+  const maintenanceCount=(v.maintenancePlan||[]).length;
+  const expenses=getVehicleExpenses(v);
+  const mileageDate=v.mileageDate?formatDateFR(v.mileageDate):'date non renseignée';
+  document.getElementById('vehicle-summary-card').innerHTML=`
+    <div class="vehicle-hero">
+      <div><div class="vehicle-name">${escapeHtml(getGarageVehicleLabel(v.id))}</div><div class="vehicle-subtitle">${v.registration?escapeHtml(v.registration)+' · ':''}${v.year?escapeHtml(v.year)+' · ':''}${v.powertrainType?escapeHtml(v.powertrainType)+' · ':''}${escapeHtml(v.fuel||'Motorisation non renseignée')}</div></div>
+      <div class="vehicle-mileage">${(Number(v.mileage)||0).toLocaleString('fr-FR')} km<small>relevé : ${mileageDate}</small></div>
+    </div>
+    <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
+    <div class="vehicle-cost-strip"><div class="vehicle-cost-mini"><span>Dépenses 12 mois</span><strong class="invoice-amount">${euro(expenses.last12m)}</strong></div><div class="vehicle-cost-mini"><span>Dépenses enregistrées</span><strong class="invoice-amount">${euro(expenses.total)}</strong></div><div class="vehicle-cost-mini"><span>Coût/km suivi</span><strong class="invoice-amount">${expenses.costPerKm!==null?expenses.costPerKm.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €/km':'—'}</strong></div></div>
+    <div class="vehicle-actions"><button id="assistantTargetPerformedMaintenance" class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button id="assistantTargetMileage" class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><button id="assistantTargetMaintenanceHistory" class="btn btn-secondary" onclick="openVehicleMaintenanceHistoryModal()">📜 Historique</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal('${v.id}')" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
+
+  const ihost=document.getElementById('vehicle-invoices');
+  const sortedInvoices=linkedInvoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  ihost.innerHTML=sortedInvoices.length?sortedInvoices.map(inv=>`<div class="vehicle-entry"><div class="vehicle-entry-head"><div><div class="vehicle-entry-title">${escapeHtml(inv.description||'Facture')}</div><div class="vehicle-entry-meta">${formatDateFR(inv.date)}${inv.seller?` · ${escapeHtml(inv.seller)}`:''}</div></div><div class="vehicle-entry-amount invoice-amount">${euro(Number(inv.amount)||0)}</div></div><div class="vehicle-entry-actions">${inv.photoUrl?`<button class="btn btn-secondary" onclick="openInvoicePhoto(${data.factures.indexOf(inv)})">📄 Voir</button>`:''}<button class="btn btn-secondary" onclick="openInvoiceById('${inv.id}')">✏️ Ouvrir</button><button class="btn btn-secondary" onclick="unlinkInvoiceFromVehicle('${inv.id}')">🔗 Dissocier</button></div></div>`).join(''):'<div class="vehicle-empty">Aucune facture associée à ce véhicule.</div>';
+}
 
 /* =========================================================
    FACTURES & GARANTIES
@@ -2890,6 +4682,7 @@ function openInvoiceModal(index=-1){
   document.getElementById('invoiceReference').value=invoice?.reference||'';
   document.getElementById('invoiceCategory').value=invoice?.category||'Autre';
   document.getElementById('invoiceReceiptType').value=invoice?.receiptType||'Facture';
+  populateInvoiceVehicleSelect(invoice?.vehicleId||'');
 
   const warrantyApplicable=invoice
     ? invoice.warrantyApplicable !== false && (Number(invoice.warrantyMonths)||0)>0
@@ -3253,6 +5046,7 @@ function submitInvoice(){
   const reference=document.getElementById('invoiceReference').value.trim();
   const category=document.getElementById('invoiceCategory').value;
   const receiptType=document.getElementById('invoiceReceiptType').value;
+  const vehicleId=document.getElementById('invoiceVehicle')?.value||'';
   const warrantyApplicable=document.getElementById('invoiceWarrantyApplicable').value!=='no';
   const warrantyRaw=document.getElementById('invoiceWarrantyMonths').value;
   const photoUrl=invoicePendingPhotoUrl;
@@ -3303,6 +5097,7 @@ function submitInvoice(){
   }
 
   const invoice={
+    id:(invoiceEditIndex>=0&&data.factures[invoiceEditIndex]?.id)||makeLocalId('inv'),
     description,
     date,
     amount,
@@ -3310,6 +5105,7 @@ function submitInvoice(){
     reference,
     category,
     receiptType,
+    vehicleId,
     warrantyApplicable,
     warrantyMonths,
     photoUrl
@@ -3323,6 +5119,12 @@ function submitInvoice(){
     data.factures.unshift(invoice);
   }
 
+  // Si cette facture est déjà liée à une intervention, l'association véhicule suit la facture.
+  (data.vehicleMaintenance||[]).forEach(m=>{
+    if(m.invoiceId===invoice.id && vehicleId)m.vehicleId=vehicleId;
+    if(m.invoiceId===invoice.id && !vehicleId)m.invoiceId='';
+  });
+
   document.getElementById('invoiceModal').classList.remove('active');
   invoiceEditIndex=-1;
   invoicePendingPhotoUrl='';
@@ -3335,7 +5137,9 @@ function deleteInvoice(index){
   if(!Array.isArray(data.factures)||!data.factures[index])return;
   const invoice=data.factures[index];
   if(!confirm(`Supprimer la facture « ${invoice.description||'Sans description'} » ?`))return;
+  const deletedId=invoice.id||'';
   data.factures.splice(index,1);
+  if(deletedId)(data.vehicleMaintenance||[]).forEach(m=>{if(m.invoiceId===deletedId)m.invoiceId='';});
   save();
   renderInvoices();
 }
@@ -3471,7 +5275,7 @@ function exportInvoicesJSON(){
 function exportInvoicesCSV(){
   const rows=[[
     'Description','Date','Montant','Vendeur','Référence',
-    'Catégorie','Type de justificatif','Garantie applicable',
+    'Catégorie','Type de justificatif','Véhicule','Garantie applicable',
     'Durée garantie (mois)','Fin de garantie','URL facture'
   ]];
 
@@ -3485,6 +5289,7 @@ function exportInvoicesCSV(){
       invoice.reference||'',
       invoice.category||'Autre',
       invoice.receiptType||'Facture',
+      getGarageVehicleLabel(invoice.vehicleId)||'',
       invoice.warrantyApplicable===false?'Non':'Oui',
       Number(invoice.warrantyMonths||0),
       w.endDate?dateToLocalISO(w.endDate):'',
@@ -3525,6 +5330,7 @@ function renderInvoices(){
         invoice.reference,
         invoice.category,
         invoice.receiptType,
+        getGarageVehicleLabel(invoice.vehicleId),
         invoice.date,
         invoice.amount
       ].join(' '));
@@ -3572,6 +5378,7 @@ function renderInvoices(){
               <div>
                 <span class="invoice-chip">${escapeHtml(invoice.category||'Autre')}</span>
                 <span class="invoice-chip">${escapeHtml(invoice.receiptType||'Facture')}</span>
+                ${invoice.vehicleId?`<span class="invoice-chip">🚗 ${escapeHtml(getGarageVehicleLabel(invoice.vehicleId))}</span>`:''}
               </div>
               ${warrantyEnd}
             </div>
@@ -3654,10 +5461,7 @@ let currentChartSeries=localStorage.getItem('finaryChartSeries')||'total';
 const chartSeriesConfig={
   total:{label:'Total',field:'net'},
   epargne:{label:'Épargne',field:'epargne'},
-  assurancevie:{label:'Assurance-vie',field:'assurancevie'},
-  bourse:{label:'Bourse',field:'bourse'},
-  crypto:{label:'Crypto',field:'crypto'},
-  autres:{label:'Autres',field:'autres'}
+  ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').map(c=>[c.key,{label:c.label,field:c.key}]))
 };
 
 function setChartRange(range){
@@ -3735,6 +5539,7 @@ function getFilteredChartPoints(){
 }
 
 function updateChartControls(){
+  renderChartSeriesControls();
   document.querySelectorAll('#chart-range-controls .chart-filter').forEach(btn=>{
     btn.classList.toggle('active',btn.dataset.range===currentChartRange);
   });
@@ -3996,10 +5801,11 @@ function renderAssetDistribution(){
 
   const cats=[
     {key:'epargne',label:'Épargne',color:'#3fb950'},
-    {key:'assurancevie',label:'AV',color:'#58a6ff'},
-    {key:'bourse',label:'Bourse',color:'#a371f7'},
-    {key:'crypto',label:'Crypto',color:'#d29922'},
-    {key:'autres',label:'Autres',color:'#f0883e'}
+    ...getActiveInvestmentCategoryKeys().map(key=>({
+      key,
+      label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label,
+      color:ASSET_CATEGORY_MAP[key].color
+    }))
   ];
 
   let total=0;
@@ -4057,6 +5863,8 @@ function renderAssetDistribution(){
   }).join('');
 }
 
+
+
 /* Entrée au clavier dans les modales */
 document.getElementById('genericModal').addEventListener('keydown',e=>{
   if(e.key==='Enter'){
@@ -4081,6 +5889,9 @@ document.getElementById('historyMonthModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closeHistoryMonthModal();
 });
 
+document.getElementById('loanModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLoanModal();});
+document.getElementById('loanModal').addEventListener('keydown',e=>{if(e.key==='Escape')closeLoanModal();});
+
 document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closePatrimoineAmountModal();
 });
@@ -4099,10 +5910,403 @@ document.getElementById('annotationsModal').addEventListener('click',e=>{
 
 document.addEventListener('DOMContentLoaded', () => {
   applyHideAmountsState();
-  initPatternLock();
-  setupPatternListeners();
   render();
 });
+
+
+/* =========================================================
+   ASSISTANT D'AIDE 100 % HORS LIGNE
+   Base de connaissances embarquée : aucune API / aucun réseau.
+   ========================================================= */
+const OFFLINE_ASSISTANT_KB=[
+  {
+    id:'budget-overview',tabs:['budget'],keywords:['budget','onglet budget','a quoi sert budget','fonctionnement budget','cet onglet'],
+    answer:"L’onglet Budget sert au suivi du mois en cours. Tu y enregistres les entrées, frais fixes et dépenses, tu suis le reste à vivre et le solde des comptes, puis tu peux clôturer le mois pour conserver un historique.",
+    target:'#tab-budget',targetTab:'budget'
+  },
+  {
+    id:'reste-vivre',tabs:['budget'],keywords:['reste a vivre','reste vivre','calcul reste','budget restant'],
+    answer:"Le « Reste à vivre estimé » correspond à ce qu’il reste après prise en compte des entrées, frais fixes et dépenses du mois. Il évolue automatiquement avec les lignes que tu ajoutes ou modifies.",
+    target:'#budget-reste-vivre',targetTab:'budget'
+  },
+  {
+    id:'solde-actuel',tabs:['budget'],keywords:['solde actuel','operations cochees','opérations cochées','case cochee','case cochée','solde compte'],
+    answer:"Le « Solde actuel — opérations cochées » utilise les opérations que tu as marquées comme réalisées. Cela permet de distinguer le budget prévu de ce qui est réellement passé sur les comptes.",
+    target:'#budget-solde-actuel',targetTab:'budget'
+  },
+  {
+    id:'accounts',tabs:['budget'],keywords:['compte bancaire','comptes bancaires','gerer comptes','gérer comptes','actif compte','supprimer compte'],
+    answer:"Le bouton « Comptes » permet de gérer les comptes bancaires utilisés par le budget. Un compte actif ne peut pas être supprimé directement : il faut d’abord le désactiver. Les anciens mois clôturés conservent leur historique.",
+    target:'#assistantTargetAccounts',targetTab:'budget'
+  },
+  {
+    id:'notes',tabs:['budget'],keywords:['notes','annotations','annotation'],
+    answer:"Le bouton « Notes » ouvre un espace de notes générales pour conserver des informations utiles avec ton suivi budgétaire.",
+    target:'#assistantTargetNotes',targetTab:'budget'
+  },
+  {
+    id:'close-month',tabs:['budget'],keywords:['cloturer','clôturer','cloture mois','clôture mois','fin du mois','historique mois'],
+    answer:"« Clôturer » fige le mois courant dans l’historique. Tu pourras ensuite retrouver ses entrées, dépenses, comptes et résultats sans modifier le mois archivé. Une confirmation est demandée avant la clôture.",
+    target:'#assistantTargetCloseMonth',targetTab:'budget'
+  },
+  {
+    id:'internal-transfer',tabs:['budget'],keywords:['virement interne','virements internes','transfert entre comptes','changer compte'],
+    answer:"Un virement interne sert à déplacer de l’argent entre tes propres comptes sans le considérer comme une dépense ou un revenu. Il modifie la répartition entre comptes, pas le résultat global du budget.",
+    target:'#details-bank-transfers',targetTab:'budget'
+  },
+  {
+    id:'budget-history',tabs:['budget'],keywords:['historique','anciens mois','mois clotures','mois clôturés','exporter','importer'],
+    answer:"La zone Historique regroupe les mois clôturés. Tu peux les rechercher, les consulter et exporter ou importer les données de l’application. Le bouton Reset efface l’historique après confirmation.",
+    target:'#assistantTargetBudgetHistory',targetTab:'budget'
+  },
+  {
+    id:'patrimoine-overview',tabs:['patrimoine'],keywords:['patrimoine','onglet patrimoine','a quoi sert patrimoine','cet onglet'],
+    answer:"L’onglet Patrimoine regroupe tes actifs et tes emprunts. Il calcule le patrimoine brut, le patrimoine net, la répartition des actifs et leur évolution dans le temps.",
+    target:'#tab-patrimoine',targetTab:'patrimoine'
+  },
+  {
+    id:'gross-net',tabs:['patrimoine'],keywords:['brut net','patrimoine brut','patrimoine net','difference brut net','différence brut net'],
+    answer:"Le patrimoine brut correspond à la valeur totale de tes actifs. Le patrimoine net retire le capital restant dû de tes emprunts. La variation indique l’évolution depuis le mois précédent lorsqu’un historique est disponible.",
+    target:'#gross',targetTab:'patrimoine'
+  },
+  {
+    id:'asset-category',tabs:['patrimoine'],keywords:['categorie actif','catégorie actif','ajouter categorie','ajouter catégorie','immobilier','scpi','crypto','bourse','assurance vie'],
+    answer:"« Ajouter une catégorie d’actifs » permet d’afficher uniquement les familles qui te sont utiles : immobilier, assurance-vie, bourse, SCPI, crypto, PER, etc. Une catégorie contenant encore des lignes ne peut pas être retirée par erreur.",
+    target:'.asset-category-manager',targetTab:'patrimoine'
+  },
+  {
+    id:'patrimoine-chart',tabs:['patrimoine'],keywords:['graphique','evolution actifs','évolution actifs','courbe patrimoine','1m','3m','6m','1a'],
+    answer:"Le graphique suit l’évolution des catégories d’actifs dans le temps. Les boutons 1M, 3M, 6M, 1A et Tout changent la période affichée, et les filtres de séries permettent de choisir les actifs visibles.",
+    target:'#chart-wrapper',targetTab:'patrimoine'
+  },
+  {
+    id:'loans',tabs:['patrimoine'],keywords:['emprunt','emprunts','credit','crédit','capital restant du','capital restant dû','mensualite','mensualité'],
+    answer:"Dans Emprunts, le montant qui compte comme dette est le capital restant dû. Les informations complémentaires — montant initial, dates, mensualité et taux — servent au suivi et à la progression du remboursement.",
+    target:'#total-dettes',targetTab:'patrimoine'
+  },
+  {
+    id:'invoices-overview',tabs:['factures'],keywords:['factures','onglet factures','garanties','a quoi sert factures','cet onglet'],
+    answer:"L’onglet Factures & garanties conserve tes achats, justificatifs et dates de garantie. Tu peux rechercher les factures, filtrer selon l’état de la garantie et associer une facture à un véhicule.",
+    target:'#tab-factures',targetTab:'factures'
+  },
+  {
+    id:'add-invoice',tabs:['factures'],keywords:['ajouter facture','nouvelle facture','ajouter achat','photo facture','justificatif'],
+    answer:"« Ajouter un achat / une facture » permet d’enregistrer l’achat, son vendeur, son montant, sa garantie et éventuellement une photo du justificatif. La facture peut aussi être rattachée à un véhicule.",
+    target:'#assistantTargetAddInvoice',targetTab:'factures'
+  },
+  {
+    id:'warranty',tabs:['factures'],keywords:['garantie','garanties','sous garantie','bientot echue','bientôt échue','garantie echue','garantie échue'],
+    answer:"Les garanties sont classées selon leur date de fin : sous garantie, bientôt échues ou échues. Les filtres permettent d’afficher uniquement l’état qui t’intéresse et la zone « Garanties à surveiller » met en avant les prochaines échéances.",
+    target:'#warranty-watch-card',targetTab:'factures'
+  },
+  {
+    id:'vehicle-invoice-link',tabs:['factures','vehicles'],keywords:['associer facture vehicule','associer facture véhicule','facture voiture','facture véhicule','lier facture'],
+    answer:"Une facture peut être associée à un véhicule. Elle reste stockée dans l’onglet Factures mais apparaît aussi dans « Factures associées » de la fiche du véhicule. La dissociation ne supprime pas la facture.",
+    target:'#assistantTargetVehicleInvoices',targetTab:'vehicles'
+  },
+  {
+    id:'vehicles-overview',tabs:['vehicles'],keywords:['vehicule','véhicule','voiture','onglet vehicules','onglet véhicules','a quoi sert vehicules','cet onglet'],
+    answer:"L’onglet Véhicules sert à suivre plusieurs voitures : informations générales, kilométrage, contrôle technique, plan d’entretien, alertes, historique des opérations réalisées et factures associées.",
+    target:'#tab-vehicles',targetTab:'vehicles'
+  },
+  {
+    id:'add-vehicle',tabs:['vehicles'],keywords:['ajouter vehicule','ajouter véhicule','creer vehicule','créer véhicule','thermique','hybride','electrique','électrique'],
+    answer:"Le bouton « Ajouter » crée un véhicule avec sa marque, son modèle, son immatriculation, son kilométrage, son contrôle technique et son type : Thermique, Hybride ou Électrique. Le type sert aussi à orienter les recommandations du plan d’entretien.",
+    target:'#assistantTargetAddVehicle',targetTab:'vehicles'
+  },
+  {
+    id:'maintenance-plan',tabs:['vehicles'],keywords:['plan entretien','plan d entretien','créer un plan','creer plan','periodicite','périodicité','vidange moteur','pompe a eau','pompe à eau','plaquettes','disques'],
+    answer:"Le plan d’entretien définit les opérations à suivre pour un véhicule. Pour chaque type sélectionné, tu renseignes le dernier entretien, son kilométrage et la périodicité en mois et/ou kilomètres. L’application calcule ensuite les prochaines échéances.",
+    target:'#assistantTargetMaintenancePlan',targetTab:'vehicles',reveal:'vehicle-plan'
+  },
+  {
+    id:'multi-maintenance',tabs:['vehicles'],keywords:['plusieurs entretiens','entretien multiple','distribution vidange','ajouter entretien','effectue plusieurs','effectué plusieurs','garage plusieurs'],
+    answer:"« Ajouter un entretien » accepte plusieurs opérations en une seule intervention. Tu coches par exemple Distribution + Pompe à eau + Liquide de refroidissement + Vidange, puis tu saisis une seule date et un seul kilométrage. Chaque type sélectionné est mis à jour séparément.",
+    target:'#assistantTargetPerformedMaintenance',targetTab:'vehicles'
+  },
+  {
+    id:'vehicle-alerts',tabs:['vehicles'],keywords:['en retard','a prevoir','à prévoir','alerte entretien','alertes','dernier huitieme','dernier huitième','orange rouge'],
+    answer:"Une échéance devient « À prévoir » lorsqu’elle entre dans le dernier 1/8 de sa périodicité enregistrée, en durée ou en kilomètres. Elle passe « En retard » uniquement lorsque la date ou le kilométrage d’échéance est réellement dépassé. Les compteurs rouge et orange sont cliquables pour dérouler uniquement la liste correspondante.",
+    target:'#vehicle-alerts-card',targetTab:'vehicles'
+  },
+  {
+    id:'performed-alert',tabs:['vehicles'],keywords:['effectue','effectué','bouton effectué','valider alerte','entretien realise','entretien réalisé'],
+    answer:"Depuis une alerte d’entretien, « ✓ Effectué » ouvre directement l’enregistrement avec l’opération concernée présélectionnée. Après validation, le dernier entretien est actualisé et la prochaine échéance est recalculée.",
+    target:'#vehicle-alerts-card',targetTab:'vehicles'
+  },
+  {
+    id:'mileage',tabs:['vehicles'],keywords:['kilometrage','kilométrage','modifier kilometrage','modifier kilométrage','releve kilométrique','relevé kilométrique'],
+    answer:"« Modifier le kilométrage » ajoute un nouveau relevé au véhicule. Cet historique sert au suivi courant et permet aussi d’estimer une période d’arrivée pour certaines échéances kilométriques lorsqu’il y a assez de relevés fiables.",
+    target:'#assistantTargetMileage',targetTab:'vehicles'
+  },
+  {
+    id:'maintenance-history',tabs:['vehicles'],keywords:['historique entretien','historique des entretiens','ancien entretien','interventions'],
+    answer:"« Historique » affiche les entretiens déjà enregistrés pour le véhicule. Les types réalisés sont mis en évidence ; plusieurs opérations du même jour au même kilométrage sont regroupées. Les boutons ✏️ et 🗑️ permettent de corriger ou supprimer une intervention et les échéances sont recalculées.",
+    target:'#assistantTargetMaintenanceHistory',targetTab:'vehicles'
+  },
+  {
+    id:'vehicle-costs',tabs:['vehicles'],keywords:['cout véhicule','coût véhicule','depenses véhicule','dépenses véhicule','cout km','coût km','depenses 12 mois','dépenses 12 mois'],
+    answer:"La fiche véhicule calcule un bilan à partir des factures qui lui sont associées : dépenses sur 12 mois, dépenses enregistrées et coût par kilomètre suivi lorsqu’il peut être calculé avec les données disponibles.",
+    target:'#vehicle-summary-card',targetTab:'vehicles'
+  },
+  {
+    id:'install',tabs:['budget','patrimoine','factures','vehicles'],keywords:['installer application','installation','pwa','installer app','ecran accueil','écran accueil'],
+    answer:"Le bouton « Installer l’application » apparaît lorsque le navigateur permet l’installation. Une fois l’application installée, ce bouton disparaît. Sur iPhone/iPad, l’installation passe par Safari > Partager > Sur l’écran d’accueil.",
+    target:'.wrap .install-app-btn',targetTab:'budget'
+  },
+  {
+    id:'sync',tabs:['budget','patrimoine','factures','vehicles'],keywords:['synchronisation','firebase','sauvegarde','hors ligne','internet','donnees','données'],
+    answer:"Les modifications sont enregistrées dans le stockage local de l’appareil puis synchronisées avec l’espace Firebase partagé de l’application personnelle lorsque le service est disponible. Le schéma ou le mot de passe protège l’accès local à l’application. L’assistant que tu utilises ici est entièrement embarqué dans app.html et ne contacte aucun service externe pour répondre.",
+    target:'#firebaseStatus',targetTab:'budget'
+  },
+  {
+    id:'assistant-itself',tabs:['budget','patrimoine','factures','vehicles'],keywords:['assistant','ia','intelligence artificielle','comment tu fonctionnes','hors ligne assistant'],
+    answer:"Je suis l’assistant d’aide local de cette application. Je ne suis pas un modèle génératif connecté : je recherche la réponse la plus pertinente dans un guide intégré à app.html. Cela me permet de fonctionner hors ligne et de rester limité aux fonctions réellement prévues dans l’application."
+  }
+];
+
+const OFFLINE_ASSISTANT_QUICK={
+  budget:['À quoi sert cet onglet ?','Comment fonctionne le reste à vivre ?','Comment clôturer un mois ?','À quoi servent les virements internes ?'],
+  patrimoine:['À quoi sert cet onglet ?','Patrimoine brut ou net ?','Comment ajouter une catégorie ?','Comment fonctionne le graphique ?'],
+  factures:['À quoi sert cet onglet ?','Comment ajouter une facture ?','Comment fonctionnent les garanties ?','Comment associer une facture à un véhicule ?'],
+  vehicles:['À quoi sert cet onglet ?','Comment créer un plan d’entretien ?','Comment enregistrer plusieurs entretiens ?','Que signifie À prévoir ?']
+};
+
+let offlineAssistantInitialized=false;
+let offlineAssistantLastEntry=null;
+let offlineAssistantWelcomeShown=false;
+
+function offlineAssistantNormalize(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’']/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function offlineAssistantTokens(value){
+  const stop=new Set(['le','la','les','un','une','des','de','du','d','a','au','aux','et','ou','en','pour','sur','je','j','tu','il','elle','on','nous','vous','ils','elles','mon','ma','mes','ce','cet','cette','ces','comment','quoi','quel','quelle','quels','quelles','est','sont','sert','faire']);
+  return offlineAssistantNormalize(value).split(/\s+/).filter(token=>token.length>1&&!stop.has(token));
+}
+
+function offlineAssistantScore(entry,query){
+  const nq=offlineAssistantNormalize(query);
+  const qTokens=new Set(offlineAssistantTokens(query));
+  let score=0;
+  (entry.keywords||[]).forEach(keyword=>{
+    const nk=offlineAssistantNormalize(keyword);
+    if(!nk)return;
+    if(nq===nk)score+=14;
+    else if(nq.includes(nk))score+=7;
+    const kTokens=offlineAssistantTokens(keyword);
+    kTokens.forEach(token=>{if(qTokens.has(token))score+=1.7;});
+  });
+  if((entry.tabs||[]).includes(currentActiveTab))score+=1.25;
+  return score;
+}
+
+function offlineAssistantFindAnswer(query){
+  const normalized=offlineAssistantNormalize(query);
+  if(!normalized)return null;
+  if(/^(aide|help|bonjour|salut|hello)$/.test(normalized)){
+    return OFFLINE_ASSISTANT_KB.find(e=>e.id===`${currentActiveTab}-overview`)||OFFLINE_ASSISTANT_KB.find(e=>e.id==='assistant-itself');
+  }
+  const ranked=OFFLINE_ASSISTANT_KB.map(entry=>({entry,score:offlineAssistantScore(entry,query)})).sort((a,b)=>b.score-a.score);
+  return ranked[0]&&ranked[0].score>=3?ranked[0].entry:null;
+}
+
+function offlineAssistantAppendMessage(text,role='bot',entry=null){
+  const host=document.getElementById('offlineAssistantMessages');
+  if(!host)return;
+  const bubble=document.createElement('div');
+  bubble.className=`offline-assistant-message ${role}`;
+  bubble.textContent=text;
+  if(role==='bot'&&entry?.target){
+    const actions=document.createElement('div');
+    actions.className='offline-assistant-actions';
+    const show=document.createElement('button');
+    show.type='button';
+    show.className='offline-assistant-action';
+    show.textContent='👁️ Montre-moi';
+    show.addEventListener('click',()=>offlineAssistantShowTarget(entry));
+    actions.appendChild(show);
+    bubble.appendChild(actions);
+  }
+  host.appendChild(bubble);
+  host.scrollTop=host.scrollHeight;
+}
+
+function offlineAssistantShowTarget(entry){
+  if(!entry?.target)return;
+  if(entry.targetTab&&entry.targetTab!==currentActiveTab)switchTab(entry.targetTab);
+  if(entry.reveal==='vehicle-plan'){
+    const vehicle=getCurrentGarageVehicle();
+    openVehicleModal(vehicle?.id||'');
+  }
+  setTimeout(()=>{
+    let target=null;
+    try{target=document.querySelector(entry.target);}catch(_e){target=null;}
+    if(!target||target.offsetParent===null){
+      offlineAssistantAppendMessage("Cette zone n’est pas visible dans l’état actuel de l’application. Elle apparaîtra lorsqu’elle aura des données à afficher.",'bot');
+      return;
+    }
+    target.scrollIntoView({behavior:'smooth',block:'center'});
+    target.classList.remove('offline-assistant-highlight');
+    void target.offsetWidth;
+    target.classList.add('offline-assistant-highlight');
+    setTimeout(()=>target.classList.remove('offline-assistant-highlight'),3400);
+  },80);
+}
+
+function offlineAssistantAsk(question){
+  const text=String(question||'').trim();
+  if(!text)return;
+  offlineAssistantAppendMessage(text,'user');
+  const entry=offlineAssistantFindAnswer(text);
+  offlineAssistantLastEntry=entry;
+  if(entry){
+    offlineAssistantAppendMessage(entry.answer,'bot',entry);
+  }else{
+    offlineAssistantAppendMessage("Je n’ai pas de réponse fiable pour cette question. Mon rôle est uniquement d’expliquer les fonctions de Budget & Patrimoine. Essaie une question proposée ci-dessous ou demande-moi comment utiliser une fonction précise de l’onglet actuel.",'bot');
+  }
+}
+
+function updateOfflineAssistantContext(){
+  const quick=document.getElementById('offlineAssistantQuick');
+  if(!quick)return;
+  quick.innerHTML='';
+  const questions=OFFLINE_ASSISTANT_QUICK[currentActiveTab]||OFFLINE_ASSISTANT_QUICK.budget;
+  questions.forEach(question=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.textContent=question;
+    btn.addEventListener('click',()=>offlineAssistantAsk(question));
+    quick.appendChild(btn);
+  });
+}
+
+function openOfflineAssistant(){
+  const panel=document.getElementById('offlineAssistantPanel');
+  const launcher=document.getElementById('offlineAssistantLauncher');
+  if(!panel||!launcher)return;
+  panel.classList.add('active');
+  panel.setAttribute('aria-hidden','false');
+  launcher.setAttribute('aria-expanded','true');
+  updateOfflineAssistantContext();
+  if(!offlineAssistantWelcomeShown){
+    offlineAssistantWelcomeShown=true;
+    offlineAssistantAppendMessage("Bonjour 👋 Je suis le guide hors ligne de Budget & Patrimoine. Pose-moi une question sur l’onglet actuel ou choisis une suggestion ci-dessous.",'bot');
+  }
+  setTimeout(()=>document.getElementById('offlineAssistantInput')?.focus(),50);
+}
+
+function closeOfflineAssistant(){
+  const panel=document.getElementById('offlineAssistantPanel');
+  const launcher=document.getElementById('offlineAssistantLauncher');
+  if(!panel||!launcher)return;
+  panel.classList.remove('active');
+  panel.setAttribute('aria-hidden','true');
+  launcher.setAttribute('aria-expanded','false');
+}
+
+function initOfflineAssistant(){
+  if(offlineAssistantInitialized)return;
+  const launcher=document.getElementById('offlineAssistantLauncher');
+  const close=document.getElementById('offlineAssistantClose');
+  const form=document.getElementById('offlineAssistantForm');
+  const input=document.getElementById('offlineAssistantInput');
+  if(!launcher||!close||!form||!input)return;
+  offlineAssistantInitialized=true;
+  launcher.addEventListener('click',()=>{
+    const panel=document.getElementById('offlineAssistantPanel');
+    if(panel?.classList.contains('active'))closeOfflineAssistant();else openOfflineAssistant();
+  });
+  close.addEventListener('click',closeOfflineAssistant);
+  form.addEventListener('submit',event=>{
+    event.preventDefault();
+    const value=input.value;
+    input.value='';
+    offlineAssistantAsk(value);
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&document.getElementById('offlineAssistantPanel')?.classList.contains('active'))closeOfflineAssistant();
+  });
+  updateOfflineAssistantContext();
+}
+
+window.updateOfflineAssistantContext=updateOfflineAssistantContext;
+window.openOfflineAssistant=openOfflineAssistant;
+window.closeOfflineAssistant=closeOfflineAssistant;
+window.addEventListener('DOMContentLoaded',initOfflineAssistant);
+
+/* PWA : installation depuis l'interface */
+let deferredInstallPrompt=null;
+
+function betaAppIsInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone===true;
+}
+
+function betaIsIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+
+function updateBetaInstallButtons(){
+  const show=!betaAppIsInstalled() && (!!deferredInstallPrompt || betaIsIOS());
+  document.querySelectorAll('.install-app-btn').forEach(btn=>{
+    btn.style.display=show?'flex':'none';
+  });
+}
+
+window.addEventListener('beforeinstallprompt',event=>{
+  // Chrome/Android : on remplace l'infobulle automatique par notre propre bouton.
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  updateBetaInstallButtons();
+});
+
+window.installBetaApp=async function(){
+  if(betaAppIsInstalled()){
+    updateBetaInstallButtons();
+    return;
+  }
+
+  if(deferredInstallPrompt){
+    const promptEvent=deferredInstallPrompt;
+    deferredInstallPrompt=null;
+    await promptEvent.prompt();
+    try{ await promptEvent.userChoice; }catch(_e){}
+    updateBetaInstallButtons();
+    return;
+  }
+
+  if(betaIsIOS()){
+    alert("Sur iPhone/iPad : ouvre cette page dans Safari, touche le bouton Partager ↗ puis « Sur l’écran d’accueil » et enfin « Ajouter ». Le bouton d’installation disparaîtra quand tu ouvriras l’application depuis son icône.");
+    return;
+  }
+
+  alert("L’installation n’est pas encore proposée par ce navigateur. Utilise son menu puis « Installer l’application » ou « Ajouter à l’écran d’accueil ».");
+};
+
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  updateBetaInstallButtons();
+});
+
+window.matchMedia('(display-mode: standalone)').addEventListener?.('change',updateBetaInstallButtons);
+window.addEventListener('DOMContentLoaded',updateBetaInstallButtons);
+
+// Verrouillage personnel historique : schéma sur mobile, mot de passe sur ordinateur.
+window.addEventListener('DOMContentLoaded',()=>{
+  initPatternLock();
+  setupPatternListeners();
+});
+
+/* PWA : enregistrement du Service Worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(err => {
+      console.warn('Service Worker non enregistré :', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
