@@ -285,8 +285,12 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .vehicle-subtitle{font-size:12px;color:#8b949e;margin-top:3px;line-height:1.5}
 .vehicle-mileage{font-size:24px;font-weight:800;color:#fff;text-align:right;white-space:nowrap}
 .vehicle-mileage small{display:block;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px}
-.vehicle-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.vehicle-actions .btn{font-size:11px;padding:7px 9px}
+.vehicle-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.vehicle-maintenance-main{width:100%;font-size:12px;padding:9px 10px}
+.vehicle-secondary-actions{display:flex;align-items:center;gap:6px}
+.vehicle-secondary-actions .btn{font-size:11px;padding:7px 10px}
+.vehicle-icon-actions{margin-left:auto;display:flex;gap:6px}
+.vehicle-icon-btn{min-width:40px;padding:7px 10px;display:flex;align-items:center;justify-content:center}
 .vehicle-alert-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px}
 .vehicle-alert-stat{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px;text-align:center}
 .vehicle-alert-stat strong{display:block;font-size:17px;color:#fff}.vehicle-alert-stat span{font-size:10px;color:#8b949e}
@@ -4102,7 +4106,7 @@ function renderVehicles(){
       <div class="vehicle-mileage">${(Number(v.mileage)||0).toLocaleString('fr-FR')} km<small>relevé : ${mileageDate}</small></div>
     </div>
     <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
-    <div class="vehicle-actions"><button class="btn btn-primary" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><button class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Kilométrage</button><button class="btn btn-secondary" onclick="openVehicleModal('${v.id}')">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')">🗑️ Supprimer</button></div>`;
+    <div class="vehicle-actions"><button class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal('${v.id}')" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
 
   const ihost=document.getElementById('vehicle-invoices');
   const sortedInvoices=linkedInvoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
