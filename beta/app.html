@@ -255,6 +255,16 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 /* PWA : bouton d'installation, masqué tant que l'installation n'est pas proposée */
 .install-app-btn{display:none;align-items:center;justify-content:center;gap:7px}
 
+
+/* Gestion dynamique des catégories d’actifs */
+.asset-category-manager{padding:10px 12px}
+.asset-category-add-panel{display:none;margin-top:10px;gap:8px;align-items:center}
+.asset-category-add-panel.active{display:flex}
+.asset-category-add-panel select{flex:1;min-width:0;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:10px;font-size:16px}
+.category-remove-btn{border:0;background:transparent;color:#f85149;font-size:18px;line-height:1;padding:7px 8px;border-radius:8px;cursor:pointer}
+.category-remove-btn:hover{background:rgba(248,81,73,.10)}
+.category-header-actions{display:flex;align-items:center;gap:6px;min-width:0}
+@media(max-width:480px){.asset-category-add-panel{align-items:stretch;flex-direction:column}.asset-category-add-panel .btn{width:100%}}
 </style>
 </head>
 <body>
@@ -712,14 +722,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
           <button class="chart-filter" data-range="ALL" onclick="setChartRange('ALL')">Tout</button>
         </div>
 
-        <div class="chart-controls chart-series-controls" id="chart-series-controls">
-          <button class="chart-filter active" data-series="total" onclick="setChartSeries('total')">Total</button>
-          <button class="chart-filter" data-series="epargne" onclick="setChartSeries('epargne')">Épargne</button>
-          <button class="chart-filter" data-series="assurancevie" onclick="setChartSeries('assurancevie')">AV</button>
-          <button class="chart-filter" data-series="bourse" onclick="setChartSeries('bourse')">Bourse</button>
-          <button class="chart-filter" data-series="crypto" onclick="setChartSeries('crypto')">Crypto</button>
-          <button class="chart-filter" data-series="autres" onclick="setChartSeries('autres')">Autres</button>
-        </div>
+        <div class="chart-controls chart-series-controls" id="chart-series-controls"></div>
 
         <div id="chart-wrapper"></div>
 
@@ -729,10 +732,18 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 
     <div class="card"><div class="section-header"><h2>🏠 Immobilier</h2><span class="section-total" id="total-immobilier">0 €</span></div><div class="rows-container" data-key="immobilier"></div><button class="btn-add" onclick="addItem('immobilier')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>📈 Bourse</h2><span class="section-total" id="total-bourse">0 €</span></div><div class="rows-container" data-key="bourse"></div><button class="btn-add" onclick="addItem('bourse')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>🪙 Crypto</h2><span class="section-total" id="total-crypto">0 €</span></div><div class="rows-container" data-key="crypto"></div><button class="btn-add" onclick="addItem('crypto')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>🛡️ Assurance-vie</h2><span class="section-total" id="total-assurancevie">0 €</span></div><div class="rows-container" data-key="assurancevie"></div><button class="btn-add" onclick="addItem('assurancevie')">+ Ajouter</button></div>
-    <div class="card"><div class="section-header"><h2>📦 Autres Actifs</h2><span class="section-total" id="total-autres">0 €</span></div><div class="rows-container" data-key="autres"></div><button class="btn-add" onclick="addItem('autres')">+ Ajouter</button></div>
+
+    <div class="card asset-category-manager">
+      <button class="btn btn-secondary" style="width:100%" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actif</button>
+      <div class="asset-category-add-panel" id="asset-category-add-panel">
+        <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
+        <button class="btn btn-primary" onclick="addSelectedAssetCategory()">Ajouter</button>
+      </div>
+      <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
+    </div>
+
+    <div id="optional-asset-categories"></div>
+
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
     <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
   </div>
@@ -1008,9 +1019,18 @@ function createEmptyBetaData(){
     immobilier:[],
     epargne:[],
     assurancevie:[],
+    scpi:[],
     bourse:[],
     crypto:[],
+    per:[],
+    crowdfunding:[],
+    privateequity:[],
+    metaux:[],
+    partssociales:[],
+    collection:[],
+    vehicules:[],
     autres:[],
+    activeAssetCategories:[],
     dettes:[],
     budgetRevenus:[],
     budgetFixes:[],
@@ -1022,6 +1042,51 @@ function createEmptyBetaData(){
     bankTransfers:[],
     factures:[]
   };
+}
+
+const ASSET_CATEGORY_DEFINITIONS=[
+  {key:'assurancevie',label:'Assurance-vie',shortLabel:'AV',icon:'🛡️',color:'#58a6ff'},
+  {key:'bourse',label:'Bourse',shortLabel:'Bourse',icon:'📈',color:'#a371f7'},
+  {key:'scpi',label:'SCPI',shortLabel:'SCPI',icon:'🏢',color:'#39c5bb'},
+  {key:'crypto',label:'Crypto',shortLabel:'Crypto',icon:'🪙',color:'#d29922'},
+  {key:'per',label:'PER / Retraite',shortLabel:'PER',icon:'🏦',color:'#db6d28'},
+  {key:'crowdfunding',label:'Crowdfunding / Crowdlending',shortLabel:'Crowdfunding',icon:'🤝',color:'#2f81f7'},
+  {key:'privateequity',label:'Private Equity / Non coté',shortLabel:'Non coté',icon:'🏭',color:'#bc8cff'},
+  {key:'metaux',label:'Métaux précieux',shortLabel:'Métaux',icon:'🥇',color:'#d4a72c'},
+  {key:'partssociales',label:'Parts sociales',shortLabel:'Parts sociales',icon:'🏛️',color:'#56d364'},
+  {key:'collection',label:'Objets de valeur / Collection',shortLabel:'Collection',icon:'⌚',color:'#f778ba'},
+  {key:'vehicules',label:'Véhicules',shortLabel:'Véhicules',icon:'🚗',color:'#8b949e'},
+  {key:'autres',label:'Autres actifs',shortLabel:'Autres',icon:'📦',color:'#f0883e'}
+];
+const ASSET_CATEGORY_MAP=Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c]));
+const NATIVE_PATRIMOINE_KEYS=['immobilier','epargne','dettes'];
+
+function ensureAssetCategoryData(){
+  ASSET_CATEGORY_DEFINITIONS.forEach(c=>{if(!Array.isArray(data[c.key]))data[c.key]=[];});
+
+  // Migration douce : sur un ancien compte sans préférence enregistrée,
+  // toute catégorie contenant déjà des lignes reste automatiquement visible.
+  if(!Array.isArray(data.activeAssetCategories)){
+    data.activeAssetCategories=ASSET_CATEGORY_DEFINITIONS
+      .filter(c=>Array.isArray(data[c.key])&&data[c.key].length>0)
+      .map(c=>c.key);
+  }
+
+  data.activeAssetCategories=[...new Set(data.activeAssetCategories)]
+    .filter(key=>ASSET_CATEGORY_MAP[key]);
+}
+
+function getActiveAssetCategoryKeys(){
+  ensureAssetCategoryData();
+  return data.activeAssetCategories.slice();
+}
+
+function getAllAssetKeys(){
+  return ['immobilier','epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key)];
+}
+
+function getPatrimoineKeys(){
+  return ['immobilier','epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key),'dettes'];
 }
 
 let betaUserUid='';
@@ -1079,6 +1144,8 @@ function ensureBankingData(){
       if(!accountExists)item[3]='ca';
     });
   });
+
+  ensureAssetCategoryData();
 }
 
 ensureBankingData();
@@ -2022,7 +2089,7 @@ function submitModal(){
 
 /* MODALE MONTANT PATRIMOINE */
 let patrimoineAmountKey='',patrimoineAmountIndex=-1;
-const patrimoineKeys=['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'];
+const patrimoineKeys=getPatrimoineKeys();
 
 function adjustPatrimoineModalForKeyboard(){
   const overlay=document.getElementById('patrimoineAmountModal');
@@ -2207,15 +2274,114 @@ function renderLoanCards(cont){
   });
 }
 
+/* CATÉGORIES D’ACTIFS CONFIGURABLES */
+function renderAssetCategoryPicker(){
+  const select=document.getElementById('asset-category-select');
+  const message=document.getElementById('asset-category-picker-message');
+  if(!select)return;
+
+  const active=new Set(getActiveAssetCategoryKeys());
+  const available=ASSET_CATEGORY_DEFINITIONS.filter(c=>!active.has(c.key));
+
+  select.innerHTML=available.length
+    ? available.map(c=>`<option value="${c.key}">${c.icon} ${escapeHtml(c.label)}</option>`).join('')
+    : '<option value="">Toutes les catégories sont déjà ajoutées</option>';
+  select.disabled=!available.length;
+
+  if(message){
+    message.textContent=available.length?'':'Toutes les catégories disponibles sont déjà affichées.';
+    message.style.display=available.length?'none':'block';
+  }
+}
+
+function toggleAssetCategoryPicker(){
+  const panel=document.getElementById('asset-category-add-panel');
+  if(!panel)return;
+  renderAssetCategoryPicker();
+  panel.classList.toggle('active');
+}
+
+function addSelectedAssetCategory(){
+  const select=document.getElementById('asset-category-select');
+  if(!select||!select.value||!ASSET_CATEGORY_MAP[select.value])return;
+  ensureAssetCategoryData();
+  if(!data.activeAssetCategories.includes(select.value)){
+    data.activeAssetCategories.push(select.value);
+  }
+  document.getElementById('asset-category-add-panel')?.classList.remove('active');
+  render();
+  save();
+}
+
+function removeAssetCategory(key){
+  const cfg=ASSET_CATEGORY_MAP[key];
+  if(!cfg)return;
+  if(!getActiveAssetCategoryKeys().includes(key))return;
+
+  if(Array.isArray(data[key])&&data[key].length>0){
+    alert(`La catégorie « ${cfg.label} » contient encore des éléments.\n\nSupprime d’abord toutes ses lignes avant de retirer la catégorie.`);
+    return;
+  }
+
+  if(!confirm(`Voulez-vous vraiment supprimer la catégorie « ${cfg.label} » ?\n\nLa catégorie sera retirée de votre patrimoine. Vous pourrez l’ajouter de nouveau plus tard.`))return;
+
+  data.activeAssetCategories=data.activeAssetCategories.filter(k=>k!==key);
+  if(currentChartSeries===key){
+    currentChartSeries='total';
+    localStorage.setItem('finaryChartSeries','total');
+  }
+  render();
+  save();
+}
+
+function renderOptionalAssetCategorySections(){
+  const host=document.getElementById('optional-asset-categories');
+  if(!host)return;
+  ensureAssetCategoryData();
+
+  host.innerHTML=getActiveAssetCategoryKeys().map(key=>{
+    const c=ASSET_CATEGORY_MAP[key];
+    return `<div class="card">
+      <div class="section-header">
+        <h2>${c.icon} ${escapeHtml(c.label)}</h2>
+        <div class="category-header-actions">
+          <span class="section-total" id="total-${c.key}">0 €</span>
+          <button class="category-remove-btn" onclick="removeAssetCategory('${c.key}')" title="Supprimer cette catégorie" aria-label="Supprimer la catégorie ${escapeHtml(c.label)}">×</button>
+        </div>
+      </div>
+      <div class="rows-container" data-key="${c.key}"></div>
+      <button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>
+    </div>`;
+  }).join('');
+
+  renderAssetCategoryPicker();
+}
+
+function renderChartSeriesControls(){
+  const host=document.getElementById('chart-series-controls');
+  if(!host)return;
+  const allowed=['total','epargne',...getActiveAssetCategoryKeys()];
+  if(!allowed.includes(currentChartSeries))currentChartSeries='total';
+
+  const series=[
+    {key:'total',label:'Total'},
+    {key:'epargne',label:'Épargne'},
+    ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label}))
+  ];
+
+  host.innerHTML=series.map(s=>`<button class="chart-filter ${s.key===currentChartSeries?'active':''}" data-series="${s.key}" onclick="setChartSeries('${s.key}')">${escapeHtml(s.label)}</button>`).join('');
+}
+
 /* RENDU */
 function render(){
+  ensureAssetCategoryData();
+  renderOptionalAssetCategorySections();
+  renderChartSeriesControls();
+
   [
     'immobilier',
     'epargne',
-    'assurancevie',
-    'bourse',
-    'crypto',
-    'autres',
+    ...getActiveAssetCategoryKeys(),
     'dettes',
     'budgetRevenus',
     'budgetFixes',
@@ -2427,7 +2593,7 @@ function save(){
 }
 
 function calculateNet(){
-  const keys=['immobilier','epargne','assurancevie','bourse','crypto','autres'];
+  const keys=getAllAssetKeys();
 
   const assets=keys.reduce(
     (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
@@ -2447,7 +2613,7 @@ function calculateNet(){
 }
 
 function calculateLiquidInvestments(){
-  return ['epargne','assurancevie','bourse','crypto','autres'].reduce(
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key)].reduce(
     (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
     0
   );
@@ -2460,10 +2626,7 @@ function getPatrimoineReportModel(){
   const categories=[
     {key:'immobilier',label:'Immobilier'},
     {key:'epargne',label:'Épargne'},
-    {key:'bourse',label:'Bourse'},
-    {key:'crypto',label:'Crypto'},
-    {key:'assurancevie',label:'Assurance-vie'},
-    {key:'autres',label:'Autres actifs'},
+    ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].label})),
     {key:'dettes',label:'Emprunts'}
   ].map(c=>({
     ...c,
@@ -2472,11 +2635,11 @@ function getPatrimoineReportModel(){
   }));
 
   const savings=categories.find(c=>c.key==='epargne')?.total||0;
-  const investments=(categories.find(c=>c.key==='bourse')?.total||0)+(categories.find(c=>c.key==='crypto')?.total||0);
+  const investments=getActiveAssetCategoryKeys().reduce((sum,key)=>sum+(categories.find(c=>c.key===key)?.total||0),0);
   const variation=document.getElementById('patrimoine-variation-value')?.textContent?.trim()||'—';
   const now=new Date();
 
-  const liquidKeys=new Set(['epargne','assurancevie','bourse','crypto','autres']);
+  const liquidKeys=new Set(['epargne',...getActiveAssetCategoryKeys()]);
   const liquidCategories=categories.filter(c=>liquidKeys.has(c.key) && c.total>0);
   const liquidTotal=liquidCategories.reduce((s,c)=>s+c.total,0);
 
@@ -2529,7 +2692,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
       }).join('')
     : `<tr><td colspan="3" class="empty">Aucun actif hors immobilier</td></tr>`;
 
-  const pieColors={epargne:'#3fb950',assurancevie:'#58a6ff',bourse:'#a371f7',crypto:'#d29922',autres:'#f0883e'};
+  const pieColors={epargne:'#3fb950',...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c.color]))};
   let pieCursor=0;
   const pieStops=model.liquidCategories.map(c=>{
     const pct=model.liquidTotal>0?(c.total/model.liquidTotal)*100:0;
@@ -2702,11 +2865,10 @@ function updateTotals(){
   );
 
   document.getElementById('investments').textContent=euro(
-    (data.bourse||[]).reduce((a,i)=>a+(i[1]||0),0)+
-    (data.crypto||[]).reduce((a,i)=>a+(i[1]||0),0)
+    ASSET_CATEGORY_DEFINITIONS.reduce((sum,c)=>sum+(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0),0)
   );
 
-  ['immobilier','epargne','assurancevie','bourse','crypto','autres','dettes'].forEach(k=>{
+  ['immobilier','epargne',...getActiveAssetCategoryKeys(),'dettes'].forEach(k=>{
     const e=document.getElementById(`total-${k}`);
     if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0));
   });
@@ -2758,10 +2920,10 @@ function recordPatrimoineSnapshot(){
 
   const currentCategories={
     epargne:(data.epargne||[]).reduce((s,i)=>s+(i[1]||0),0),
-    assurancevie:(data.assurancevie||[]).reduce((s,i)=>s+(i[1]||0),0),
-    bourse:(data.bourse||[]).reduce((s,i)=>s+(i[1]||0),0),
-    crypto:(data.crypto||[]).reduce((s,i)=>s+(i[1]||0),0),
-    autres:(data.autres||[]).reduce((s,i)=>s+(i[1]||0),0)
+    ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[
+      c.key,
+      (data[c.key]||[]).reduce((s,i)=>s+(i[1]||0),0)
+    ]))
   };
 
   const existing=patrimoineHistory.find(h=>h.date===today);
@@ -3989,10 +4151,7 @@ let currentChartSeries=localStorage.getItem('finaryChartSeries')||'total';
 const chartSeriesConfig={
   total:{label:'Total',field:'net'},
   epargne:{label:'Épargne',field:'epargne'},
-  assurancevie:{label:'Assurance-vie',field:'assurancevie'},
-  bourse:{label:'Bourse',field:'bourse'},
-  crypto:{label:'Crypto',field:'crypto'},
-  autres:{label:'Autres',field:'autres'}
+  ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,{label:c.label,field:c.key}]))
 };
 
 function setChartRange(range){
@@ -4070,6 +4229,7 @@ function getFilteredChartPoints(){
 }
 
 function updateChartControls(){
+  renderChartSeriesControls();
   document.querySelectorAll('#chart-range-controls .chart-filter').forEach(btn=>{
     btn.classList.toggle('active',btn.dataset.range===currentChartRange);
   });
@@ -4331,10 +4491,11 @@ function renderAssetDistribution(){
 
   const cats=[
     {key:'epargne',label:'Épargne',color:'#3fb950'},
-    {key:'assurancevie',label:'AV',color:'#58a6ff'},
-    {key:'bourse',label:'Bourse',color:'#a371f7'},
-    {key:'crypto',label:'Crypto',color:'#d29922'},
-    {key:'autres',label:'Autres',color:'#f0883e'}
+    ...getActiveAssetCategoryKeys().map(key=>({
+      key,
+      label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label,
+      color:ASSET_CATEGORY_MAP[key].color
+    }))
   ];
 
   let total=0;
