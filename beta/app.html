@@ -1021,11 +1021,11 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
     </div>
 
-    <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
+    <div class="card" id="asset-section-epargne"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button id="assistantTargetAddSavings" class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
 
     <div id="optional-asset-categories"></div>
 
-    <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
+    <div class="card" id="asset-section-dettes"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button id="assistantTargetAddLoan" class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
     <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
   </div>
 
@@ -2805,7 +2805,7 @@ function renderOptionalAssetCategorySections(){
 
   host.innerHTML=getActiveAssetCategoryKeys().map(key=>{
     const c=ASSET_CATEGORY_MAP[key];
-    return `<div class="card">
+    return `<div class="card" id="asset-section-${c.key}">
       <div class="section-header">
         <h2>${c.icon} ${escapeHtml(c.label)}</h2>
         <div class="category-header-actions">
@@ -2814,7 +2814,7 @@ function renderOptionalAssetCategorySections(){
         </div>
       </div>
       <div class="rows-container" data-key="${c.key}"></div>
-      <button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>
+      <button id="assistantTargetAddAsset-${c.key}" class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>
     </div>`;
   }).join('');
 
@@ -6172,6 +6172,71 @@ const OFFLINE_ASSISTANT_KB=[
     target:'.asset-category-manager',targetTab:'patrimoine'
   },
   {
+    id:'add-savings',tabs:['patrimoine'],keywords:['livret','livret a','livret jeune','livret bleu','lep','ldds','pel','cel','compte epargne','épargne','ajouter livret','ajouter epargne','ajouter épargne','placer livret','ouvrir livret','renseigner livret'],
+    answer:"Un Livret A, un LEP, un LDDS ou un autre livret se range dans « Épargne ». Dans l’onglet Patrimoine, va dans la carte 💰 Épargne puis touche « + Ajouter ». Donne un nom à la ligne — par exemple « Livret A » ou « LEP » — puis touche le montant pour renseigner sa valeur actuelle.",
+    target:'#assistantTargetAddSavings',targetTab:'patrimoine',assetKey:'epargne',reveal:'asset-item'
+  },
+  {
+    id:'add-life-insurance',tabs:['patrimoine'],keywords:['assurance vie','assurance-vie','av','contrat assurance vie','ajouter assurance vie'],
+    answer:"Une assurance-vie se suit dans la catégorie « Assurance-vie » du Patrimoine. Si cette catégorie n’est pas encore affichée, utilise d’abord « Ajouter une catégorie d’actifs » et choisis Assurance-vie. Ensuite touche « + Ajouter » dans cette carte pour créer ton contrat et renseigner sa valeur.",
+    target:'#assistantTargetAddAsset-assurancevie',targetTab:'patrimoine',assetKey:'assurancevie',reveal:'asset-item'
+  },
+  {
+    id:'add-stock-market',tabs:['patrimoine'],keywords:['pea','etf','action','actions','bourse','compte titres','cto','ajouter pea','ajouter etf'],
+    answer:"Un PEA, un CTO, des ETF ou des actions se suivent dans la catégorie « Bourse ». Si Bourse n’est pas encore visible, ajoute d’abord cette catégorie depuis « Ajouter une catégorie d’actifs », puis utilise « + Ajouter » dans la carte Bourse.",
+    target:'#assistantTargetAddAsset-bourse',targetTab:'patrimoine',assetKey:'bourse',reveal:'asset-item'
+  },
+  {
+    id:'add-scpi',tabs:['patrimoine'],keywords:['scpi','pierre papier','ajouter scpi'],
+    answer:"Tes SCPI se suivent dans la catégorie « SCPI ». Si elle n’est pas encore affichée, ajoute-la depuis « Ajouter une catégorie d’actifs », puis touche « + Ajouter » dans la carte SCPI pour créer une ligne par placement ou contrat.",
+    target:'#assistantTargetAddAsset-scpi',targetTab:'patrimoine',assetKey:'scpi',reveal:'asset-item'
+  },
+  {
+    id:'add-crypto',tabs:['patrimoine'],keywords:['crypto','bitcoin','btc','ethereum','eth','binance','ajouter crypto'],
+    answer:"Les cryptomonnaies se suivent dans la catégorie « Crypto ». Si elle n’est pas visible, ajoute d’abord la catégorie Crypto, puis utilise « + Ajouter » pour créer par exemple une ligne Bitcoin, Ethereum ou un compte de plateforme.",
+    target:'#assistantTargetAddAsset-crypto',targetTab:'patrimoine',assetKey:'crypto',reveal:'asset-item'
+  },
+  {
+    id:'add-real-estate',tabs:['patrimoine'],keywords:['immobilier','maison','appartement','bien immobilier','résidence principale','residence principale','ajouter immobilier'],
+    answer:"Un bien immobilier se suit dans la catégorie « Immobilier ». Si elle n’est pas affichée, ajoute d’abord la catégorie Immobilier depuis le gestionnaire de catégories, puis touche « + Ajouter » pour renseigner le bien et sa valeur actuelle.",
+    target:'#assistantTargetAddAsset-immobilier',targetTab:'patrimoine',assetKey:'immobilier',reveal:'asset-item'
+  },
+  {
+    id:'add-per',tabs:['patrimoine'],keywords:['per','plan epargne retraite','plan épargne retraite','retraite','ajouter per'],
+    answer:"Un PER se suit dans la catégorie « PER / Retraite ». Si elle n’est pas encore visible, ajoute cette catégorie depuis « Ajouter une catégorie d’actifs », puis utilise « + Ajouter » pour créer ton contrat et renseigner sa valeur.",
+    target:'#assistantTargetAddAsset-per',targetTab:'patrimoine',assetKey:'per',reveal:'asset-item'
+  },
+  {
+    id:'add-crowdfunding',tabs:['patrimoine'],keywords:['crowdfunding','crowdlending','bienpreter','bienprêter','premiere brique','première brique'],
+    answer:"Les placements de crowdfunding ou crowdlending se suivent dans la catégorie « Crowdfunding / Crowdlending ». Ajoute cette catégorie si nécessaire, puis crée une ligne avec « + Ajouter ».",
+    target:'#assistantTargetAddAsset-crowdfunding',targetTab:'patrimoine',assetKey:'crowdfunding',reveal:'asset-item'
+  },
+  {
+    id:'add-private-equity',tabs:['patrimoine'],keywords:['private equity','non cote','non coté','capital investissement'],
+    answer:"Les investissements en Private Equity ou non coté se suivent dans la catégorie « Private Equity / Non coté ». Ajoute cette catégorie si elle n’est pas visible, puis utilise « + Ajouter ».",
+    target:'#assistantTargetAddAsset-privateequity',targetTab:'patrimoine',assetKey:'privateequity',reveal:'asset-item'
+  },
+  {
+    id:'add-metals',tabs:['patrimoine'],keywords:['or','argent metal','métaux précieux','metaux precieux','lingot','pièce or','piece or'],
+    answer:"L’or, l’argent et les autres métaux d’investissement se suivent dans « Métaux précieux ». Ajoute cette catégorie si nécessaire puis utilise « + Ajouter » pour créer tes lignes.",
+    target:'#assistantTargetAddAsset-metaux',targetTab:'patrimoine',assetKey:'metaux',reveal:'asset-item'
+  },
+  {
+    id:'add-social-shares',tabs:['patrimoine'],keywords:['parts sociales','part sociale','sociétaire','societaire'],
+    answer:"Les parts sociales se suivent dans la catégorie « Parts sociales ». Ajoute cette catégorie si besoin, puis crée une ligne avec « + Ajouter ».",
+    target:'#assistantTargetAddAsset-partssociales',targetTab:'patrimoine',assetKey:'partssociales',reveal:'asset-item'
+  },
+  {
+    id:'add-collection',tabs:['patrimoine'],keywords:['collection','montre collection','montres','objet de valeur','objets de valeur','pièce collection','piece collection'],
+    answer:"Les montres, pièces, bijoux ou autres objets de valeur peuvent être suivis dans « Objets de valeur / Collection ». Ajoute cette catégorie si nécessaire, puis utilise « + Ajouter » pour créer chaque objet ou ensemble.",
+    target:'#assistantTargetAddAsset-collection',targetTab:'patrimoine',assetKey:'collection',reveal:'asset-item'
+  },
+  {
+    id:'add-loan',tabs:['patrimoine'],keywords:['ajouter emprunt','ajouter credit','ajouter crédit','nouveau prêt','nouveau pret','capital restant du','capital restant dû'],
+    answer:"Pour ajouter un crédit ou un emprunt, va dans Patrimoine > 💳 Emprunts puis touche « + Ajouter ». La fiche permet de saisir le libellé, le montant initial, le capital restant dû, les dates, la mensualité et le taux. Seul le capital restant dû est déduit du patrimoine net.",
+    target:'#assistantTargetAddLoan',targetTab:'patrimoine'
+  },
+  {
     id:'patrimoine-chart',tabs:['patrimoine'],keywords:['graphique','evolution actifs','évolution actifs','courbe patrimoine','1m','3m','6m','1a'],
     answer:"Le graphique suit l’évolution des catégories d’actifs dans le temps. Les boutons 1M, 3M, 6M, 1A et Tout changent la période affichée, et les filtres de séries permettent de choisir les actifs visibles.",
     target:'#chart-wrapper',targetTab:'patrimoine'
@@ -6264,11 +6329,12 @@ const OFFLINE_ASSISTANT_KB=[
 
 const OFFLINE_ASSISTANT_QUICK={
   budget:['Comment ajouter une dépense ?','Comment ajouter un revenu ?','Comment fonctionne le reste à vivre ?','Comment clôturer un mois ?'],
-  patrimoine:['À quoi sert cet onglet ?','Patrimoine brut ou net ?','Comment ajouter une catégorie ?','Comment fonctionne le graphique ?'],
+  patrimoine:['Comment ajouter un livret d’épargne ?','Comment ajouter une assurance-vie ?','Comment ajouter un PEA ?','Comment ajouter un emprunt ?'],
   factures:['À quoi sert cet onglet ?','Comment ajouter une facture ?','Comment fonctionnent les garanties ?','Comment associer une facture à un véhicule ?'],
   vehicles:['À quoi sert cet onglet ?','Comment créer un plan d’entretien ?','Comment enregistrer plusieurs entretiens ?','Que signifie À prévoir ?']
 };
 
+const OFFLINE_ASSISTANT_ROUTER_VERSION='2026-08-28-r3';
 let offlineAssistantInitialized=false;
 let offlineAssistantLastEntry=null;
 let offlineAssistantWelcomeShown=false;
@@ -6311,8 +6377,8 @@ function offlineAssistantDetectDomains(query){
   const domains=new Set();
   const has=(re)=>re.test(q);
   const vehicle=has(/\b(vehicule|vehicules|voiture|voitures|auto|garage|entretien|entretiens|vidange|distribution|pompe a eau|plaquette|plaquettes|disque|disques|kilometrage|controle technique)\b/);
-  const invoice=has(/\b(facture|factures|garantie|garanties|justificatif|justificatifs)\b/);
-  const patrimoine=has(/\b(patrimoine|actif|actifs|epargne|assurance vie|bourse|scpi|crypto|emprunt|emprunts|credit|credits|capital restant|immobilier|per retraite)\b/);
+  const invoice=has(/\b(facture|factures|garantie|garanties|justificatif|justificatifs|ticket de caisse|recu)\b/);
+  const patrimoine=has(/\b(patrimoine|actif|actifs|epargne|livret|livret a|livret jeune|livret bleu|lep|ldds|pel|cel|compte epargne|assurance vie|pea|etf|bourse|action|actions|cto|scpi|crypto|bitcoin|btc|ethereum|eth|emprunt|emprunts|credit|credits|capital restant|immobilier|maison|appartement|per|retraite|crowdfunding|crowdlending|private equity|non cote|metaux precieux|parts sociales|collection|objet de valeur)\b/);
   const budget=has(/\b(budget|depense|depenses|revenu|revenus|entree|entrees|frais fixe|frais fixes|reste a vivre|cloturer|cloture|virement interne|virements internes|compte bancaire|comptes bancaires)\b/);
   if(vehicle)domains.add('vehicles');
   if(invoice)domains.add('factures');
@@ -6320,20 +6386,65 @@ function offlineAssistantDetectDomains(query){
   if(budget)domains.add('budget');
   // « dépenses véhicule » concerne le bilan véhicule, pas l'ajout d'une dépense mensuelle.
   if(vehicle&&has(/\b(depense|depenses|cout|couts)\b/))domains.delete('budget');
+  // Si la question parle explicitement d'un véhicule comme actif du patrimoine, priorité au Patrimoine.
+  if(vehicle&&has(/\b(patrimoine|actif|valeur)\b/))domains.add('patrimoine');
   return domains;
 }
 
 function offlineAssistantDirectIntent(query){
   const q=offlineAssistantNormalize(query);
-  const wantsAdd=/\b(ajout|ajouter|ajoute|creer|cree|nouveau|nouvelle|saisir|enregistrer|rentrer|mettre)\b/.test(q);
+  const wantsAdd=/\b(ajout|ajouter|ajoute|rajouter|creer|cree|nouveau|nouvelle|saisir|enregistrer|rentrer|mettre|integrer)\b/.test(q);
+  const wantsLocate=/\b(ou|ranger|classer|mettre|suivre|enregistrer|dans quelle|dans quel)\b/.test(q);
+
+  // 1) Objets métier très caractéristiques : ils priment sur le simple verbe « ajouter ».
+  if(/\b(livret|livret a|livret jeune|livret bleu|lep|ldds|pel|cel|compte epargne|produit epargne)\b/.test(q))return 'add-savings';
+  if((wantsAdd||wantsLocate)&&/\bepargne\b/.test(q)&&!/\b(retraite|per)\b/.test(q))return 'add-savings';
+  if(/\b(assurance vie|assurance-vie)\b/.test(q))return 'add-life-insurance';
+  if(/\b(pea|etf|compte titres|cto|action|actions|bourse)\b/.test(q))return 'add-stock-market';
+  if(/\bscpi\b/.test(q))return 'add-scpi';
+  if(/\b(crypto|bitcoin|btc|ethereum|eth|binance)\b/.test(q))return 'add-crypto';
+  if(/\b(per|plan epargne retraite|plan retraite)\b/.test(q))return 'add-per';
+  if(/\b(crowdfunding|crowdlending|bienpreter|bienpretrer|premiere brique)\b/.test(q))return 'add-crowdfunding';
+  if(/\b(private equity|non cote|capital investissement)\b/.test(q))return 'add-private-equity';
+  if(/\b(metaux precieux|lingot|piece or|or physique)\b/.test(q))return 'add-metals';
+  if(/\b(parts sociales|part sociale)\b/.test(q))return 'add-social-shares';
+  if(/\b(objet de valeur|objets de valeur|collection|montre collection|piece collection)\b/.test(q))return 'add-collection';
+  if(/\b(immobilier|bien immobilier|maison|appartement|residence principale)\b/.test(q)&&(wantsAdd||wantsLocate||/\bpatrimoine\b/.test(q)))return 'add-real-estate';
+  if(/\b(emprunt|emprunts|credit|credits|pret|prets)\b/.test(q)&&(wantsAdd||wantsLocate))return 'add-loan';
+
+  // 2) Actions Budget / Factures / Véhicules.
   if(wantsAdd&&/\b(depense|depenses)\b/.test(q)&&!/\b(vehicule|voiture|auto|facture)\b/.test(q))return 'add-expense';
   if(wantsAdd&&/\b(frais fixe|frais fixes|charge fixe|charges fixes)\b/.test(q))return 'add-fixed';
   if(wantsAdd&&/\b(revenu|revenus|entree|entrees|salaire)\b/.test(q))return 'add-income';
   if(/\b(virement interne|virements internes|transfert entre comptes)\b/.test(q))return 'add-transfer';
   if(wantsAdd&&/\b(facture|achat|justificatif)\b/.test(q))return 'add-invoice';
-  if(wantsAdd&&/\b(vehicule|voiture|auto)\b/.test(q))return 'add-vehicle';
+
+  // Un véhicule mentionné avec « patrimoine / actif / valeur » désigne la catégorie patrimoniale ; sinon le garage.
+  if(wantsAdd&&/\b(vehicule|voiture|auto)\b/.test(q)){
+    if(/\b(patrimoine|actif|valeur)\b/.test(q))return 'asset-category';
+    return 'add-vehicle';
+  }
   if(wantsAdd&&/\b(entretien|entretiens)\b/.test(q))return 'multi-maintenance';
   return '';
+}
+
+function offlineAssistantAssetQueryMatches(assetKey,normalizedQuery){
+  const q=normalizedQuery||'';
+  const patterns={
+    epargne:/\b(epargne|livret|livret a|livret jeune|livret bleu|lep|ldds|pel|cel|compte epargne)\b/,
+    assurancevie:/\b(assurance vie|assurance-vie)\b/,
+    bourse:/\b(pea|etf|bourse|action|actions|cto|compte titres)\b/,
+    scpi:/\bscpi\b/,
+    crypto:/\b(crypto|bitcoin|btc|ethereum|eth|binance)\b/,
+    immobilier:/\b(immobilier|bien immobilier|maison|appartement|residence principale)\b/,
+    per:/\b(per|plan epargne retraite|retraite)\b/,
+    crowdfunding:/\b(crowdfunding|crowdlending|bienpreter|premiere brique)\b/,
+    privateequity:/\b(private equity|non cote|capital investissement)\b/,
+    metaux:/\b(metaux precieux|lingot|piece or|or physique)\b/,
+    partssociales:/\b(parts sociales|part sociale)\b/,
+    collection:/\b(collection|objet de valeur|montre collection|piece collection)\b/
+  };
+  return Boolean(patterns[assetKey]?.test(q));
 }
 
 function offlineAssistantScore(entry,query,domains=new Set()){
@@ -6353,9 +6464,11 @@ function offlineAssistantScore(entry,query,domains=new Set()){
   const tabs=entry.tabs||[];
   if(domains.size){
     const matches=[...domains].filter(domain=>tabs.includes(domain)).length;
-    if(matches)score+=5*matches;
-    else score-=12;
+    if(matches)score+=7*matches;
+    else score-=18;
   }else if(tabs.includes(currentActiveTab))score+=1.5;
+  // Une entrée qui possède un assetKey est très spécifique : bonus si le nom de l'actif est explicitement cité.
+  if(entry.assetKey&&offlineAssistantAssetQueryMatches(entry.assetKey,nq))score+=12;
   return score;
 }
 
@@ -6365,18 +6478,42 @@ function offlineAssistantFindAnswer(query){
   if(/^(aide|help|bonjour|salut|hello)$/.test(normalized)){
     return OFFLINE_ASSISTANT_KB.find(e=>e.id===`${currentActiveTab}-overview`)||OFFLINE_ASSISTANT_KB.find(e=>e.id==='assistant-itself');
   }
+
+  // Les intentions métier explicites sont prioritaires sur tout classement statistique.
+  // Exemple : « livret d'épargne » doit toujours mener à Patrimoine > Épargne,
+  // même si la phrase contient un verbe générique comme « ajouter ».
   const directId=offlineAssistantDirectIntent(query);
   if(directId){
     const direct=OFFLINE_ASSISTANT_KB.find(entry=>entry.id===directId);
     if(direct)return direct;
   }
+
   const domains=offlineAssistantDetectDomains(query);
-  const ranked=OFFLINE_ASSISTANT_KB.map(entry=>({entry,score:offlineAssistantScore(entry,query,domains)})).sort((a,b)=>b.score-a.score);
+  let candidates=OFFLINE_ASSISTANT_KB;
+
+  // Lorsqu'un seul domaine est clairement identifié, on exclut totalement les réponses
+  // des autres onglets. Cela empêche par construction « livret » -> « véhicule ».
+  if(domains.size===1){
+    const onlyDomain=[...domains][0];
+    candidates=OFFLINE_ASSISTANT_KB.filter(entry=>(entry.tabs||[]).includes(onlyDomain));
+  }else if(domains.size>1){
+    // Plusieurs domaines peuvent être légitimes (ex. facture + véhicule). On garde
+    // uniquement les réponses appartenant à au moins l'un des domaines détectés.
+    candidates=OFFLINE_ASSISTANT_KB.filter(entry=>(entry.tabs||[]).some(tab=>domains.has(tab)));
+  }
+
+  const ranked=candidates
+    .map(entry=>({entry,score:offlineAssistantScore(entry,query,domains)}))
+    .sort((a,b)=>b.score-a.score);
   const best=ranked[0];
   const second=ranked[1];
   if(!best||best.score<4)return null;
-  // En cas de résultat très ambigu entre deux domaines, mieux vaut ne pas inventer.
-  if(second&&best.score-second.score<0.8&&domains.size===0&&best.score<8)return null;
+
+  // Sans objet/domaine explicite, une question ambiguë ne doit jamais être devinée.
+  if(domains.size===0){
+    if(second&&best.score-second.score<1.5&&best.score<10)return null;
+    if(/^((comment|ou) )?(ajouter|creer|modifier|supprimer)( quelque chose)?$/.test(normalized))return null;
+  }
   return best.entry;
 }
 
@@ -6409,9 +6546,28 @@ function offlineAssistantShowTarget(entry){
     const vehicle=getCurrentGarageVehicle();
     openVehicleModal(vehicle?.id||'');
   }
+  let resolvedTarget=entry.target;
+  if(entry.reveal==='asset-item'&&entry.assetKey){
+    if(entry.assetKey==='epargne'){
+      resolvedTarget='#assistantTargetAddSavings';
+    }else if(entry.assetKey==='dettes'){
+      resolvedTarget='#assistantTargetAddLoan';
+    }else{
+      const active=getActiveAssetCategoryKeys().includes(entry.assetKey);
+      if(active){
+        resolvedTarget=`#assistantTargetAddAsset-${entry.assetKey}`;
+      }else{
+        const panel=document.getElementById('asset-category-add-panel');
+        if(panel&&!panel.classList.contains('active'))toggleAssetCategoryPicker();
+        const select=document.getElementById('asset-category-select');
+        if(select&&Array.from(select.options).some(o=>o.value===entry.assetKey))select.value=entry.assetKey;
+        resolvedTarget='.asset-category-manager';
+      }
+    }
+  }
   setTimeout(()=>{
     let target=null;
-    try{target=document.querySelector(entry.target);}catch(_e){target=null;}
+    try{target=document.querySelector(resolvedTarget);}catch(_e){target=null;}
     if(!target||target.offsetParent===null){
       offlineAssistantAppendMessage("Cette zone n’est pas visible dans l’état actuel de l’application. Elle apparaîtra lorsqu’elle aura des données à afficher.",'bot');
       return;
