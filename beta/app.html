@@ -352,11 +352,17 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vehicle-cost-mini{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:8px 7px;text-align:center;min-width:0}
 .vehicle-cost-mini span{display:block;font-size:9px;color:#8b949e;line-height:1.25}
 .vehicle-cost-mini strong{display:block;font-size:12px;color:#c9d1d9;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.maintenance-history-group{background:#0d1117;border:1px solid #30363d;border-radius:11px;padding:10px 11px}
-.maintenance-history-date{font-size:12px;font-weight:800;color:#fff}
+.maintenance-history-group{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:11px 12px}
+.maintenance-history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.maintenance-history-date{font-size:13px;font-weight:900;color:#fff}
 .maintenance-history-meta{font-size:10px;color:#8b949e;margin-top:2px}
-.maintenance-history-types{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.maintenance-history-chip{display:inline-flex;padding:3px 7px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;font-size:10px;font-weight:700}
+.maintenance-history-actions{display:flex;gap:5px;flex:0 0 auto}
+.maintenance-history-action{width:34px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.maintenance-history-label{margin-top:10px;color:#8b949e;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.55px}
+.maintenance-history-types{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.maintenance-history-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:9px;background:rgba(35,134,54,.13);border:1px solid rgba(63,185,80,.38);color:#e6edf3;font-size:12px;font-weight:900;line-height:1.2}
+.maintenance-history-chip::before{content:'🔧';font-size:11px}
+.maintenance-history-count{display:inline-flex;align-items:center;margin-left:5px;padding:2px 6px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#8b949e;font-size:9px;font-weight:800;vertical-align:1px}
 @media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* Assistant d'aide 100 % hors ligne */
@@ -683,6 +689,26 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <div id="vehicleMaintenanceHistoryList" class="vehicle-list"></div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMaintenanceHistoryModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODIFICATION HISTORIQUE ENTRETIEN -->
+<div class="modal-overlay" id="vehicleMaintenanceHistoryEditModal">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehicleMaintenanceHistoryEditTitle">Modifier l'intervention</h3>
+    <div class="modal-field">
+      <label>Entretiens réalisés</label>
+      <div id="vehicleMaintenanceHistoryEditTypes" class="performed-maintenance-list"></div>
+    </div>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Date effectuée</label><input type="date" id="vehicleMaintenanceHistoryEditDate"></div>
+      <div class="modal-field"><label>Kilométrage</label><input type="number" id="vehicleMaintenanceHistoryEditMileage" inputmode="numeric" min="0"></div>
+    </div>
+    <div class="vehicle-section-note">La correction de cette intervention recalculera le dernier entretien et les prochaines échéances des types concernés.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMaintenanceHistoryEditModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleMaintenanceHistoryEdit()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -4200,6 +4226,7 @@ function submitPerformedMaintenance(){
 
   if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
   toUpdate.forEach(plan=>{
+    const before=normalizeMaintenancePlanItem(plan);
     plan.lastDate=date;
     plan.lastMileage=mileage;
     plan.legacy=false;
@@ -4207,6 +4234,7 @@ function submitPerformedMaintenance(){
     plan.legacyDueMileage=0;
 
     // Une ligne d'historique par type permet de conserver le détail d'une intervention multiple.
+    // On mémorise également l'état précédent pour permettre une correction/suppression propre.
     data.vehicleMaintenance.unshift({
       id:makeLocalId('mnt'),
       vehicleId:v.id,
@@ -4214,6 +4242,8 @@ function submitPerformedMaintenance(){
       title:String(plan.type||'Entretien'),
       date,
       mileage,
+      previousLastDate:before.lastDate||'',
+      previousLastMileage:before.lastMileage,
       amount:0,
       notes:'',
       invoiceId:'',
@@ -4312,14 +4342,17 @@ function getVehicleExpenses(vehicle){
   return {total,last12m,costPerKm:distance>0?total/distance:null,distance};
 }
 
+let maintenanceHistoryEditContext=null;
+
 function getVehicleMaintenanceHistoryGroups(vehicle){
   const rows=(data.vehicleMaintenance||[]).filter(m=>m?.vehicleId===vehicle.id&&m.date).slice();
   const groups=new Map();
   rows.forEach(row=>{
     const mileage=Math.max(0,Math.round(Number(row.mileage)||0));
     const key=`${row.date}|${mileage}`;
-    if(!groups.has(key))groups.set(key,{date:row.date,mileage,titles:[],amount:0});
+    if(!groups.has(key))groups.set(key,{key,date:row.date,mileage,titles:[],amount:0,rows:[]});
     const group=groups.get(key);
+    group.rows.push(row);
     const title=String(row.title||'Entretien').trim()||'Entretien';
     if(!group.titles.includes(title))group.titles.push(title);
     if(Number(row.amount)>0&&!row.invoiceId)group.amount+=Number(row.amount)||0;
@@ -4327,19 +4360,171 @@ function getVehicleMaintenanceHistoryGroups(vehicle){
   return [...groups.values()].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.mileage-a.mileage);
 }
 
-function openVehicleMaintenanceHistoryModal(){
+function resolveMaintenanceRowPlanId(vehicle,row){
+  const direct=String(row?.planId||'');
+  if(direct&&(vehicle.maintenancePlan||[]).some(p=>String(p.id)===direct))return direct;
+  const title=String(row?.title||'').trim().toLowerCase();
+  const match=(vehicle.maintenancePlan||[]).find(p=>String(p.type||'').trim().toLowerCase()===title);
+  return match?String(match.id):'';
+}
+
+function getLatestMaintenanceHistoryForPlan(vehicle,planId){
+  return (data.vehicleMaintenance||[])
+    .filter(row=>row?.vehicleId===vehicle.id&&row.date&&resolveMaintenanceRowPlanId(vehicle,row)===String(planId))
+    .slice()
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(Number(b.mileage)||0)-(Number(a.mileage)||0))[0]||null;
+}
+
+function syncVehicleMaintenancePlansFromHistory(vehicle,planIds,fallbacks={}){
+  const ids=[...new Set((planIds||[]).map(String).filter(Boolean))];
+  ids.forEach(planId=>{
+    const plan=(vehicle.maintenancePlan||[]).find(p=>String(p.id)===planId);
+    if(!plan)return;
+    const latest=getLatestMaintenanceHistoryForPlan(vehicle,planId);
+    if(latest){
+      plan.lastDate=latest.date||'';
+      plan.lastMileage=(latest.mileage===''||latest.mileage===null||latest.mileage===undefined)?'':Math.max(0,Math.round(Number(latest.mileage)||0));
+      plan.legacy=false;
+      plan.legacyDueDate='';
+      plan.legacyDueMileage=0;
+      return;
+    }
+    const fallback=fallbacks[planId];
+    if(fallback){
+      plan.lastDate=fallback.lastDate||'';
+      plan.lastMileage=(fallback.lastMileage===''||fallback.lastMileage===null||fallback.lastMileage===undefined)?'':Math.max(0,Math.round(Number(fallback.lastMileage)||0));
+    }else{
+      plan.lastDate='';
+      plan.lastMileage='';
+    }
+  });
+}
+
+function findVehicleMaintenanceHistoryGroup(vehicle,date,mileage){
+  const targetMileage=Math.max(0,Math.round(Number(mileage)||0));
+  return getVehicleMaintenanceHistoryGroups(vehicle).find(group=>group.date===date&&group.mileage===targetMileage)||null;
+}
+
+function renderVehicleMaintenanceHistoryModal(){
   const v=getCurrentGarageVehicle();if(!v)return;
   const host=document.getElementById('vehicleMaintenanceHistoryList');
   const title=document.getElementById('vehicleMaintenanceHistoryTitle');
   if(!host||!title)return;
   title.textContent=`Historique des entretiens · ${getGarageVehicleLabel(v.id)}`;
   const groups=getVehicleMaintenanceHistoryGroups(v);
-  host.innerHTML=groups.length?groups.map(group=>`<div class="maintenance-history-group"><div class="maintenance-history-date">${escapeHtml(formatDateFR(group.date))}</div><div class="maintenance-history-meta">${group.mileage?`${group.mileage.toLocaleString('fr-FR')} km`: 'Kilométrage non renseigné'}${group.amount>0?` · ${euro(group.amount)}`:''}</div><div class="maintenance-history-types">${group.titles.map(type=>`<span class="maintenance-history-chip">${escapeHtml(type)}</span>`).join('')}</div></div>`).join(''):'<div class="vehicle-empty">Aucun entretien effectué n’est encore enregistré pour ce véhicule.</div>';
+  host.innerHTML=groups.length?groups.map(group=>`<div class="maintenance-history-group">
+    <div class="maintenance-history-head">
+      <div><div class="maintenance-history-date">${escapeHtml(formatDateFR(group.date))}<span class="maintenance-history-count">${group.titles.length} entretien${group.titles.length>1?'s':''}</span></div><div class="maintenance-history-meta">${group.mileage?`${group.mileage.toLocaleString('fr-FR')} km`:'Kilométrage non renseigné'}${group.amount>0?` · ${euro(group.amount)}`:''}</div></div>
+      <div class="maintenance-history-actions"><button class="btn btn-secondary maintenance-history-action" onclick="openVehicleMaintenanceHistoryEditModal('${escapeHtml(group.date)}',${group.mileage})" title="Modifier l'intervention" aria-label="Modifier l'intervention">✏️</button><button class="btn btn-secondary maintenance-history-action" style="color:#f85149" onclick="deleteVehicleMaintenanceHistoryGroup('${escapeHtml(group.date)}',${group.mileage})" title="Supprimer l'intervention" aria-label="Supprimer l'intervention">🗑️</button></div>
+    </div>
+    <div class="maintenance-history-label">Entretiens réalisés</div>
+    <div class="maintenance-history-types">${group.titles.map(type=>`<span class="maintenance-history-chip">${escapeHtml(type)}</span>`).join('')}</div>
+  </div>`).join(''):'<div class="vehicle-empty">Aucun entretien effectué n’est encore enregistré pour ce véhicule.</div>';
+}
+
+function openVehicleMaintenanceHistoryModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  renderVehicleMaintenanceHistoryModal();
   document.getElementById('vehicleMaintenanceHistoryModal').classList.add('active');
 }
 
 function closeVehicleMaintenanceHistoryModal(){
   document.getElementById('vehicleMaintenanceHistoryModal')?.classList.remove('active');
+}
+
+function openVehicleMaintenanceHistoryEditModal(date,mileage){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const group=findVehicleMaintenanceHistoryGroup(v,date,mileage);if(!group)return;
+  maintenanceHistoryEditContext={vehicleId:v.id,date:group.date,mileage:group.mileage,rowIds:group.rows.map(row=>String(row.id||''))};
+  const selectedIds=new Set(group.rows.map(row=>resolveMaintenanceRowPlanId(v,row)).filter(Boolean));
+  const selectedTitles=new Set(group.rows.map(row=>String(row.title||'').trim().toLowerCase()).filter(Boolean));
+  const host=document.getElementById('vehicleMaintenanceHistoryEditTypes');
+  const plans=(v.maintenancePlan||[]).map(normalizeMaintenancePlanItem).filter(p=>p.type);
+  host.innerHTML=plans.map(plan=>{
+    const checked=selectedIds.has(String(plan.id))||selectedTitles.has(String(plan.type||'').trim().toLowerCase());
+    return `<label class="performed-maintenance-choice"><input type="checkbox" name="maintenanceHistoryEditPlan" value="${escapeHtml(plan.id)}" ${checked?'checked':''}><span>${escapeHtml(plan.type)}</span></label>`;
+  }).join('');
+  document.getElementById('vehicleMaintenanceHistoryEditDate').value=group.date||'';
+  document.getElementById('vehicleMaintenanceHistoryEditMileage').value=group.mileage||'';
+  document.getElementById('vehicleMaintenanceHistoryEditTitle').textContent=`Modifier l'intervention · ${getGarageVehicleLabel(v.id)}`;
+  document.getElementById('vehicleMaintenanceHistoryEditModal').classList.add('active');
+}
+
+function closeVehicleMaintenanceHistoryEditModal(){
+  document.getElementById('vehicleMaintenanceHistoryEditModal')?.classList.remove('active');
+  maintenanceHistoryEditContext=null;
+}
+
+function submitVehicleMaintenanceHistoryEdit(){
+  const ctx=maintenanceHistoryEditContext;if(!ctx)return;
+  const v=getGarageVehicleById(ctx.vehicleId);if(!v)return;
+  const selectedIds=[...document.querySelectorAll('#vehicleMaintenanceHistoryEditTypes input[name="maintenanceHistoryEditPlan"]:checked')].map(input=>String(input.value||'')).filter(Boolean);
+  if(!selectedIds.length){alert('Sélectionne au moins un entretien réalisé.');return;}
+  const date=document.getElementById('vehicleMaintenanceHistoryEditDate')?.value||'';
+  const mileageRaw=document.getElementById('vehicleMaintenanceHistoryEditMileage')?.value??'';
+  if(!date){alert("Renseigne la date de l'intervention.");return;}
+  if(mileageRaw===''){alert("Renseigne le kilométrage de l'intervention.");return;}
+  const mileage=Math.max(0,Math.round(Number(mileageRaw)||0));
+  if(date>dateToLocalISO(new Date())){alert("La date de l'intervention ne peut pas être dans le futur.");return;}
+
+  const rowIdSet=new Set(ctx.rowIds);
+  const oldRows=(data.vehicleMaintenance||[]).filter(row=>rowIdSet.has(String(row.id||'')));
+  const affectedPlanIds=new Set(oldRows.map(row=>resolveMaintenanceRowPlanId(v,row)).filter(Boolean));
+  selectedIds.forEach(id=>affectedPlanIds.add(id));
+  const fallbacks={};
+  oldRows.forEach(row=>{
+    const pid=resolveMaintenanceRowPlanId(v,row);if(!pid||fallbacks[pid])return;
+    if(row.previousLastDate!==undefined||row.previousLastMileage!==undefined){fallbacks[pid]={lastDate:row.previousLastDate||'',lastMileage:row.previousLastMileage};}
+  });
+
+  const metadataByPlan=new Map();
+  oldRows.forEach(row=>{
+    const pid=resolveMaintenanceRowPlanId(v,row);
+    if(pid&&!metadataByPlan.has(pid))metadataByPlan.set(pid,row);
+  });
+  data.vehicleMaintenance=(data.vehicleMaintenance||[]).filter(row=>!rowIdSet.has(String(row.id||'')));
+
+  selectedIds.forEach(planId=>{
+    const plan=(v.maintenancePlan||[]).find(p=>String(p.id)===planId);if(!plan)return;
+    const previous=metadataByPlan.get(planId);
+    data.vehicleMaintenance.unshift({
+      ...(previous||{}),
+      id:previous?.id||makeLocalId('mnt'),
+      vehicleId:v.id,
+      planId:String(plan.id||''),
+      title:String(plan.type||'Entretien'),
+      date,
+      mileage,
+      previousLastDate:previous?.previousLastDate??'',
+      previousLastMileage:previous?.previousLastMileage??'',
+      amount:Number(previous?.amount)||0,
+      notes:String(previous?.notes||''),
+      invoiceId:String(previous?.invoiceId||''),
+      source:previous?.source||'performed-maintenance'
+    });
+  });
+
+  syncVehicleMaintenancePlansFromHistory(v,[...affectedPlanIds],fallbacks);
+  closeVehicleMaintenanceHistoryEditModal();
+  save();renderVehicles();renderVehicleMaintenanceHistoryModal();
+}
+
+function deleteVehicleMaintenanceHistoryGroup(date,mileage){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const group=findVehicleMaintenanceHistoryGroup(v,date,mileage);if(!group)return;
+  const label=group.titles.join(' + ');
+  if(!confirm(`Supprimer cette intervention du ${formatDateFR(group.date)}${group.mileage?` à ${group.mileage.toLocaleString('fr-FR')} km`:''} ?\n\n${label}\n\nLes prochaines échéances des entretiens concernés seront recalculées.`))return;
+  const rowIds=new Set(group.rows.map(row=>String(row.id||'')));
+  const affectedPlanIds=new Set();
+  const fallbacks={};
+  group.rows.forEach(row=>{
+    const pid=resolveMaintenanceRowPlanId(v,row);if(!pid)return;
+    affectedPlanIds.add(pid);
+    if(!fallbacks[pid]&&(row.previousLastDate!==undefined||row.previousLastMileage!==undefined))fallbacks[pid]={lastDate:row.previousLastDate||'',lastMileage:row.previousLastMileage};
+  });
+  data.vehicleMaintenance=(data.vehicleMaintenance||[]).filter(row=>!rowIds.has(String(row.id||'')));
+  syncVehicleMaintenancePlansFromHistory(v,[...affectedPlanIds],fallbacks);
+  save();renderVehicles();renderVehicleMaintenanceHistoryModal();
 }
 
 function openPerformedMaintenanceFromAlert(vehicleId,planId){
@@ -6033,7 +6218,7 @@ const OFFLINE_ASSISTANT_KB=[
   },
   {
     id:'maintenance-history',tabs:['vehicles'],keywords:['historique entretien','historique des entretiens','ancien entretien','interventions'],
-    answer:"« Historique » affiche les entretiens déjà enregistrés pour le véhicule. Lorsque plusieurs opérations ont été réalisées le même jour au même kilométrage, elles sont regroupées comme une seule intervention de garage.",
+    answer:"« Historique » affiche les entretiens déjà enregistrés pour le véhicule. Les types réalisés sont mis en évidence ; plusieurs opérations du même jour au même kilométrage sont regroupées. Les boutons ✏️ et 🗑️ permettent de corriger ou supprimer une intervention et les échéances sont recalculées.",
     target:'#assistantTargetMaintenanceHistory',targetTab:'vehicles'
   },
   {
