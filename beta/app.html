@@ -274,7 +274,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 
 
 /* =========================================================
-   VÉHICULES / CARNET D'ENTRETIEN
+   VÉHICULES / PLAN D'ENTRETIEN
    ========================================================= */
 .vehicle-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .vehicle-tabs::-webkit-scrollbar{display:none}
@@ -316,11 +316,23 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .maintenance-plan-row{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:11px}
 .maintenance-plan-row-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
 .maintenance-plan-row-head strong{font-size:12px;color:#fff}
-.maintenance-plan-remove{border:0;background:transparent;color:#f85149;font-size:18px;line-height:1;padding:5px 7px;border-radius:7px;cursor:pointer}
-.maintenance-plan-remove:hover{background:rgba(248,81,73,.10)}
+.maintenance-plan-toggle{display:flex;align-items:center;gap:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;min-width:0}
+.maintenance-plan-toggle input{width:18px;height:18px;accent-color:#238636;cursor:pointer;flex:0 0 auto}
+.maintenance-plan-row.is-disabled{padding-top:9px;padding-bottom:9px;opacity:.76}
+.maintenance-plan-row.is-disabled .maintenance-plan-row-head{margin-bottom:0}
 .maintenance-plan-preview{margin-top:8px;padding:8px 9px;border-radius:8px;background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;line-height:1.45}
 .maintenance-plan-preview strong{color:#c9d1d9}
 .maintenance-plan-legacy{color:#d29922}
+.vehicle-plan-summary{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.vehicle-plan-summary-item{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px 10px}
+.vehicle-plan-summary-item-title{font-size:12px;font-weight:800;color:#fff}
+.vehicle-plan-summary-item-meta{font-size:10px;color:#8b949e;line-height:1.45;margin-top:3px}
+.vehicle-plan-modal-tools{display:flex;gap:6px;margin-top:10px;margin-bottom:2px}
+.vehicle-plan-modal-tools .btn{font-size:10px;padding:6px 8px}
+.performed-maintenance-list{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow-y:auto;padding:2px}
+.performed-maintenance-choice{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid #30363d;border-radius:10px;background:#0d1117;color:#e6edf3;font-size:13px;font-weight:700;cursor:pointer}
+.performed-maintenance-choice input{width:19px;height:19px;accent-color:#238636;flex:0 0 auto}
+.performed-maintenance-choice:has(input:checked){border-color:#2ea043;background:rgba(35,134,54,.12)}
 @media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
@@ -539,7 +551,8 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       <div class="modal-field"><label>Modèle</label><input type="text" id="vehicleModel" placeholder="Ex : Kodiaq"></div>
       <div class="modal-field"><label>Immatriculation</label><input type="text" id="vehicleRegistration" placeholder="AA-123-BB"></div>
       <div class="modal-field"><label>Année</label><input type="number" id="vehicleYear" inputmode="numeric" min="1900" max="2100" placeholder="2019"></div>
-      <div class="modal-field"><label>Motorisation</label><input type="text" id="vehicleFuel" placeholder="Ex : Essence 1.5 TSI"></div>
+      <div class="modal-field"><label>Type de véhicule</label><select id="vehiclePowertrainType" class="invoice-select"><option value="">Sélectionner</option><option value="Thermique">Thermique</option><option value="Hybride">Hybride</option><option value="Électrique">Électrique</option></select></div>
+      <div class="modal-field"><label>Motorisation</label><input type="text" id="vehicleFuel" placeholder="Ex : Essence 1.5 TSI / 100 % électrique"></div>
       <div class="modal-field"><label>1re mise en circulation</label><input type="date" id="vehicleFirstRegistration"></div>
       <div class="modal-field"><label>Kilométrage actuel</label><input type="number" id="vehicleMileage" inputmode="numeric" min="0" placeholder="91250"></div>
       <div class="modal-field"><label>Date du relevé</label><input type="date" id="vehicleMileageDate"></div>
@@ -549,20 +562,32 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div class="vehicle-maintenance-plan-block">
       <div class="section-header">
         <h2 style="font-size:14px">🔧 Plan d'entretien</h2>
-        <button type="button" class="btn btn-primary" onclick="addVehicleMaintenancePlanRow()" style="padding:6px 8px;font-size:10px">＋ Entretien</button>
+        <button type="button" class="btn btn-primary" onclick="openVehiclePlanModal()" style="padding:6px 9px;font-size:10px">Créer un plan d'entretien</button>
       </div>
-      <div class="vehicle-section-note">Pour chaque entretien, indique le dernier entretien réalisé et sa périodicité. L'application calculera automatiquement la prochaine échéance par date et/ou kilométrage.</div>
-      <div id="vehicleMaintenancePlanEditor" class="vehicle-maintenance-plan-editor"></div>
-      <datalist id="maintenanceTypeSuggestions">
-        <option value="Vidange moteur"><option value="Filtre à huile"><option value="Filtre à air"><option value="Filtre habitacle">
-        <option value="Bougies"><option value="Liquide de frein"><option value="Liquide de refroidissement"><option value="Courroie de distribution">
-        <option value="Courroie accessoires"><option value="Entretien boîte de vitesses"><option value="Pneus"><option value="Batterie">
-      </datalist>
+      <div class="vehicle-section-note">Choisis les entretiens à suivre et définis leur périodicité. Les prochaines échéances seront ensuite calculées automatiquement.</div>
+      <div id="vehicleMaintenancePlanSummary" class="vehicle-plan-summary"></div>
     </div>
 
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="submitVehicleModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLAN D'ENTRETIEN -->
+<div class="modal-overlay" id="vehiclePlanModal">
+  <div class="modal" style="max-width:560px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehiclePlanModalTitle">Créer un plan d'entretien</h3>
+    <div class="vehicle-section-note">Coche les entretiens à suivre. Pour chacun, indique la date et le kilométrage du dernier entretien, puis sa périodicité en durée et/ou en kilomètres.</div>
+    <div class="vehicle-plan-modal-tools">
+      <button type="button" class="btn btn-secondary" onclick="setAllVehiclePlanItems(true)">Tout sélectionner</button>
+      <button type="button" class="btn btn-secondary" onclick="setAllVehiclePlanItems(false)">Tout désélectionner</button>
+    </div>
+    <div id="vehiclePlanEditor" class="vehicle-maintenance-plan-editor"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehiclePlanModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehiclePlanModal()">Valider le plan</button>
     </div>
   </div>
 </div>
@@ -585,14 +610,14 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
   <div class="modal" style="max-width:440px;">
     <h3 id="performedMaintenanceModalTitle">Ajouter un entretien</h3>
     <div class="modal-field">
-      <label>Type d'entretien</label>
-      <select id="performedMaintenancePlanSelect" class="invoice-select"></select>
+      <label>Entretiens réalisés</label>
+      <div id="performedMaintenancePlanList" class="performed-maintenance-list"></div>
     </div>
     <div class="vehicle-grid">
       <div class="modal-field"><label>Date effectuée</label><input type="date" id="performedMaintenanceDate"></div>
       <div class="modal-field"><label>Kilométrage</label><input type="number" id="performedMaintenanceMileage" inputmode="numeric" min="0" placeholder="Ex : 97000"></div>
     </div>
-    <div class="vehicle-section-note">L'entretien sélectionné sera automatiquement mis à jour dans le plan du véhicule et sa prochaine échéance sera recalculée.</div>
+    <div class="vehicle-section-note">Sélectionne tous les entretiens réalisés lors de cette intervention. La même date et le même kilométrage mettront à jour chaque type sélectionné et recalculeront leurs prochaines échéances.</div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closePerformedMaintenanceModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="submitPerformedMaintenance()">Enregistrer</button>
@@ -3597,7 +3622,7 @@ function resetHistory(){
 
 
 /* =========================================================
-   VÉHICULES / CARNET D'ENTRETIEN
+   VÉHICULES / PLAN D'ENTRETIEN
    ========================================================= */
 let currentGarageVehicleId='';
 let vehicleEditId='';
@@ -3637,6 +3662,29 @@ function populateInvoiceVehicleSelect(selected=''){
 }
 
 let vehicleMaintenancePlanDraft=[];
+let vehiclePlanModalDraft=[];
+
+const VEHICLE_MAINTENANCE_TYPES=[
+  'Vidange moteur',
+  'Filtre à huile',
+  'Filtre à air',
+  'Filtre habitacle',
+  'Bougies',
+  'Liquide de frein',
+  'Liquide de refroidissement',
+  'Courroie de distribution',
+  'Pompe à eau',
+  'Disques de freins',
+  'Plaquettes de freins',
+  'Courroie accessoires',
+  'Entretien boîte de vitesses',
+  'Pneus',
+  'Batterie'
+];
+
+function maintenanceTypeKey(value){
+  return String(value||'').trim().toLocaleLowerCase('fr-FR');
+}
 
 function getMaintenancePlanComputedSchedule(vehicle,item){
   const plan=normalizeMaintenancePlanItem(item);
@@ -3693,60 +3741,143 @@ function maintenancePlanPreviewHtml(item){
   return parts.length?`Calcul automatique : ${parts.join(' · ')}`:'La prochaine échéance sera calculée dès qu’une périodicité valide sera renseignée.';
 }
 
-function renderVehicleMaintenancePlanEditor(){
-  const host=document.getElementById('vehicleMaintenancePlanEditor');
+function renderVehicleMaintenancePlanSummary(){
+  const host=document.getElementById('vehicleMaintenancePlanSummary');
   if(!host)return;
-  if(!vehicleMaintenancePlanDraft.length){
-    host.innerHTML='<div class="vehicle-empty" style="padding:12px 6px">Aucun entretien périodique configuré.</div>';
+  const plan=(vehicleMaintenancePlanDraft||[]).map(normalizeMaintenancePlanItem);
+  if(!plan.length){
+    host.innerHTML='<div class="vehicle-empty" style="padding:12px 6px">Aucun plan d’entretien défini.</div>';
     return;
   }
-  host.innerHTML=vehicleMaintenancePlanDraft.map((raw,index)=>{
+  const fakeVehicle={mileage:Number(document.getElementById('vehicleMileage')?.value)||0};
+  host.innerHTML=plan.map(item=>{
+    const sc=getMaintenancePlanComputedSchedule(fakeVehicle,item);
+    const last=[];
+    if(item.lastDate)last.push(formatDateFR(item.lastDate));
+    if(item.lastMileage!=='')last.push(`${Number(item.lastMileage).toLocaleString('fr-FR')} km`);
+    const period=[];
+    if(item.intervalMonths>0)period.push(`${item.intervalMonths} mois`);
+    if(item.intervalKm>0)period.push(`${Number(item.intervalKm).toLocaleString('fr-FR')} km`);
+    const next=[];
+    if(sc.dueDate)next.push(formatDateFR(sc.dueDate));
+    if(Number(sc.dueMileage)>0)next.push(`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`);
+    const lines=[];
+    if(last.length)lines.push(`Dernier : ${last.join(' · ')}`);
+    if(period.length)lines.push(`Périodicité : ${period.join(' / ')}`);
+    if(next.length)lines.push(`Prochaine échéance : ${next.join(' ou ')}`);
+    if(item.legacy&&!(item.intervalMonths>0||item.intervalKm>0))lines.push('Ancienne échéance conservée à convertir.');
+    return `<div class="vehicle-plan-summary-item"><div class="vehicle-plan-summary-item-title">${escapeHtml(item.type||'Entretien')}</div><div class="vehicle-plan-summary-item-meta">${lines.map(escapeHtml).join('<br>')||'Configuration à compléter.'}</div></div>`;
+  }).join('');
+}
+
+function buildVehiclePlanModalDraft(){
+  const existing=(vehicleMaintenancePlanDraft||[]).map(normalizeMaintenancePlanItem);
+  const standardKeys=new Set(VEHICLE_MAINTENANCE_TYPES.map(maintenanceTypeKey));
+  const rows=VEHICLE_MAINTENANCE_TYPES.map(type=>{
+    const found=existing.find(item=>maintenanceTypeKey(item.type)===maintenanceTypeKey(type));
+    if(found)return {...found,type,enabled:true,builtin:true};
+    return {...normalizeMaintenancePlanItem({id:makeLocalId('plan'),type,lastDate:'',lastMileage:'',intervalMonths:0,intervalKm:0,notes:''}),enabled:false,builtin:true};
+  });
+  // Conserve également les anciens entretiens personnalisés/issus d'une migration.
+  existing.filter(item=>!standardKeys.has(maintenanceTypeKey(item.type))).forEach(item=>rows.push({...item,enabled:true,builtin:false}));
+  vehiclePlanModalDraft=rows;
+}
+
+function renderVehiclePlanModalEditor(){
+  const host=document.getElementById('vehiclePlanEditor');
+  if(!host)return;
+  host.innerHTML=vehiclePlanModalDraft.map(raw=>{
     const p=normalizeMaintenancePlanItem(raw);
-    return `<div class="maintenance-plan-row">
-      <div class="maintenance-plan-row-head"><strong>Entretien ${index+1}</strong><button type="button" class="maintenance-plan-remove" onclick="removeVehicleMaintenancePlanRow('${p.id}')" title="Supprimer cet entretien">×</button></div>
-      <div class="modal-field"><label>Type d'entretien</label><input type="text" list="maintenanceTypeSuggestions" value="${escapeHtml(p.type)}" placeholder="Ex : Vidange moteur" oninput="updateVehicleMaintenancePlanDraft('${p.id}','type',this.value)"></div>
-      <div class="vehicle-grid">
-        <div class="modal-field"><label>Date du dernier entretien</label><input type="date" value="${escapeHtml(p.lastDate)}" onchange="updateVehicleMaintenancePlanDraft('${p.id}','lastDate',this.value,true)"></div>
-        <div class="modal-field"><label>Kilométrage au dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehicleMaintenancePlanDraft('${p.id}','lastMileage',this.value,true)"></div>
-        <div class="modal-field"><label>Périodicité en temps (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehicleMaintenancePlanDraft('${p.id}','intervalMonths',this.value,true)"></div>
-        <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehicleMaintenancePlanDraft('${p.id}','intervalKm',this.value,true)"></div>
+    const enabled=raw.enabled!==false;
+    return `<div class="maintenance-plan-row ${enabled?'':'is-disabled'}">
+      <div class="maintenance-plan-row-head">
+        <label class="maintenance-plan-toggle"><input type="checkbox" ${enabled?'checked':''} onchange="toggleVehiclePlanItem('${p.id}',this.checked)"><strong>${escapeHtml(p.type||'Entretien')}</strong></label>
       </div>
-      <div class="modal-field"><label>Notes <span style="text-transform:none;font-weight:500">(facultatif)</span></label><input type="text" value="${escapeHtml(p.notes)}" placeholder="Ex : huile 5W30, filtre inclus…" oninput="updateVehicleMaintenancePlanDraft('${p.id}','notes',this.value)"></div>
-      <div class="maintenance-plan-preview" id="maintenance-plan-preview-${p.id}">${maintenancePlanPreviewHtml(p)}</div>
+      ${enabled?`<div class="vehicle-grid">
+        <div class="modal-field"><label>Date du dernier entretien</label><input type="date" value="${escapeHtml(p.lastDate)}" onchange="updateVehiclePlanModalDraft('${p.id}','lastDate',this.value,true)"></div>
+        <div class="modal-field"><label>Kilométrage du dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehiclePlanModalDraft('${p.id}','lastMileage',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité durée (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehiclePlanModalDraft('${p.id}','intervalMonths',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehiclePlanModalDraft('${p.id}','intervalKm',this.value,true)"></div>
+      </div>
+      <div class="maintenance-plan-preview" id="vehicle-plan-preview-${p.id}">${maintenancePlanPreviewHtml(p)}</div>`:''}
     </div>`;
   }).join('');
 }
 
-function updateMaintenancePlanPreview(id){
-  const row=vehicleMaintenancePlanDraft.find(x=>String(x.id)===String(id));
-  const el=document.getElementById(`maintenance-plan-preview-${id}`);
+function updateVehiclePlanPreview(id){
+  const row=vehiclePlanModalDraft.find(item=>String(item.id)===String(id));
+  const el=document.getElementById(`vehicle-plan-preview-${id}`);
   if(row&&el)el.innerHTML=maintenancePlanPreviewHtml(row);
 }
 
-function updateVehicleMaintenancePlanDraft(id,field,value,refreshPreview=false){
-  const row=vehicleMaintenancePlanDraft.find(x=>String(x.id)===String(id));
+function updateVehiclePlanModalDraft(id,field,value,refreshPreview=false){
+  const row=vehiclePlanModalDraft.find(item=>String(item.id)===String(id));
   if(!row)return;
   if(field==='lastMileage')row[field]=value===''?'':Math.max(0,Math.round(Number(value)||0));
   else if(field==='intervalMonths'||field==='intervalKm')row[field]=Math.max(0,Math.round(Number(value)||0));
   else row[field]=value;
-  if(refreshPreview)updateMaintenancePlanPreview(id);
+  if(refreshPreview)updateVehiclePlanPreview(id);
 }
 
-function addVehicleMaintenancePlanRow(){
-  vehicleMaintenancePlanDraft.push(normalizeMaintenancePlanItem({id:makeLocalId('plan'),type:'',lastDate:'',lastMileage:'',intervalMonths:0,intervalKm:0,notes:''}));
-  renderVehicleMaintenancePlanEditor();
-  const host=document.getElementById('vehicleMaintenancePlanEditor');
-  if(host)setTimeout(()=>host.lastElementChild?.querySelector('input')?.focus(),20);
-}
-
-function removeVehicleMaintenancePlanRow(id){
-  const row=vehicleMaintenancePlanDraft.find(x=>String(x.id)===String(id));
+function toggleVehiclePlanItem(id,enabled){
+  const row=vehiclePlanModalDraft.find(item=>String(item.id)===String(id));
   if(!row)return;
-  const label=row.type||'cet entretien';
-  const hasData=Boolean(row.type||row.lastDate||row.lastMileage!==''||row.intervalMonths||row.intervalKm||row.legacyDueDate||row.legacyDueMileage);
-  if(hasData&&!confirm(`Supprimer « ${label} » du plan d'entretien ?`))return;
-  vehicleMaintenancePlanDraft=vehicleMaintenancePlanDraft.filter(x=>String(x.id)!==String(id));
-  renderVehicleMaintenancePlanEditor();
+  row.enabled=Boolean(enabled);
+  renderVehiclePlanModalEditor();
+}
+
+function setAllVehiclePlanItems(enabled){
+  vehiclePlanModalDraft.forEach(item=>item.enabled=Boolean(enabled));
+  renderVehiclePlanModalEditor();
+}
+
+function openVehiclePlanModal(){
+  buildVehiclePlanModalDraft();
+  const label=[document.getElementById('vehicleMake')?.value.trim(),document.getElementById('vehicleModel')?.value.trim()].filter(Boolean).join(' ')||document.getElementById('vehicleRegistration')?.value.trim()||'Nouveau véhicule';
+  document.getElementById('vehiclePlanModalTitle').textContent=`Créer un plan d'entretien · ${label}`;
+  renderVehiclePlanModalEditor();
+  document.getElementById('vehiclePlanModal').classList.add('active');
+}
+
+function closeVehiclePlanModal(){
+  const modal=document.getElementById('vehiclePlanModal');
+  if(modal)modal.classList.remove('active');
+  vehiclePlanModalDraft=[];
+}
+
+function validateSelectedVehiclePlan(rows){
+  const cleaned=[];
+  for(const raw of rows){
+    const p=normalizeMaintenancePlanItem(raw);
+    const hasLegacy=Boolean(p.legacyDueDate||p.legacyDueMileage>0);
+    if(!p.type){alert("Un type d'entretien est manquant.");return null;}
+    if(p.legacy&&hasLegacy&&p.intervalMonths<=0&&p.intervalKm<=0){
+      cleaned.push(p);
+      continue;
+    }
+    if(!p.lastDate){alert(`Renseigne la date du dernier entretien pour « ${p.type} ».`);return null;}
+    if(p.lastMileage===''){alert(`Renseigne le kilométrage du dernier entretien pour « ${p.type} ».`);return null;}
+    if(p.intervalMonths<=0&&p.intervalKm<=0){alert(`Renseigne une périodicité en durée et/ou en kilomètres pour « ${p.type} ».`);return null;}
+    p.legacy=false;
+    p.legacyDueDate='';
+    p.legacyDueMileage=0;
+    cleaned.push(p);
+  }
+  return cleaned;
+}
+
+function submitVehiclePlanModal(){
+  const selected=vehiclePlanModalDraft.filter(item=>item.enabled!==false);
+  const cleaned=validateSelectedVehiclePlan(selected);
+  if(cleaned===null)return;
+  vehicleMaintenancePlanDraft=cleaned;
+  renderVehicleMaintenancePlanSummary();
+  closeVehiclePlanModal();
+}
+
+function validateVehicleMaintenancePlan(){
+  // Dernière sécurité avant l'enregistrement du véhicule.
+  return validateSelectedVehiclePlan(vehicleMaintenancePlanDraft||[]);
 }
 
 function openVehicleModal(id=''){
@@ -3758,42 +3889,25 @@ function openVehicleModal(id=''){
   document.getElementById('vehicleModel').value=v?.model||'';
   document.getElementById('vehicleRegistration').value=v?.registration||'';
   document.getElementById('vehicleYear').value=v?.year||'';
+  document.getElementById('vehiclePowertrainType').value=['Thermique','Hybride','Électrique'].includes(v?.powertrainType)?v.powertrainType:'';
   document.getElementById('vehicleFuel').value=v?.fuel||'';
   document.getElementById('vehicleFirstRegistration').value=v?.firstRegistration||'';
   document.getElementById('vehicleMileage').value=v?.mileage??'';
   document.getElementById('vehicleMileageDate').value=v?.mileageDate||dateToLocalISO(new Date());
   document.getElementById('vehicleTechnicalInspection').value=v?.technicalInspectionDate||'';
   vehicleMaintenancePlanDraft=JSON.parse(JSON.stringify(v?.maintenancePlan||[])).map(normalizeMaintenancePlanItem);
-  renderVehicleMaintenancePlanEditor();
+  renderVehicleMaintenancePlanSummary();
   document.getElementById('vehicleModal').classList.add('active');
   setTimeout(()=>document.getElementById('vehicleMake').focus(),50);
 }
 
 function closeVehicleModal(){
   document.getElementById('vehicleModal').classList.remove('active');
+  const planModal=document.getElementById('vehiclePlanModal');
+  if(planModal)planModal.classList.remove('active');
   vehicleEditId='';
   vehicleMaintenancePlanDraft=[];
-}
-
-function validateVehicleMaintenancePlan(){
-  const cleaned=[];
-  for(let i=0;i<vehicleMaintenancePlanDraft.length;i++){
-    const p=normalizeMaintenancePlanItem(vehicleMaintenancePlanDraft[i]);
-    const hasLegacy=Boolean(p.legacyDueDate||p.legacyDueMileage>0);
-    if(!p.type){alert(`Renseigne le type de l'entretien n°${i+1}.`);return null;}
-    if(p.legacy&&hasLegacy&&p.intervalMonths<=0&&p.intervalKm<=0){
-      cleaned.push(p);
-      continue;
-    }
-    if(!p.lastDate){alert(`Renseigne la date du dernier entretien pour « ${p.type} ».`);return null;}
-    if(p.intervalMonths<=0&&p.intervalKm<=0){alert(`Renseigne une périodicité en mois et/ou en kilomètres pour « ${p.type} ».`);return null;}
-    if(p.intervalKm>0&&p.lastMileage===''){alert(`Renseigne le kilométrage du dernier entretien pour « ${p.type} » afin de calculer l'échéance kilométrique.`);return null;}
-    p.legacy=false;
-    p.legacyDueDate='';
-    p.legacyDueMileage=0;
-    cleaned.push(p);
-  }
-  return cleaned;
+  vehiclePlanModalDraft=[];
 }
 
 function submitVehicleModal(){
@@ -3802,8 +3916,10 @@ function submitVehicleModal(){
   const model=document.getElementById('vehicleModel').value.trim();
   const registration=document.getElementById('vehicleRegistration').value.trim().toUpperCase();
   const yearRaw=document.getElementById('vehicleYear').value;
+  const powertrainType=document.getElementById('vehiclePowertrainType').value;
   const mileageRaw=document.getElementById('vehicleMileage').value;
   if(!make&&!model&&!registration){document.getElementById('vehicleMake').focus();return;}
+  if(!powertrainType){alert('Sélectionne si le véhicule est thermique, hybride ou électrique.');document.getElementById('vehiclePowertrainType').focus();return;}
   const maintenancePlan=validateVehicleMaintenancePlan();
   if(maintenancePlan===null)return;
   const year=yearRaw===''?'':Math.max(1900,Math.min(2100,Math.round(Number(yearRaw)||0)));
@@ -3812,7 +3928,7 @@ function submitVehicleModal(){
   const obj={
     ...(existing||{}),
     id:existing?.id||makeLocalId('veh'),
-    make,model,registration,year,
+    make,model,registration,year,powertrainType,
     fuel:document.getElementById('vehicleFuel').value.trim(),
     firstRegistration:document.getElementById('vehicleFirstRegistration').value,
     mileage,
@@ -3828,7 +3944,9 @@ function submitVehicleModal(){
   }
   if(existing){Object.assign(existing,obj);}else{data.garageVehicles.push(obj);currentGarageVehicleId=obj.id;}
   document.getElementById('vehicleModal').classList.remove('active');
-  vehicleEditId='';vehicleMaintenancePlanDraft=[];save();renderVehicles();renderInvoices();
+  const planModal=document.getElementById('vehiclePlanModal');
+  if(planModal)planModal.classList.remove('active');
+  vehicleEditId='';vehicleMaintenancePlanDraft=[];vehiclePlanModalDraft=[];save();renderVehicles();renderInvoices();
 }
 
 function deleteGarageVehicle(id){
@@ -3869,16 +3987,19 @@ function openPerformedMaintenanceModal(){
   ensureVehicleData();
   const plan=(v.maintenancePlan||[]).map(normalizeMaintenancePlanItem).filter(p=>p.type);
   if(!plan.length){
-    alert("Aucun entretien n'est encore défini pour ce véhicule.\n\nAjoute d'abord les entretiens à suivre dans « Modifier le véhicule ».");
+    alert("Aucun entretien n'est encore défini pour ce véhicule.\n\nCrée d'abord le plan d'entretien dans « Modifier le véhicule ».");
     return;
   }
-  const select=document.getElementById('performedMaintenancePlanSelect');
-  select.innerHTML=plan.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.type)}</option>`).join('');
+
+  const host=document.getElementById('performedMaintenancePlanList');
+  if(!host)return;
+  host.innerHTML=plan.map((p,index)=>`<label class="performed-maintenance-choice"><input type="checkbox" name="performedMaintenancePlan" value="${escapeHtml(p.id)}" ${plan.length===1&&index===0?'checked':''}><span>${escapeHtml(p.type)}</span></label>`).join('');
+
   document.getElementById('performedMaintenanceDate').value=dateToLocalISO(new Date());
   document.getElementById('performedMaintenanceMileage').value=Number(v.mileage)||'';
   document.getElementById('performedMaintenanceModalTitle').textContent=`Ajouter un entretien · ${getGarageVehicleLabel(v.id)}`;
   document.getElementById('performedMaintenanceModal').classList.add('active');
-  setTimeout(()=>select.focus(),30);
+  setTimeout(()=>host.querySelector('input[type="checkbox"]')?.focus(),30);
 }
 
 function closePerformedMaintenanceModal(){
@@ -3887,9 +4008,22 @@ function closePerformedMaintenanceModal(){
 
 function submitPerformedMaintenance(){
   const v=getCurrentGarageVehicle();if(!v)return;
-  const planId=document.getElementById('performedMaintenancePlanSelect')?.value||'';
-  const plan=(v.maintenancePlan||[]).find(p=>String(p.id)===String(planId));
-  if(!plan){alert("Sélectionne un entretien valide.");return;}
+
+  const selectedIds=new Set(
+    [...document.querySelectorAll('#performedMaintenancePlanList input[name="performedMaintenancePlan"]:checked')]
+      .map(input=>String(input.value||''))
+      .filter(Boolean)
+  );
+  if(!selectedIds.size){
+    alert('Sélectionne au moins un entretien réalisé.');
+    return;
+  }
+
+  const selectedPlans=(v.maintenancePlan||[]).filter(p=>selectedIds.has(String(p.id||'')));
+  if(!selectedPlans.length){
+    alert('Aucun entretien sélectionné ne correspond au plan de ce véhicule.');
+    return;
+  }
 
   const date=document.getElementById('performedMaintenanceDate')?.value||'';
   const mileageRaw=document.getElementById('performedMaintenanceMileage')?.value??'';
@@ -3899,39 +4033,52 @@ function submitPerformedMaintenance(){
   const today=dateToLocalISO(new Date());
   if(date>today){alert("La date de l'entretien ne peut pas être dans le futur.");return;}
 
-  const currentPlan=normalizeMaintenancePlanItem(plan);
-  if(currentPlan.lastDate&&date<currentPlan.lastDate){
-    alert(`La date saisie est antérieure au dernier entretien enregistré (${formatDateFR(currentPlan.lastDate)}).\n\nPour corriger une ancienne valeur, utilise « Modifier le véhicule ».`);
-    return;
+  // Validation de tous les entretiens avant toute modification pour éviter une mise à jour partielle.
+  const toUpdate=[];
+  const duplicates=[];
+  for(const plan of selectedPlans){
+    const currentPlan=normalizeMaintenancePlanItem(plan);
+    if(currentPlan.lastDate&&date<currentPlan.lastDate){
+      alert(`Pour « ${currentPlan.type} », la date saisie est antérieure au dernier entretien enregistré (${formatDateFR(currentPlan.lastDate)}).\n\nPour corriger une ancienne valeur, utilise « Modifier le véhicule ».`);
+      return;
+    }
+    if(currentPlan.lastMileage!==''&&mileage<Number(currentPlan.lastMileage)){
+      alert(`Pour « ${currentPlan.type} », le kilométrage saisi est inférieur au dernier entretien enregistré (${Number(currentPlan.lastMileage).toLocaleString('fr-FR')} km).\n\nPour corriger une ancienne valeur, utilise « Modifier le véhicule ».`);
+      return;
+    }
+    if(currentPlan.lastDate===date&&currentPlan.lastMileage!==''&&Number(currentPlan.lastMileage)===mileage){
+      duplicates.push(currentPlan.type||'Entretien');
+      continue;
+    }
+    toUpdate.push(plan);
   }
-  if(currentPlan.lastMileage!==''&&mileage<Number(currentPlan.lastMileage)){
-    alert(`Le kilométrage saisi est inférieur au dernier entretien enregistré (${Number(currentPlan.lastMileage).toLocaleString('fr-FR')} km).\n\nPour corriger une ancienne valeur, utilise « Modifier le véhicule ».`);
-    return;
-  }
-  if(currentPlan.lastDate===date&&currentPlan.lastMileage!==''&&Number(currentPlan.lastMileage)===mileage){
-    alert("Cet entretien est déjà enregistré à cette date et à ce kilométrage.");
+
+  if(!toUpdate.length){
+    alert('Tous les entretiens sélectionnés sont déjà enregistrés à cette date et à ce kilométrage.');
     return;
   }
 
-  plan.lastDate=date;
-  plan.lastMileage=mileage;
-  plan.legacy=false;
-  plan.legacyDueDate='';
-  plan.legacyDueMileage=0;
-
-  // Conserve un historique discret des entretiens réalisés pour les évolutions futures de l'application.
   if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
-  data.vehicleMaintenance.unshift({
-    id:makeLocalId('mnt'),
-    vehicleId:v.id,
-    planId:String(plan.id||''),
-    title:String(plan.type||'Entretien'),
-    date,
-    mileage,
-    amount:0,
-    notes:'',
-    invoiceId:'',
-    source:'performed-maintenance'
+  toUpdate.forEach(plan=>{
+    plan.lastDate=date;
+    plan.lastMileage=mileage;
+    plan.legacy=false;
+    plan.legacyDueDate='';
+    plan.legacyDueMileage=0;
+
+    // Une ligne d'historique par type permet de conserver le détail d'une intervention multiple.
+    data.vehicleMaintenance.unshift({
+      id:makeLocalId('mnt'),
+      vehicleId:v.id,
+      planId:String(plan.id||''),
+      title:String(plan.type||'Entretien'),
+      date,
+      mileage,
+      amount:0,
+      notes:'',
+      invoiceId:'',
+      source:'performed-maintenance'
+    });
   });
 
   // Un entretien à un kilométrage plus récent peut aussi servir de nouveau relevé kilométrique.
@@ -3948,6 +4095,10 @@ function submitPerformedMaintenance(){
   closePerformedMaintenanceModal();
   save();
   renderVehicles();
+
+  if(duplicates.length){
+    alert(`${duplicates.length} entretien(s) étaient déjà enregistrés à cette date et ce kilométrage et n'ont pas été dupliqués :\n\n${duplicates.join('\n')}`);
+  }
 }
 
 function getScheduleStatus(v,sc){
@@ -4102,7 +4253,7 @@ function renderVehicles(){
   const mileageDate=v.mileageDate?formatDateFR(v.mileageDate):'date non renseignée';
   document.getElementById('vehicle-summary-card').innerHTML=`
     <div class="vehicle-hero">
-      <div><div class="vehicle-name">${escapeHtml(getGarageVehicleLabel(v.id))}</div><div class="vehicle-subtitle">${v.registration?escapeHtml(v.registration)+' · ':''}${v.year?escapeHtml(v.year)+' · ':''}${escapeHtml(v.fuel||'Motorisation non renseignée')}</div></div>
+      <div><div class="vehicle-name">${escapeHtml(getGarageVehicleLabel(v.id))}</div><div class="vehicle-subtitle">${v.registration?escapeHtml(v.registration)+' · ':''}${v.year?escapeHtml(v.year)+' · ':''}${v.powertrainType?escapeHtml(v.powertrainType)+' · ':''}${escapeHtml(v.fuel||'Motorisation non renseignée')}</div></div>
       <div class="vehicle-mileage">${(Number(v.mileage)||0).toLocaleString('fr-FR')} km<small>relevé : ${mileageDate}</small></div>
     </div>
     <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
