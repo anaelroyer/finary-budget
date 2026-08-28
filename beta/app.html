@@ -358,6 +358,32 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .maintenance-history-types{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .maintenance-history-chip{display:inline-flex;padding:3px 7px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;font-size:10px;font-weight:700}
 @media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Assistant d'aide 100 % hors ligne */
+.offline-assistant-launcher{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;border:1px solid #2ea043;background:#238636;color:#fff;border-radius:999px;padding:10px 14px;min-height:44px;display:flex;align-items:center;gap:7px;font-weight:800;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.36);cursor:pointer}
+.offline-assistant-launcher:hover{background:#2ea043}.offline-assistant-launcher:focus-visible{outline:2px solid #58a6ff;outline-offset:2px}
+.offline-assistant-panel{position:fixed;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9500;width:min(390px,calc(100vw - 24px));max-height:min(650px,72vh);background:#161b22;border:1px solid #30363d;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.58);display:none;flex-direction:column;overflow:hidden}
+.offline-assistant-panel.active{display:flex}
+.offline-assistant-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border-bottom:1px solid #30363d;background:#0d1117}
+.offline-assistant-head-main{min-width:0}.offline-assistant-title{font-size:13px;font-weight:900;color:#fff}.offline-assistant-subtitle{font-size:9px;color:#8b949e;margin-top:2px}
+.offline-assistant-local{display:inline-flex;align-items:center;gap:4px;margin-left:5px;padding:2px 6px;border-radius:999px;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.25);color:#56d364;font-size:8px;font-weight:800;vertical-align:1px}
+.offline-assistant-close{border:0;background:transparent;color:#8b949e;font-size:22px;line-height:1;padding:5px 7px;border-radius:8px;cursor:pointer}.offline-assistant-close:hover{background:#21262d;color:#fff}
+.offline-assistant-messages{display:flex;flex-direction:column;gap:9px;padding:12px;overflow-y:auto;min-height:150px;max-height:350px;scroll-behavior:smooth}
+.offline-assistant-message{max-width:88%;padding:9px 10px;border-radius:12px;font-size:11px;line-height:1.5;white-space:pre-line}
+.offline-assistant-message.bot{align-self:flex-start;background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-bottom-left-radius:4px}
+.offline-assistant-message.user{align-self:flex-end;background:#1f6f35;border:1px solid #2ea043;color:#fff;border-bottom-right-radius:4px}
+.offline-assistant-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.offline-assistant-action{border:1px solid #3d444d;background:#0d1117;color:#c9d1d9;border-radius:8px;padding:6px 8px;font-size:10px;font-weight:700;cursor:pointer}.offline-assistant-action:hover{border-color:#58a6ff;color:#fff}
+.offline-assistant-quick{border-top:1px solid #21262d;padding:9px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;background:#161b22}
+.offline-assistant-quick button{flex:0 0 auto;border:1px solid #30363d;background:#0d1117;color:#c9d1d9;border-radius:999px;padding:6px 9px;font-size:9px;cursor:pointer;white-space:nowrap}.offline-assistant-quick button:hover{border-color:#2ea043;color:#fff}
+.offline-assistant-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:10px;border-top:1px solid #30363d;background:#0d1117}
+.offline-assistant-input{width:100%;min-width:0;border:1px solid #30363d;background:#161b22;color:#fff;border-radius:10px;padding:9px 10px;font-size:16px;outline:none}.offline-assistant-input:focus{border-color:#58a6ff}
+.offline-assistant-send{border:1px solid #2ea043;background:#238636;color:#fff;border-radius:10px;min-width:44px;padding:8px 10px;font-weight:900;cursor:pointer}.offline-assistant-send:hover{background:#2ea043}
+.offline-assistant-note{padding:0 10px 9px;background:#0d1117;color:#6e7681;font-size:8px;line-height:1.35}
+.offline-assistant-highlight{position:relative;z-index:4;outline:3px solid #58a6ff!important;outline-offset:4px;border-radius:10px;animation:offlineAssistantHighlight 1s ease-in-out 3}
+@keyframes offlineAssistantHighlight{0%,100%{outline-color:rgba(88,166,255,.35);transform:scale(1)}50%{outline-color:#58a6ff;transform:scale(1.015)}}
+@media(max-width:480px){.offline-assistant-launcher{right:10px;bottom:calc(10px + env(safe-area-inset-bottom));padding:10px 12px}.offline-assistant-panel{right:8px;width:calc(100vw - 16px);bottom:calc(64px + env(safe-area-inset-bottom));max-height:75vh}.offline-assistant-messages{max-height:330px}}
+@media(prefers-reduced-motion:reduce){.offline-assistant-highlight{animation:none}.offline-assistant-messages{scroll-behavior:auto}}
 </style>
 </head>
 <body>
@@ -586,7 +612,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <div class="vehicle-maintenance-plan-block">
       <div class="section-header">
         <h2 style="font-size:14px">🔧 Plan d'entretien</h2>
-        <button type="button" class="btn btn-primary" onclick="openVehiclePlanModal()" style="padding:6px 9px;font-size:10px">Créer un plan d'entretien</button>
+        <button id="assistantTargetMaintenancePlan" type="button" class="btn btn-primary" onclick="openVehiclePlanModal()" style="padding:6px 9px;font-size:10px">Créer un plan d'entretien</button>
       </div>
       <div class="vehicle-section-note">Choisis les entretiens à suivre et définis leur périodicité. Les prochaines échéances seront ensuite calculées automatiquement.</div>
       <div id="vehicleMaintenancePlanSummary" class="vehicle-plan-summary"></div>
@@ -824,6 +850,25 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   </div>
 </div>
 
+<!-- ASSISTANT D'AIDE HORS LIGNE -->
+<button id="offlineAssistantLauncher" class="offline-assistant-launcher" type="button" aria-controls="offlineAssistantPanel" aria-expanded="false">💬 <span>Assistant</span></button>
+<section id="offlineAssistantPanel" class="offline-assistant-panel" aria-label="Assistant d'aide de l'application" aria-hidden="true">
+  <div class="offline-assistant-head">
+    <div class="offline-assistant-head-main">
+      <div class="offline-assistant-title">💬 Assistant <span class="offline-assistant-local">● hors ligne</span></div>
+      <div class="offline-assistant-subtitle">Guide intégré à Budget & Patrimoine</div>
+    </div>
+    <button id="offlineAssistantClose" class="offline-assistant-close" type="button" aria-label="Fermer l'assistant">×</button>
+  </div>
+  <div id="offlineAssistantMessages" class="offline-assistant-messages" aria-live="polite"></div>
+  <div id="offlineAssistantQuick" class="offline-assistant-quick" aria-label="Questions suggérées"></div>
+  <form id="offlineAssistantForm" class="offline-assistant-compose">
+    <input id="offlineAssistantInput" class="offline-assistant-input" type="text" autocomplete="off" placeholder="Pose une question sur l'application…" aria-label="Question à l'assistant">
+    <button class="offline-assistant-send" type="submit" aria-label="Envoyer">➤</button>
+  </form>
+  <div class="offline-assistant-note">Aucune question n'est envoyée sur Internet. Cet assistant répond uniquement à partir du guide intégré à l'application.</div>
+</section>
+
 <div class="wrap">
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
@@ -842,9 +887,9 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   <div id="tab-budget" class="tab-content active">
 
     <div class="top" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:center;">
-      <button class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 5px;font-size:10px">📝 Notes</button>
-      <button class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
-      <button class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 5px;font-size:10px">🔒 Clôturer</button>
+      <button id="assistantTargetNotes" class="btn btn-secondary" onclick="openAnnotationsModal()" style="padding:6px 5px;font-size:10px">📝 Notes</button>
+      <button id="assistantTargetAccounts" class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
+      <button id="assistantTargetCloseMonth" class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 5px;font-size:10px">🔒 Clôturer</button>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 5px;font-size:10px">👁️ Affiché</button>
     </div>
 
@@ -871,7 +916,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <button class="btn btn-primary" onclick="openBankTransferModal()">⇄ Ajouter un virement interne</button>
     <details class="card" id="details-bank-transfers"><summary><span>⇄ Virements internes</span><span class="budget-summary-total" id="bank-transfer-count">0</span></summary><div class="details-content"><div id="bank-transfers-container"></div><button class="btn btn-secondary" onclick="clearBankTransfers()" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <div class="card">
+    <div class="card" id="assistantTargetBudgetHistory">
       <div class="section-header"><h2>🗓️ Historique</h2></div>
       <input type="text" id="historySearchInput" placeholder="🔍 Rechercher (mois, libellé, montant)..." oninput="renderHistory()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;margin-top:4px">
       <div id="history-container"></div>
@@ -964,7 +1009,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Affiché</button>
     </div>
 
-    <button class="btn btn-primary" onclick="openInvoiceModal()">+ Ajouter un achat / une facture</button>
+    <button id="assistantTargetAddInvoice" class="btn btn-primary" onclick="openInvoiceModal()">+ Ajouter un achat / une facture</button>
 
     <div id="invoice-summary-alert" class="invoice-summary-alert"></div>
 
@@ -994,7 +1039,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   <div id="tab-vehicles" class="tab-content">
     <div class="top" style="justify-content:space-between;gap:8px;">
       <div style="font-weight:700;color:#fff">🚗 Véhicules</div>
-      <button class="btn btn-primary" onclick="openVehicleModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
+      <button id="assistantTargetAddVehicle" class="btn btn-primary" onclick="openVehicleModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
     </div>
 
     <div class="card" id="vehicle-alerts-card" style="display:none">
@@ -1009,7 +1054,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <div class="card" id="vehicle-summary-card"></div>
 
 
-      <div class="card">
+      <div class="card" id="assistantTargetVehicleInvoices">
         <div class="section-header"><h2>🧾 Factures associées</h2><button class="btn btn-secondary" onclick="openVehicleInvoiceLinkModal()" style="padding:6px 8px;font-size:10px">＋ Associer</button></div>
         <div id="vehicle-invoices" class="vehicle-list"></div>
       </div>
@@ -1538,6 +1583,7 @@ function switchTab(t){
   });
   if(t==='factures')renderInvoices();
   if(t==='vehicles')renderVehicles();
+  if(typeof updateOfflineAssistantContext==='function')updateOfflineAssistantContext();
 }
 
 let touchStartX=0,touchStartY=0;
@@ -4485,7 +4531,7 @@ function renderVehicles(){
     </div>
     <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
     <div class="vehicle-cost-strip"><div class="vehicle-cost-mini"><span>Dépenses 12 mois</span><strong class="invoice-amount">${euro(expenses.last12m)}</strong></div><div class="vehicle-cost-mini"><span>Dépenses enregistrées</span><strong class="invoice-amount">${euro(expenses.total)}</strong></div><div class="vehicle-cost-mini"><span>Coût/km suivi</span><strong class="invoice-amount">${expenses.costPerKm!==null?expenses.costPerKm.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €/km':'—'}</strong></div></div>
-    <div class="vehicle-actions"><button class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><button class="btn btn-secondary" onclick="openVehicleMaintenanceHistoryModal()">📜 Historique</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal('${v.id}')" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
+    <div class="vehicle-actions"><button id="assistantTargetPerformedMaintenance" class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button id="assistantTargetMileage" class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><button id="assistantTargetMaintenanceHistory" class="btn btn-secondary" onclick="openVehicleMaintenanceHistoryModal()">📜 Historique</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal('${v.id}')" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
 
   const ihost=document.getElementById('vehicle-invoices');
   const sortedInvoices=linkedInvoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -5859,6 +5905,327 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
 });
 
+
+/* =========================================================
+   ASSISTANT D'AIDE 100 % HORS LIGNE
+   Base de connaissances embarquée : aucune API / aucun réseau.
+   ========================================================= */
+const OFFLINE_ASSISTANT_KB=[
+  {
+    id:'budget-overview',tabs:['budget'],keywords:['budget','onglet budget','a quoi sert budget','fonctionnement budget','cet onglet'],
+    answer:"L’onglet Budget sert au suivi du mois en cours. Tu y enregistres les entrées, frais fixes et dépenses, tu suis le reste à vivre et le solde des comptes, puis tu peux clôturer le mois pour conserver un historique.",
+    target:'#tab-budget',targetTab:'budget'
+  },
+  {
+    id:'reste-vivre',tabs:['budget'],keywords:['reste a vivre','reste vivre','calcul reste','budget restant'],
+    answer:"Le « Reste à vivre estimé » correspond à ce qu’il reste après prise en compte des entrées, frais fixes et dépenses du mois. Il évolue automatiquement avec les lignes que tu ajoutes ou modifies.",
+    target:'#budget-reste-vivre',targetTab:'budget'
+  },
+  {
+    id:'solde-actuel',tabs:['budget'],keywords:['solde actuel','operations cochees','opérations cochées','case cochee','case cochée','solde compte'],
+    answer:"Le « Solde actuel — opérations cochées » utilise les opérations que tu as marquées comme réalisées. Cela permet de distinguer le budget prévu de ce qui est réellement passé sur les comptes.",
+    target:'#budget-solde-actuel',targetTab:'budget'
+  },
+  {
+    id:'accounts',tabs:['budget'],keywords:['compte bancaire','comptes bancaires','gerer comptes','gérer comptes','actif compte','supprimer compte'],
+    answer:"Le bouton « Comptes » permet de gérer les comptes bancaires utilisés par le budget. Un compte actif ne peut pas être supprimé directement : il faut d’abord le désactiver. Les anciens mois clôturés conservent leur historique.",
+    target:'#assistantTargetAccounts',targetTab:'budget'
+  },
+  {
+    id:'notes',tabs:['budget'],keywords:['notes','annotations','annotation'],
+    answer:"Le bouton « Notes » ouvre un espace de notes générales pour conserver des informations utiles avec ton suivi budgétaire.",
+    target:'#assistantTargetNotes',targetTab:'budget'
+  },
+  {
+    id:'close-month',tabs:['budget'],keywords:['cloturer','clôturer','cloture mois','clôture mois','fin du mois','historique mois'],
+    answer:"« Clôturer » fige le mois courant dans l’historique. Tu pourras ensuite retrouver ses entrées, dépenses, comptes et résultats sans modifier le mois archivé. Une confirmation est demandée avant la clôture.",
+    target:'#assistantTargetCloseMonth',targetTab:'budget'
+  },
+  {
+    id:'internal-transfer',tabs:['budget'],keywords:['virement interne','virements internes','transfert entre comptes','changer compte'],
+    answer:"Un virement interne sert à déplacer de l’argent entre tes propres comptes sans le considérer comme une dépense ou un revenu. Il modifie la répartition entre comptes, pas le résultat global du budget.",
+    target:'#details-bank-transfers',targetTab:'budget'
+  },
+  {
+    id:'budget-history',tabs:['budget'],keywords:['historique','anciens mois','mois clotures','mois clôturés','exporter','importer'],
+    answer:"La zone Historique regroupe les mois clôturés. Tu peux les rechercher, les consulter et exporter ou importer les données de l’application. Le bouton Reset efface l’historique après confirmation.",
+    target:'#assistantTargetBudgetHistory',targetTab:'budget'
+  },
+  {
+    id:'patrimoine-overview',tabs:['patrimoine'],keywords:['patrimoine','onglet patrimoine','a quoi sert patrimoine','cet onglet'],
+    answer:"L’onglet Patrimoine regroupe tes actifs et tes emprunts. Il calcule le patrimoine brut, le patrimoine net, la répartition des actifs et leur évolution dans le temps.",
+    target:'#tab-patrimoine',targetTab:'patrimoine'
+  },
+  {
+    id:'gross-net',tabs:['patrimoine'],keywords:['brut net','patrimoine brut','patrimoine net','difference brut net','différence brut net'],
+    answer:"Le patrimoine brut correspond à la valeur totale de tes actifs. Le patrimoine net retire le capital restant dû de tes emprunts. La variation indique l’évolution depuis le mois précédent lorsqu’un historique est disponible.",
+    target:'#gross',targetTab:'patrimoine'
+  },
+  {
+    id:'asset-category',tabs:['patrimoine'],keywords:['categorie actif','catégorie actif','ajouter categorie','ajouter catégorie','immobilier','scpi','crypto','bourse','assurance vie'],
+    answer:"« Ajouter une catégorie d’actifs » permet d’afficher uniquement les familles qui te sont utiles : immobilier, assurance-vie, bourse, SCPI, crypto, PER, etc. Une catégorie contenant encore des lignes ne peut pas être retirée par erreur.",
+    target:'.asset-category-manager',targetTab:'patrimoine'
+  },
+  {
+    id:'patrimoine-chart',tabs:['patrimoine'],keywords:['graphique','evolution actifs','évolution actifs','courbe patrimoine','1m','3m','6m','1a'],
+    answer:"Le graphique suit l’évolution des catégories d’actifs dans le temps. Les boutons 1M, 3M, 6M, 1A et Tout changent la période affichée, et les filtres de séries permettent de choisir les actifs visibles.",
+    target:'#chart-wrapper',targetTab:'patrimoine'
+  },
+  {
+    id:'loans',tabs:['patrimoine'],keywords:['emprunt','emprunts','credit','crédit','capital restant du','capital restant dû','mensualite','mensualité'],
+    answer:"Dans Emprunts, le montant qui compte comme dette est le capital restant dû. Les informations complémentaires — montant initial, dates, mensualité et taux — servent au suivi et à la progression du remboursement.",
+    target:'#total-dettes',targetTab:'patrimoine'
+  },
+  {
+    id:'invoices-overview',tabs:['factures'],keywords:['factures','onglet factures','garanties','a quoi sert factures','cet onglet'],
+    answer:"L’onglet Factures & garanties conserve tes achats, justificatifs et dates de garantie. Tu peux rechercher les factures, filtrer selon l’état de la garantie et associer une facture à un véhicule.",
+    target:'#tab-factures',targetTab:'factures'
+  },
+  {
+    id:'add-invoice',tabs:['factures'],keywords:['ajouter facture','nouvelle facture','ajouter achat','photo facture','justificatif'],
+    answer:"« Ajouter un achat / une facture » permet d’enregistrer l’achat, son vendeur, son montant, sa garantie et éventuellement une photo du justificatif. La facture peut aussi être rattachée à un véhicule.",
+    target:'#assistantTargetAddInvoice',targetTab:'factures'
+  },
+  {
+    id:'warranty',tabs:['factures'],keywords:['garantie','garanties','sous garantie','bientot echue','bientôt échue','garantie echue','garantie échue'],
+    answer:"Les garanties sont classées selon leur date de fin : sous garantie, bientôt échues ou échues. Les filtres permettent d’afficher uniquement l’état qui t’intéresse et la zone « Garanties à surveiller » met en avant les prochaines échéances.",
+    target:'#warranty-watch-card',targetTab:'factures'
+  },
+  {
+    id:'vehicle-invoice-link',tabs:['factures','vehicles'],keywords:['associer facture vehicule','associer facture véhicule','facture voiture','facture véhicule','lier facture'],
+    answer:"Une facture peut être associée à un véhicule. Elle reste stockée dans l’onglet Factures mais apparaît aussi dans « Factures associées » de la fiche du véhicule. La dissociation ne supprime pas la facture.",
+    target:'#assistantTargetVehicleInvoices',targetTab:'vehicles'
+  },
+  {
+    id:'vehicles-overview',tabs:['vehicles'],keywords:['vehicule','véhicule','voiture','onglet vehicules','onglet véhicules','a quoi sert vehicules','cet onglet'],
+    answer:"L’onglet Véhicules sert à suivre plusieurs voitures : informations générales, kilométrage, contrôle technique, plan d’entretien, alertes, historique des opérations réalisées et factures associées.",
+    target:'#tab-vehicles',targetTab:'vehicles'
+  },
+  {
+    id:'add-vehicle',tabs:['vehicles'],keywords:['ajouter vehicule','ajouter véhicule','creer vehicule','créer véhicule','thermique','hybride','electrique','électrique'],
+    answer:"Le bouton « Ajouter » crée un véhicule avec sa marque, son modèle, son immatriculation, son kilométrage, son contrôle technique et son type : Thermique, Hybride ou Électrique. Le type sert aussi à orienter les recommandations du plan d’entretien.",
+    target:'#assistantTargetAddVehicle',targetTab:'vehicles'
+  },
+  {
+    id:'maintenance-plan',tabs:['vehicles'],keywords:['plan entretien','plan d entretien','créer un plan','creer plan','periodicite','périodicité','vidange moteur','pompe a eau','pompe à eau','plaquettes','disques'],
+    answer:"Le plan d’entretien définit les opérations à suivre pour un véhicule. Pour chaque type sélectionné, tu renseignes le dernier entretien, son kilométrage et la périodicité en mois et/ou kilomètres. L’application calcule ensuite les prochaines échéances.",
+    target:'#assistantTargetMaintenancePlan',targetTab:'vehicles',reveal:'vehicle-plan'
+  },
+  {
+    id:'multi-maintenance',tabs:['vehicles'],keywords:['plusieurs entretiens','entretien multiple','distribution vidange','ajouter entretien','effectue plusieurs','effectué plusieurs','garage plusieurs'],
+    answer:"« Ajouter un entretien » accepte plusieurs opérations en une seule intervention. Tu coches par exemple Distribution + Pompe à eau + Liquide de refroidissement + Vidange, puis tu saisis une seule date et un seul kilométrage. Chaque type sélectionné est mis à jour séparément.",
+    target:'#assistantTargetPerformedMaintenance',targetTab:'vehicles'
+  },
+  {
+    id:'vehicle-alerts',tabs:['vehicles'],keywords:['en retard','a prevoir','à prévoir','alerte entretien','alertes','dernier huitieme','dernier huitième','orange rouge'],
+    answer:"Une échéance devient « À prévoir » lorsqu’elle entre dans le dernier 1/8 de sa périodicité enregistrée, en durée ou en kilomètres. Elle passe « En retard » uniquement lorsque la date ou le kilométrage d’échéance est réellement dépassé. Les compteurs rouge et orange sont cliquables pour dérouler uniquement la liste correspondante.",
+    target:'#vehicle-alerts-card',targetTab:'vehicles'
+  },
+  {
+    id:'performed-alert',tabs:['vehicles'],keywords:['effectue','effectué','bouton effectué','valider alerte','entretien realise','entretien réalisé'],
+    answer:"Depuis une alerte d’entretien, « ✓ Effectué » ouvre directement l’enregistrement avec l’opération concernée présélectionnée. Après validation, le dernier entretien est actualisé et la prochaine échéance est recalculée.",
+    target:'#vehicle-alerts-card',targetTab:'vehicles'
+  },
+  {
+    id:'mileage',tabs:['vehicles'],keywords:['kilometrage','kilométrage','modifier kilometrage','modifier kilométrage','releve kilométrique','relevé kilométrique'],
+    answer:"« Modifier le kilométrage » ajoute un nouveau relevé au véhicule. Cet historique sert au suivi courant et permet aussi d’estimer une période d’arrivée pour certaines échéances kilométriques lorsqu’il y a assez de relevés fiables.",
+    target:'#assistantTargetMileage',targetTab:'vehicles'
+  },
+  {
+    id:'maintenance-history',tabs:['vehicles'],keywords:['historique entretien','historique des entretiens','ancien entretien','interventions'],
+    answer:"« Historique » affiche les entretiens déjà enregistrés pour le véhicule. Lorsque plusieurs opérations ont été réalisées le même jour au même kilométrage, elles sont regroupées comme une seule intervention de garage.",
+    target:'#assistantTargetMaintenanceHistory',targetTab:'vehicles'
+  },
+  {
+    id:'vehicle-costs',tabs:['vehicles'],keywords:['cout véhicule','coût véhicule','depenses véhicule','dépenses véhicule','cout km','coût km','depenses 12 mois','dépenses 12 mois'],
+    answer:"La fiche véhicule calcule un bilan à partir des factures qui lui sont associées : dépenses sur 12 mois, dépenses enregistrées et coût par kilomètre suivi lorsqu’il peut être calculé avec les données disponibles.",
+    target:'#vehicle-summary-card',targetTab:'vehicles'
+  },
+  {
+    id:'install',tabs:['budget','patrimoine','factures','vehicles'],keywords:['installer application','installation','pwa','installer app','ecran accueil','écran accueil'],
+    answer:"Le bouton « Installer l’application » apparaît lorsque le navigateur permet l’installation. Une fois l’application installée, ce bouton disparaît. Sur iPhone/iPad, l’installation passe par Safari > Partager > Sur l’écran d’accueil.",
+    target:'.wrap .install-app-btn',targetTab:'budget'
+  },
+  {
+    id:'sync',tabs:['budget','patrimoine','factures','vehicles'],keywords:['synchronisation','firebase','sauvegarde','hors ligne','internet','donnees','données'],
+    answer:"Les modifications de l’application sont d’abord enregistrées dans le stockage local associé au compte, puis la synchronisation Firebase est demandée lorsque le service est disponible. L’assistant que tu utilises ici est, lui, entièrement embarqué dans app.html et ne contacte aucun service externe pour répondre.",
+    target:'#firebaseStatus',targetTab:'budget'
+  },
+  {
+    id:'assistant-itself',tabs:['budget','patrimoine','factures','vehicles'],keywords:['assistant','ia','intelligence artificielle','comment tu fonctionnes','hors ligne assistant'],
+    answer:"Je suis l’assistant d’aide local de cette application. Je ne suis pas un modèle génératif connecté : je recherche la réponse la plus pertinente dans un guide intégré à app.html. Cela me permet de fonctionner hors ligne et de rester limité aux fonctions réellement prévues dans l’application."
+  }
+];
+
+const OFFLINE_ASSISTANT_QUICK={
+  budget:['À quoi sert cet onglet ?','Comment fonctionne le reste à vivre ?','Comment clôturer un mois ?','À quoi servent les virements internes ?'],
+  patrimoine:['À quoi sert cet onglet ?','Patrimoine brut ou net ?','Comment ajouter une catégorie ?','Comment fonctionne le graphique ?'],
+  factures:['À quoi sert cet onglet ?','Comment ajouter une facture ?','Comment fonctionnent les garanties ?','Comment associer une facture à un véhicule ?'],
+  vehicles:['À quoi sert cet onglet ?','Comment créer un plan d’entretien ?','Comment enregistrer plusieurs entretiens ?','Que signifie À prévoir ?']
+};
+
+let offlineAssistantInitialized=false;
+let offlineAssistantLastEntry=null;
+let offlineAssistantWelcomeShown=false;
+
+function offlineAssistantNormalize(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’']/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function offlineAssistantTokens(value){
+  const stop=new Set(['le','la','les','un','une','des','de','du','d','a','au','aux','et','ou','en','pour','sur','je','j','tu','il','elle','on','nous','vous','ils','elles','mon','ma','mes','ce','cet','cette','ces','comment','quoi','quel','quelle','quels','quelles','est','sont','sert','faire']);
+  return offlineAssistantNormalize(value).split(/\s+/).filter(token=>token.length>1&&!stop.has(token));
+}
+
+function offlineAssistantScore(entry,query){
+  const nq=offlineAssistantNormalize(query);
+  const qTokens=new Set(offlineAssistantTokens(query));
+  let score=0;
+  (entry.keywords||[]).forEach(keyword=>{
+    const nk=offlineAssistantNormalize(keyword);
+    if(!nk)return;
+    if(nq===nk)score+=14;
+    else if(nq.includes(nk))score+=7;
+    const kTokens=offlineAssistantTokens(keyword);
+    kTokens.forEach(token=>{if(qTokens.has(token))score+=1.7;});
+  });
+  if((entry.tabs||[]).includes(currentActiveTab))score+=1.25;
+  return score;
+}
+
+function offlineAssistantFindAnswer(query){
+  const normalized=offlineAssistantNormalize(query);
+  if(!normalized)return null;
+  if(/^(aide|help|bonjour|salut|hello)$/.test(normalized)){
+    return OFFLINE_ASSISTANT_KB.find(e=>e.id===`${currentActiveTab}-overview`)||OFFLINE_ASSISTANT_KB.find(e=>e.id==='assistant-itself');
+  }
+  const ranked=OFFLINE_ASSISTANT_KB.map(entry=>({entry,score:offlineAssistantScore(entry,query)})).sort((a,b)=>b.score-a.score);
+  return ranked[0]&&ranked[0].score>=3?ranked[0].entry:null;
+}
+
+function offlineAssistantAppendMessage(text,role='bot',entry=null){
+  const host=document.getElementById('offlineAssistantMessages');
+  if(!host)return;
+  const bubble=document.createElement('div');
+  bubble.className=`offline-assistant-message ${role}`;
+  bubble.textContent=text;
+  if(role==='bot'&&entry?.target){
+    const actions=document.createElement('div');
+    actions.className='offline-assistant-actions';
+    const show=document.createElement('button');
+    show.type='button';
+    show.className='offline-assistant-action';
+    show.textContent='👁️ Montre-moi';
+    show.addEventListener('click',()=>offlineAssistantShowTarget(entry));
+    actions.appendChild(show);
+    bubble.appendChild(actions);
+  }
+  host.appendChild(bubble);
+  host.scrollTop=host.scrollHeight;
+}
+
+function offlineAssistantShowTarget(entry){
+  if(!entry?.target)return;
+  if(entry.targetTab&&entry.targetTab!==currentActiveTab)switchTab(entry.targetTab);
+  if(entry.reveal==='vehicle-plan'){
+    const vehicle=getCurrentGarageVehicle();
+    openVehicleModal(vehicle?.id||'');
+  }
+  setTimeout(()=>{
+    let target=null;
+    try{target=document.querySelector(entry.target);}catch(_e){target=null;}
+    if(!target||target.offsetParent===null){
+      offlineAssistantAppendMessage("Cette zone n’est pas visible dans l’état actuel de l’application. Elle apparaîtra lorsqu’elle aura des données à afficher.",'bot');
+      return;
+    }
+    target.scrollIntoView({behavior:'smooth',block:'center'});
+    target.classList.remove('offline-assistant-highlight');
+    void target.offsetWidth;
+    target.classList.add('offline-assistant-highlight');
+    setTimeout(()=>target.classList.remove('offline-assistant-highlight'),3400);
+  },80);
+}
+
+function offlineAssistantAsk(question){
+  const text=String(question||'').trim();
+  if(!text)return;
+  offlineAssistantAppendMessage(text,'user');
+  const entry=offlineAssistantFindAnswer(text);
+  offlineAssistantLastEntry=entry;
+  if(entry){
+    offlineAssistantAppendMessage(entry.answer,'bot',entry);
+  }else{
+    offlineAssistantAppendMessage("Je n’ai pas de réponse fiable pour cette question. Mon rôle est uniquement d’expliquer les fonctions de Budget & Patrimoine. Essaie une question proposée ci-dessous ou demande-moi comment utiliser une fonction précise de l’onglet actuel.",'bot');
+  }
+}
+
+function updateOfflineAssistantContext(){
+  const quick=document.getElementById('offlineAssistantQuick');
+  if(!quick)return;
+  quick.innerHTML='';
+  const questions=OFFLINE_ASSISTANT_QUICK[currentActiveTab]||OFFLINE_ASSISTANT_QUICK.budget;
+  questions.forEach(question=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.textContent=question;
+    btn.addEventListener('click',()=>offlineAssistantAsk(question));
+    quick.appendChild(btn);
+  });
+}
+
+function openOfflineAssistant(){
+  const panel=document.getElementById('offlineAssistantPanel');
+  const launcher=document.getElementById('offlineAssistantLauncher');
+  if(!panel||!launcher)return;
+  panel.classList.add('active');
+  panel.setAttribute('aria-hidden','false');
+  launcher.setAttribute('aria-expanded','true');
+  updateOfflineAssistantContext();
+  if(!offlineAssistantWelcomeShown){
+    offlineAssistantWelcomeShown=true;
+    offlineAssistantAppendMessage("Bonjour 👋 Je suis le guide hors ligne de Budget & Patrimoine. Pose-moi une question sur l’onglet actuel ou choisis une suggestion ci-dessous.",'bot');
+  }
+  setTimeout(()=>document.getElementById('offlineAssistantInput')?.focus(),50);
+}
+
+function closeOfflineAssistant(){
+  const panel=document.getElementById('offlineAssistantPanel');
+  const launcher=document.getElementById('offlineAssistantLauncher');
+  if(!panel||!launcher)return;
+  panel.classList.remove('active');
+  panel.setAttribute('aria-hidden','true');
+  launcher.setAttribute('aria-expanded','false');
+}
+
+function initOfflineAssistant(){
+  if(offlineAssistantInitialized)return;
+  const launcher=document.getElementById('offlineAssistantLauncher');
+  const close=document.getElementById('offlineAssistantClose');
+  const form=document.getElementById('offlineAssistantForm');
+  const input=document.getElementById('offlineAssistantInput');
+  if(!launcher||!close||!form||!input)return;
+  offlineAssistantInitialized=true;
+  launcher.addEventListener('click',()=>{
+    const panel=document.getElementById('offlineAssistantPanel');
+    if(panel?.classList.contains('active'))closeOfflineAssistant();else openOfflineAssistant();
+  });
+  close.addEventListener('click',closeOfflineAssistant);
+  form.addEventListener('submit',event=>{
+    event.preventDefault();
+    const value=input.value;
+    input.value='';
+    offlineAssistantAsk(value);
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&document.getElementById('offlineAssistantPanel')?.classList.contains('active'))closeOfflineAssistant();
+  });
+  updateOfflineAssistantContext();
+}
+
+window.updateOfflineAssistantContext=updateOfflineAssistantContext;
+window.openOfflineAssistant=openOfflineAssistant;
+window.closeOfflineAssistant=closeOfflineAssistant;
+window.addEventListener('DOMContentLoaded',initOfflineAssistant);
 
 /* PWA : installation depuis l'interface */
 let deferredInstallPrompt=null;
