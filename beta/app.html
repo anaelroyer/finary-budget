@@ -292,9 +292,21 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .vehicle-icon-actions{margin-left:auto;display:flex;gap:6px}
 .vehicle-icon-btn{min-width:40px;padding:7px 10px;display:flex;align-items:center;justify-content:center}
 .vehicle-alert-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px}
-.vehicle-alert-stat{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px;text-align:center}
+.vehicle-alert-stat{appearance:none;width:100%;font-family:inherit;background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px;text-align:center;color:inherit}
+button.vehicle-alert-stat{cursor:pointer;transition:transform .15s ease,border-color .15s ease,background .15s ease}
+button.vehicle-alert-stat:active{transform:scale(.97)}
 .vehicle-alert-stat strong{display:block;font-size:17px;color:#fff}.vehicle-alert-stat span{font-size:10px;color:#8b949e}
+.vehicle-alert-stat.overdue.has-alert{border-color:rgba(248,81,73,.7);background:rgba(248,81,73,.13)}
+.vehicle-alert-stat.overdue.has-alert strong,.vehicle-alert-stat.overdue.has-alert span{color:#f85149}
+.vehicle-alert-stat.soon.has-alert{border-color:rgba(210,153,34,.7);background:rgba(210,153,34,.13)}
+.vehicle-alert-stat.soon.has-alert strong,.vehicle-alert-stat.soon.has-alert span{color:#d29922}
+.vehicle-alert-stat.active{box-shadow:0 0 0 2px rgba(255,255,255,.10) inset}
+.vehicle-alert-stat.has-alert{animation:vehicleAlertPulse 1.6s ease-in-out infinite}
+@keyframes vehicleAlertPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@media(prefers-reduced-motion:reduce){.vehicle-alert-stat.has-alert{animation:none}}
 .vehicle-alert-list{display:flex;flex-direction:column;gap:7px}
+.vehicle-alert-list-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;color:#c9d1d9;font-size:11px;font-weight:800}
+.vehicle-alert-list-title button{border:0;background:transparent;color:#8b949e;cursor:pointer;font-size:11px;padding:4px 0}
 .vehicle-alert{border-radius:10px;padding:10px 11px;border:1px solid #30363d;background:#161b22}
 .vehicle-alert.ok{border-color:rgba(63,185,80,.28);background:rgba(63,185,80,.06)}
 .vehicle-alert.soon{border-color:rgba(210,153,34,.38);background:rgba(210,153,34,.08)}
@@ -3652,6 +3664,7 @@ let currentGarageVehicleId='';
 let vehicleEditId='';
 let maintenanceEditId='';
 let scheduleEditId='';
+let vehicleAlertDetailFilter='';
 
 function getGarageVehicleById(id){
   ensureVehicleData();
@@ -3674,6 +3687,17 @@ function getCurrentGarageVehicle(){
 function selectGarageVehicle(id){
   if(!getGarageVehicleById(id))return;
   currentGarageVehicleId=id;
+  renderVehicles();
+}
+
+function setVehicleAlertDetailFilter(status){
+  if(status!=='overdue'&&status!=='soon')return;
+  vehicleAlertDetailFilter=vehicleAlertDetailFilter===status?'':status;
+  renderVehicles();
+}
+
+function closeVehicleAlertDetails(){
+  vehicleAlertDetailFilter='';
   renderVehicles();
 }
 
@@ -4390,7 +4414,8 @@ function renderVehicles(){
     tabs.innerHTML='';
     empty.style.display='block';
     content.style.display='none';
-    alerts.innerHTML='<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>0</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
+    vehicleAlertDetailFilter='';
+    alerts.innerHTML='<div class="vehicle-alert-summary"><button type="button" class="vehicle-alert-stat overdue" disabled><strong>0</strong><span>En retard</span></button><button type="button" class="vehicle-alert-stat soon" disabled><strong>0</strong><span>À prévoir</span></button><div class="vehicle-alert-stat ok"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
     return;
   }
 
@@ -4412,8 +4437,17 @@ function renderVehicles(){
     return ak-bk;
   });
   const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
-  const visibleAlertRows=alertRows.filter(x=>x.st.status==='overdue'||x.st.status==='soon');
-  alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>${counts.ok}</strong><span>À jour</span></div></div>`+(visibleAlertRows.length?`<div class="vehicle-alert-list">${visibleAlertRows.map(({vehicle,sc,st})=>{
+  if(vehicleAlertDetailFilter&&counts[vehicleAlertDetailFilter]===0)vehicleAlertDetailFilter='';
+  const detailRows=vehicleAlertDetailFilter?alertRows.filter(x=>x.st.status===vehicleAlertDetailFilter):[];
+  const overdueActive=vehicleAlertDetailFilter==='overdue';
+  const soonActive=vehicleAlertDetailFilter==='soon';
+  const summaryHtml=`<div class="vehicle-alert-summary">
+    <button type="button" class="vehicle-alert-stat overdue ${counts.overdue?'has-alert':''} ${overdueActive?'active':''}" onclick="setVehicleAlertDetailFilter('overdue')" ${counts.overdue?'':'disabled'} aria-pressed="${overdueActive}"><strong>${counts.overdue}</strong><span>En retard</span></button>
+    <button type="button" class="vehicle-alert-stat soon ${counts.soon?'has-alert':''} ${soonActive?'active':''}" onclick="setVehicleAlertDetailFilter('soon')" ${counts.soon?'':'disabled'} aria-pressed="${soonActive}"><strong>${counts.soon}</strong><span>À prévoir</span></button>
+    <div class="vehicle-alert-stat ok"><strong>${counts.ok}</strong><span>À jour</span></div>
+  </div>`;
+
+  const renderAlertRow=({vehicle,sc,st})=>{
     const vehicleLabel=getGarageVehicleLabel(vehicle.id);
     const registration=vehicle.registration?` · ${escapeHtml(vehicle.registration)}`:'';
     const last=maintenanceLastMeta(sc);
@@ -4424,8 +4458,19 @@ function renderVehicles(){
     const estimate=estimatedMileageDate?`<br>📅 Au rythme actuel : vers ${escapeHtml(formatMonthYearFR(estimatedMileageDate))}`:'';
     const legacy=sc.legacy?'<br><span class="maintenance-plan-legacy">Ancienne échéance à convertir dans le plan d’entretien.</span>':'';
     const performedAction=sc.source==='maintenance-plan'&&!sc.legacy?`<button class="btn btn-primary" onclick="openPerformedMaintenanceFromAlert('${vehicle.id}','${sc.planId}')">✓ Effectué</button>`:'';
-    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️</button></div></div></div>`;
-  }).join('')}</div>`:'<div class="vehicle-empty">✅ Aucune échéance proche ou dépassée. Tout est à jour.</div>');
+    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':'🟠'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️</button></div></div></div>`;
+  };
+
+  let detailsHtml='';
+  if(vehicleAlertDetailFilter&&detailRows.length){
+    const label=vehicleAlertDetailFilter==='overdue'?'Entretiens en retard':'Entretiens à prévoir';
+    detailsHtml=`<div class="vehicle-alert-list-title"><span>${label} · ${detailRows.length}</span><button type="button" onclick="closeVehicleAlertDetails()">Fermer ×</button></div><div class="vehicle-alert-list">${detailRows.map(renderAlertRow).join('')}</div>`;
+  }else if(counts.overdue||counts.soon){
+    detailsHtml='<div class="vehicle-empty" style="padding:8px 4px 2px">Touchez « En retard » ou « À prévoir » pour afficher la liste correspondante.</div>';
+  }else{
+    detailsHtml='<div class="vehicle-empty">✅ Aucune échéance à prévoir ou dépassée. Tout est à jour.</div>';
+  }
+  alerts.innerHTML=summaryHtml+detailsHtml;
 
   const linkedInvoices=(data.factures||[]).filter(i=>i.vehicleId===v.id);
   const vehicleSchedules=getVehicleGeneratedSchedules(v);
