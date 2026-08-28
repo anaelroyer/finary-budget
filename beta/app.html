@@ -257,14 +257,53 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 
 
 /* Gestion dynamique des catégories d’actifs */
-.asset-category-manager{padding:10px 12px}
-.asset-category-add-panel{display:none;margin-top:10px;gap:8px;align-items:center}
-.asset-category-add-panel.active{display:flex}
-.asset-category-add-panel select{flex:1;min-width:0;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:10px;font-size:16px}
+.asset-category-manager{margin:10px 0 14px}
+.asset-category-manager-toggle{width:100%;background:#238636;border:1px solid #2ea043;color:#fff;font-weight:800}
+.asset-category-manager-toggle:hover{background:#2ea043}
+.asset-category-add-panel{display:none;margin-top:9px;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+.asset-category-add-panel.active{display:grid}
+.asset-category-add-panel select{width:100%;min-width:0;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:10px 12px;font-size:16px}
+.asset-category-add-panel .asset-category-add-btn{width:auto;min-width:82px;padding:8px 12px;white-space:nowrap}
 .category-remove-btn{border:0;background:transparent;color:#f85149;font-size:18px;line-height:1;padding:7px 8px;border-radius:8px;cursor:pointer}
 .category-remove-btn:hover{background:rgba(248,81,73,.10)}
 .category-header-actions{display:flex;align-items:center;gap:6px;min-width:0}
-@media(max-width:480px){.asset-category-add-panel{align-items:stretch;flex-direction:column}.asset-category-add-panel .btn{width:100%}}
+@media(max-width:360px){.asset-category-add-panel{grid-template-columns:minmax(0,1fr) 76px}.asset-category-add-panel .asset-category-add-btn{min-width:76px;padding-left:8px;padding-right:8px}}
+
+
+/* =========================================================
+   VÉHICULES / CARNET D'ENTRETIEN
+   ========================================================= */
+.vehicle-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.vehicle-tabs::-webkit-scrollbar{display:none}
+.vehicle-tab{border:1px solid #30363d;background:#161b22;color:#c9d1d9;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
+.vehicle-tab.active{background:#238636;border-color:#2ea043;color:#fff}
+.vehicle-hero{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.vehicle-name{font-size:18px;font-weight:800;color:#fff;line-height:1.25}
+.vehicle-subtitle{font-size:12px;color:#8b949e;margin-top:3px;line-height:1.5}
+.vehicle-mileage{font-size:24px;font-weight:800;color:#fff;text-align:right;white-space:nowrap}
+.vehicle-mileage small{display:block;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px}
+.vehicle-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.vehicle-actions .btn{font-size:11px;padding:7px 9px}
+.vehicle-alert-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.vehicle-alert-stat{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px;text-align:center}
+.vehicle-alert-stat strong{display:block;font-size:17px;color:#fff}.vehicle-alert-stat span{font-size:10px;color:#8b949e}
+.vehicle-alert-list{display:flex;flex-direction:column;gap:7px}
+.vehicle-alert{border-radius:10px;padding:10px 11px;border:1px solid #30363d;background:#161b22}
+.vehicle-alert.ok{border-color:rgba(63,185,80,.28);background:rgba(63,185,80,.06)}
+.vehicle-alert.soon{border-color:rgba(210,153,34,.38);background:rgba(210,153,34,.08)}
+.vehicle-alert.overdue{border-color:rgba(248,81,73,.38);background:rgba(248,81,73,.08)}
+.vehicle-alert-title{font-size:13px;font-weight:800;color:#fff}.vehicle-alert-meta{font-size:11px;color:#8b949e;margin-top:3px;line-height:1.45}
+.vehicle-list{display:flex;flex-direction:column;gap:8px}
+.vehicle-entry{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:11px}
+.vehicle-entry-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.vehicle-entry-title{font-size:13px;font-weight:800;color:#fff}.vehicle-entry-meta{font-size:11px;color:#8b949e;line-height:1.5;margin-top:3px}
+.vehicle-entry-amount{font-size:13px;font-weight:800;color:#c9d1d9;white-space:nowrap}
+.vehicle-entry-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.vehicle-entry-actions .btn{font-size:10px;padding:6px 8px}
+.vehicle-empty{color:#8b949e;text-align:center;padding:20px 8px;font-size:12px}
+.vehicle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vehicle-section-note{font-size:11px;color:#8b949e;line-height:1.5;margin-top:3px}
+.vehicle-link-badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:700;background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+@media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
@@ -472,6 +511,92 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
   </div>
 </div>
 
+
+<!-- MODAL VÉHICULE -->
+<div class="modal-overlay" id="vehicleModal">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehicleModalTitle">Ajouter un véhicule</h3>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Marque</label><input type="text" id="vehicleMake" placeholder="Ex : Skoda"></div>
+      <div class="modal-field"><label>Modèle</label><input type="text" id="vehicleModel" placeholder="Ex : Kodiaq"></div>
+      <div class="modal-field"><label>Immatriculation</label><input type="text" id="vehicleRegistration" placeholder="AA-123-BB"></div>
+      <div class="modal-field"><label>Année</label><input type="number" id="vehicleYear" inputmode="numeric" min="1900" max="2100" placeholder="2019"></div>
+      <div class="modal-field"><label>Motorisation</label><input type="text" id="vehicleFuel" placeholder="Ex : Essence 1.5 TSI"></div>
+      <div class="modal-field"><label>1re mise en circulation</label><input type="date" id="vehicleFirstRegistration"></div>
+      <div class="modal-field"><label>Kilométrage actuel</label><input type="number" id="vehicleMileage" inputmode="numeric" min="0" placeholder="91250"></div>
+      <div class="modal-field"><label>Date du relevé</label><input type="date" id="vehicleMileageDate"></div>
+      <div class="modal-field" style="grid-column:1/-1"><label>Prochain contrôle technique</label><input type="date" id="vehicleTechnicalInspection"></div>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KILOMÉTRAGE -->
+<div class="modal-overlay" id="vehicleMileageModal">
+  <div class="modal">
+    <h3>Mettre à jour le kilométrage</h3>
+    <div class="modal-field"><label>Kilométrage actuel</label><input type="number" id="vehicleMileageQuick" inputmode="numeric" min="0" placeholder="0"></div>
+    <div class="modal-field"><label>Date du relevé</label><input type="date" id="vehicleMileageQuickDate"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMileageModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleMileage()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENTRETIEN -->
+<div class="modal-overlay" id="maintenanceModal">
+  <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
+    <h3 id="maintenanceModalTitle">Ajouter une intervention</h3>
+    <div class="modal-field"><label>Intervention</label><input type="text" id="maintenanceTitle" placeholder="Ex : Vidange + filtre à huile"></div>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Date</label><input type="date" id="maintenanceDate"></div>
+      <div class="modal-field"><label>Kilométrage</label><input type="number" id="maintenanceMileage" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="modal-field"><label>Montant (€)</label><input type="number" id="maintenanceAmount" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+      <div class="modal-field"><label>Facture associée</label><select id="maintenanceInvoice" class="invoice-select"><option value="">Aucune</option></select></div>
+    </div>
+    <div class="modal-field"><label>Notes</label><textarea id="maintenanceNotes" placeholder="Garage, pièces remplacées, observations..." style="width:100%;min-height:80px;resize:vertical;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-family:inherit;font-size:14px"></textarea></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeMaintenanceModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitMaintenanceModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ÉCHÉANCE -->
+<div class="modal-overlay" id="vehicleScheduleModal">
+  <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
+    <h3 id="vehicleScheduleModalTitle">Ajouter une échéance</h3>
+    <div class="modal-field"><label>Entretien / échéance</label><input type="text" id="vehicleScheduleTitle" placeholder="Ex : Vidange"></div>
+    <div class="vehicle-grid">
+      <div class="modal-field"><label>Date d'échéance</label><input type="date" id="vehicleScheduleDate"></div>
+      <div class="modal-field"><label>Kilométrage d'échéance</label><input type="number" id="vehicleScheduleMileage" inputmode="numeric" min="0" placeholder="Ex : 100000"></div>
+    </div>
+    <div class="modal-field"><label>Notes</label><input type="text" id="vehicleScheduleNotes" placeholder="Facultatif"></div>
+    <div class="vehicle-section-note">Une échéance est signalée comme proche à moins de 60 jours ou 2 000 km.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleScheduleModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleScheduleModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LIAISON FACTURE / VÉHICULE -->
+<div class="modal-overlay" id="vehicleInvoiceLinkModal">
+  <div class="modal">
+    <h3>Associer une facture</h3>
+    <div class="modal-field"><label>Facture existante</label><select id="vehicleInvoiceLinkSelect" class="invoice-select"></select></div>
+    <div class="vehicle-section-note">La facture reste stockée dans l'onglet Factures. Seule son association au véhicule est enregistrée.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleInvoiceLinkModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleInvoiceLink()">Associer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RECADRAGE FACTURE -->
 <div class="modal-overlay" id="invoiceCropModal">
   <div class="modal" style="max-width:460px;width:94%;max-height:94vh;overflow-y:auto;">
@@ -555,6 +680,14 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       </div>
     </div>
 
+
+    <div class="modal-field">
+      <label>Véhicule associé</label>
+      <select id="invoiceVehicle" class="invoice-select">
+        <option value="">Aucun véhicule</option>
+      </select>
+    </div>
+
     <div class="modal-field">
       <label>Garantie applicable</label>
       <select id="invoiceWarrantyApplicable" onchange="toggleInvoiceWarrantyField()" style="width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none;">
@@ -619,6 +752,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
     <button class="tab-btn" onclick="switchTab('patrimoine')">📊 Patrimoine</button>
     <button class="tab-btn" onclick="switchTab('factures')">🧾 Factures</button>
+    <button class="tab-btn" onclick="switchTab('vehicles')">🚗 Véhicules</button>
   </div>
 
   <div id="firebaseStatus">Synchronisation…</div>
@@ -704,6 +838,15 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
         </div>
       </div>
 
+      <div class="asset-category-manager">
+        <button class="btn asset-category-manager-toggle" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actifs</button>
+        <div class="asset-category-add-panel" id="asset-category-add-panel">
+          <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
+          <button class="btn btn-primary asset-category-add-btn" onclick="addSelectedAssetCategory()">Ajouter</button>
+        </div>
+        <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
+      </div>
+
       <div class="chart-container">
 
         <div class="chart-performance">
@@ -730,17 +873,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       </div>
     </div>
 
-    <div class="card"><div class="section-header"><h2>🏠 Immobilier</h2><span class="section-total" id="total-immobilier">0 €</span></div><div class="rows-container" data-key="immobilier"></div><button class="btn-add" onclick="addItem('immobilier')">+ Ajouter</button></div>
     <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
-
-    <div class="card asset-category-manager">
-      <button class="btn btn-secondary" style="width:100%" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actif</button>
-      <div class="asset-category-add-panel" id="asset-category-add-panel">
-        <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
-        <button class="btn btn-primary" onclick="addSelectedAssetCategory()">Ajouter</button>
-      </div>
-      <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
-    </div>
 
     <div id="optional-asset-categories"></div>
 
@@ -778,6 +911,37 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
         <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
       </div>
     </div>
+    <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
+  </div>
+
+  <div id="tab-vehicles" class="tab-content">
+    <div class="top" style="justify-content:space-between;gap:8px;">
+      <div style="font-weight:700;color:#fff">🚗 Véhicules</div>
+      <button class="btn btn-primary" onclick="openVehicleModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
+    </div>
+
+    <div id="vehicle-tabs" class="vehicle-tabs"></div>
+    <div id="vehicle-empty" class="card vehicle-empty" style="display:none">Aucun véhicule enregistré.<br><br><button class="btn btn-primary" onclick="openVehicleModal()">＋ Créer mon premier véhicule</button></div>
+
+    <div id="vehicle-content" style="display:none">
+      <div class="card" id="vehicle-summary-card"></div>
+
+      <div class="card">
+        <div class="section-header"><h2>🔔 Échéances & alertes</h2><button class="btn btn-secondary" onclick="openVehicleScheduleModal()" style="padding:6px 8px;font-size:10px">＋ Échéance</button></div>
+        <div id="vehicle-alerts"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-header"><h2>🔧 Carnet d'entretien</h2><button class="btn btn-secondary" onclick="openMaintenanceModal()" style="padding:6px 8px;font-size:10px">＋ Intervention</button></div>
+        <div id="vehicle-maintenance" class="vehicle-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-header"><h2>🧾 Factures associées</h2><button class="btn btn-secondary" onclick="openVehicleInvoiceLinkModal()" style="padding:6px 8px;font-size:10px">＋ Associer</button></div>
+        <div id="vehicle-invoices" class="vehicle-list"></div>
+      </div>
+    </div>
+
     <div class="app-footer">Application crée par ROYER Anaël · Bêta</div>
   </div>
 
@@ -1040,11 +1204,14 @@ function createEmptyBetaData(){
       {id:'ca',name:'Compte secondaire',active:true}
     ],
     bankTransfers:[],
-    factures:[]
+    factures:[],
+    garageVehicles:[],
+    vehicleMaintenance:[]
   };
 }
 
 const ASSET_CATEGORY_DEFINITIONS=[
+  {key:'immobilier',label:'Immobilier',shortLabel:'Immobilier',icon:'🏠',color:'#8b949e'},
   {key:'assurancevie',label:'Assurance-vie',shortLabel:'AV',icon:'🛡️',color:'#58a6ff'},
   {key:'bourse',label:'Bourse',shortLabel:'Bourse',icon:'📈',color:'#a371f7'},
   {key:'scpi',label:'SCPI',shortLabel:'SCPI',icon:'🏢',color:'#39c5bb'},
@@ -1059,7 +1226,7 @@ const ASSET_CATEGORY_DEFINITIONS=[
   {key:'autres',label:'Autres actifs',shortLabel:'Autres',icon:'📦',color:'#f0883e'}
 ];
 const ASSET_CATEGORY_MAP=Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c]));
-const NATIVE_PATRIMOINE_KEYS=['immobilier','epargne','dettes'];
+const NATIVE_PATRIMOINE_KEYS=['epargne','dettes'];
 
 function ensureAssetCategoryData(){
   ASSET_CATEGORY_DEFINITIONS.forEach(c=>{if(!Array.isArray(data[c.key]))data[c.key]=[];});
@@ -1074,19 +1241,31 @@ function ensureAssetCategoryData(){
 
   data.activeAssetCategories=[...new Set(data.activeAssetCategories)]
     .filter(key=>ASSET_CATEGORY_MAP[key]);
+
+  // Migration de la version où Immobilier était natif : si un compte possède
+  // déjà des biens, la catégorie reste visible automatiquement. Un compte sans
+  // immobilier ne l'affiche pas et pourra l'ajouter depuis le menu.
+  if(Array.isArray(data.immobilier)&&data.immobilier.length>0&&!data.activeAssetCategories.includes('immobilier')){
+    data.activeAssetCategories.unshift('immobilier');
+  }
 }
 
 function getActiveAssetCategoryKeys(){
   ensureAssetCategoryData();
-  return data.activeAssetCategories.slice();
+  const active=new Set(data.activeAssetCategories);
+  return ASSET_CATEGORY_DEFINITIONS.filter(c=>active.has(c.key)).map(c=>c.key);
+}
+
+function getActiveInvestmentCategoryKeys(){
+  return getActiveAssetCategoryKeys().filter(key=>key!=='immobilier');
 }
 
 function getAllAssetKeys(){
-  return ['immobilier','epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key)];
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key)];
 }
 
 function getPatrimoineKeys(){
-  return ['immobilier','epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key),'dettes'];
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key),'dettes'];
 }
 
 let betaUserUid='';
@@ -1100,6 +1279,34 @@ function betaStorageKey(name){return betaStoragePrefix?`${betaStoragePrefix}${na
 function safeLocalJSON(key,fallback){
   if(!key)return fallback;
   try{const value=localStorage.getItem(key);return value?JSON.parse(value):fallback;}catch{return fallback;}
+}
+
+
+function makeLocalId(prefix='id'){
+  if(window.crypto&&typeof window.crypto.randomUUID==='function')return `${prefix}_${window.crypto.randomUUID()}`;
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
+}
+
+function ensureVehicleData(){
+  if(!Array.isArray(data.garageVehicles))data.garageVehicles=[];
+  if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
+  if(!Array.isArray(data.factures))data.factures=[];
+
+  data.garageVehicles=data.garageVehicles.filter(v=>v&&typeof v==='object').map(v=>({
+    ...v,
+    id:String(v.id||makeLocalId('veh')),
+    schedules:Array.isArray(v.schedules)?v.schedules:[],
+    mileageHistory:Array.isArray(v.mileageHistory)?v.mileageHistory:[]
+  }));
+
+  data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m&&typeof m==='object').map(m=>({
+    ...m,
+    id:String(m.id||makeLocalId('mnt'))
+  }));
+
+  data.factures.forEach(inv=>{
+    if(inv&&typeof inv==='object'&&!inv.id)inv.id=makeLocalId('inv');
+  });
 }
 
 function ensureBankingData(){
@@ -1146,6 +1353,7 @@ function ensureBankingData(){
   });
 
   ensureAssetCategoryData();
+  ensureVehicleData();
 }
 
 ensureBankingData();
@@ -1225,6 +1433,7 @@ function switchTab(t){
     e.classList.toggle('active',target.includes(`'${t}'`));
   });
   if(t==='factures')renderInvoices();
+  if(t==='vehicles')renderVehicles();
 }
 
 let touchStartX=0,touchStartY=0;
@@ -1239,7 +1448,7 @@ document.addEventListener('touchend',e=>{
       dx=x-touchStartX,
       dy=y-touchStartY;
   if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
-    const tabs=['budget','patrimoine','factures'];
+    const tabs=['budget','patrimoine','factures','vehicles'];
     const idx=tabs.indexOf(currentActiveTab);
     if(dx<0&&idx<tabs.length-1)switchTab(tabs[idx+1]);
     else if(dx>0&&idx>0)switchTab(tabs[idx-1]);
@@ -2360,13 +2569,13 @@ function renderOptionalAssetCategorySections(){
 function renderChartSeriesControls(){
   const host=document.getElementById('chart-series-controls');
   if(!host)return;
-  const allowed=['total','epargne',...getActiveAssetCategoryKeys()];
+  const allowed=['total','epargne',...getActiveInvestmentCategoryKeys()];
   if(!allowed.includes(currentChartSeries))currentChartSeries='total';
 
   const series=[
     {key:'total',label:'Total'},
     {key:'epargne',label:'Épargne'},
-    ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label}))
+    ...getActiveInvestmentCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label}))
   ];
 
   host.innerHTML=series.map(s=>`<button class="chart-filter ${s.key===currentChartSeries?'active':''}" data-series="${s.key}" onclick="setChartSeries('${s.key}')">${escapeHtml(s.label)}</button>`).join('');
@@ -2379,7 +2588,6 @@ function render(){
   renderChartSeriesControls();
 
   [
-    'immobilier',
     'epargne',
     ...getActiveAssetCategoryKeys(),
     'dettes',
@@ -2492,6 +2700,7 @@ function render(){
   renderChart();
   renderAssetDistribution();
   renderInvoices();
+  renderVehicles();
 }
 
 function escapeHtml(v){
@@ -2613,7 +2822,7 @@ function calculateNet(){
 }
 
 function calculateLiquidInvestments(){
-  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key)].reduce(
+  return ['epargne',...ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').map(c=>c.key)].reduce(
     (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
     0
   );
@@ -2624,7 +2833,6 @@ function calculateLiquidInvestments(){
 function getPatrimoineReportModel(){
   const totals=calculateNet();
   const categories=[
-    {key:'immobilier',label:'Immobilier'},
     {key:'epargne',label:'Épargne'},
     ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].label})),
     {key:'dettes',label:'Emprunts'}
@@ -2635,11 +2843,11 @@ function getPatrimoineReportModel(){
   }));
 
   const savings=categories.find(c=>c.key==='epargne')?.total||0;
-  const investments=getActiveAssetCategoryKeys().reduce((sum,key)=>sum+(categories.find(c=>c.key===key)?.total||0),0);
+  const investments=getActiveInvestmentCategoryKeys().reduce((sum,key)=>sum+(categories.find(c=>c.key===key)?.total||0),0);
   const variation=document.getElementById('patrimoine-variation-value')?.textContent?.trim()||'—';
   const now=new Date();
 
-  const liquidKeys=new Set(['epargne',...getActiveAssetCategoryKeys()]);
+  const liquidKeys=new Set(['epargne',...getActiveInvestmentCategoryKeys()]);
   const liquidCategories=categories.filter(c=>liquidKeys.has(c.key) && c.total>0);
   const liquidTotal=liquidCategories.reduce((s,c)=>s+c.total,0);
 
@@ -2865,10 +3073,10 @@ function updateTotals(){
   );
 
   document.getElementById('investments').textContent=euro(
-    ASSET_CATEGORY_DEFINITIONS.reduce((sum,c)=>sum+(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0),0)
+    ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').reduce((sum,c)=>sum+(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0),0)
   );
 
-  ['immobilier','epargne',...getActiveAssetCategoryKeys(),'dettes'].forEach(k=>{
+  ['epargne',...getActiveAssetCategoryKeys(),'dettes'].forEach(k=>{
     const e=document.getElementById(`total-${k}`);
     if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0));
   });
@@ -3261,6 +3469,292 @@ function resetHistory(){
 }
 
 
+
+/* =========================================================
+   VÉHICULES / CARNET D'ENTRETIEN
+   ========================================================= */
+let currentGarageVehicleId='';
+let vehicleEditId='';
+let maintenanceEditId='';
+let scheduleEditId='';
+
+function getGarageVehicleById(id){
+  ensureVehicleData();
+  return data.garageVehicles.find(v=>v.id===id)||null;
+}
+
+function getGarageVehicleLabel(id){
+  const v=getGarageVehicleById(id);
+  if(!v)return '';
+  return [v.make,v.model].filter(Boolean).join(' ')||v.registration||'Véhicule';
+}
+
+function getCurrentGarageVehicle(){
+  ensureVehicleData();
+  if(!data.garageVehicles.length)return null;
+  if(!data.garageVehicles.some(v=>v.id===currentGarageVehicleId))currentGarageVehicleId=data.garageVehicles[0].id;
+  return getGarageVehicleById(currentGarageVehicleId);
+}
+
+function selectGarageVehicle(id){
+  if(!getGarageVehicleById(id))return;
+  currentGarageVehicleId=id;
+  renderVehicles();
+}
+
+function populateInvoiceVehicleSelect(selected=''){
+  ensureVehicleData();
+  const select=document.getElementById('invoiceVehicle');
+  if(!select)return;
+  select.innerHTML='<option value="">Aucun véhicule</option>'+data.garageVehicles.map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml(getGarageVehicleLabel(v.id))}${v.registration?` · ${escapeHtml(v.registration)}`:''}</option>`).join('');
+  select.value=data.garageVehicles.some(v=>v.id===selected)?selected:'';
+}
+
+function openVehicleModal(id=''){
+  ensureVehicleData();
+  vehicleEditId=id||'';
+  const v=vehicleEditId?getGarageVehicleById(vehicleEditId):null;
+  document.getElementById('vehicleModalTitle').textContent=v?'Modifier le véhicule':'Ajouter un véhicule';
+  document.getElementById('vehicleMake').value=v?.make||'';
+  document.getElementById('vehicleModel').value=v?.model||'';
+  document.getElementById('vehicleRegistration').value=v?.registration||'';
+  document.getElementById('vehicleYear').value=v?.year||'';
+  document.getElementById('vehicleFuel').value=v?.fuel||'';
+  document.getElementById('vehicleFirstRegistration').value=v?.firstRegistration||'';
+  document.getElementById('vehicleMileage').value=v?.mileage??'';
+  document.getElementById('vehicleMileageDate').value=v?.mileageDate||dateToLocalISO(new Date());
+  document.getElementById('vehicleTechnicalInspection').value=v?.technicalInspectionDate||'';
+  document.getElementById('vehicleModal').classList.add('active');
+  setTimeout(()=>document.getElementById('vehicleMake').focus(),50);
+}
+
+function closeVehicleModal(){document.getElementById('vehicleModal').classList.remove('active');vehicleEditId='';}
+
+function submitVehicleModal(){
+  ensureVehicleData();
+  const make=document.getElementById('vehicleMake').value.trim();
+  const model=document.getElementById('vehicleModel').value.trim();
+  const registration=document.getElementById('vehicleRegistration').value.trim().toUpperCase();
+  const yearRaw=document.getElementById('vehicleYear').value;
+  const mileageRaw=document.getElementById('vehicleMileage').value;
+  if(!make&&!model&&!registration){document.getElementById('vehicleMake').focus();return;}
+  const year=yearRaw===''?'':Math.max(1900,Math.min(2100,Math.round(Number(yearRaw)||0)));
+  const mileage=mileageRaw===''?0:Math.max(0,Math.round(Number(mileageRaw)||0));
+  const existing=vehicleEditId?getGarageVehicleById(vehicleEditId):null;
+  const obj={
+    ...(existing||{}),
+    id:existing?.id||makeLocalId('veh'),
+    make,model,registration,year,
+    fuel:document.getElementById('vehicleFuel').value.trim(),
+    firstRegistration:document.getElementById('vehicleFirstRegistration').value,
+    mileage,
+    mileageDate:document.getElementById('vehicleMileageDate').value||dateToLocalISO(new Date()),
+    technicalInspectionDate:document.getElementById('vehicleTechnicalInspection').value,
+    schedules:Array.isArray(existing?.schedules)?existing.schedules:[],
+    mileageHistory:Array.isArray(existing?.mileageHistory)?existing.mileageHistory:[]
+  };
+  if(mileage>0){
+    const last=obj.mileageHistory[obj.mileageHistory.length-1];
+    if(!last||Number(last.mileage)!==mileage||last.date!==obj.mileageDate)obj.mileageHistory.push({date:obj.mileageDate,mileage});
+  }
+  if(existing){Object.assign(existing,obj);}else{data.garageVehicles.push(obj);currentGarageVehicleId=obj.id;}
+  document.getElementById('vehicleModal').classList.remove('active');
+  vehicleEditId='';save();renderVehicles();renderInvoices();
+}
+
+function deleteGarageVehicle(id){
+  const v=getGarageVehicleById(id);if(!v)return;
+  const linked=(data.factures||[]).filter(i=>i.vehicleId===id).length;
+  const maintenance=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===id).length;
+  const extra=(linked||maintenance)?`\n\n${maintenance} intervention(s) seront supprimée(s). ${linked} facture(s) resteront enregistrée(s) mais seront dissociée(s) du véhicule.`:'';
+  if(!confirm(`Supprimer le véhicule « ${getGarageVehicleLabel(id)} » ?${extra}`))return;
+  data.garageVehicles=data.garageVehicles.filter(x=>x.id!==id);
+  data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m.vehicleId!==id);
+  (data.factures||[]).forEach(inv=>{if(inv.vehicleId===id)inv.vehicleId='';});
+  currentGarageVehicleId=data.garageVehicles[0]?.id||'';
+  save();renderVehicles();renderInvoices();
+}
+
+function openVehicleMileageModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  document.getElementById('vehicleMileageQuick').value=v.mileage||'';
+  document.getElementById('vehicleMileageQuickDate').value=dateToLocalISO(new Date());
+  document.getElementById('vehicleMileageModal').classList.add('active');
+  setTimeout(()=>document.getElementById('vehicleMileageQuick').focus(),50);
+}
+function closeVehicleMileageModal(){document.getElementById('vehicleMileageModal').classList.remove('active');}
+function submitVehicleMileage(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const raw=document.getElementById('vehicleMileageQuick').value;
+  const mileage=Math.max(0,Math.round(Number(raw)||0));
+  const date=document.getElementById('vehicleMileageQuickDate').value||dateToLocalISO(new Date());
+  v.mileage=mileage;v.mileageDate=date;
+  if(!Array.isArray(v.mileageHistory))v.mileageHistory=[];
+  const last=v.mileageHistory[v.mileageHistory.length-1];
+  if(!last||Number(last.mileage)!==mileage||last.date!==date)v.mileageHistory.push({date,mileage});
+  closeVehicleMileageModal();save();renderVehicles();
+}
+
+function getVehicleInvoiceOptions(vehicleId,selected=''){
+  ensureVehicleData();
+  return '<option value="">Aucune</option>'+(data.factures||[]).filter(inv=>!inv.vehicleId||inv.vehicleId===vehicleId||inv.id===selected).map(inv=>`<option value="${escapeHtml(inv.id)}">${escapeHtml(inv.description||'Facture')} · ${formatDateFR(inv.date)} · ${euro(Number(inv.amount)||0)}</option>`).join('');
+}
+
+function openMaintenanceModal(id=''){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  maintenanceEditId=id||'';
+  const m=maintenanceEditId?(data.vehicleMaintenance||[]).find(x=>x.id===maintenanceEditId):null;
+  document.getElementById('maintenanceModalTitle').textContent=m?'Modifier l’intervention':'Ajouter une intervention';
+  document.getElementById('maintenanceTitle').value=m?.title||'';
+  document.getElementById('maintenanceDate').value=m?.date||dateToLocalISO(new Date());
+  document.getElementById('maintenanceMileage').value=m?.mileage??v.mileage??'';
+  document.getElementById('maintenanceAmount').value=m?.amount??'';
+  document.getElementById('maintenanceNotes').value=m?.notes||'';
+  const sel=document.getElementById('maintenanceInvoice');
+  sel.innerHTML=getVehicleInvoiceOptions(v.id,m?.invoiceId||'');sel.value=m?.invoiceId||'';
+  document.getElementById('maintenanceModal').classList.add('active');
+}
+function closeMaintenanceModal(){document.getElementById('maintenanceModal').classList.remove('active');maintenanceEditId='';}
+function submitMaintenanceModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const title=document.getElementById('maintenanceTitle').value.trim();if(!title){document.getElementById('maintenanceTitle').focus();return;}
+  const invoiceId=document.getElementById('maintenanceInvoice').value||'';
+  if(invoiceId){const inv=(data.factures||[]).find(i=>i.id===invoiceId);if(inv)inv.vehicleId=v.id;}
+  const obj={id:maintenanceEditId||makeLocalId('mnt'),vehicleId:v.id,title,date:document.getElementById('maintenanceDate').value||dateToLocalISO(new Date()),mileage:Math.max(0,Math.round(Number(document.getElementById('maintenanceMileage').value)||0)),amount:Math.max(0,Number(document.getElementById('maintenanceAmount').value)||0),notes:document.getElementById('maintenanceNotes').value.trim(),invoiceId};
+  const idx=data.vehicleMaintenance.findIndex(m=>m.id===obj.id);if(idx>=0)data.vehicleMaintenance[idx]=obj;else data.vehicleMaintenance.unshift(obj);
+  closeMaintenanceModal();save();renderVehicles();renderInvoices();
+}
+function deleteMaintenance(id){
+  const m=(data.vehicleMaintenance||[]).find(x=>x.id===id);if(!m)return;
+  if(!confirm(`Supprimer l’intervention « ${m.title||'Sans libellé'} » ?`))return;
+  data.vehicleMaintenance=data.vehicleMaintenance.filter(x=>x.id!==id);save();renderVehicles();
+}
+
+function openVehicleScheduleModal(id=''){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  scheduleEditId=id||'';
+  const sc=(v.schedules||[]).find(x=>x.id===scheduleEditId)||null;
+  document.getElementById('vehicleScheduleModalTitle').textContent=sc?'Modifier l’échéance':'Ajouter une échéance';
+  document.getElementById('vehicleScheduleTitle').value=sc?.title||'';
+  document.getElementById('vehicleScheduleDate').value=sc?.dueDate||'';
+  document.getElementById('vehicleScheduleMileage').value=sc?.dueMileage??'';
+  document.getElementById('vehicleScheduleNotes').value=sc?.notes||'';
+  document.getElementById('vehicleScheduleModal').classList.add('active');
+}
+function closeVehicleScheduleModal(){document.getElementById('vehicleScheduleModal').classList.remove('active');scheduleEditId='';}
+function submitVehicleScheduleModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const title=document.getElementById('vehicleScheduleTitle').value.trim();if(!title){document.getElementById('vehicleScheduleTitle').focus();return;}
+  const dueDate=document.getElementById('vehicleScheduleDate').value;
+  const dueMileageRaw=document.getElementById('vehicleScheduleMileage').value;
+  if(!dueDate&&dueMileageRaw===''){alert('Renseigne au moins une date ou un kilométrage d’échéance.');return;}
+  const obj={id:scheduleEditId||makeLocalId('sch'),title,dueDate,dueMileage:dueMileageRaw===''?0:Math.max(0,Math.round(Number(dueMileageRaw)||0)),notes:document.getElementById('vehicleScheduleNotes').value.trim()};
+  if(!Array.isArray(v.schedules))v.schedules=[];
+  const idx=v.schedules.findIndex(x=>x.id===obj.id);if(idx>=0)v.schedules[idx]=obj;else v.schedules.push(obj);
+  closeVehicleScheduleModal();save();renderVehicles();
+}
+function deleteVehicleSchedule(id){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const sc=(v.schedules||[]).find(x=>x.id===id);if(!sc)return;
+  if(!confirm(`Supprimer l’échéance « ${sc.title} » ?`))return;
+  v.schedules=v.schedules.filter(x=>x.id!==id);save();renderVehicles();
+}
+
+function getScheduleStatus(v,sc){
+  const today=parseLocalDate(dateToLocalISO(new Date()));
+  const due=parseLocalDate(sc.dueDate);
+  const days=due?Math.ceil((due-today)/86400000):null;
+  const currentKm=Number(v.mileage)||0;
+  const dueKm=Number(sc.dueMileage)||0;
+  const km=dueKm>0?dueKm-currentKm:null;
+  const overdue=(days!==null&&days<0)||(km!==null&&km<0);
+  const soon=!overdue&&((days!==null&&days<=60)||(km!==null&&km<=2000));
+  return {status:overdue?'overdue':soon?'soon':'ok',days,km};
+}
+
+function scheduleMeta(v,sc,status){
+  const parts=[];
+  if(sc.dueDate){
+    if(status.days<0)parts.push(`date dépassée de ${Math.abs(status.days)} j`);
+    else if(status.days===0)parts.push('échéance aujourd’hui');
+    else parts.push(`${status.days} j restants`);
+  }
+  if(Number(sc.dueMileage)>0){
+    if(status.km<0)parts.push(`dépassé de ${Math.abs(status.km).toLocaleString('fr-FR')} km`);
+    else parts.push(`${status.km.toLocaleString('fr-FR')} km restants`);
+  }
+  return parts.join(' · ');
+}
+
+function openVehicleInvoiceLinkModal(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const select=document.getElementById('vehicleInvoiceLinkSelect');
+  const invoices=(data.factures||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!invoices.length){alert("Aucune facture n'est encore enregistrée dans l'onglet Factures.");return;}
+  select.innerHTML=invoices.map(inv=>{
+    const linked=inv.vehicleId&&inv.vehicleId!==v.id?` · liée à ${getGarageVehicleLabel(inv.vehicleId)}`:inv.vehicleId===v.id?' · déjà associée':'';
+    return `<option value="${escapeHtml(inv.id)}">${escapeHtml(inv.description||'Facture')} · ${formatDateFR(inv.date)} · ${euro(Number(inv.amount)||0)}${escapeHtml(linked)}</option>`;
+  }).join('');
+  document.getElementById('vehicleInvoiceLinkModal').classList.add('active');
+}
+function closeVehicleInvoiceLinkModal(){document.getElementById('vehicleInvoiceLinkModal').classList.remove('active');}
+function submitVehicleInvoiceLink(){
+  const v=getCurrentGarageVehicle();if(!v)return;
+  const id=document.getElementById('vehicleInvoiceLinkSelect').value;
+  const inv=(data.factures||[]).find(i=>i.id===id);if(!inv)return;
+  if(inv.vehicleId&&inv.vehicleId!==v.id&&!confirm(`Cette facture est déjà liée à « ${getGarageVehicleLabel(inv.vehicleId)} ». La réaffecter à « ${getGarageVehicleLabel(v.id)} » ?`))return;
+  inv.vehicleId=v.id;closeVehicleInvoiceLinkModal();save();renderVehicles();renderInvoices();
+}
+function unlinkInvoiceFromVehicle(invoiceId){
+  const inv=(data.factures||[]).find(i=>i.id===invoiceId);if(!inv)return;
+  if(!confirm(`Dissocier la facture « ${inv.description||'Facture'} » de ce véhicule ?`))return;
+  inv.vehicleId='';(data.vehicleMaintenance||[]).forEach(m=>{if(m.invoiceId===invoiceId)m.invoiceId='';});save();renderVehicles();renderInvoices();
+}
+function openInvoiceById(invoiceId){
+  const idx=(data.factures||[]).findIndex(i=>i.id===invoiceId);if(idx<0)return;
+  switchTab('factures');openInvoiceModal(idx);
+}
+
+function renderVehicles(){
+  ensureVehicleData();
+  const tabs=document.getElementById('vehicle-tabs');
+  const empty=document.getElementById('vehicle-empty');
+  const content=document.getElementById('vehicle-content');
+  if(!tabs||!empty||!content)return;
+
+  if(!data.garageVehicles.length){tabs.innerHTML='';empty.style.display='block';content.style.display='none';return;}
+  const v=getCurrentGarageVehicle();if(!v)return;
+  empty.style.display='none';content.style.display='block';
+  tabs.innerHTML=data.garageVehicles.map(x=>`<button class="vehicle-tab ${x.id===v.id?'active':''}" onclick="selectGarageVehicle('${x.id}')">${escapeHtml(getGarageVehicleLabel(x.id))}</button>`).join('');
+
+  const linkedInvoices=(data.factures||[]).filter(i=>i.vehicleId===v.id);
+  const maint=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===v.id);
+  const total12m=maint.filter(m=>{const d=parseLocalDate(m.date);if(!d)return false;const limit=new Date();limit.setFullYear(limit.getFullYear()-1);return d>=limit;}).reduce((s,m)=>s+(Number(m.amount)||0),0);
+  const mileageDate=v.mileageDate?formatDateFR(v.mileageDate):'date non renseignée';
+  document.getElementById('vehicle-summary-card').innerHTML=`
+    <div class="vehicle-hero">
+      <div><div class="vehicle-name">${escapeHtml(getGarageVehicleLabel(v.id))}</div><div class="vehicle-subtitle">${v.registration?escapeHtml(v.registration)+' · ':''}${v.year?escapeHtml(v.year)+' · ':''}${escapeHtml(v.fuel||'Motorisation non renseignée')}</div></div>
+      <div class="vehicle-mileage">${(Number(v.mileage)||0).toLocaleString('fr-FR')} km<small>relevé : ${mileageDate}</small></div>
+    </div>
+    <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretien 12 mois</span><strong class="invoice-amount">${euro(total12m)}</strong></div><div class="stat"><span>Interventions</span><strong>${maint.length}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
+    <div class="vehicle-actions"><button class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Kilométrage</button><button class="btn btn-secondary" onclick="openVehicleModal('${v.id}')">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')">🗑️ Supprimer</button></div>`;
+
+  const schedules=[...(v.schedules||[])];
+  if(v.technicalInspectionDate)schedules.unshift({id:'__ct__',title:'Contrôle technique',dueDate:v.technicalInspectionDate,dueMileage:0,notes:''});
+  const alertRows=schedules.map(sc=>({sc,st:getScheduleStatus(v,sc)})).sort((a,b)=>({overdue:0,soon:1,ok:2}[a.st.status]-({overdue:0,soon:1,ok:2}[b.st.status])));
+  const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
+  const alerts=document.getElementById('vehicle-alerts');
+  alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>${counts.ok}</strong><span>À jour</span></div></div>`+(alertRows.length?`<div class="vehicle-alert-list">${alertRows.map(({sc,st})=>`<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${sc.dueDate?`Échéance : ${formatDateFR(sc.dueDate)}`:''}${sc.dueDate&&Number(sc.dueMileage)>0?' · ':''}${Number(sc.dueMileage)>0?`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`:''}<br>${escapeHtml(scheduleMeta(v,sc,st))}${sc.notes?` · ${escapeHtml(sc.notes)}`:''}</div></div>${sc.id!=='__ct__'?`<div class="vehicle-entry-actions"><button class="btn btn-secondary" onclick="openVehicleScheduleModal('${sc.id}')">✏️</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteVehicleSchedule('${sc.id}')">×</button></div>`:''}</div></div>`).join('')}</div>`:'<div class="vehicle-empty">Aucune échéance renseignée.</div>');
+
+  const mhost=document.getElementById('vehicle-maintenance');
+  const sortedMaint=maint.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  mhost.innerHTML=sortedMaint.length?sortedMaint.map(m=>{const inv=(data.factures||[]).find(i=>i.id===m.invoiceId);return `<div class="vehicle-entry"><div class="vehicle-entry-head"><div><div class="vehicle-entry-title">${escapeHtml(m.title)}</div><div class="vehicle-entry-meta">${formatDateFR(m.date)}${Number(m.mileage)>0?` · ${Number(m.mileage).toLocaleString('fr-FR')} km`:''}${m.notes?`<br>${escapeHtml(m.notes)}`:''}${inv?`<br><span class="vehicle-link-badge">🧾 ${escapeHtml(inv.description||'Facture')}</span>`:''}</div></div><div class="vehicle-entry-amount invoice-amount">${Number(m.amount)>0?euro(Number(m.amount)):''}</div></div><div class="vehicle-entry-actions">${inv?`<button class="btn btn-secondary" onclick="openInvoiceById('${inv.id}')">🧾 Facture</button>`:''}<button class="btn btn-secondary" onclick="openMaintenanceModal('${m.id}')">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteMaintenance('${m.id}')">🗑️</button></div></div>`;}).join(''):'<div class="vehicle-empty">Aucune intervention enregistrée.</div>';
+
+  const ihost=document.getElementById('vehicle-invoices');
+  const sortedInvoices=linkedInvoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  ihost.innerHTML=sortedInvoices.length?sortedInvoices.map(inv=>`<div class="vehicle-entry"><div class="vehicle-entry-head"><div><div class="vehicle-entry-title">${escapeHtml(inv.description||'Facture')}</div><div class="vehicle-entry-meta">${formatDateFR(inv.date)}${inv.seller?` · ${escapeHtml(inv.seller)}`:''}</div></div><div class="vehicle-entry-amount invoice-amount">${euro(Number(inv.amount)||0)}</div></div><div class="vehicle-entry-actions">${inv.photoUrl?`<button class="btn btn-secondary" onclick="openInvoicePhoto(${data.factures.indexOf(inv)})">📄 Voir</button>`:''}<button class="btn btn-secondary" onclick="openInvoiceById('${inv.id}')">✏️ Ouvrir</button><button class="btn btn-secondary" onclick="unlinkInvoiceFromVehicle('${inv.id}')">🔗 Dissocier</button></div></div>`).join(''):'<div class="vehicle-empty">Aucune facture associée à ce véhicule.</div>';
+}
+
 /* =========================================================
    FACTURES & GARANTIES
    ========================================================= */
@@ -3387,6 +3881,7 @@ function openInvoiceModal(index=-1){
   document.getElementById('invoiceReference').value=invoice?.reference||'';
   document.getElementById('invoiceCategory').value=invoice?.category||'Autre';
   document.getElementById('invoiceReceiptType').value=invoice?.receiptType||'Facture';
+  populateInvoiceVehicleSelect(invoice?.vehicleId||'');
 
   const warrantyApplicable=invoice
     ? invoice.warrantyApplicable !== false && (Number(invoice.warrantyMonths)||0)>0
@@ -3750,6 +4245,7 @@ function submitInvoice(){
   const reference=document.getElementById('invoiceReference').value.trim();
   const category=document.getElementById('invoiceCategory').value;
   const receiptType=document.getElementById('invoiceReceiptType').value;
+  const vehicleId=document.getElementById('invoiceVehicle')?.value||'';
   const warrantyApplicable=document.getElementById('invoiceWarrantyApplicable').value!=='no';
   const warrantyRaw=document.getElementById('invoiceWarrantyMonths').value;
   const photoUrl=invoicePendingPhotoUrl;
@@ -3800,6 +4296,7 @@ function submitInvoice(){
   }
 
   const invoice={
+    id:(invoiceEditIndex>=0&&data.factures[invoiceEditIndex]?.id)||makeLocalId('inv'),
     description,
     date,
     amount,
@@ -3807,6 +4304,7 @@ function submitInvoice(){
     reference,
     category,
     receiptType,
+    vehicleId,
     warrantyApplicable,
     warrantyMonths,
     photoUrl
@@ -3820,6 +4318,12 @@ function submitInvoice(){
     data.factures.unshift(invoice);
   }
 
+  // Si cette facture est déjà liée à une intervention, l'association véhicule suit la facture.
+  (data.vehicleMaintenance||[]).forEach(m=>{
+    if(m.invoiceId===invoice.id && vehicleId)m.vehicleId=vehicleId;
+    if(m.invoiceId===invoice.id && !vehicleId)m.invoiceId='';
+  });
+
   document.getElementById('invoiceModal').classList.remove('active');
   invoiceEditIndex=-1;
   invoicePendingPhotoUrl='';
@@ -3832,7 +4336,9 @@ function deleteInvoice(index){
   if(!Array.isArray(data.factures)||!data.factures[index])return;
   const invoice=data.factures[index];
   if(!confirm(`Supprimer la facture « ${invoice.description||'Sans description'} » ?`))return;
+  const deletedId=invoice.id||'';
   data.factures.splice(index,1);
+  if(deletedId)(data.vehicleMaintenance||[]).forEach(m=>{if(m.invoiceId===deletedId)m.invoiceId='';});
   save();
   renderInvoices();
 }
@@ -3968,7 +4474,7 @@ function exportInvoicesJSON(){
 function exportInvoicesCSV(){
   const rows=[[
     'Description','Date','Montant','Vendeur','Référence',
-    'Catégorie','Type de justificatif','Garantie applicable',
+    'Catégorie','Type de justificatif','Véhicule','Garantie applicable',
     'Durée garantie (mois)','Fin de garantie','URL facture'
   ]];
 
@@ -3982,6 +4488,7 @@ function exportInvoicesCSV(){
       invoice.reference||'',
       invoice.category||'Autre',
       invoice.receiptType||'Facture',
+      getGarageVehicleLabel(invoice.vehicleId)||'',
       invoice.warrantyApplicable===false?'Non':'Oui',
       Number(invoice.warrantyMonths||0),
       w.endDate?dateToLocalISO(w.endDate):'',
@@ -4022,6 +4529,7 @@ function renderInvoices(){
         invoice.reference,
         invoice.category,
         invoice.receiptType,
+        getGarageVehicleLabel(invoice.vehicleId),
         invoice.date,
         invoice.amount
       ].join(' '));
@@ -4069,6 +4577,7 @@ function renderInvoices(){
               <div>
                 <span class="invoice-chip">${escapeHtml(invoice.category||'Autre')}</span>
                 <span class="invoice-chip">${escapeHtml(invoice.receiptType||'Facture')}</span>
+                ${invoice.vehicleId?`<span class="invoice-chip">🚗 ${escapeHtml(getGarageVehicleLabel(invoice.vehicleId))}</span>`:''}
               </div>
               ${warrantyEnd}
             </div>
@@ -4151,7 +4660,7 @@ let currentChartSeries=localStorage.getItem('finaryChartSeries')||'total';
 const chartSeriesConfig={
   total:{label:'Total',field:'net'},
   epargne:{label:'Épargne',field:'epargne'},
-  ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,{label:c.label,field:c.key}]))
+  ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').map(c=>[c.key,{label:c.label,field:c.key}]))
 };
 
 function setChartRange(range){
@@ -4491,7 +5000,7 @@ function renderAssetDistribution(){
 
   const cats=[
     {key:'epargne',label:'Épargne',color:'#3fb950'},
-    ...getActiveAssetCategoryKeys().map(key=>({
+    ...getActiveInvestmentCategoryKeys().map(key=>({
       key,
       label:ASSET_CATEGORY_MAP[key].shortLabel||ASSET_CATEGORY_MAP[key].label,
       color:ASSET_CATEGORY_MAP[key].color
