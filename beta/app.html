@@ -930,16 +930,16 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
+    <button id="assistantTargetAddExpense" class="btn btn-primary" onclick="openModal('budgetDepenses')">+ Ajouter une dépense</button>
     <details class="card" id="details-depenses"><summary><span>🛒 Dépenses</span><span class="budget-summary-total" id="total-budgetDepenses">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetDepenses"></div><button class="btn btn-secondary" onclick="clearList('budgetDepenses')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <button class="btn btn-primary" onclick="openModal('budgetFixes')">+ Ajouter un Frais fixe</button>
+    <button id="assistantTargetAddFixed" class="btn btn-primary" onclick="openModal('budgetFixes')">+ Ajouter un Frais fixe</button>
     <details class="card"><summary><span>🏠 Frais fixes</span><span class="budget-summary-total" id="total-budgetFixes">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetFixes"></div><button class="btn btn-secondary" onclick="clearList('budgetFixes')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <button class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
+    <button id="assistantTargetAddIncome" class="btn btn-primary" onclick="openModal('budgetRevenus')">+ Ajouter une Entrée</button>
     <details class="card"><summary><span>📥 Entrées</span><span class="budget-summary-total" id="total-budgetRevenus">0 €</span></summary><div class="details-content"><div class="rows-container" data-key="budgetRevenus"></div><button class="btn btn-secondary" onclick="clearList('budgetRevenus')" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
-    <button class="btn btn-primary" onclick="openBankTransferModal()">⇄ Ajouter un virement interne</button>
+    <button id="assistantTargetAddTransfer" class="btn btn-primary" onclick="openBankTransferModal()">⇄ Ajouter un virement interne</button>
     <details class="card" id="details-bank-transfers"><summary><span>⇄ Virements internes</span><span class="budget-summary-total" id="bank-transfer-count">0</span></summary><div class="details-content"><div id="bank-transfers-container"></div><button class="btn btn-secondary" onclick="clearBankTransfers()" style="width:100%;color:#f85149;margin-top:4px">🗑️ Vider</button></div></details>
 
     <div class="card" id="assistantTargetBudgetHistory">
@@ -6102,6 +6102,26 @@ const OFFLINE_ASSISTANT_KB=[
     target:'#tab-budget',targetTab:'budget'
   },
   {
+    id:'add-expense',tabs:['budget'],keywords:['ajouter depense','ajouter une depense','nouvelle depense','creer depense','saisir depense','enregistrer depense','depense budget','dépense'],
+    answer:"Pour ajouter une dépense dans le mois en cours, ouvre l’onglet Budget puis touche « + Ajouter une dépense ». Renseigne le libellé, le montant, le compte concerné et l’état de l’opération, puis valide. La dépense sera immédiatement prise en compte dans le reste à vivre.",
+    target:'#assistantTargetAddExpense',targetTab:'budget'
+  },
+  {
+    id:'add-fixed',tabs:['budget'],keywords:['ajouter frais fixe','ajouter un frais fixe','nouveau frais fixe','charge fixe','depense fixe','dépense fixe'],
+    answer:"Pour ajouter une charge récurrente, utilise « + Ajouter un Frais fixe » dans l’onglet Budget. Renseigne son libellé, son montant et le compte concerné, puis valide. Elle sera intégrée au calcul du budget du mois.",
+    target:'#assistantTargetAddFixed',targetTab:'budget'
+  },
+  {
+    id:'add-income',tabs:['budget'],keywords:['ajouter revenu','ajouter une entree','ajouter entrée','nouveau revenu','saisir revenu','salaire','revenu budget'],
+    answer:"Pour enregistrer un revenu ou une entrée d’argent, touche « + Ajouter une Entrée » dans l’onglet Budget, renseigne le libellé, le montant et le compte concerné, puis valide.",
+    target:'#assistantTargetAddIncome',targetTab:'budget'
+  },
+  {
+    id:'add-transfer',tabs:['budget'],keywords:['ajouter virement interne','faire virement interne','virement entre comptes','transfert entre comptes'],
+    answer:"Pour déplacer de l’argent entre deux de tes comptes sans créer une dépense, utilise « Ajouter un virement interne ». Choisis le compte de départ, le compte d’arrivée et le montant : le résultat global du budget ne change pas.",
+    target:'#assistantTargetAddTransfer',targetTab:'budget'
+  },
+  {
     id:'reste-vivre',tabs:['budget'],keywords:['reste a vivre','reste vivre','calcul reste','budget restant'],
     answer:"Le « Reste à vivre estimé » correspond à ce qu’il reste après prise en compte des entrées, frais fixes et dépenses du mois. Il évolue automatiquement avec les lignes que tu ajoutes ou modifies.",
     target:'#budget-reste-vivre',targetTab:'budget'
@@ -6233,7 +6253,7 @@ const OFFLINE_ASSISTANT_KB=[
   },
   {
     id:'sync',tabs:['budget','patrimoine','factures','vehicles'],keywords:['synchronisation','firebase','sauvegarde','hors ligne','internet','donnees','données'],
-    answer:"Les modifications de l’application sont d’abord enregistrées dans le stockage local associé au compte, puis la synchronisation Firebase est demandée lorsque le service est disponible. L’assistant que tu utilises ici est, lui, entièrement embarqué dans app.html et ne contacte aucun service externe pour répondre.",
+    answer:"Les modifications de l’application sont d’abord enregistrées dans le stockage local associé au compte, puis synchronisées avec l’espace Firebase personnel du testeur lorsque le service est disponible. Chaque compte bêta conserve ses propres données. L’assistant que tu utilises ici est entièrement embarqué dans app.html et ne contacte aucun service externe pour répondre.",
     target:'#firebaseStatus',targetTab:'budget'
   },
   {
@@ -6243,7 +6263,7 @@ const OFFLINE_ASSISTANT_KB=[
 ];
 
 const OFFLINE_ASSISTANT_QUICK={
-  budget:['À quoi sert cet onglet ?','Comment fonctionne le reste à vivre ?','Comment clôturer un mois ?','À quoi servent les virements internes ?'],
+  budget:['Comment ajouter une dépense ?','Comment ajouter un revenu ?','Comment fonctionne le reste à vivre ?','Comment clôturer un mois ?'],
   patrimoine:['À quoi sert cet onglet ?','Patrimoine brut ou net ?','Comment ajouter une catégorie ?','Comment fonctionne le graphique ?'],
   factures:['À quoi sert cet onglet ?','Comment ajouter une facture ?','Comment fonctionnent les garanties ?','Comment associer une facture à un véhicule ?'],
   vehicles:['À quoi sert cet onglet ?','Comment créer un plan d’entretien ?','Comment enregistrer plusieurs entretiens ?','Que signifie À prévoir ?']
@@ -6258,23 +6278,84 @@ function offlineAssistantNormalize(value){
 }
 
 function offlineAssistantTokens(value){
-  const stop=new Set(['le','la','les','un','une','des','de','du','d','a','au','aux','et','ou','en','pour','sur','je','j','tu','il','elle','on','nous','vous','ils','elles','mon','ma','mes','ce','cet','cette','ces','comment','quoi','quel','quelle','quels','quelles','est','sont','sert','faire']);
+  const stop=new Set(['le','la','les','un','une','des','de','du','d','a','au','aux','et','ou','en','pour','sur','je','j','tu','il','elle','on','nous','vous','ils','elles','mon','ma','mes','ce','cet','cette','ces','comment','quoi','quel','quelle','quels','quelles','est','sont','sert','faire','avec','dans']);
   return offlineAssistantNormalize(value).split(/\s+/).filter(token=>token.length>1&&!stop.has(token));
 }
 
-function offlineAssistantScore(entry,query){
+function offlineAssistantEditDistance(a,b){
+  a=String(a||'');b=String(b||'');
+  if(a===b)return 0;
+  if(!a.length)return b.length;
+  if(!b.length)return a.length;
+  const prev=Array.from({length:b.length+1},(_,i)=>i);
+  const cur=new Array(b.length+1);
+  for(let i=1;i<=a.length;i++){
+    cur[0]=i;
+    for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    for(let j=0;j<=b.length;j++)prev[j]=cur[j];
+  }
+  return prev[b.length];
+}
+
+function offlineAssistantTokenMatches(a,b){
+  if(a===b)return true;
+  if(a.length>=5&&b.length>=5){
+    if(a.startsWith(b)||b.startsWith(a))return true;
+    return offlineAssistantEditDistance(a,b)<=1;
+  }
+  return false;
+}
+
+function offlineAssistantDetectDomains(query){
+  const q=offlineAssistantNormalize(query);
+  const domains=new Set();
+  const has=(re)=>re.test(q);
+  const vehicle=has(/\b(vehicule|vehicules|voiture|voitures|auto|garage|entretien|entretiens|vidange|distribution|pompe a eau|plaquette|plaquettes|disque|disques|kilometrage|controle technique)\b/);
+  const invoice=has(/\b(facture|factures|garantie|garanties|justificatif|justificatifs)\b/);
+  const patrimoine=has(/\b(patrimoine|actif|actifs|epargne|assurance vie|bourse|scpi|crypto|emprunt|emprunts|credit|credits|capital restant|immobilier|per retraite)\b/);
+  const budget=has(/\b(budget|depense|depenses|revenu|revenus|entree|entrees|frais fixe|frais fixes|reste a vivre|cloturer|cloture|virement interne|virements internes|compte bancaire|comptes bancaires)\b/);
+  if(vehicle)domains.add('vehicles');
+  if(invoice)domains.add('factures');
+  if(patrimoine)domains.add('patrimoine');
+  if(budget)domains.add('budget');
+  // « dépenses véhicule » concerne le bilan véhicule, pas l'ajout d'une dépense mensuelle.
+  if(vehicle&&has(/\b(depense|depenses|cout|couts)\b/))domains.delete('budget');
+  return domains;
+}
+
+function offlineAssistantDirectIntent(query){
+  const q=offlineAssistantNormalize(query);
+  const wantsAdd=/\b(ajout|ajouter|ajoute|creer|cree|nouveau|nouvelle|saisir|enregistrer|rentrer|mettre)\b/.test(q);
+  if(wantsAdd&&/\b(depense|depenses)\b/.test(q)&&!/\b(vehicule|voiture|auto|facture)\b/.test(q))return 'add-expense';
+  if(wantsAdd&&/\b(frais fixe|frais fixes|charge fixe|charges fixes)\b/.test(q))return 'add-fixed';
+  if(wantsAdd&&/\b(revenu|revenus|entree|entrees|salaire)\b/.test(q))return 'add-income';
+  if(/\b(virement interne|virements internes|transfert entre comptes)\b/.test(q))return 'add-transfer';
+  if(wantsAdd&&/\b(facture|achat|justificatif)\b/.test(q))return 'add-invoice';
+  if(wantsAdd&&/\b(vehicule|voiture|auto)\b/.test(q))return 'add-vehicle';
+  if(wantsAdd&&/\b(entretien|entretiens)\b/.test(q))return 'multi-maintenance';
+  return '';
+}
+
+function offlineAssistantScore(entry,query,domains=new Set()){
   const nq=offlineAssistantNormalize(query);
-  const qTokens=new Set(offlineAssistantTokens(query));
+  const qTokens=offlineAssistantTokens(query);
   let score=0;
   (entry.keywords||[]).forEach(keyword=>{
     const nk=offlineAssistantNormalize(keyword);
     if(!nk)return;
-    if(nq===nk)score+=14;
-    else if(nq.includes(nk))score+=7;
+    if(nq===nk)score+=18;
+    else if(nq.includes(nk))score+=9;
     const kTokens=offlineAssistantTokens(keyword);
-    kTokens.forEach(token=>{if(qTokens.has(token))score+=1.7;});
+    kTokens.forEach(token=>{
+      if(qTokens.some(qt=>offlineAssistantTokenMatches(qt,token)))score+=2.2;
+    });
   });
-  if((entry.tabs||[]).includes(currentActiveTab))score+=1.25;
+  const tabs=entry.tabs||[];
+  if(domains.size){
+    const matches=[...domains].filter(domain=>tabs.includes(domain)).length;
+    if(matches)score+=5*matches;
+    else score-=12;
+  }else if(tabs.includes(currentActiveTab))score+=1.5;
   return score;
 }
 
@@ -6284,8 +6365,19 @@ function offlineAssistantFindAnswer(query){
   if(/^(aide|help|bonjour|salut|hello)$/.test(normalized)){
     return OFFLINE_ASSISTANT_KB.find(e=>e.id===`${currentActiveTab}-overview`)||OFFLINE_ASSISTANT_KB.find(e=>e.id==='assistant-itself');
   }
-  const ranked=OFFLINE_ASSISTANT_KB.map(entry=>({entry,score:offlineAssistantScore(entry,query)})).sort((a,b)=>b.score-a.score);
-  return ranked[0]&&ranked[0].score>=3?ranked[0].entry:null;
+  const directId=offlineAssistantDirectIntent(query);
+  if(directId){
+    const direct=OFFLINE_ASSISTANT_KB.find(entry=>entry.id===directId);
+    if(direct)return direct;
+  }
+  const domains=offlineAssistantDetectDomains(query);
+  const ranked=OFFLINE_ASSISTANT_KB.map(entry=>({entry,score:offlineAssistantScore(entry,query,domains)})).sort((a,b)=>b.score-a.score);
+  const best=ranked[0];
+  const second=ranked[1];
+  if(!best||best.score<4)return null;
+  // En cas de résultat très ambigu entre deux domaines, mieux vaut ne pas inventer.
+  if(second&&best.score-second.score<0.8&&domains.size===0&&best.score<8)return null;
+  return best.entry;
 }
 
 function offlineAssistantAppendMessage(text,role='bot',entry=null){
@@ -6311,6 +6403,7 @@ function offlineAssistantAppendMessage(text,role='bot',entry=null){
 
 function offlineAssistantShowTarget(entry){
   if(!entry?.target)return;
+  closeOfflineAssistant();
   if(entry.targetTab&&entry.targetTab!==currentActiveTab)switchTab(entry.targetTab);
   if(entry.reveal==='vehicle-plan'){
     const vehicle=getCurrentGarageVehicle();
