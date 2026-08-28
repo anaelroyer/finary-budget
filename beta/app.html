@@ -307,6 +307,16 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .vehicle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .vehicle-section-note{font-size:11px;color:#8b949e;line-height:1.5;margin-top:3px}
 .vehicle-link-badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:700;background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.vehicle-maintenance-plan-block{margin-top:16px;padding-top:14px;border-top:1px solid #30363d}
+.vehicle-maintenance-plan-editor{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.maintenance-plan-row{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:11px}
+.maintenance-plan-row-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
+.maintenance-plan-row-head strong{font-size:12px;color:#fff}
+.maintenance-plan-remove{border:0;background:transparent;color:#f85149;font-size:18px;line-height:1;padding:5px 7px;border-radius:7px;cursor:pointer}
+.maintenance-plan-remove:hover{background:rgba(248,81,73,.10)}
+.maintenance-plan-preview{margin-top:8px;padding:8px 9px;border-radius:8px;background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;line-height:1.45}
+.maintenance-plan-preview strong{color:#c9d1d9}
+.maintenance-plan-legacy{color:#d29922}
 @media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -531,6 +541,21 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
       <div class="modal-field"><label>Date du relevé</label><input type="date" id="vehicleMileageDate"></div>
       <div class="modal-field" style="grid-column:1/-1"><label>Prochain contrôle technique</label><input type="date" id="vehicleTechnicalInspection"></div>
     </div>
+
+    <div class="vehicle-maintenance-plan-block">
+      <div class="section-header">
+        <h2 style="font-size:14px">🔧 Plan d'entretien</h2>
+        <button type="button" class="btn btn-secondary" onclick="addVehicleMaintenancePlanRow()" style="padding:6px 8px;font-size:10px">＋ Entretien</button>
+      </div>
+      <div class="vehicle-section-note">Pour chaque entretien, indique le dernier entretien réalisé et sa périodicité. L'application calculera automatiquement la prochaine échéance par date et/ou kilométrage.</div>
+      <div id="vehicleMaintenancePlanEditor" class="vehicle-maintenance-plan-editor"></div>
+      <datalist id="maintenanceTypeSuggestions">
+        <option value="Vidange moteur"><option value="Filtre à huile"><option value="Filtre à air"><option value="Filtre habitacle">
+        <option value="Bougies"><option value="Liquide de frein"><option value="Liquide de refroidissement"><option value="Courroie de distribution">
+        <option value="Courroie accessoires"><option value="Entretien boîte de vitesses"><option value="Pneus"><option value="Batterie">
+      </datalist>
+    </div>
+
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="submitVehicleModal()">Enregistrer</button>
@@ -547,43 +572,6 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleMileageModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="submitVehicleMileage()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL ENTRETIEN -->
-<div class="modal-overlay" id="maintenanceModal">
-  <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
-    <h3 id="maintenanceModalTitle">Ajouter une intervention</h3>
-    <div class="modal-field"><label>Intervention</label><input type="text" id="maintenanceTitle" placeholder="Ex : Vidange + filtre à huile"></div>
-    <div class="vehicle-grid">
-      <div class="modal-field"><label>Date</label><input type="date" id="maintenanceDate"></div>
-      <div class="modal-field"><label>Kilométrage</label><input type="number" id="maintenanceMileage" inputmode="numeric" min="0" placeholder="0"></div>
-      <div class="modal-field"><label>Montant (€)</label><input type="number" id="maintenanceAmount" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
-      <div class="modal-field"><label>Facture associée</label><select id="maintenanceInvoice" class="invoice-select"><option value="">Aucune</option></select></div>
-    </div>
-    <div class="modal-field"><label>Notes</label><textarea id="maintenanceNotes" placeholder="Garage, pièces remplacées, observations..." style="width:100%;min-height:80px;resize:vertical;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-family:inherit;font-size:14px"></textarea></div>
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeMaintenanceModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1" onclick="submitMaintenanceModal()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL ÉCHÉANCE -->
-<div class="modal-overlay" id="vehicleScheduleModal">
-  <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
-    <h3 id="vehicleScheduleModalTitle">Ajouter une échéance</h3>
-    <div class="modal-field"><label>Entretien / échéance</label><input type="text" id="vehicleScheduleTitle" placeholder="Ex : Vidange"></div>
-    <div class="vehicle-grid">
-      <div class="modal-field"><label>Date d'échéance</label><input type="date" id="vehicleScheduleDate"></div>
-      <div class="modal-field"><label>Kilométrage d'échéance</label><input type="number" id="vehicleScheduleMileage" inputmode="numeric" min="0" placeholder="Ex : 100000"></div>
-    </div>
-    <div class="modal-field"><label>Notes</label><input type="text" id="vehicleScheduleNotes" placeholder="Facultatif"></div>
-    <div class="vehicle-section-note">Une échéance est signalée comme proche à moins de 60 jours ou 2 000 km.</div>
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeVehicleScheduleModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1" onclick="submitVehicleScheduleModal()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -925,7 +913,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     </div>
 
     <div class="card" id="vehicle-alerts-card" style="display:none">
-      <div class="section-header"><h2>🔔 Échéances & alertes</h2><button class="btn btn-secondary" id="vehicle-add-schedule-btn" onclick="openVehicleScheduleModal()" style="padding:6px 8px;font-size:10px">＋ Échéance</button></div>
+      <div class="section-header"><h2>🔔 Échéances & alertes</h2></div>
       <div id="vehicle-alerts"></div>
     </div>
 
@@ -935,10 +923,6 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
     <div id="vehicle-content" style="display:none">
       <div class="card" id="vehicle-summary-card"></div>
 
-      <div class="card">
-        <div class="section-header"><h2>🔧 Carnet d'entretien</h2><button class="btn btn-secondary" onclick="openMaintenanceModal()" style="padding:6px 8px;font-size:10px">＋ Intervention</button></div>
-        <div id="vehicle-maintenance" class="vehicle-list"></div>
-      </div>
 
       <div class="card">
         <div class="section-header"><h2>🧾 Factures associées</h2><button class="btn btn-secondary" onclick="openVehicleInvoiceLinkModal()" style="padding:6px 8px;font-size:10px">＋ Associer</button></div>
@@ -1291,17 +1275,54 @@ function makeLocalId(prefix='id'){
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
 }
 
+function normalizeMaintenancePlanItem(item={}){
+  const lastMileage=(item.lastMileage===''||item.lastMileage===null||item.lastMileage===undefined)?'':Math.max(0,Math.round(Number(item.lastMileage)||0));
+  return {
+    ...item,
+    id:String(item.id||makeLocalId('plan')),
+    type:String(item.type||item.title||'').trim(),
+    lastDate:String(item.lastDate||''),
+    lastMileage,
+    intervalMonths:Math.max(0,Math.round(Number(item.intervalMonths)||0)),
+    intervalKm:Math.max(0,Math.round(Number(item.intervalKm)||0)),
+    notes:String(item.notes||''),
+    legacyDueDate:String(item.legacyDueDate||''),
+    legacyDueMileage:Math.max(0,Math.round(Number(item.legacyDueMileage)||0)),
+    legacy:Boolean(item.legacy)
+  };
+}
+
 function ensureVehicleData(){
   if(!Array.isArray(data.garageVehicles))data.garageVehicles=[];
+  // Ancien historique d'interventions conservé pour compatibilité, mais il n'est plus utilisé par l'interface.
   if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
   if(!Array.isArray(data.factures))data.factures=[];
 
-  data.garageVehicles=data.garageVehicles.filter(v=>v&&typeof v==='object').map(v=>({
-    ...v,
-    id:String(v.id||makeLocalId('veh')),
-    schedules:Array.isArray(v.schedules)?v.schedules:[],
-    mileageHistory:Array.isArray(v.mileageHistory)?v.mileageHistory:[]
-  }));
+  data.garageVehicles=data.garageVehicles.filter(v=>v&&typeof v==='object').map(v=>{
+    const oldSchedules=Array.isArray(v.schedules)?v.schedules:[];
+    let plan;
+    if(Array.isArray(v.maintenancePlan)){
+      plan=v.maintenancePlan.map(normalizeMaintenancePlanItem);
+    }else{
+      // Migration douce des anciennes échéances manuelles : elles restent visibles jusqu'à
+      // ce que l'utilisateur renseigne un dernier entretien et une périodicité.
+      plan=oldSchedules.map(sc=>normalizeMaintenancePlanItem({
+        id:sc?.id||makeLocalId('plan'),
+        type:sc?.title||'Entretien',
+        notes:sc?.notes||'',
+        legacyDueDate:sc?.dueDate||'',
+        legacyDueMileage:Number(sc?.dueMileage)||0,
+        legacy:true
+      }));
+    }
+    return {
+      ...v,
+      id:String(v.id||makeLocalId('veh')),
+      schedules:oldSchedules,
+      maintenancePlan:plan,
+      mileageHistory:Array.isArray(v.mileageHistory)?v.mileageHistory:[]
+    };
+  });
 
   data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m&&typeof m==='object').map(m=>({
     ...m,
@@ -3591,6 +3612,119 @@ function populateInvoiceVehicleSelect(selected=''){
   select.value=data.garageVehicles.some(v=>v.id===selected)?selected:'';
 }
 
+let vehicleMaintenancePlanDraft=[];
+
+function getMaintenancePlanComputedSchedule(vehicle,item){
+  const plan=normalizeMaintenancePlanItem(item);
+  let dueDate='';
+  let dueMileage=0;
+  if(plan.intervalMonths>0&&plan.lastDate){
+    const d=parseLocalDate(plan.lastDate);
+    if(d)dueDate=dateToLocalISO(addMonthsSafe(d,plan.intervalMonths));
+  }
+  if(plan.intervalKm>0&&plan.lastMileage!==''){
+    dueMileage=Math.max(0,Number(plan.lastMileage)||0)+plan.intervalKm;
+  }
+  // Anciennes échéances : on conserve la date/km historiques tant que le plan n'a pas été converti.
+  if(!dueDate&&plan.legacyDueDate)dueDate=plan.legacyDueDate;
+  if(!dueMileage&&plan.legacyDueMileage>0)dueMileage=plan.legacyDueMileage;
+  return {
+    id:`plan_${plan.id}`,
+    planId:plan.id,
+    source:'maintenance-plan',
+    title:plan.type||'Entretien',
+    dueDate,
+    dueMileage,
+    notes:plan.notes||'',
+    lastDate:plan.lastDate||'',
+    lastMileage:plan.lastMileage,
+    intervalMonths:plan.intervalMonths,
+    intervalKm:plan.intervalKm,
+    legacy:plan.legacy&&!(plan.intervalMonths>0||plan.intervalKm>0)
+  };
+}
+
+function getVehicleGeneratedSchedules(vehicle){
+  const rows=[];
+  if(vehicle.technicalInspectionDate){
+    rows.push({id:'__ct__',source:'technical',title:'Contrôle technique',dueDate:vehicle.technicalInspectionDate,dueMileage:0,notes:''});
+  }
+  (vehicle.maintenancePlan||[]).forEach(item=>{
+    const sc=getMaintenancePlanComputedSchedule(vehicle,item);
+    if(sc.dueDate||Number(sc.dueMileage)>0)rows.push(sc);
+  });
+  return rows;
+}
+
+function maintenancePlanPreviewHtml(item){
+  const plan=normalizeMaintenancePlanItem(item);
+  const fakeVehicle={mileage:Number(document.getElementById('vehicleMileage')?.value)||0};
+  const sc=getMaintenancePlanComputedSchedule(fakeVehicle,plan);
+  const parts=[];
+  if(sc.dueDate)parts.push(`prochaine date : <strong>${escapeHtml(formatDateFR(sc.dueDate))}</strong>`);
+  if(Number(sc.dueMileage)>0)parts.push(`prochain kilométrage : <strong>${Number(sc.dueMileage).toLocaleString('fr-FR')} km</strong>`);
+  if(plan.legacy&&!(plan.intervalMonths>0||plan.intervalKm>0)){
+    return `<span class="maintenance-plan-legacy">Ancienne échéance conservée.</span> ${parts.length?parts.join(' · '):'Renseigne le dernier entretien et une périodicité pour passer au calcul automatique.'}`;
+  }
+  return parts.length?`Calcul automatique : ${parts.join(' · ')}`:'La prochaine échéance sera calculée dès qu’une périodicité valide sera renseignée.';
+}
+
+function renderVehicleMaintenancePlanEditor(){
+  const host=document.getElementById('vehicleMaintenancePlanEditor');
+  if(!host)return;
+  if(!vehicleMaintenancePlanDraft.length){
+    host.innerHTML='<div class="vehicle-empty" style="padding:12px 6px">Aucun entretien périodique configuré.</div>';
+    return;
+  }
+  host.innerHTML=vehicleMaintenancePlanDraft.map((raw,index)=>{
+    const p=normalizeMaintenancePlanItem(raw);
+    return `<div class="maintenance-plan-row">
+      <div class="maintenance-plan-row-head"><strong>Entretien ${index+1}</strong><button type="button" class="maintenance-plan-remove" onclick="removeVehicleMaintenancePlanRow('${p.id}')" title="Supprimer cet entretien">×</button></div>
+      <div class="modal-field"><label>Type d'entretien</label><input type="text" list="maintenanceTypeSuggestions" value="${escapeHtml(p.type)}" placeholder="Ex : Vidange moteur" oninput="updateVehicleMaintenancePlanDraft('${p.id}','type',this.value)"></div>
+      <div class="vehicle-grid">
+        <div class="modal-field"><label>Date du dernier entretien</label><input type="date" value="${escapeHtml(p.lastDate)}" onchange="updateVehicleMaintenancePlanDraft('${p.id}','lastDate',this.value,true)"></div>
+        <div class="modal-field"><label>Kilométrage au dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehicleMaintenancePlanDraft('${p.id}','lastMileage',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité en temps (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehicleMaintenancePlanDraft('${p.id}','intervalMonths',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehicleMaintenancePlanDraft('${p.id}','intervalKm',this.value,true)"></div>
+      </div>
+      <div class="modal-field"><label>Notes <span style="text-transform:none;font-weight:500">(facultatif)</span></label><input type="text" value="${escapeHtml(p.notes)}" placeholder="Ex : huile 5W30, filtre inclus…" oninput="updateVehicleMaintenancePlanDraft('${p.id}','notes',this.value)"></div>
+      <div class="maintenance-plan-preview" id="maintenance-plan-preview-${p.id}">${maintenancePlanPreviewHtml(p)}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateMaintenancePlanPreview(id){
+  const row=vehicleMaintenancePlanDraft.find(x=>String(x.id)===String(id));
+  const el=document.getElementById(`maintenance-plan-preview-${id}`);
+  if(row&&el)el.innerHTML=maintenancePlanPreviewHtml(row);
+}
+
+function updateVehicleMaintenancePlanDraft(id,field,value,refreshPreview=false){
+  const row=vehicleMaintenancePlanDraft.find(x=>String(x.id)===String(id));
+  if(!row)return;
+  if(field==='lastMileage')row[field]=value===''?'':Math.max(0,Math.round(Number(value)||0));
+  else if(field==='intervalMonths'||field==='intervalKm')row[field]=Math.max(0,Math.round(Number(value)||0));
+  else row[field]=value;
+  if(refreshPreview)updateMaintenancePlanPreview(id);
+}
+
+function addVehicleMaintenancePlanRow(){
+  vehicleMaintenancePlanDraft.push(normalizeMaintenancePlanItem({id:makeLocalId('plan'),type:'',lastDate:'',lastMileage:'',intervalMonths:0,intervalKm:0,notes:''}));
+  renderVehicleMaintenancePlanEditor();
+  const host=document.getElementById('vehicleMaintenancePlanEditor');
+  if(host)setTimeout(()=>host.lastElementChild?.querySelector('input')?.focus(),20);
+}
+
+function removeVehicleMaintenancePlanRow(id){
+  const row=vehicleMaintenancePlanDraft.find(x=>String(x.id)===String(id));
+  if(!row)return;
+  const label=row.type||'cet entretien';
+  const hasData=Boolean(row.type||row.lastDate||row.lastMileage!==''||row.intervalMonths||row.intervalKm||row.legacyDueDate||row.legacyDueMileage);
+  if(hasData&&!confirm(`Supprimer « ${label} » du plan d'entretien ?`))return;
+  vehicleMaintenancePlanDraft=vehicleMaintenancePlanDraft.filter(x=>String(x.id)!==String(id));
+  renderVehicleMaintenancePlanEditor();
+}
+
 function openVehicleModal(id=''){
   ensureVehicleData();
   vehicleEditId=id||'';
@@ -3605,11 +3739,38 @@ function openVehicleModal(id=''){
   document.getElementById('vehicleMileage').value=v?.mileage??'';
   document.getElementById('vehicleMileageDate').value=v?.mileageDate||dateToLocalISO(new Date());
   document.getElementById('vehicleTechnicalInspection').value=v?.technicalInspectionDate||'';
+  vehicleMaintenancePlanDraft=JSON.parse(JSON.stringify(v?.maintenancePlan||[])).map(normalizeMaintenancePlanItem);
+  renderVehicleMaintenancePlanEditor();
   document.getElementById('vehicleModal').classList.add('active');
   setTimeout(()=>document.getElementById('vehicleMake').focus(),50);
 }
 
-function closeVehicleModal(){document.getElementById('vehicleModal').classList.remove('active');vehicleEditId='';}
+function closeVehicleModal(){
+  document.getElementById('vehicleModal').classList.remove('active');
+  vehicleEditId='';
+  vehicleMaintenancePlanDraft=[];
+}
+
+function validateVehicleMaintenancePlan(){
+  const cleaned=[];
+  for(let i=0;i<vehicleMaintenancePlanDraft.length;i++){
+    const p=normalizeMaintenancePlanItem(vehicleMaintenancePlanDraft[i]);
+    const hasLegacy=Boolean(p.legacyDueDate||p.legacyDueMileage>0);
+    if(!p.type){alert(`Renseigne le type de l'entretien n°${i+1}.`);return null;}
+    if(p.legacy&&hasLegacy&&p.intervalMonths<=0&&p.intervalKm<=0){
+      cleaned.push(p);
+      continue;
+    }
+    if(!p.lastDate){alert(`Renseigne la date du dernier entretien pour « ${p.type} ».`);return null;}
+    if(p.intervalMonths<=0&&p.intervalKm<=0){alert(`Renseigne une périodicité en mois et/ou en kilomètres pour « ${p.type} ».`);return null;}
+    if(p.intervalKm>0&&p.lastMileage===''){alert(`Renseigne le kilométrage du dernier entretien pour « ${p.type} » afin de calculer l'échéance kilométrique.`);return null;}
+    p.legacy=false;
+    p.legacyDueDate='';
+    p.legacyDueMileage=0;
+    cleaned.push(p);
+  }
+  return cleaned;
+}
 
 function submitVehicleModal(){
   ensureVehicleData();
@@ -3619,6 +3780,8 @@ function submitVehicleModal(){
   const yearRaw=document.getElementById('vehicleYear').value;
   const mileageRaw=document.getElementById('vehicleMileage').value;
   if(!make&&!model&&!registration){document.getElementById('vehicleMake').focus();return;}
+  const maintenancePlan=validateVehicleMaintenancePlan();
+  if(maintenancePlan===null)return;
   const year=yearRaw===''?'':Math.max(1900,Math.min(2100,Math.round(Number(yearRaw)||0)));
   const mileage=mileageRaw===''?0:Math.max(0,Math.round(Number(mileageRaw)||0));
   const existing=vehicleEditId?getGarageVehicleById(vehicleEditId):null;
@@ -3631,6 +3794,7 @@ function submitVehicleModal(){
     mileage,
     mileageDate:document.getElementById('vehicleMileageDate').value||dateToLocalISO(new Date()),
     technicalInspectionDate:document.getElementById('vehicleTechnicalInspection').value,
+    maintenancePlan,
     schedules:Array.isArray(existing?.schedules)?existing.schedules:[],
     mileageHistory:Array.isArray(existing?.mileageHistory)?existing.mileageHistory:[]
   };
@@ -3640,14 +3804,14 @@ function submitVehicleModal(){
   }
   if(existing){Object.assign(existing,obj);}else{data.garageVehicles.push(obj);currentGarageVehicleId=obj.id;}
   document.getElementById('vehicleModal').classList.remove('active');
-  vehicleEditId='';save();renderVehicles();renderInvoices();
+  vehicleEditId='';vehicleMaintenancePlanDraft=[];save();renderVehicles();renderInvoices();
 }
 
 function deleteGarageVehicle(id){
   const v=getGarageVehicleById(id);if(!v)return;
   const linked=(data.factures||[]).filter(i=>i.vehicleId===id).length;
   const maintenance=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===id).length;
-  const extra=(linked||maintenance)?`\n\n${maintenance} intervention(s) seront supprimée(s). ${linked} facture(s) resteront enregistrée(s) mais seront dissociée(s) du véhicule.`:'';
+  const extra=(linked||maintenance)?`\n\n${maintenance} ancienne(s) intervention(s) seront supprimée(s). ${linked} facture(s) resteront enregistrée(s) mais seront dissociée(s) du véhicule.`:'';
   if(!confirm(`Supprimer le véhicule « ${getGarageVehicleLabel(id)} » ?${extra}`))return;
   data.garageVehicles=data.garageVehicles.filter(x=>x.id!==id);
   data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m.vehicleId!==id);
@@ -3676,84 +3840,6 @@ function submitVehicleMileage(){
   closeVehicleMileageModal();save();renderVehicles();
 }
 
-function getVehicleInvoiceOptions(vehicleId,selected=''){
-  ensureVehicleData();
-  return '<option value="">Aucune</option>'+(data.factures||[]).filter(inv=>!inv.vehicleId||inv.vehicleId===vehicleId||inv.id===selected).map(inv=>`<option value="${escapeHtml(inv.id)}">${escapeHtml(inv.description||'Facture')} · ${formatDateFR(inv.date)} · ${euro(Number(inv.amount)||0)}</option>`).join('');
-}
-
-function openMaintenanceModal(id=''){
-  const v=getCurrentGarageVehicle();if(!v)return;
-  maintenanceEditId=id||'';
-  const m=maintenanceEditId?(data.vehicleMaintenance||[]).find(x=>x.id===maintenanceEditId):null;
-  document.getElementById('maintenanceModalTitle').textContent=m?'Modifier l’intervention':'Ajouter une intervention';
-  document.getElementById('maintenanceTitle').value=m?.title||'';
-  document.getElementById('maintenanceDate').value=m?.date||dateToLocalISO(new Date());
-  document.getElementById('maintenanceMileage').value=m?.mileage??v.mileage??'';
-  document.getElementById('maintenanceAmount').value=m?.amount??'';
-  document.getElementById('maintenanceNotes').value=m?.notes||'';
-  const sel=document.getElementById('maintenanceInvoice');
-  sel.innerHTML=getVehicleInvoiceOptions(v.id,m?.invoiceId||'');sel.value=m?.invoiceId||'';
-  document.getElementById('maintenanceModal').classList.add('active');
-}
-function closeMaintenanceModal(){document.getElementById('maintenanceModal').classList.remove('active');maintenanceEditId='';}
-function submitMaintenanceModal(){
-  const v=getCurrentGarageVehicle();if(!v)return;
-  const title=document.getElementById('maintenanceTitle').value.trim();if(!title){document.getElementById('maintenanceTitle').focus();return;}
-  const invoiceId=document.getElementById('maintenanceInvoice').value||'';
-  if(invoiceId){const inv=(data.factures||[]).find(i=>i.id===invoiceId);if(inv)inv.vehicleId=v.id;}
-  const obj={id:maintenanceEditId||makeLocalId('mnt'),vehicleId:v.id,title,date:document.getElementById('maintenanceDate').value||dateToLocalISO(new Date()),mileage:Math.max(0,Math.round(Number(document.getElementById('maintenanceMileage').value)||0)),amount:Math.max(0,Number(document.getElementById('maintenanceAmount').value)||0),notes:document.getElementById('maintenanceNotes').value.trim(),invoiceId};
-  const idx=data.vehicleMaintenance.findIndex(m=>m.id===obj.id);if(idx>=0)data.vehicleMaintenance[idx]=obj;else data.vehicleMaintenance.unshift(obj);
-  closeMaintenanceModal();save();renderVehicles();renderInvoices();
-}
-function deleteMaintenance(id){
-  const m=(data.vehicleMaintenance||[]).find(x=>x.id===id);if(!m)return;
-  if(!confirm(`Supprimer l’intervention « ${m.title||'Sans libellé'} » ?`))return;
-  data.vehicleMaintenance=data.vehicleMaintenance.filter(x=>x.id!==id);save();renderVehicles();
-}
-
-function openVehicleScheduleModal(id=''){
-  const v=getCurrentGarageVehicle();if(!v)return;
-  scheduleEditId=id||'';
-  const sc=(v.schedules||[]).find(x=>x.id===scheduleEditId)||null;
-  document.getElementById('vehicleScheduleModalTitle').textContent=(sc?'Modifier l’échéance':'Ajouter une échéance')+' · '+getGarageVehicleLabel(v.id);
-  document.getElementById('vehicleScheduleTitle').value=sc?.title||'';
-  document.getElementById('vehicleScheduleDate').value=sc?.dueDate||'';
-  document.getElementById('vehicleScheduleMileage').value=sc?.dueMileage??'';
-  document.getElementById('vehicleScheduleNotes').value=sc?.notes||'';
-  document.getElementById('vehicleScheduleModal').classList.add('active');
-}
-function closeVehicleScheduleModal(){document.getElementById('vehicleScheduleModal').classList.remove('active');scheduleEditId='';}
-function submitVehicleScheduleModal(){
-  const v=getCurrentGarageVehicle();if(!v)return;
-  const title=document.getElementById('vehicleScheduleTitle').value.trim();if(!title){document.getElementById('vehicleScheduleTitle').focus();return;}
-  const dueDate=document.getElementById('vehicleScheduleDate').value;
-  const dueMileageRaw=document.getElementById('vehicleScheduleMileage').value;
-  if(!dueDate&&dueMileageRaw===''){alert('Renseigne au moins une date ou un kilométrage d’échéance.');return;}
-  const obj={id:scheduleEditId||makeLocalId('sch'),title,dueDate,dueMileage:dueMileageRaw===''?0:Math.max(0,Math.round(Number(dueMileageRaw)||0)),notes:document.getElementById('vehicleScheduleNotes').value.trim()};
-  if(!Array.isArray(v.schedules))v.schedules=[];
-  const idx=v.schedules.findIndex(x=>x.id===obj.id);if(idx>=0)v.schedules[idx]=obj;else v.schedules.push(obj);
-  closeVehicleScheduleModal();save();renderVehicles();
-}
-function deleteVehicleSchedule(id){
-  const v=getCurrentGarageVehicle();if(!v)return;
-  const sc=(v.schedules||[]).find(x=>x.id===id);if(!sc)return;
-  if(!confirm(`Supprimer l’échéance « ${sc.title} » ?`))return;
-  v.schedules=v.schedules.filter(x=>x.id!==id);save();renderVehicles();
-}
-
-function openVehicleScheduleForVehicle(vehicleId,id=''){
-  if(!getGarageVehicleById(vehicleId))return;
-  currentGarageVehicleId=vehicleId;
-  renderVehicles();
-  openVehicleScheduleModal(id);
-}
-
-function deleteVehicleScheduleForVehicle(vehicleId,id){
-  if(!getGarageVehicleById(vehicleId))return;
-  currentGarageVehicleId=vehicleId;
-  deleteVehicleSchedule(id);
-}
-
 function getScheduleStatus(v,sc){
   const today=parseLocalDate(dateToLocalISO(new Date()));
   const due=parseLocalDate(sc.dueDate);
@@ -3778,6 +3864,14 @@ function scheduleMeta(v,sc,status){
     else parts.push(`${status.km.toLocaleString('fr-FR')} km restants`);
   }
   return parts.join(' · ');
+}
+
+function maintenanceLastMeta(sc){
+  if(sc.source!=='maintenance-plan')return '';
+  const parts=[];
+  if(sc.lastDate)parts.push(formatDateFR(sc.lastDate));
+  if(sc.lastMileage!==''&&sc.lastMileage!==null&&sc.lastMileage!==undefined)parts.push(`${Number(sc.lastMileage).toLocaleString('fr-FR')} km`);
+  return parts.length?`Dernier entretien : ${parts.join(' · ')}`:'';
 }
 
 function openVehicleInvoiceLinkModal(){
@@ -3816,32 +3910,26 @@ function renderVehicles(){
   const content=document.getElementById('vehicle-content');
   const alertsCard=document.getElementById('vehicle-alerts-card');
   const alerts=document.getElementById('vehicle-alerts');
-  const addScheduleBtn=document.getElementById('vehicle-add-schedule-btn');
   if(!tabs||!empty||!content||!alertsCard||!alerts)return;
 
-  // La zone d'alertes reste toujours en tête de l'onglet et synthétise TOUS les véhicules.
+  // Zone globale : les échéances sont calculées à partir du plan d'entretien de chaque véhicule.
   alertsCard.style.display='block';
 
   if(!data.garageVehicles.length){
     tabs.innerHTML='';
     empty.style.display='block';
     content.style.display='none';
-    if(addScheduleBtn)addScheduleBtn.disabled=true;
-    alerts.innerHTML='<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>0</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule pour commencer à suivre ses échéances.</div>';
+    alerts.innerHTML='<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>0</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
     return;
   }
 
-  if(addScheduleBtn)addScheduleBtn.disabled=false;
   const v=getCurrentGarageVehicle();if(!v)return;
   empty.style.display='none';content.style.display='block';
   tabs.innerHTML=data.garageVehicles.map(x=>`<button class="vehicle-tab ${x.id===v.id?'active':''}" onclick="selectGarageVehicle('${x.id}')">${escapeHtml(getGarageVehicleLabel(x.id))}</button>`).join('');
 
-  // Échéances globales : chaque ligne garde le véhicule auquel elle appartient.
   const alertRows=[];
   data.garageVehicles.forEach(vehicle=>{
-    const schedules=[...(vehicle.schedules||[])];
-    if(vehicle.technicalInspectionDate)schedules.unshift({id:'__ct__',title:'Contrôle technique',dueDate:vehicle.technicalInspectionDate,dueMileage:0,notes:''});
-    schedules.forEach(sc=>alertRows.push({vehicle,sc,st:getScheduleStatus(vehicle,sc)}));
+    getVehicleGeneratedSchedules(vehicle).forEach(sc=>alertRows.push({vehicle,sc,st:getScheduleStatus(vehicle,sc)}));
   });
   const priority={overdue:0,soon:1,ok:2};
   alertRows.sort((a,b)=>{
@@ -3856,24 +3944,26 @@ function renderVehicles(){
   alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>${counts.ok}</strong><span>À jour</span></div></div>`+(alertRows.length?`<div class="vehicle-alert-list">${alertRows.map(({vehicle,sc,st})=>{
     const vehicleLabel=getGarageVehicleLabel(vehicle.id);
     const registration=vehicle.registration?` · ${escapeHtml(vehicle.registration)}`:'';
-    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${sc.dueDate?`Échéance : ${formatDateFR(sc.dueDate)}`:''}${sc.dueDate&&Number(sc.dueMileage)>0?' · ':''}${Number(sc.dueMileage)>0?`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`:''}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${sc.notes?` · ${escapeHtml(sc.notes)}`:''}</div></div>${sc.id!=='__ct__'?`<div class="vehicle-entry-actions"><button class="btn btn-secondary" onclick="openVehicleScheduleForVehicle('${vehicle.id}','${sc.id}')">✏️</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteVehicleScheduleForVehicle('${vehicle.id}','${sc.id}')">×</button></div>`:''}</div></div>`;
-  }).join('')}</div>`:'<div class="vehicle-empty">Aucune échéance renseignée sur vos véhicules.</div>');
+    const last=maintenanceLastMeta(sc);
+    const dueParts=[];
+    if(sc.dueDate)dueParts.push(`Échéance : ${formatDateFR(sc.dueDate)}`);
+    if(Number(sc.dueMileage)>0)dueParts.push(`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`);
+    const legacy=sc.legacy?'<br><span class="maintenance-plan-legacy">Ancienne échéance à convertir dans le plan d’entretien.</span>':'';
+    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions"><button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️ Modifier</button></div></div></div>`;
+  }).join('')}</div>`:'<div class="vehicle-empty">Aucune échéance calculée. Configurez les entretiens périodiques dans chaque véhicule.</div>');
 
   const linkedInvoices=(data.factures||[]).filter(i=>i.vehicleId===v.id);
-  const maint=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===v.id);
-  const total12m=maint.filter(m=>{const d=parseLocalDate(m.date);if(!d)return false;const limit=new Date();limit.setFullYear(limit.getFullYear()-1);return d>=limit;}).reduce((s,m)=>s+(Number(m.amount)||0),0);
+  const vehicleSchedules=getVehicleGeneratedSchedules(v);
+  const warningCount=vehicleSchedules.reduce((n,sc)=>n+(getScheduleStatus(v,sc).status==='ok'?0:1),0);
+  const maintenanceCount=(v.maintenancePlan||[]).length;
   const mileageDate=v.mileageDate?formatDateFR(v.mileageDate):'date non renseignée';
   document.getElementById('vehicle-summary-card').innerHTML=`
     <div class="vehicle-hero">
       <div><div class="vehicle-name">${escapeHtml(getGarageVehicleLabel(v.id))}</div><div class="vehicle-subtitle">${v.registration?escapeHtml(v.registration)+' · ':''}${v.year?escapeHtml(v.year)+' · ':''}${escapeHtml(v.fuel||'Motorisation non renseignée')}</div></div>
       <div class="vehicle-mileage">${(Number(v.mileage)||0).toLocaleString('fr-FR')} km<small>relevé : ${mileageDate}</small></div>
     </div>
-    <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretien 12 mois</span><strong class="invoice-amount">${euro(total12m)}</strong></div><div class="stat"><span>Interventions</span><strong>${maint.length}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
+    <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
     <div class="vehicle-actions"><button class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Kilométrage</button><button class="btn btn-secondary" onclick="openVehicleModal('${v.id}')">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')">🗑️ Supprimer</button></div>`;
-
-  const mhost=document.getElementById('vehicle-maintenance');
-  const sortedMaint=maint.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  mhost.innerHTML=sortedMaint.length?sortedMaint.map(m=>{const inv=(data.factures||[]).find(i=>i.id===m.invoiceId);return `<div class="vehicle-entry"><div class="vehicle-entry-head"><div><div class="vehicle-entry-title">${escapeHtml(m.title)}</div><div class="vehicle-entry-meta">${formatDateFR(m.date)}${Number(m.mileage)>0?` · ${Number(m.mileage).toLocaleString('fr-FR')} km`:''}${m.notes?`<br>${escapeHtml(m.notes)}`:''}${inv?`<br><span class="vehicle-link-badge">🧾 ${escapeHtml(inv.description||'Facture')}</span>`:''}</div></div><div class="vehicle-entry-amount invoice-amount">${Number(m.amount)>0?euro(Number(m.amount)):''}</div></div><div class="vehicle-entry-actions">${inv?`<button class="btn btn-secondary" onclick="openInvoiceById('${inv.id}')">🧾 Facture</button>`:''}<button class="btn btn-secondary" onclick="openMaintenanceModal('${m.id}')">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="deleteMaintenance('${m.id}')">🗑️</button></div></div>`;}).join(''):'<div class="vehicle-empty">Aucune intervention enregistrée.</div>';
 
   const ihost=document.getElementById('vehicle-invoices');
   const sortedInvoices=linkedInvoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
