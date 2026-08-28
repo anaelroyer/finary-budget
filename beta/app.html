@@ -225,6 +225,7 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .bank-active-toggle input{width:18px;height:18px;accent-color:#238636}
 .bank-delete-btn{width:36px;height:36px;border:1px solid rgba(248,81,73,.35);border-radius:8px;background:rgba(248,81,73,.08);color:#f85149;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .bank-delete-btn:hover{background:rgba(248,81,73,.16)}
+.bank-delete-btn:disabled{cursor:not-allowed;opacity:.28;background:#161b22;border-color:#30363d;color:#8b949e}
 .transfer-row{display:grid;grid-template-columns:28px minmax(0,1fr) 90px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
 .transfer-row.done{background:rgba(35,134,54,.15)}
 .transfer-main{min-width:0;cursor:pointer}
@@ -1931,7 +1932,7 @@ function renderBankAccountsSettings(){
     <div class="bank-account-setting-row">
       <input type="text" value="${escapeHtml(a.name)}" onchange="renameBankAccount(${index},this.value)" aria-label="Nom du compte">
       <label class="bank-active-toggle"><input type="checkbox" ${a.active!==false?'checked':''} onchange="setBankAccountActive(${index},this.checked)"> Actif</label>
-      <button type="button" class="bank-delete-btn" onclick="deleteBankAccount(${index})" title="Supprimer ce compte" aria-label="Supprimer ${escapeHtml(a.name)}">×</button>
+      <button type="button" class="bank-delete-btn" onclick="deleteBankAccount(${index})" ${a.active!==false?'disabled':''} title="${a.active!==false?'Désactivez ce compte avant de le supprimer':'Supprimer ce compte'}" aria-label="${a.active!==false?'Compte actif : désactivez-le avant suppression':'Supprimer '+escapeHtml(a.name)}">×</button>
     </div>
   `).join('');
 }
@@ -1959,17 +1960,14 @@ function deleteBankAccount(index){
     return;
   }
 
-  if(accountIsUsed(account.id)){
-    alert(`Le compte « ${account.name} » est encore utilisé dans le cycle en cours ou dans un virement interne.\n\nDéplacez ou supprimez d’abord ces opérations avant de supprimer le compte.`);
+  if(account.active!==false){
+    alert(`Le compte « ${account.name} » est encore actif.\n\nDécochez d’abord « Actif » avant de pouvoir le supprimer.`);
     return;
   }
 
-  if(account.active!==false){
-    const otherActive=(data.bankAccounts||[]).some((a,i)=>i!==index&&a.active!==false);
-    if(!otherActive){
-      alert('Activez au moins un autre compte avant de supprimer celui-ci.');
-      return;
-    }
+  if(accountIsUsed(account.id)){
+    alert(`Le compte « ${account.name} » est encore utilisé dans le cycle en cours ou dans un virement interne.\n\nDéplacez ou supprimez d’abord ces opérations avant de supprimer le compte.`);
+    return;
   }
 
   const historicalMonths=(monthHistory||[]).filter(month=>{
