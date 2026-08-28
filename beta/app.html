@@ -287,7 +287,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .vehicle-mileage small{display:block;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px}
 .vehicle-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 .vehicle-actions .btn{font-size:11px;padding:7px 9px}
-.vehicle-alert-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.vehicle-alert-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:10px}
 .vehicle-alert-stat{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:9px;text-align:center}
 .vehicle-alert-stat strong{display:block;font-size:17px;color:#fff}.vehicle-alert-stat span{font-size:10px;color:#8b949e}
 .vehicle-alert-list{display:flex;flex-direction:column;gap:7px}
@@ -317,7 +317,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .maintenance-plan-preview{margin-top:8px;padding:8px 9px;border-radius:8px;background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;line-height:1.45}
 .maintenance-plan-preview strong{color:#c9d1d9}
 .maintenance-plan-legacy{color:#d29922}
-@media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:420px){.vehicle-grid{grid-template-columns:1fr}.vehicle-hero{flex-direction:column}.vehicle-mileage{text-align:left}.vehicle-alert-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -4057,7 +4057,7 @@ function renderVehicles(){
     tabs.innerHTML='';
     empty.style.display='block';
     content.style.display='none';
-    alerts.innerHTML='<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>0</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>Bientôt</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
+    alerts.innerHTML='<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>0</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
     return;
   }
 
@@ -4080,7 +4080,7 @@ function renderVehicles(){
   });
   const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
   const visibleAlertRows=alertRows.filter(x=>x.st.status==='overdue'||x.st.status==='soon');
-  alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div></div>`+(visibleAlertRows.length?`<div class="vehicle-alert-list">${visibleAlertRows.map(({vehicle,sc,st})=>{
+  alerts.innerHTML=`<div class="vehicle-alert-summary"><div class="vehicle-alert-stat"><strong>${counts.overdue}</strong><span>En retard</span></div><div class="vehicle-alert-stat"><strong>${counts.soon}</strong><span>Bientôt</span></div><div class="vehicle-alert-stat"><strong>${counts.ok}</strong><span>À jour</span></div></div>`+(visibleAlertRows.length?`<div class="vehicle-alert-list">${visibleAlertRows.map(({vehicle,sc,st})=>{
     const vehicleLabel=getGarageVehicleLabel(vehicle.id);
     const registration=vehicle.registration?` · ${escapeHtml(vehicle.registration)}`:'';
     const last=maintenanceLastMeta(sc);
