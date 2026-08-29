@@ -11,116 +11,167 @@ permissions:
 jobs:
   update-quotes:
     runs-on: ubuntu-latest
+
     steps:
       - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
-      - name: Récupérer les cours Euronext AJAX
+      - name: Récupérer les cours Borsa Italiana
         shell: bash
         run: |
           python3 - <<'PY'
-          import json, re, html as html_lib, urllib.request
+          import json
+          import re
+          import html as html_lib
+          import urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
 
-          PRODUCTS = {
-            "IE00B4ND3602": ("IE00B4ND3602-ETFP", "Euronext · ETFP", 10, 200),
-            "IE0002XZSHO1": ("IE0002XZSHO1-XPAR", "Euronext Paris · WPEA", 1, 20),
-            "FR0013412020": ("FR0013412020-XPAR", "Euronext Paris · PAEEM", 20, 60),
+          INSTRUMENTS = {
+              "IE00B4ND3602": {
+                  "url": "https://www.borsaitaliana.it/borsa/etc-etn/scheda/IE00B4ND3602-ETFP.html?lang=it",
+                  "source": "Borsa Italiana · Milan · SGLN",
+                  "min": 10,
+                  "max": 200,
+              },
+              "IE0002XZSHO1": {
+                  "url": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
+                  "source": "Borsa Italiana · Paris · WPEA",
+                  "min": 1,
+                  "max": 20,
+              },
+              "FR0013412020": {
+                  "url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
+                  "source": "Borsa Italiana · Paris · PAEEM",
+                  "min": 20,
+                  "max": 60,
+              },
           }
 
-          BASE = "https://live.euronext.com/en"
           HEADERS = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-            "Accept": "text/html,*/*",
-            "Accept-Language": "en-US,en;q=0.9",
-            "X-Requested-With": "XMLHttpRequest",
-            "Referer": BASE + "/",
+              "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
+              "Cache-Control": "no-cache",
           }
 
-          opener = urllib.request.build_opener()
-          opener.addheaders = list(HEADERS.items())
-
-          # Initialise les cookies Euronext avant les appels AJAX.
-          try:
-            opener.open(BASE + "/", timeout=30).read()
-          except Exception as e:
-            print("AVERTISSEMENT initialisation Euronext:", e)
-
-          def fetch(product):
-            url = f"{BASE}/ajax/getDetailedQuote/{product}"
-            req = urllib.request.Request(url, headers=HEADERS)
-            with opener.open(req, timeout=30) as r:
-              return r.read().decode("utf-8", errors="ignore"), url
+          def fetch(url):
+              req = urllib.request.Request(url, headers=HEADERS)
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return r.read().decode("utf-8", errors="ignore")
 
           def textify(raw):
-            raw = re.sub(r"<script\b[^>]*>.*?</script>", " ", raw, flags=re.I|re.S)
-            raw = re.sub(r"<style\b[^>]*>.*?</style>", " ", raw, flags=re.I|re.S)
-            raw = re.sub(r"<[^>]+>", " ", raw)
-            return re.sub(r"\s+", " ", html_lib.unescape(raw)).strip()
+              raw = re.sub(r"<script\b[^>]*>.*?</script>", " ", raw, flags=re.I | re.S)
+              raw = re.sub(r"<style\b[^>]*>.*?</style>", " ", raw, flags=re.I | re.S)
+              raw = re.sub(r"<[^>]+>", " ", raw)
+              raw = html_lib.unescape(raw)
+              return re.sub(r"\s+", " ", raw).strip()
 
-          def num(s):
-            s = s.strip().replace("\u202f","").replace("\xa0","").replace(" ","")
-            if "," in s and "." in s:
-              s = s.replace(".","").replace(",",".") if s.rfind(",") > s.rfind(".") else s.replace(",","")
-            else:
-              s = s.replace(",",".")
-            return float(s)
+          def number(s):
+              s = s.strip().replace("\u202f", "").replace("\xa0", "").replace(" ", "")
+              if "," in s and "." in s:
+                  # Format italien : 1.234,56
+                  if s.rfind(",") > s.rfind("."):
+                      s = s.replace(".", "").replace(",", ".")
+                  else:
+                      s = s.replace(",", "")
+              else:
+                  s = s.replace(",", ".")
+              return float(s)
 
-          def parse(raw, low, high):
-            text = textify(raw)
-            patterns = [
-              r"(?:Last Traded|Dernier traité|Last price|Last Price|Price)\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
-              r"\b([0-9]+(?:[.,][0-9]+)?)\s*EUR\b",
-            ]
-            for p in patterns:
-              for m in re.finditer(p, text, flags=re.I):
-                v = num(m.group(1))
-                if low < v < high:
-                  return v
-            return None
+          def valid(v, low, high):
+              return v is not None and low < v < high
+
+          def parse_price(raw, low, high):
+              text = textify(raw)
+
+              # 1) Cours affiché en haut de la fiche :
+              #    "35,855 +0,29% Fase:" ou "76,62 +0,17% Fase:"
+              m = re.search(
+                  r"(?<![\d.,])([0-9]+(?:[.,][0-9]+)?)\s*[+-]\s*[0-9]+(?:[.,][0-9]+)?%\s*Fase\s*:",
+                  text,
+                  flags=re.I,
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "ultimo corso"
+
+              # 2) Prix de clôture, si présent.
+              m = re.search(
+                  r"Prezzo di Chiusura\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
+                  text,
+                  flags=re.I,
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "prezzo di chiusura"
+
+              # 3) Secours fiable : prix de référence de la séance précédente.
+              m = re.search(
+                  r"Prezzo di riferimento\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
+                  text,
+                  flags=re.I,
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "prezzo di riferimento"
+
+              return None, None
 
           path = Path("quotes.json")
           try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
+              payload = json.loads(path.read_text(encoding="utf-8"))
           except Exception:
-            payload = {"quotes": {}}
+              payload = {"quotes": {}}
+
           payload.setdefault("quotes", {})
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
-          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00","Z")
-          ok = 0
-          errors = []
+          successes = 0
+          failures = []
 
-          for isin, (product, source, low, high) in PRODUCTS.items():
-            try:
-              raw, url = fetch(product)
-              price = parse(raw, low, high)
-              if price is None:
-                preview = textify(raw)[:500]
-                raise RuntimeError("prix introuvable dans réponse AJAX; aperçu=" + repr(preview))
-              payload["quotes"][isin] = {
-                "price": round(price, 6),
-                "currency": "EUR",
-                "source": source,
-                "sourceUrl": url,
-                "updatedAt": now
-              }
-              ok += 1
-              print(f"OK {isin} = {price:.6f} EUR via {product}")
-            except Exception as e:
-              errors.append(f"{isin}: {e}")
-              print(f"ERREUR {isin}: {e}")
+          for isin, cfg in INSTRUMENTS.items():
+              try:
+                  raw = fetch(cfg["url"])
+                  price, mode = parse_price(raw, cfg["min"], cfg["max"])
 
-          if ok:
-            payload["updatedAt"] = now
-            path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                  if price is None:
+                      preview = textify(raw)[:800]
+                      raise RuntimeError("aucun cours exploitable trouvé; aperçu=" + repr(preview))
 
-          print(f"\nRésultat : {ok}/3 cours récupérés.")
-          for e in errors:
-            print(" -", e)
+                  payload["quotes"][isin] = {
+                      "price": round(price, 6),
+                      "currency": "EUR",
+                      "source": cfg["source"] + " · " + mode,
+                      "sourceUrl": cfg["url"],
+                      "updatedAt": now,
+                  }
 
-          if ok == 0:
-            raise SystemExit("Aucun cours Euronext AJAX récupéré.")
+                  successes += 1
+                  print(f"OK {isin} = {price:.6f} EUR ({mode})")
+
+              except Exception as e:
+                  failures.append(f"{isin}: {e}")
+                  print(f"ERREUR {isin}: {e} — ancien cours conservé")
+
+          if successes:
+              payload["updatedAt"] = now
+              path.write_text(
+                  json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+
+          print(f"\nRésultat : {successes}/3 cours récupérés.")
+          if failures:
+              print("Échecs :")
+              for failure in failures:
+                  print(" -", failure)
+
+          if successes == 0:
+              raise SystemExit("Aucun cours Borsa Italiana récupéré.")
           PY
 
       - name: Enregistrer quotes.json
@@ -130,8 +181,9 @@ jobs:
             echo "Aucune modification de quotes.json."
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add quotes.json
-          git commit -m "Mise à jour automatique des cours Euronext"
+          git commit -m "Mise à jour automatique des cours Borsa Italiana"
           git push
