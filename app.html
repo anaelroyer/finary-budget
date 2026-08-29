@@ -3888,7 +3888,23 @@ function render(){
 
     if(key==='dettes'){renderLoanCards(cont);return;}
     if(key==='bourse'){
-      data.bourse.forEach((item,idx)=>renderStockRow(item,idx,cont));
+      const stockOrder={
+        'IE0002XZSHO1':0, // MSCI World Swap / WPEA
+        'FR0013412020':1, // Emerging Market / PAEEM
+        'IE00B4ND3602':2  // Gold
+      };
+
+      data.bourse
+        .map((item,idx)=>({item,idx}))
+        .sort((a,b)=>{
+          const aIsin=String(getStockMeta(a.item).isin||'').toUpperCase();
+          const bIsin=String(getStockMeta(b.item).isin||'').toUpperCase();
+          const aOrder=stockOrder[aIsin] ?? 999;
+          const bOrder=stockOrder[bIsin] ?? 999;
+          return aOrder-bOrder || a.idx-b.idx;
+        })
+        .forEach(({item,idx})=>renderStockRow(item,idx,cont));
+
       return;
     }
     if(key==='crypto'){
