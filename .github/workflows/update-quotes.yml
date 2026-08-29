@@ -21,129 +21,47 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
-          import re
-          import html as html_lib
           import urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
 
           HEADERS = {
-              "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-              "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+              "User-Agent": "Mozilla/5.0",
+              "Accept": "application/json",
           }
 
-          def fetch(url):
+          def fetch_json(url):
               req = urllib.request.Request(url, headers=HEADERS)
               with urllib.request.urlopen(req, timeout=30) as r:
-                  return r.read().decode("utf-8", errors="ignore")
+                  return json.loads(r.read().decode("utf-8"))
 
-          def textify(raw):
-              raw = re.sub(r"<script\b[^>]*>.*?</script>", " ", raw, flags=re.I | re.S)
-              raw = re.sub(r"<style\b[^>]*>.*?</style>", " ", raw, flags=re.I | re.S)
-              raw = re.sub(r"<[^>]+>", " ", raw)
-              raw = html_lib.unescape(raw)
-              return re.sub(r"\s+", " ", raw).strip()
+          def yahoo_last(symbol):
+              url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
+              data = fetch_json(url)
+              result = data.get("chart", {}).get("result")
+              if not result:
+                  raise RuntimeError(f"Yahoo: aucun résultat pour {symbol}")
+              r = result[0]
+              meta = r.get("meta", {})
+              price = meta.get("regularMarketPrice")
+              if not price:
+                  closes = r.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+                  closes = [x for x in closes if isinstance(x, (int, float))]
+                  price = closes[-1] if closes else None
+              if not price:
+                  raise RuntimeError(f"Yahoo: aucun cours pour {symbol}")
+              return float(price), url
 
-          def fr_number(s):
-              s = s.strip().replace("\u202f", "").replace("\xa0", "")
-              if "," in s and "." in s:
-                  if s.rfind(",") > s.rfind("."):
-                      s = s.replace(".", "").replace(",", ".")
-                  else:
-                      s = s.replace(",", "")
-              else:
-                  s = s.replace(",", ".")
-              return float(s)
-
-          def parse_gold_boursedirect(raw, isin):
-              text = textify(raw)
-              pos = text.upper().find(isin.upper())
-              zone = text[max(0, pos-300):pos+1200] if pos >= 0 else text
-              m = re.search(r"\b([0-9]{1,5}(?:[.,][0-9]{1,6})?)\s*EUR\b", zone, flags=re.I)
-              if not m:
-                  return None
-              v = fr_number(m.group(1))
-              return v if 10 < v < 500 else None
-
-          def parse_wpea_blackrock(raw, isin):
-              text = textify(raw)
-
-              # Format observé sur la fiche BlackRock :
-              # "Valeur liquidative (VL) au 28/août/2026 EUR 6,98"
-              patterns = [
-                  r"Valeur liquidative\s*\(VL\)\s*au\s*[^E]{0,50}EUR\s*([0-9]+(?:[.,][0-9]+)?)",
-                  r"Net Asset Value.*?EUR\s*([0-9]+(?:[.,][0-9]+)?)",
-              ]
-              for pattern in patterns:
-                  m = re.search(pattern, text, flags=re.I)
-                  if m:
-                      v = fr_number(m.group(1))
-                      if 1 < v < 50:
-                          return v
-              return None
-
-          def parse_amundi_euronext(raw, isin):
-              text = textify(raw)
-
-              # Euronext FR : "Dernier traité 36,215"
-              # Euronext EN : "Last Traded 36.215"
-              patterns = [
-                  r"Dernier traité\s+([0-9]+(?:[.,][0-9]+)?)",
-                  r"Last Traded\s+([0-9]+(?:[.,][0-9]+)?)",
-              ]
-              for pattern in patterns:
-                  m = re.search(pattern, text, flags=re.I)
-                  if m:
-                      v = fr_number(m.group(1))
-                      if 10 < v < 100:
-                          return v
-              return None
-
-          instruments = [
-              {
-                  "isin": "IE00B4ND3602",
-                  "currency": "EUR",
-                  "sources": [
-                      {
-                          "name": "Bourse Direct · Xetra",
-                          "url": "https://www.boursedirect.fr/fr/marche/xetra/ishares-phys-met-o-end-zt-IE00B4ND3602-PPFB-EUR-XETR/seance",
-                          "parser": parse_gold_boursedirect,
-                      },
-                      {
-                          "name": "Zonebourse",
-                          "url": "https://www.zonebourse.com/cours/etf/ISHARES-PHYSICAL-GOLD-ETC-124881157/",
-                          "parser": parse_gold_boursedirect,
-                      },
-                  ],
+          instruments = {
+              "IE0002XZSHO1": {
+                  "symbol": "WPEA.PA",
+                  "source": "Yahoo Finance · Euronext Paris",
               },
-              {
-                  "isin": "IE0002XZSHO1",
-                  "currency": "EUR",
-                  "sources": [
-                      {
-                          "name": "BlackRock · WPEA",
-                          "url": "https://www.blackrock.com/fr/intermediaries/products/335178/ishares-msci-world-swap-pea-ucits-etf",
-                          "parser": parse_wpea_blackrock,
-                      },
-                  ],
+              "FR0013412020": {
+                  "symbol": "PAEEM.PA",
+                  "source": "Yahoo Finance · Euronext Paris",
               },
-              {
-                  "isin": "FR0013412020",
-                  "currency": "EUR",
-                  "sources": [
-                      {
-                          "name": "Euronext Paris · PAEEM",
-                          "url": "https://live.euronext.com/fr/product/etfs/FR0013412020-XPAR",
-                          "parser": parse_amundi_euronext,
-                      },
-                      {
-                          "name": "Euronext Paris · PAEEM (EN)",
-                          "url": "https://live.euronext.com/en/product/etfs/FR0013412020-XPAR",
-                          "parser": parse_amundi_euronext,
-                      },
-                  ],
-              },
-          ]
+          }
 
           path = Path("quotes.json")
           try:
@@ -157,37 +75,22 @@ jobs:
 
           failures = []
 
-          for instrument in instruments:
-              isin = instrument["isin"]
-              price = None
-              used_source = None
-              errors = []
-
-              for source in instrument["sources"]:
-                  try:
-                      raw = fetch(source["url"])
-                      candidate = source["parser"](raw, isin)
-                      if candidate:
-                          price = candidate
-                          used_source = source
-                          break
-                      errors.append(f'{source["name"]}: cours introuvable')
-                  except Exception as e:
-                      errors.append(f'{source["name"]}: {e}')
-
-              if price is None:
-                  failures.append(f'{isin} -> ' + " | ".join(errors))
+          # On conserve IE00B4ND3602 tel quel dans quotes.json.
+          # Les deux ETF ci-dessous sont mis à jour via Yahoo Finance.
+          for isin, cfg in instruments.items():
+              try:
+                  price, source_url = yahoo_last(cfg["symbol"])
+                  payload["quotes"][isin] = {
+                      "price": round(price, 6),
+                      "currency": "EUR",
+                      "source": cfg["source"],
+                      "sourceUrl": source_url,
+                      "updatedAt": now,
+                  }
+                  print(f"✅ {isin} ({cfg['symbol']}) = {price:.6f} EUR")
+              except Exception as e:
+                  failures.append(f"{isin}: {e}")
                   print(f"⚠️ {isin}: échec, ancien cours conservé")
-                  continue
-
-              payload["quotes"][isin] = {
-                  "price": round(price, 6),
-                  "currency": instrument["currency"],
-                  "source": used_source["name"],
-                  "sourceUrl": used_source["url"],
-                  "updatedAt": now,
-              }
-              print(f"✅ {isin} = {price:.6f} EUR via {used_source['name']}")
 
           path.write_text(
               json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
@@ -195,9 +98,9 @@ jobs:
           )
 
           if failures:
-              print("\nSources en échec (les anciens cours restent conservés) :")
-              for failure in failures:
-                  print(" -", failure)
+              print("\nÉchecs :")
+              for f in failures:
+                  print(" -", f)
           PY
 
       - name: Enregistrer quotes.json
