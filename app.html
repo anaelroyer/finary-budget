@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- V26.1.12 : ordre catégories + lignes inline + ISIN sans répétition PEA/CTO -->
+<!-- V26.1.24 : Allocation Réelle / Cible en bleu -->
 <title>Budget & Patrimoine</title>
 <meta name="theme-color" content="#0d1117">
 <meta name="application-name" content="Budget & Patrimoine">
@@ -717,6 +717,217 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   background:#21262d;
 }
 
+
+
+/* V26.1.15 — catégories patrimoine en accordéon + bouton TR rouge */
+.asset-accordion-card{
+  padding:0;
+  overflow:hidden;
+}
+.asset-accordion-header{
+  min-height:52px;
+  padding:12px 14px;
+  cursor:pointer;
+  gap:10px;
+  user-select:none;
+}
+.asset-accordion-header h2{
+  margin:0!important;
+  flex:0 0 auto;
+}
+.asset-accordion-header .category-header-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:auto;
+  flex:0 0 auto;
+}
+.asset-accordion-chevron{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  color:#8b949e;
+  font-size:16px;
+  transition:transform .18s ease;
+}
+.asset-accordion-card.open .asset-accordion-chevron{
+  transform:rotate(180deg);
+}
+.asset-accordion-content{
+  display:none;
+  padding:0 14px 14px;
+}
+.asset-accordion-card.open .asset-accordion-content{
+  display:block;
+}
+.asset-accordion-card:not(.open) .section-header{
+  margin-bottom:0;
+}
+
+/* Bourse : titre à gauche, bouton au milieu, montant toujours à droite */
+.bourse-accordion-header{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+}
+.bourse-accordion-header h2{
+  white-space:nowrap;
+}
+.bourse-accordion-header .category-header-actions{
+  grid-column:3;
+  justify-self:end;
+}
+.tr-sync-btn-red{
+  grid-column:2;
+  justify-self:start;
+  width:auto;
+  min-width:0;
+  padding:8px 12px;
+  border:1px solid #f85149;
+  border-radius:8px;
+  background:#da3633;
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  line-height:1;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.tr-sync-btn-red:hover{background:#f85149;}
+.tr-sync-btn-red:active{transform:scale(.97);}
+.tr-sync-btn-red:disabled{
+  opacity:.65;
+  cursor:default;
+  transform:none;
+}
+.tr-sync-status{
+  margin:0 0 8px;
+  font-size:9px;
+  line-height:1.35;
+  color:#8b949e;
+  text-align:left;
+  text-transform:none;
+}
+.tr-sync-status:empty{display:none;}
+.tr-sync-status.ok{color:#3fb950;}
+.tr-sync-status.pending{color:#d29922;}
+.tr-sync-status.error{color:#f85149;}
+
+@media(max-width:430px){
+  .asset-accordion-header{
+    min-height:48px;
+    padding:10px 11px;
+  }
+  .bourse-accordion-header{
+    grid-template-columns:auto minmax(0,1fr) auto;
+    gap:7px;
+  }
+  .tr-sync-btn-red{
+    padding:6px 9px;
+    font-size:9px;
+  }
+  .section-total{
+    font-size:12px;
+  }
+  .category-remove-btn{
+    width:22px;
+    height:22px;
+  }
+}
+
+
+.asset-accordion-header:hover{background:rgba(255,255,255,.02);}
+.asset-accordion-card:not(.open) .asset-accordion-header{border-radius:12px;}
+.asset-accordion-card.open .asset-accordion-header{border-bottom:1px solid #21262d;}
+.asset-accordion-header:focus-visible{outline:2px solid #58a6ff;outline-offset:-2px;}
+
+
+
+/* V26.1.20 — Bourse épurée : TR seulement ouvert + allocation PEA sous ISIN */
+.bourse-accordion-header{
+  display:flex!important;
+  grid-template-columns:none!important;
+}
+.tr-sync-expanded-row{
+  display:flex;
+  justify-content:flex-end;
+  margin:0 0 8px;
+}
+.tr-sync-expanded-row .tr-sync-btn-red{
+  grid-column:auto;
+  justify-self:auto;
+}
+.stock-allocation-inline{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin-top:3px;
+  font-size:10px;
+  line-height:1.25;
+  color:#8b949e;
+  white-space:nowrap;
+}
+.stock-allocation-inline strong{
+  display:inline!important;
+  font-size:10px!important;
+  font-weight:700!important;
+  color:#c9d1d9!important;
+}
+
+
+
+/* V26.1.22 — Bourse fermée au démarrage + bouton TR dans l'en-tête uniquement ouvert */
+.bourse-accordion-header{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.bourse-accordion-header h2{
+  grid-column:1;
+  white-space:nowrap;
+}
+.bourse-accordion-header .tr-sync-btn-red{
+  grid-column:2;
+  justify-self:start;
+  margin:0;
+}
+.bourse-accordion-header .category-header-actions{
+  grid-column:3;
+  justify-self:end;
+  margin-left:0!important;
+}
+.asset-accordion-card[data-asset-accordion="bourse"]:not(.open) .tr-sync-btn-red{
+  display:none!important;
+}
+.asset-accordion-card[data-asset-accordion="bourse"].open .tr-sync-btn-red{
+  display:inline-flex!important;
+}
+.tr-sync-expanded-row{display:none!important;}
+
+@media(max-width:430px){
+  .bourse-accordion-header{
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    gap:6px!important;
+  }
+  .bourse-accordion-header .tr-sync-btn-red{
+    padding:7px 9px;
+    font-size:9px;
+  }
+}
+
+
+
+/* V26.1.24 — Allocation Réelle / Cible en bleu */
+.stock-allocation-inline{
+  color:#58a6ff!important;
+}
+.stock-allocation-inline strong{
+  color:#58a6ff!important;
+}
+
 </style>
 </head>
 <body>
@@ -1389,11 +1600,35 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <div class="muted" id="asset-category-picker-message" style="margin-top:8px;display:none"></div>
     </div>
 
-    <div class="card"><div class="section-header"><h2>💰 Épargne</h2><span class="section-total" id="total-epargne">0 €</span></div><div class="rows-container" data-key="epargne"></div><button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button></div>
+    <div class="card asset-accordion-card" data-asset-accordion="epargne">
+      <div class="section-header asset-accordion-header" role="button" tabindex="0" aria-expanded="false" onclick="toggleAssetAccordion('epargne',event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAssetAccordion('epargne',event)}">
+        <h2>💰 Épargne</h2>
+        <div class="category-header-actions">
+          <span class="section-total" id="total-epargne">0 €</span>
+          <span class="asset-accordion-chevron" aria-hidden="true">⌄</span>
+        </div>
+      </div>
+      <div class="asset-accordion-content">
+        <div class="rows-container" data-key="epargne"></div>
+        <button class="btn-add" onclick="addItem('epargne')">+ Ajouter</button>
+      </div>
+    </div>
 
     <div id="optional-asset-categories"></div>
 
-    <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
+    <div class="card asset-accordion-card" data-asset-accordion="dettes">
+      <div class="section-header asset-accordion-header" role="button" tabindex="0" aria-expanded="false" onclick="toggleAssetAccordion('dettes',event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAssetAccordion('dettes',event)}">
+        <h2>💳 Emprunts</h2>
+        <div class="category-header-actions">
+          <span class="section-total" id="total-dettes">0 €</span>
+          <span class="asset-accordion-chevron" aria-hidden="true">⌄</span>
+        </div>
+      </div>
+      <div class="asset-accordion-content">
+        <div class="rows-container" data-key="dettes"></div>
+        <button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button>
+      </div>
+    </div>
     <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
 
@@ -1507,6 +1742,92 @@ function setFirebaseStatus(message,state=''){
   if(state)el.classList.add(state);
 }
 
+function tradeRepublicSyncTimeLabel(value){
+  if(!value)return '';
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return '';
+  return d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+window.updateTradeRepublicSyncUI=function(){
+  const btn=document.getElementById('tradeRepublicSyncBtn');
+  const statusEl=document.getElementById('tradeRepublicSyncStatus');
+  if(!btn||!statusEl)return;
+
+  const state=window.tradeRepublicSyncRequestState||null;
+  const status=String(state?.status||'').toLowerCase();
+  btn.disabled=status==='pending'||status==='processing';
+
+  if(status==='pending'){
+    btn.textContent='⏳ Trade Republic';
+    statusEl.textContent='En attente du lancement GitHub. La notification Trade Republic peut arriver dans quelques minutes.';
+    statusEl.className='tr-sync-status pending';
+    return;
+  }
+
+  if(status==='processing'){
+    btn.textContent='📱 Trade Republic';
+    statusEl.textContent='Trade Republic est en cours de connexion : valide la demande dans l’application mobile.';
+    statusEl.className='tr-sync-status pending';
+    return;
+  }
+
+  btn.textContent='↻ Trade Republic';
+
+  if(status==='done'){
+    const when=tradeRepublicSyncTimeLabel(state.completedAt);
+    const count=Number(state.updatedPositions||0);
+    statusEl.textContent=`✓ Parts et PRU actualisés${when?` le ${when}`:''}${count?` · ${count} ligne${count>1?'s':''}`:''}.`;
+    statusEl.className='tr-sync-status ok';
+    return;
+  }
+
+  if(status==='error'){
+    statusEl.textContent=`⚠️ Échec de la synchronisation${state.errorMessage?` : ${state.errorMessage}`:''}`;
+    statusEl.className='tr-sync-status error';
+    return;
+  }
+
+  statusEl.textContent='';
+  statusEl.className='tr-sync-status';
+};
+
+window.requestTradeRepublicSync=async function(){
+  if(!window.firebaseReady){
+    alert('La synchronisation Firebase doit être disponible pour lancer Trade Republic.');
+    return;
+  }
+
+  const current=window.tradeRepublicSyncRequestState||null;
+  if(current && ['pending','processing'].includes(String(current.status||'').toLowerCase()))return;
+
+  const id=(window.crypto&&typeof window.crypto.randomUUID==='function')
+    ? window.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+
+  const request={
+    id,
+    status:'pending',
+    requestedAt:new Date().toISOString()
+  };
+
+  window.tradeRepublicSyncRequestState=request;
+  window.updateTradeRepublicSyncUI();
+
+  try{
+    await setDoc(sharedRef,{tradeRepublicSyncRequest:request},{merge:true});
+  }catch(error){
+    console.error(error);
+    window.tradeRepublicSyncRequestState={
+      ...request,
+      status:'error',
+      errorMessage:'demande impossible à envoyer'
+    };
+    window.updateTradeRepublicSyncUI();
+    alert("Impossible d'envoyer la demande de synchronisation Trade Republic.");
+  }
+};
+
 window.firebaseSave=function(){
   if(!window.firebaseReady)return;
   clearTimeout(firebaseSaveTimer);
@@ -1545,6 +1866,8 @@ async function applyRemoteSnapshot(snapshot){
   const r=snapshot.data();
   window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
   window.recipeDataState=(r.recipeData && typeof r.recipeData==='object')?r.recipeData:{};
+  window.tradeRepublicSyncRequestState=(r.tradeRepublicSyncRequest && typeof r.tradeRepublicSyncRequest==='object')?r.tradeRepublicSyncRequest:null;
+  if(window.updateTradeRepublicSyncUI)window.updateTradeRepublicSyncUI();
   if(window.applyFirebaseState){
     window.applyFirebaseState({
       data:r.data?JSON.parse(r.data):undefined,
@@ -4884,6 +5207,27 @@ function updateStockField(index,field,value){
   }
 }
 
+function stockAllocationInlineHtml(item,idx){
+  if(getStockAccount(item)!=='PEA' || !isAllocationTargetEligible(item))return '';
+
+  ensureV26Data();
+  migrateLegacyAllocationTargets();
+
+  const eligible=(data.bourse||[])
+    .map((row,index)=>({item:row,index}))
+    .filter(({item})=>isAllocationTargetEligible(item));
+
+  const total=eligible.reduce((sum,{item})=>sum+(Number(item?.[1])||0),0);
+  const actual=total>0?((Number(item?.[1])||0)/total*100):0;
+  const target=Number(data.allocationTargets[stockTargetKey(item,idx)])||0;
+
+  return `<div class="stock-allocation-inline">
+    <span>Allocation Réelle <strong>${actual.toFixed(1)} %</strong></span>
+    <span>·</span>
+    <span>Cible <strong>${target?target.toFixed(1)+' %':'—'}</strong></span>
+  </div>`;
+}
+
 function renderStockRow(item,idx,cont){
   const meta=getStockMeta(item);
   if(meta.shares>0 || meta.pricePerShare>0)recalculateStockItem(item);
@@ -4902,6 +5246,7 @@ function renderStockRow(item,idx,cont){
       <div class="stock-compact-title">
         <strong>${escapeHtml(item[0]||'Ligne Bourse')}</strong>
         <div class="stock-compact-sub">${escapeHtml(meta.isin||'ISIN non renseigné')}</div>
+        ${stockAllocationInlineHtml(item,idx)}
       </div>
       <div class="stock-compact-actions">
         ${meta.isin?`<button class="stock-icon-btn refresh" type="button" onclick="refreshStockPrice(${idx},{force:true})" title="Actualiser le cours" aria-label="Actualiser le cours">↻</button>`:''}
@@ -5197,6 +5542,46 @@ function removeAssetCategory(key){
   save();
 }
 
+
+const DEFAULT_OPEN_ASSET_ACCORDIONS=[];
+
+function getOpenAssetAccordions(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem('finaryOpenAssetAccordions')||'null');
+    if(Array.isArray(parsed))return parsed;
+  }catch{}
+  return [...DEFAULT_OPEN_ASSET_ACCORDIONS];
+}
+
+function ensureBourseClosedByDefault(){
+  if(window._bourseAccordionInitialStateApplied)return;
+
+  const open=new Set(getOpenAssetAccordions());
+  open.delete('bourse');
+  localStorage.setItem('finaryOpenAssetAccordions',JSON.stringify([...open]));
+  window._bourseAccordionInitialStateApplied=true;
+}
+
+function applyAssetAccordionState(){
+  const open=new Set(getOpenAssetAccordions());
+  document.querySelectorAll('[data-asset-accordion]').forEach(card=>{
+    const key=card.dataset.assetAccordion;
+    const isOpen=open.has(key);
+    card.classList.toggle('open',isOpen);
+    const header=card.querySelector('.asset-accordion-header');
+    if(header)header.setAttribute('aria-expanded',isOpen?'true':'false');
+  });
+}
+
+function toggleAssetAccordion(key,event){
+  if(event?.target?.closest('button,input,select,a,label'))return;
+  const open=new Set(getOpenAssetAccordions());
+  if(open.has(key))open.delete(key);
+  else open.add(key);
+  localStorage.setItem('finaryOpenAssetAccordions',JSON.stringify([...open]));
+  applyAssetAccordionState();
+}
+
 function renderOptionalAssetCategorySections(){
   const host=document.getElementById('optional-asset-categories');
   if(!host)return;
@@ -5204,27 +5589,27 @@ function renderOptionalAssetCategorySections(){
 
   host.innerHTML=getActiveAssetCategoryKeys().map(key=>{
     const c=ASSET_CATEGORY_MAP[key];
-    const allocationCard=key==='bourse'?`<div id="allocationTargetCard" class="smart-card">
-      <div class="section-header">
-        <h2>🎯 Allocation cible — PEA</h2>
-        <button class="btn btn-secondary" onclick="openAllocationTargetModal()" style="padding:6px 8px;font-size:10px">Modifier</button>
-      </div>
-      <div id="allocationTargetSummary" class="muted" style="text-transform:none">Aucune cible définie.</div>
-    </div>`:'';
-    return `${allocationCard}<div class="card">
-      <div class="section-header">
+    return `<div class="card asset-accordion-card" data-asset-accordion="${c.key}">
+      <div class="section-header asset-accordion-header ${c.key==='bourse'?'bourse-accordion-header':''}" role="button" tabindex="0" aria-expanded="false" onclick="toggleAssetAccordion('${c.key}',event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAssetAccordion('${c.key}',event)}">
         <h2>${c.icon} ${escapeHtml(c.label)}</h2>
+        ${c.key==='bourse'?`<button id="tradeRepublicSyncBtn" class="tr-sync-btn-red" type="button" onclick="event.stopPropagation();requestTradeRepublicSync()" title="Actualiser depuis Trade Republic" aria-label="Actualiser depuis Trade Republic">↻ Trade Republic</button>`:''}
         <div class="category-header-actions">
           <span class="section-total" id="total-${c.key}">0 €</span>
-          <button class="category-remove-btn" onclick="removeAssetCategory('${c.key}')" title="Supprimer cette catégorie" aria-label="Supprimer la catégorie ${escapeHtml(c.label)}">×</button>
+          <span class="asset-accordion-chevron" aria-hidden="true">⌄</span>
         </div>
       </div>
-      <div class="rows-container" data-key="${c.key}"></div>
-      ${c.key==='crypto'?'':`<button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>`}
+      <div class="asset-accordion-content">
+        ${c.key==='bourse'?`<div id="tradeRepublicSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
+        <div class="rows-container" data-key="${c.key}"></div>
+        ${c.key==='crypto'?'':`<button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>`}
+      </div>
     </div>`;
   }).join('');
 
   renderAssetCategoryPicker();
+  ensureBourseClosedByDefault();
+  applyAssetAccordionState();
+  if(window.updateTradeRepublicSyncUI)window.updateTradeRepublicSyncUI();
 }
 
 function renderChartSeriesControls(){
@@ -5587,6 +5972,7 @@ function openSettingsModal(){
   ensureV26Data();
   renderSettingsArchives();
   renderIgnoredRecurringSettings();
+  renderAllocationTargetSummary();
   const sync=document.getElementById('settingsSyncState');
   if(sync)sync.textContent=document.getElementById('firebaseStatus')?.textContent||'—';
   document.getElementById('settingsModal')?.classList.add('active');
@@ -5852,7 +6238,8 @@ function saveAllocationTargets(){
     if(val>0)data.allocationTargets[input.dataset.targetKey]=val;
     else delete data.allocationTargets[input.dataset.targetKey];
   });
-  save();closeAllocationTargetModal();renderAllocationTargetSummary();
+  save();closeAllocationTargetModal();render();
+  if(document.getElementById('settingsModal')?.classList.contains('active'))renderAllocationTargetSummary();
 }
 function renderAllocationTargetSummary(){
   const root=document.getElementById('allocationTargetSummary');if(!root)return;
@@ -7041,6 +7428,9 @@ function buildHistoryMonthReportHtml(model=getHistoryMonthShareModel()){
 
 
 /* V26.1.6 — Ajout automatique de la ligne MSCI World du CTO */
+
+
+
 
 </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
 }
@@ -9713,6 +10103,14 @@ if(window.visualViewport){
         <button class="btn btn-secondary" onclick="exportData()">⬇️ Exporter les données</button>
         <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
       </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="font-weight:700">🎯 Allocation cible — PEA</div>
+        <button class="btn btn-secondary" onclick="openAllocationTargetModal()" style="padding:6px 8px;font-size:10px">Modifier</button>
+      </div>
+      <div id="allocationTargetSummary" class="muted" style="text-transform:none;margin-top:8px">Aucune cible définie.</div>
     </div>
 
     <div class="settings-section">
