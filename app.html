@@ -3222,7 +3222,7 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
       : '';
     setStockPriceStatus(
       index,
-      `Cours : ${price.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})} € · ${meta.priceSourceName}${dateText?' · '+dateText:''}`,
+      `Cours : ${price.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})} € · ${shortStockSourceName(meta.priceSourceName)}${dateText?' · '+dateText:''}`,
       'ok'
     );
 
