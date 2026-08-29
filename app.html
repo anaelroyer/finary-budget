@@ -115,6 +115,7 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-compact-status{
   font-size:10px;color:#8b949e;text-align:right;line-height:1.25
 }
+.stock-compact-status.ok{color:#3fb950}
 .stock-compact-card .stock-history-panel,
 .crypto-compact-card .stock-history-panel{margin-top:9px}
 .stock-compact-card .stock-performance-head{margin:7px 0 0}
@@ -3153,6 +3154,12 @@ async function ensureStockHistoryChart(index){
   }
 }
 
+function shortStockSourceName(name){
+  const s=String(name||'').trim();
+  if(!s)return '';
+  return s.split('·')[0].trim();
+}
+
 function setStockPriceStatus(index,text,state=''){
   const el=document.querySelector(`[data-stock-index="${index}"] .stock-compact-status`);
   if(!el)return;
@@ -3239,8 +3246,8 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
       const row=document.querySelector(`[data-stock-index="${index}"]`);
       const status=row?.querySelector('.stock-price-status');
       if(status && meta.priceUpdatedAt && meta.priceSourceName){
-        status.textContent=`Dernière mise à jour : ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')} · ${meta.priceSourceName}`;
-        status.className='stock-price-status';
+        status.textContent=`Cours : ${formatStockCourse(meta.pricePerShare)} · ${shortStockSourceName(meta.priceSourceName)} · ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')}`;
+        status.className='stock-price-status ok';
       }
     }
   }
@@ -3548,7 +3555,7 @@ function renderStockRow(item,idx,cont){
 
     <div class="stock-compact-bottom">
       <span class="stock-compact-value">Valeur : <strong>${euro(Number(item[1])||0)}</strong></span>
-      <span class="stock-compact-status">${updated?`${updated}${meta.priceSourceName?` · ${escapeHtml(meta.priceSourceName)}`:''}`:'Cours non actualisé'}</span>
+      <span class="stock-compact-status">${updated?`Cours : ${courseText}${meta.priceSourceName?` · ${escapeHtml(shortStockSourceName(meta.priceSourceName))}`:''} · ${updated}`:'Cours non actualisé'}</span>
     </div>
 
     <div class="stock-history-panel">
@@ -3685,7 +3692,7 @@ function renderCryptoBtcRow(cont){
 
     <div class="crypto-compact-bottom">
       <span class="stock-compact-value">Valeur : <strong>${euro(value)}</strong></span>
-      <span class="stock-compact-status">${updated?`OKX · ${updated}`:'En attente de synchronisation OKX'}</span>
+      <span class="stock-compact-status${updated?' ok':''}">${updated?`OKX · ${updated}`:'En attente de synchronisation OKX'}</span>
     </div>
 
     <div class="stock-history-panel">${cryptoBtcHistoryHtml(meta)}</div>
