@@ -217,6 +217,7 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .budget-line-main{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .budget-line-account{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .budget-line-account .bank-dot{width:6px;height:6px}
+.budget-line-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}.budget-category-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:2px 6px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#8b949e;font-size:9px;font-weight:800;line-height:1.25}.budget-category-badge.auto{color:#c9d1d9}.budget-category-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:14px;outline:none}.budget-category-hint{font-size:10px;color:#8b949e;line-height:1.35;margin-top:3px}
 .bank-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}
 .bank-account-settings{display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow-y:auto}
 .bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto 36px;gap:8px;align-items:center}
@@ -476,6 +477,22 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <div class="modal-field">
       <label>Compte bancaire</label>
       <select id="modalAccount" class="bank-select"></select>
+    </div>
+
+    <div class="modal-field">
+      <label>Type d’enregistrement</label>
+      <select id="modalBudgetType" class="budget-category-select">
+        <option value="budgetDepenses">Dépense</option>
+        <option value="budgetFixes">Frais fixe</option>
+        <option value="budgetRevenus">Entrée</option>
+      </select>
+      <div class="budget-category-hint">Tu peux déplacer une ligne d’un onglet à l’autre sans la supprimer.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Catégorie</label>
+      <select id="modalCategory" class="budget-category-select"></select>
+      <div id="modalCategoryHint" class="budget-category-hint">Détectée automatiquement d’après le libellé. Tu peux la modifier à tout moment.</div>
     </div>
 
     <div class="modal-buttons">
@@ -1410,6 +1427,117 @@ function getAllAssetKeys(){
 
 function getPatrimoineKeys(){
   return ['epargne',...ASSET_CATEGORY_DEFINITIONS.map(c=>c.key),'dettes'];
+}
+
+/* =========================================================
+   CATÉGORISATION AUTOMATIQUE DU BUDGET
+   item[5] = identifiant de catégorie. Les anciens éléments restent compatibles.
+   ========================================================= */
+const BUDGET_EXPENSE_CATEGORIES=[
+  {id:'courses',label:'🛒 Courses'},
+  {id:'logement',label:'🏠 Logement & énergie'},
+  {id:'maison',label:'🛠️ Maison & travaux'},
+  {id:'transport',label:'🚗 Transport'},
+  {id:'enfants',label:'🎓 Enfants & éducation'},
+  {id:'sante',label:'💊 Santé & beauté'},
+  {id:'restaurants',label:'🍽️ Restaurants & sorties'},
+  {id:'loisirs',label:'🛍️ Loisirs & achats'},
+  {id:'abonnements',label:'📱 Abonnements & services'},
+  {id:'epargne',label:'💰 Épargne & investissement'},
+  {id:'credits',label:'🏦 Crédits & assurances'},
+  {id:'impots',label:'🧾 Impôts & taxes'},
+  {id:'autres',label:'📦 Autres'}
+];
+const BUDGET_INCOME_CATEGORIES=[
+  {id:'salaire',label:'💼 Salaire / solde'},
+  {id:'prestations',label:'👨‍👩‍👧 Prestations'},
+  {id:'remboursement',label:'↩️ Remboursement'},
+  {id:'revenus_financiers',label:'📈 Revenus financiers'},
+  {id:'exceptionnel',label:'✨ Revenu exceptionnel'},
+  {id:'autres',label:'📦 Autres'}
+];
+const BUDGET_KEYWORDS={
+  courses:['carrefour','carrefour market','leclerc','e leclerc','lidl','aldi','intermarche','super u','hyper u','u express','auchan','monoprix','franprix','casino','netto','biocoop','picard','grand frais','leader price','cora','match','spar','vival','proxi','naturalia','la vie claire','thiriet','metro france','costco','marche frais','primeur','boucherie','boulangerie'],
+  logement:['edf','engie','enedis','gaz tarif','eau du ponant','veolia','suez eau','saur','eau potable','electricite','gaz','chauffage','fioul','granules','pellets','loyer','charges copro','copropriete'],
+  maison:['leroy merlin','castorama','brico depot','bricodepot','bricomarche','mr bricolage','weldom','ikea','maisons du monde','maison du monde','conforama','but ','but.fr','jysk','action','gifi','b&m','centrakor','la foir fouille','foir fouille','manomano','brico cash','lapeyre','point p','chausson materiaux','gedimat','saint maclou','4 murs','alinea','zodio','habitat','homebox'],
+  transport:['totalenergies','total access','total ','esso','shell','avia','bp ','dyneff','eni ','agip','station service','carburant','essence','gazole','diesel','sans plomb','sp95','sp98','e10','e85','adblue','norauto','feu vert','midas','speedy','carter cash','road y','euromaster','first stop','allopneus','1001 pneus','vroomly','autodoc','oscaro','mister auto','parking','indigo','effia','vinci autoroutes','ulys','bip&go','peage','sncf','ouigo','blablacar','ratp','bibus','tan nantes','ter bretagne','uber','bolt'],
+  enfants:['ecole','college','lycee','cantine','scolarite','fournitures scolaires','papeterie','auto ecole','auto-ecole','permis ewan','permis','pension scolaire','internat','garderie','creche','centre loisirs','centre de loisirs','activite enfant'],
+  sante:['pharmacie','parapharmacie','doctolib','medecin','dentiste','orthodont','kine','osteopathe','opticien','krys','afflelou','optical center','generale d optique','grandoptical','sephora','marionnaud','nocibe','yves rocher','coiffeur','barbier','epilation','body minute','institut beaute','mutuelle'],
+  restaurants:['mcdonald','mcdo','burger king','kfc','subway','dominos','domino s','pizza hut','buffalo grill','courtepaille','flunch','quick','sushi shop','del arte','bistro regent','hippopotamus','restaurant','brasserie','creperie','pizzeria','uber eats','ubereats','deliveroo','just eat','bar ','cafe ','starbucks','columbus cafe'],
+  loisirs:['amazon','amzn','fnac','darty','boulanger','cdiscount','electro depot','apple store','decathlon','intersport','go sport','kiabi','gemo','h&m','zara','celio','jules','cache cache','bonobo','uniqlo','primark','lacoste','armor lux','armor-lux','levis','levi s','courir','foot locker','zalando','veepee','vinted','tissot','yema','cinema','cineville','pathe','ugc','bowling','parc attraction','futuroscope','disneyland','puy du fou','librairie','joueclub','joue club','king jouet','cultura'],
+  abonnements:['netflix','spotify','deezer','disney+','disney plus','prime video','amazon prime','canal+','canal plus','youtube premium','apple music','icloud','google one','microsoft 365','office 365','orange','sosh','sfr','red by sfr','red sfr','bouygues telecom','b&you','b and you','free mobile','freebox','box internet','internet','telephone mobile','forfait mobile'],
+  epargne:['pea','trade republic','assurance vie','assurance-vie','linxea','livret a','ldds','lep ','lep','epargne','investissement','boursorama bourse','fortuneo bourse','binance','coinbase','okx','crypto','bitcoin','btc','scpi'],
+  credits:['credit immobilier','pret immobilier','emprunt immobilier','credit voiture','credit auto','pret auto','emprunt veranda','pret veranda','mensualite credit','assurance emprunteur','assurance auto','assurance habitation','maif','macif','matmut','mma','axa','allianz','groupama','generali','direct assurance','l olivier assurance'],
+  impots:['impot','impots','taxe fonciere','taxe habitation','dgfip','finances publiques','tresor public','prelevement a la source'],
+  salaire:['salaire','solde marine','solde','traitement','paie','remuneration','employeur'],
+  prestations:['caf','allocations familiales','allocation','paje','apl','msa'],
+  remboursement:['remboursement','rembours','indemnite','indemnisation','avoir ','securite sociale','cpam','ameli'],
+  revenus_financiers:['interets','interet livret','dividende','coupon','loyer recu','revenus scpi'],
+  exceptionnel:['prime','vente ','cession ','heritage','donation','gain exceptionnel']
+};
+function normalizeBudgetText(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9+&]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function budgetTextHas(text,keyword){
+  const k=normalizeBudgetText(keyword); if(!k)return false;
+  return (` ${text} `).includes(` ${k} `)||text.includes(k);
+}
+function getBudgetCategories(key){return key==='budgetRevenus'?BUDGET_INCOME_CATEGORIES:BUDGET_EXPENSE_CATEGORIES;}
+function getBudgetCategoryLabel(key,id){return getBudgetCategories(key).find(c=>c.id===id)?.label||getBudgetCategories(key).find(c=>c.id==='autres')?.label||'Autres';}
+function getVehicleKeywords(){
+  ensureVehicleData();
+  const words=[];
+  (data.garageVehicles||[]).forEach(v=>{
+    [v.make,v.model,v.registration].forEach(x=>{const n=normalizeBudgetText(x);if(n&&n.length>=2)words.push(n);});
+    const both=normalizeBudgetText([v.make,v.model].filter(Boolean).join(' '));if(both)words.push(both);
+  });
+  return [...new Set(words)];
+}
+function detectBudgetCategory(key,label){
+  const text=normalizeBudgetText(label);
+  if(!text)return 'autres';
+  if(key==='budgetRevenus'){
+    for(const id of ['remboursement','prestations','revenus_financiers','exceptionnel','salaire']){
+      if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;
+    }
+    return 'autres';
+  }
+  // Priorité au contexte véhicule : Carrefour + Skoda/Hyundai/etc. = carburant/transport.
+  const vehicleMatch=getVehicleKeywords().some(k=>budgetTextHas(text,k));
+  const fuelOrStation=[...(BUDGET_KEYWORDS.transport||[]),...(BUDGET_KEYWORDS.courses||[])].some(k=>budgetTextHas(text,k));
+  if(vehicleMatch&&fuelOrStation)return 'transport';
+  const priorities=['epargne','credits','impots','sante','enfants','abonnements','transport','restaurants','maison','logement','courses','loisirs'];
+  for(const id of priorities){if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;}
+  return 'autres';
+}
+function getItemBudgetCategory(key,item){return (Array.isArray(item)&&item[5])?String(item[5]):detectBudgetCategory(key,Array.isArray(item)?item[0]:'');}
+function populateBudgetCategorySelect(key,selectedId=''){
+  const select=document.getElementById('modalCategory');if(!select)return;
+  const cats=getBudgetCategories(key);const selected=cats.some(c=>c.id===selectedId)?selectedId:'autres';
+  select.innerHTML=cats.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');select.value=selected;
+}
+function getModalBudgetType(){
+  return document.getElementById('modalBudgetType')?.value||activeModalKey||'budgetDepenses';
+}
+function updateModalCategorySuggestion(force=false){
+  const key=getModalBudgetType();
+  if(!key)return;
+  const label=document.getElementById('modalLabel')?.value||'';
+  const select=document.getElementById('modalCategory');if(!select)return;
+  if(force||select.dataset.manual!=='1')select.value=detectBudgetCategory(key,label);
+}
+function syncModalBudgetType(key,{resetCategory=false}={}){
+  const typeSelect=document.getElementById('modalBudgetType');
+  if(typeSelect)typeSelect.value=key;
+  const categorySelect=document.getElementById('modalCategory');
+  const label=document.getElementById('modalLabel')?.value||'';
+  if(categorySelect){
+    if(resetCategory)categorySelect.dataset.manual='0';
+    const current=categorySelect.value;
+    const cats=getBudgetCategories(key);
+    const keep=!resetCategory&&cats.some(c=>c.id===current);
+    populateBudgetCategorySelect(key,keep?current:detectBudgetCategory(key,label));
+  }
 }
 
 let betaUserUid='';
@@ -2414,10 +2542,16 @@ function openModal(key){
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
   const accountSelect=document.getElementById('modalAccount');
+  const typeSelect=document.getElementById('modalBudgetType');
 
   labelInput.value='';
   amountInput.value='';
   populateBankSelect(accountSelect,localStorage.getItem('finaryLastBudgetAccount')||'fortuneo');
+  if(typeSelect){typeSelect.value=key;typeSelect.onchange=()=>syncModalBudgetType(typeSelect.value,{resetCategory:true});}
+  const categorySelect=document.getElementById('modalCategory');
+  if(categorySelect){categorySelect.dataset.manual='0';populateBudgetCategorySelect(key,detectBudgetCategory(key,''));}
+  labelInput.oninput=()=>updateModalCategorySuggestion(false);
+  if(categorySelect)categorySelect.onchange=()=>{categorySelect.dataset.manual='1';};
   labelInput.placeholder='Ex: Loyer, Salaire, Courses...';
   amountInput.placeholder='0';
 
@@ -2454,12 +2588,17 @@ function openBudgetEditModal(key,index){
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
   const accountSelect=document.getElementById('modalAccount');
+  const typeSelect=document.getElementById('modalBudgetType');
 
   /* Comme dans Patrimoine : les valeurs actuelles sont directement préremplies. */
   labelInput.value=item[0] || '';
   const currentAmount=Number(item[1]||0);
   amountInput.value=Number.isFinite(currentAmount)?currentAmount:'';
   populateBankSelect(accountSelect,item[3]||'ca');
+  if(typeSelect){typeSelect.value=key;typeSelect.onchange=()=>syncModalBudgetType(typeSelect.value,{resetCategory:true});}
+  const categorySelect=document.getElementById('modalCategory');
+  if(categorySelect){categorySelect.dataset.manual='1';populateBudgetCategorySelect(key,getItemBudgetCategory(key,item));categorySelect.onchange=()=>{categorySelect.dataset.manual='1';};}
+  labelInput.oninput=()=>{};
 
   labelInput.placeholder='Modifier le libellé';
   amountInput.placeholder='0';
@@ -2524,6 +2663,16 @@ function submitModal(){
     }
 
     item[3]=accountId;
+    const targetKey=getModalBudgetType();
+    item[5]=document.getElementById('modalCategory')?.value||getItemBudgetCategory(targetKey,item);
+
+    // Si le type a été modifié, on déplace la ligne dans le bon onglet
+    // en conservant le libellé, le montant, l’état coché et le compte bancaire.
+    if(targetKey!==activeModalKey){
+      if(!Array.isArray(data[targetKey]))data[targetKey]=[];
+      data[activeModalKey].splice(activeModalIndex,1);
+      data[targetKey].unshift(item);
+    }
 
     closeModal();
     render();
@@ -2534,15 +2683,18 @@ function submitModal(){
   /* AJOUT */
   const amount=amountVal==='' ? 0 : Number(amountVal);
 
-  if(!data[activeModalKey]){
-    data[activeModalKey]=[];
+  const targetKey=getModalBudgetType();
+  if(!data[targetKey]){
+    data[targetKey]=[];
   }
 
-  data[activeModalKey].unshift([
+  data[targetKey].unshift([
     label,
     Number.isFinite(amount) ? amount : 0,
     false,
-    accountId
+    accountId,
+    null,
+    document.getElementById('modalCategory')?.value||detectBudgetCategory(targetKey,label)
   ]);
 
   closeModal();
@@ -2893,7 +3045,7 @@ function render(){
 
           <div class="budget-line-label" title="Cliquer pour modifier">
             <div class="budget-line-main">${escapeHtml(item[0] || 'Sans libellé')}</div>
-            <div class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</div>
+            <div class="budget-line-meta"><span class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</span><span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span></div>
           </div>
 
           <div class="budget-line-amount" title="Cliquer pour modifier">
@@ -3597,6 +3749,7 @@ function renderHistory(){
 
       const budgetMatch=allItems.some(item =>
         matchesQuery(item[0], item[1], query) ||
+        normalizeText(getBudgetCategoryLabel('budgetDepenses',item[5]||'autres')).includes(normalizeText(query)) ||
         Boolean(item[3]) && normalizeText(getHistoricalBudgetAccountName(item)).includes(normalizeText(query))
       );
 
@@ -3662,9 +3815,10 @@ function renderHistoryMonthModalContent(m){
     </div>
   `;
 
-  const renderSection = (title, items) => {
+  const renderSection = (title, items, budgetKey) => {
     const filteredItems = (items || []).filter(it =>
       matchesQuery(it[0], it[1], query) ||
+      normalizeText(getBudgetCategoryLabel(budgetKey,it[5]||detectBudgetCategory(budgetKey,it[0]))).includes(normalizeText(query)) ||
       (it[3] && normalizeText(getHistoricalBudgetAccountName(it)).includes(normalizeText(query)))
     );
 
@@ -3678,16 +3832,17 @@ function renderHistoryMonthModalContent(m){
 
     filteredItems.forEach(it => {
       const accountText=it[3]?`<span class="history-account">${escapeHtml(getHistoricalBudgetAccountName(it))}</span>`:'';
-      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
+      const categoryText=`<span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(budgetKey,it[5]||detectBudgetCategory(budgetKey,it[0])))}</span>`;
+      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}${categoryText}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
     });
 
     html += `</div>`;
     return html;
   };
 
-  let secRev = renderSection('📥 Entrées', m.revenusDetails);
-  let secFix = renderSection('🏠 Frais fixes', m.fixesDetails);
-  let secDep = renderSection('🛒 Dépenses', m.depensesDetails);
+  let secRev = renderSection('📥 Entrées', m.revenusDetails, 'budgetRevenus');
+  let secFix = renderSection('🏠 Frais fixes', m.fixesDetails, 'budgetFixes');
+  let secDep = renderSection('🛒 Dépenses', m.depensesDetails, 'budgetDepenses');
 
   const filteredTransfers=(m.transfersDetails||[]).filter(t=>
     matchesQuery(t.label,t.amount,query) ||
