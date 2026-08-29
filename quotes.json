@@ -1,45 +1,45 @@
 {
-  "updatedAt": "2026-08-29T13:49:24Z",
+  "updatedAt": "2026-08-29T13:59:01Z",
   "quotes": {
     "IE00B4ND3602": {
-      "price": 75.53,
+      "price": 74.54,
       "currency": "EUR",
-      "source": "Borsa Italiana · Milan · SGLN · Bid · prezzo acquisto (bid)",
-      "sourceUrl": "https://www.borsaitaliana.it/borsa/etc-etn/dettaglio.html?isin=IE00B4ND3602&lang=it&mic=ETFP",
-      "updatedAt": "2026-08-29T13:49:24Z",
+      "source": "Quotrix · Gold · Dernier cours",
+      "sourceUrl": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
+      "updatedAt": "2026-08-29T13:59:01Z",
       "history": [
         {
           "date": "2026-08-29",
-          "price": 75.53,
-          "updatedAt": "2026-08-29T13:49:24Z"
+          "price": 74.54,
+          "updatedAt": "2026-08-29T13:59:01Z"
         }
       ]
     },
     "IE0002XZSHO1": {
-      "price": 7.023,
+      "price": 7.027,
       "currency": "EUR",
-      "source": "Borsa Italiana · Paris · WPEA · Bid · prezzo acquisto (bid)",
-      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/dettaglio.html?isin=IE0002XZSHO1&lang=it&mic=XPAR",
-      "updatedAt": "2026-08-29T13:49:24Z",
+      "source": "Borsa Italiana · Paris · WPEA · ultimo corso · fallback",
+      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
+      "updatedAt": "2026-08-29T13:59:01Z",
       "history": [
         {
           "date": "2026-08-29",
-          "price": 7.023,
-          "updatedAt": "2026-08-29T13:49:24Z"
+          "price": 7.027,
+          "updatedAt": "2026-08-29T13:59:01Z"
         }
       ]
     },
     "FR0013412020": {
-      "price": 36.0,
+      "price": 36.095,
       "currency": "EUR",
-      "source": "Borsa Italiana · Paris · PAEEM · Bid · prezzo acquisto (bid)",
-      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/dettaglio.html?isin=FR0013412020&lang=it&mic=XPAR",
-      "updatedAt": "2026-08-29T13:49:24Z",
+      "source": "Borsa Italiana · Paris · PAEEM · ultimo corso · fallback",
+      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
+      "updatedAt": "2026-08-29T13:59:01Z",
       "history": [
         {
           "date": "2026-08-29",
-          "price": 36.0,
-          "updatedAt": "2026-08-29T13:49:24Z"
+          "price": 36.095,
+          "updatedAt": "2026-08-29T13:59:01Z"
         }
       ]
     }
