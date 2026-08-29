@@ -1,4 +1,4 @@
-name: Mise à jour des cours — test Bid
+name: Mise à jour des cours — V22 sources TR
 
 on:
   workflow_dispatch:
@@ -32,19 +32,22 @@ jobs:
           # Pour les deux crons 20:45/21:45 UTC, on ne poursuit que s'il est
           # réellement 22:45 dans le fuseau Europe/Paris (été comme hiver).
           PARIS_TIME="$(TZ=Europe/Paris date +%H:%M)"
+          PARIS_HOUR="$(TZ=Europe/Paris date +%H)"
           echo "Heure de Paris : $PARIS_TIME"
-          if [ "$PARIS_TIME" = "22:45" ]; then
+          # GitHub Actions peut démarrer un cron avec quelques minutes de retard.
+          # On accepte donc toute exécution du cron spécial pendant l'heure 22.
+          if [ "$PARIS_HOUR" = "22" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "Exécution ignorée : ce n'est pas 22:45 à Paris."
+            echo "Exécution ignorée : nous ne sommes pas dans l'heure 22 à Paris."
           fi
 
       - name: Récupérer le dépôt
         if: steps.timing.outputs.run == 'true'
         uses: actions/checkout@v4
 
-      - name: Récupérer les cours Borsa Italiana
+      - name: Récupérer les cours proches de Trade Republic
         if: steps.timing.outputs.run == 'true'
         shell: bash
         run: |
@@ -58,20 +61,29 @@ jobs:
 
           INSTRUMENTS = {
               "IE00B4ND3602": {
-                  "url": "https://www.borsaitaliana.it/borsa/etc-etn/dettaglio.html?isin=IE00B4ND3602&lang=it&mic=ETFP",
-                  "source": "Borsa Italiana · Milan · SGLN · Bid",
+                  "primary_url": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
+                  "primary_source": "Quotrix · Gold",
+                  "primary_parser": "quotrix_last",
+                  "fallback_url": "https://www.borsaitaliana.it/borsa/etc-etn/scheda/IE00B4ND3602-ETFP.html?lang=it",
+                  "fallback_source": "Borsa Italiana · Milan · SGLN",
                   "min": 10,
                   "max": 200,
               },
               "IE0002XZSHO1": {
-                  "url": "https://www.borsaitaliana.it/borsa/etf/dettaglio.html?isin=IE0002XZSHO1&lang=it&mic=XPAR",
-                  "source": "Borsa Italiana · Paris · WPEA · Bid",
+                  "primary_url": "https://www.boerse-stuttgart.de/en/products/etps/etfs/stuttgart/a3e1jv-ishares-msci-world-swap-pea-ucits-etf-eur-acc/",
+                  "primary_source": "Börse Stuttgart · WPEA",
+                  "primary_parser": "stuttgart_bid",
+                  "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
+                  "fallback_source": "Borsa Italiana · Paris · WPEA",
                   "min": 1,
                   "max": 20,
               },
               "FR0013412020": {
-                  "url": "https://www.borsaitaliana.it/borsa/etf/dettaglio.html?isin=FR0013412020&lang=it&mic=XPAR",
-                  "source": "Borsa Italiana · Paris · PAEEM · Bid",
+                  "primary_url": "https://www.boerse-stuttgart.de/en/products/etps/etfs/stuttgart/a2pkzp-amundi-pea-emergent-msci-emerging-esg-transition-ucits-etf-acc/",
+                  "primary_source": "Börse Stuttgart · PAEEM",
+                  "primary_parser": "stuttgart_bid",
+                  "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
+                  "fallback_source": "Borsa Italiana · Paris · PAEEM",
                   "min": 20,
                   "max": 60,
               },
@@ -80,7 +92,7 @@ jobs:
           HEADERS = {
               "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-              "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9,de;q=0.8,it;q=0.7",
               "Cache-Control": "no-cache",
           }
 
@@ -99,7 +111,6 @@ jobs:
           def number(s):
               s = s.strip().replace("\u202f", "").replace("\xa0", "").replace(" ", "")
               if "," in s and "." in s:
-                  # Format italien : 1.234,56
                   if s.rfind(",") > s.rfind("."):
                       s = s.replace(".", "").replace(",", ".")
                   else:
@@ -111,61 +122,89 @@ jobs:
           def valid(v, low, high):
               return v is not None and low < v < high
 
-          def parse_price(raw, low, high):
+          def parse_stuttgart_bid(raw, low, high):
               text = textify(raw)
-
-              # 1) Priorité au meilleur prix acheteur (Bid / Prezzo Acquisto).
-              # C'est la valeur la plus proche d'une valorisation de portefeuille
-              # basée sur le prix auquel la position pourrait être vendue.
-              #
-              # Après textify(), le début du carnet prend typiquement la forme :
-              # "N Numero Proposte Volume Acquisto Prezzo Acquisto Prezzo Vendita
-              #  Volume Vendita Numero Proposte 1 5 57 35,90 35,95 1.617 3 ..."
-              book = re.search(
-                  r"Prezzo\s+Acquisto\s+Prezzo\s+Vendita\s+Volume\s+Vendita\s+Numero\s+Proposte\s+"
-                  r"1\s+\S+\s+\S+\s+([0-9]+(?:[.,][0-9]+)?)\s+([0-9]+(?:[.,][0-9]+)?)",
-                  text,
-                  flags=re.I,
-              )
-              if book:
-                  bid = number(book.group(1))
-                  if valid(bid, low, high):
-                      return bid, "prezzo acquisto (bid)"
-
-              # 2) Prix de clôture si le carnet n'est pas exploitable.
+              # Page anglaise : "BID 6.969 ASK 6.97"
               m = re.search(
-                  r"Prezzo di Chiusura\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
-                  text,
-                  flags=re.I,
+                  r"\bBID\s+([0-9]+(?:[.,][0-9]+)?)\s+ASK\b",
+                  text, flags=re.I
               )
               if m:
                   v = number(m.group(1))
                   if valid(v, low, high):
-                      return v, "prezzo di chiusura"
-
-              # 3) Prix de référence.
+                      return v, "Bid"
+              # Secours page allemande éventuelle : "Geld 35,66 Brief"
               m = re.search(
-                  r"Prezzo di riferimento\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
-                  text,
-                  flags=re.I,
+                  r"\bGeld\s+([0-9]+(?:[.,][0-9]+)?)\s+Brief\b",
+                  text, flags=re.I
               )
               if m:
                   v = number(m.group(1))
                   if valid(v, low, high):
-                      return v, "prezzo di riferimento"
+                      return v, "Bid"
+              return None, None
 
-              # 4) Dernier cours affiché en dernier recours.
+          def parse_quotrix_last(raw, low, high):
+              text = textify(raw)
+              # Quotrix : "Letzter 74,54" dans Kursdaten.
+              m = re.search(
+                  r"\bLetzter\s+([0-9]+(?:[.,][0-9]+)?)\b",
+                  text, flags=re.I
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "Dernier cours"
+              return None, None
+
+          def parse_borsa(raw, low, high):
+              text = textify(raw)
               m = re.search(
                   r"(?<![\d.,])([0-9]+(?:[.,][0-9]+)?)\s*[+-]\s*[0-9]+(?:[.,][0-9]+)?%\s*Fase\s*:",
-                  text,
-                  flags=re.I,
+                  text, flags=re.I
               )
               if m:
                   v = number(m.group(1))
                   if valid(v, low, high):
                       return v, "ultimo corso"
-
+              m = re.search(
+                  r"Prezzo di Chiusura\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
+                  text, flags=re.I
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "prezzo di chiusura"
+              m = re.search(
+                  r"Prezzo di riferimento\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
+                  text, flags=re.I
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "prezzo di riferimento"
               return None, None
+
+          def get_price(cfg):
+              primary_error = None
+              try:
+                  raw = fetch(cfg["primary_url"])
+                  if cfg["primary_parser"] == "stuttgart_bid":
+                      price, mode = parse_stuttgart_bid(raw, cfg["min"], cfg["max"])
+                  else:
+                      price, mode = parse_quotrix_last(raw, cfg["min"], cfg["max"])
+                  if price is not None:
+                      return price, mode, cfg["primary_source"], cfg["primary_url"], False
+                  primary_error = "aucun cours primaire exploitable"
+              except Exception as e:
+                  primary_error = str(e)
+
+              print("  Source principale indisponible :", primary_error)
+              raw = fetch(cfg["fallback_url"])
+              price, mode = parse_borsa(raw, cfg["min"], cfg["max"])
+              if price is None:
+                  raise RuntimeError("échec source principale + fallback Borsa")
+              return price, mode, cfg["fallback_source"], cfg["fallback_url"], True
 
           path = Path("quotes.json")
           try:
@@ -175,26 +214,18 @@ jobs:
 
           payload.setdefault("quotes", {})
           now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
           successes = 0
           failures = []
 
           for isin, cfg in INSTRUMENTS.items():
               try:
-                  raw = fetch(cfg["url"])
-                  price, mode = parse_price(raw, cfg["min"], cfg["max"])
-
-                  if price is None:
-                      preview = textify(raw)[:800]
-                      raise RuntimeError("aucun cours exploitable trouvé; aperçu=" + repr(preview))
+                  price, mode, source, source_url, used_fallback = get_price(cfg)
 
                   previous = payload["quotes"].get(isin, {})
                   history = previous.get("history", [])
                   if not isinstance(history, list):
                       history = []
 
-                  # Si l'ancien quotes.json contient un cours d'un jour précédent,
-                  # on le récupère une fois comme premier point historique.
                   previous_price = previous.get("price")
                   previous_updated = str(previous.get("updatedAt", ""))
                   previous_day = previous_updated[:10] if len(previous_updated) >= 10 else ""
@@ -210,14 +241,8 @@ jobs:
                       except (TypeError, ValueError):
                           pass
 
-                  # Un seul point par jour : les passages suivants (toutes les 6 h)
-                  # remplacent le point du jour par le dernier cours disponible.
                   today = now[:10]
-                  daily_point = {
-                      "date": today,
-                      "price": round(price, 6),
-                      "updatedAt": now,
-                  }
+                  daily_point = {"date": today, "price": round(price, 6), "updatedAt": now}
                   history = [
                       p for p in history
                       if isinstance(p, dict) and str(p.get("date", ""))[:10] != today
@@ -225,7 +250,6 @@ jobs:
                   history.append(daily_point)
                   history.sort(key=lambda p: str(p.get("date", ""))[:10])
 
-                  # On conserve 366 jours maximum.
                   cutoff = datetime.now(timezone.utc).date().toordinal() - 366
                   cleaned_history = []
                   for p in history:
@@ -239,14 +263,14 @@ jobs:
                   payload["quotes"][isin] = {
                       "price": round(price, 6),
                       "currency": "EUR",
-                      "source": cfg["source"] + " · " + mode,
-                      "sourceUrl": cfg["url"],
+                      "source": source + " · " + mode + (" · fallback" if used_fallback else ""),
+                      "sourceUrl": source_url,
                       "updatedAt": now,
                       "history": cleaned_history,
                   }
 
                   successes += 1
-                  print(f"OK {isin} = {price:.6f} EUR ({mode}) · historique {len(cleaned_history)} jour(s)")
+                  print(f"OK {isin} = {price:.6f} EUR · {source} · {mode}" + (" [FALLBACK]" if used_fallback else ""))
 
               except Exception as e:
                   failures.append(f"{isin}: {e}")
@@ -254,10 +278,7 @@ jobs:
 
           if successes:
               payload["updatedAt"] = now
-              path.write_text(
-                  json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                  encoding="utf-8",
-              )
+              path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           print(f"\nRésultat : {successes}/3 cours récupérés.")
           if failures:
@@ -266,9 +287,8 @@ jobs:
                   print(" -", failure)
 
           if successes == 0:
-              raise SystemExit("Aucun cours Borsa Italiana récupéré.")
+              raise SystemExit("Aucun cours récupéré.")
           PY
-
       - name: Enregistrer quotes.json
         if: steps.timing.outputs.run == 'true'
         shell: bash
