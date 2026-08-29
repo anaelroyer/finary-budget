@@ -43,6 +43,16 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .rows-container{display:flex;flex-direction:column;gap:8px}
 .row{display:grid;grid-template-columns:28px minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}.row.paid{background:rgba(35,134,54,.15)}.row:last-child{border-bottom:0}
 .row.patrimoine-row{display:grid;grid-template-columns:minmax(0,1fr) 95px 28px;gap:6px;align-items:center;padding:8px 4px;border-bottom:1px solid #21262d;border-radius:8px}
+.stock-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:10px 4px;border-bottom:1px solid #21262d}
+.stock-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.stock-field label{font-size:9px;color:#8b949e;text-transform:uppercase;letter-spacing:.35px;font-weight:800}
+.stock-field input{width:100%;min-width:0;padding:8px 9px;background:#0d1117;border:1px solid #30363d;border-radius:7px;color:#fff;font-size:13px;outline:none}
+.stock-field input:focus{border-color:#58a6ff}
+.stock-row-footer{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:2px}
+.stock-calculated-value{font-size:11px;color:#8b949e}.stock-calculated-value strong{color:#c9d1d9;font-size:13px}
+.stock-row-footer .btn-del{margin-left:auto}
+@media(max-width:360px){.stock-row{grid-template-columns:1fr}}
+
 
 /* FICHES EMPRUNTS */
 .loan-card{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:10px}
@@ -2716,6 +2726,93 @@ function saveAnnotations(){
 }
 
 
+
+/* BOURSE : nombre de parts × prix par part */
+function getStockMeta(item){
+  const raw=item && typeof item[2]==='object' && item[2]!==null ? item[2] : {};
+  return {
+    isin:String(raw.isin||''),
+    shares:Number(raw.shares)||0,
+    pricePerShare:Number(raw.pricePerShare)||0,
+    priceUpdatedAt:raw.priceUpdatedAt||'',
+    priceSourceUrl:raw.priceSourceUrl||''
+  };
+}
+
+function recalculateStockItem(item){
+  if(!Array.isArray(item))return 0;
+  const meta=getStockMeta(item);
+  const value=Math.max(0,meta.shares)*Math.max(0,meta.pricePerShare);
+  item[1]=Number.isFinite(value)?value:0;
+  item[2]=meta;
+  return item[1];
+}
+
+function updateStockField(index,field,value){
+  if(!Array.isArray(data.bourse)||!data.bourse[index])return;
+  const item=data.bourse[index];
+  const meta=getStockMeta(item);
+
+  if(field==='label'){
+    item[0]=String(value||'');
+  }else if(field==='isin'){
+    meta.isin=String(value||'').trim().toUpperCase();
+    item[2]=meta;
+  }else if(field==='shares'){
+    const n=Number(value);
+    meta.shares=Number.isFinite(n)&&n>=0?n:0;
+    item[2]=meta;
+    recalculateStockItem(item);
+  }else if(field==='pricePerShare'){
+    const n=Number(value);
+    meta.pricePerShare=Number.isFinite(n)&&n>=0?n:0;
+    item[2]=meta;
+    recalculateStockItem(item);
+  }
+
+  const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+  const valueEl=row?.querySelector('.stock-calculated-value strong');
+  if(valueEl)valueEl.textContent=euro(Number(item[1])||0);
+
+  updateTotals();
+  renderAssetDistribution();
+  save();
+}
+
+function renderStockRow(item,idx,cont){
+  const meta=getStockMeta(item);
+  // Anciennes lignes : on conserve leur montant tant que l'utilisateur
+  // n'a pas encore renseigné parts + prix, afin de ne pas perdre de valeur.
+  if(meta.shares>0 || meta.pricePerShare>0)recalculateStockItem(item);
+
+  const row=document.createElement('div');
+  row.className='stock-row';
+  row.dataset.stockIndex=String(idx);
+  row.innerHTML=`
+    <div class="stock-field">
+      <label>Libellé</label>
+      <input type="text" value="${escapeHtml(item[0]||'')}" placeholder="Ex : MSCI World PEA" oninput="updateStockField(${idx},'label',this.value)">
+    </div>
+    <div class="stock-field">
+      <label>ISIN</label>
+      <input type="text" value="${escapeHtml(meta.isin)}" placeholder="Ex : IE0002XZSHO1" autocapitalize="characters" spellcheck="false" oninput="updateStockField(${idx},'isin',this.value)">
+    </div>
+    <div class="stock-field">
+      <label>Nombre de parts possédées</label>
+      <input type="number" value="${meta.shares||''}" placeholder="0" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'shares',this.value)">
+    </div>
+    <div class="stock-field">
+      <label>Prix par part (€)</label>
+      <input type="number" value="${meta.pricePerShare||''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pricePerShare',this.value)">
+    </div>
+    <div class="stock-row-footer">
+      <span class="stock-calculated-value">Valeur calculée : <strong>${euro(Number(item[1])||0)}</strong></span>
+      <button class="btn-del" onclick="delPatrimoine('bourse',${idx})" title="Supprimer">×</button>
+    </div>
+  `;
+  cont.appendChild(row);
+}
+
 /* EMPRUNTS */
 let activeLoanIndex=-1;
 function getLoanMeta(item){
@@ -2901,6 +2998,10 @@ function render(){
     const isBudget=key.startsWith('budget');
 
     if(key==='dettes'){renderLoanCards(cont);return;}
+    if(key==='bourse'){
+      data.bourse.forEach((item,idx)=>renderStockRow(item,idx,cont));
+      return;
+    }
 
     // Dans le budget, les lignes non cochées restent en haut et
     // les lignes cochées sont affichées en bas, sans modifier data.
@@ -3023,7 +3124,11 @@ function togglePaid(k,i){
 function addItem(k){
   if(k==='dettes'){openLoanModal(-1);return;}
   if(!data[k])data[k]=[];
-  data[k].push(['',0]);
+  if(k==='bourse'){
+    data[k].push(['',0,{isin:'',shares:0,pricePerShare:0,priceUpdatedAt:'',priceSourceUrl:''}]);
+  }else{
+    data[k].push(['',0]);
+  }
   render();
   save();
 
