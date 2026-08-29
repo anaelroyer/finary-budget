@@ -1,4 +1,4 @@
-import { TRClient, topicRegistry } from "trade-republic-sdk";
+import { TRClient } from "trade-republic-sdk";
 
 const phone = process.env.TR_PHONE;
 const pin = process.env.TR_PIN;
@@ -8,22 +8,11 @@ if (!phone || !pin) {
   process.exit(1);
 }
 
-function redact(value) {
-  if (!value) return value;
-  if (Array.isArray(value)) return value.map(redact);
-  if (typeof value === "object") {
-    const out = {};
-    for (const [k, v] of Object.entries(value)) {
-      if (/name|firstName|lastName|email|phone|address|iban|taxId/i.test(k)) {
-        out[k] = "[MASQUÉ]";
-      } else {
-        out[k] = redact(v);
-      }
-    }
-    return out;
-  }
-  return value;
-}
+const TARGETS = new Set([
+  "IE0002XZSHO1", // WPEA
+  "FR0013412020", // PAEEM
+  "IE00B4ND3602"  // iShares Physical Gold
+]);
 
 const client = new TRClient({
   validate: "warn",
@@ -32,63 +21,194 @@ const client = new TRClient({
   }
 });
 
-try {
-  console.log("🔐 Connexion Trade Republic...");
-  console.log("📱 Une demande d'approbation doit apparaître dans l'app.");
-  await client.login(phone, pin);
+function collectSecuritiesAccounts(value) {
+  const seen = new Set();
+  const found = new Map();
 
-  console.log("✅ Connexion approuvée.");
-  console.log("");
+  function walk(node, context = {}) {
+    if (!node || typeof node !== "object" || seen.has(node)) return;
+    seen.add(node);
 
-  const availableTopics = Object.keys(topicRegistry || {});
-  console.log("📚 Topics disponibles dans le SDK :");
-  console.log(availableTopics.join(", "));
-  console.log("");
+    let localContext = {...context};
 
-  const candidates = [
-    "portfolio",
-    "portfolioStatus",
-    "cash",
-    "availableCash",
-    "timelineTransactions",
-    "orders",
-    "savingsPlans"
-  ];
-
-  let successCount = 0;
-
-  for (const name of candidates) {
-    try {
-      let accessor = client[name];
-      if (!accessor && typeof client.topic === "function") {
-        accessor = client.topic(name);
+    for (const [key, val] of Object.entries(node)) {
+      if (typeof val === "string") {
+        if (/^(type|accountType|name|label|title)$/i.test(key)) {
+          localContext[key] = val;
+        }
       }
+    }
 
-      if (!accessor || typeof accessor.get !== "function") {
-        console.log(`ℹ️ ${name} : accessor absent`);
-        continue;
+    for (const [key, val] of Object.entries(node)) {
+      if (
+        typeof val === "string" &&
+        /^(securitiesAccountNumber|secAccNo|securitiesAccountNo)$/i.test(key)
+      ) {
+        if (!found.has(val)) {
+          found.set(val, {
+            secAccNo: val,
+            context: {...localContext}
+          });
+        }
       }
+    }
 
-      console.log(`📡 Lecture ${name}...`);
-      const data = await accessor.get({});
-      console.log(`✅ ${name} reçu`);
-      console.log(JSON.stringify(redact(data), null, 2));
-      console.log("");
-      successCount++;
-    } catch (err) {
-      console.log(`⚠️ ${name} : ${err?.message || String(err)}`);
-      console.log("");
+    for (const val of Object.values(node)) {
+      walk(val, localContext);
     }
   }
 
-  console.log(`✅ Test terminé : ${successCount} topic(s) reçu(s).`);
+  walk(value);
+  return [...found.values()];
+}
 
-  if (successCount === 0) {
-    console.error("❌ Authentification réussie mais aucune donnée testée n'a pu être lue.");
+function flattenPositions(portfolio) {
+  if (!portfolio || typeof portfolio !== "object") return [];
+
+  if (Array.isArray(portfolio.positions)) return portfolio.positions;
+
+  if (Array.isArray(portfolio.categories)) {
+    return portfolio.categories.flatMap(category =>
+      Array.isArray(category?.positions) ? category.positions : []
+    );
+  }
+
+  const out = [];
+  const seen = new Set();
+  function walk(node) {
+    if (!node || typeof node !== "object" || seen.has(node)) return;
+    seen.add(node);
+    if (Array.isArray(node)) {
+      for (const x of node) walk(x);
+      return;
+    }
+    const hasPositionShape =
+      ("netSize" in node || "size" in node || "quantity" in node) &&
+      ("isin" in node || "instrumentId" in node || "instrument" in node);
+    if (hasPositionShape) out.push(node);
+    for (const v of Object.values(node)) walk(v);
+  }
+  walk(portfolio);
+  return out;
+}
+
+function normalizePosition(position) {
+  const isin =
+    position?.isin ??
+    position?.instrumentId ??
+    position?.instrument?.isin ??
+    position?.instrument?.id ??
+    null;
+
+  const parts =
+    position?.netSize ??
+    position?.size ??
+    position?.quantity ??
+    position?.amount ??
+    null;
+
+  const averageBuyIn =
+    position?.averageBuyIn ??
+    position?.averageBuyInPrice ??
+    position?.buyIn ??
+    position?.averagePrice ??
+    null;
+
+  const name =
+    position?.name ??
+    position?.instrument?.name ??
+    position?.instrumentName ??
+    "";
+
+  return { isin, name, parts, averageBuyIn };
+}
+
+function accountLabel(account, index) {
+  const c = account?.context || {};
+  const raw = c.accountType || c.type || c.name || c.label || c.title || "";
+  return raw ? String(raw) : `Compte titres ${index + 1}`;
+}
+
+try {
+  console.log("🔐 Connexion Trade Republic...");
+  console.log("📱 Valide la demande dans l'app Trade Republic.");
+  await client.login(phone, pin);
+  console.log("✅ Connexion approuvée.");
+  console.log("");
+
+  let accounts = [];
+
+  try {
+    console.log("🔎 Recherche des comptes titres / PEA...");
+    const accountPairs = await client.accountPairs.get({});
+    accounts = collectSecuritiesAccounts(accountPairs);
+    console.log(`✅ ${accounts.length} compte(s) d'investissement détecté(s) via accountPairs.`);
+  } catch (err) {
+    console.log("ℹ️ accountPairs non exploitable :", err?.message || String(err));
+  }
+
+  if (accounts.length === 0) {
+    try {
+      const accountInfo = await client.accountInfo.get();
+      accounts = collectSecuritiesAccounts(accountInfo);
+      console.log(`✅ ${accounts.length} compte(s) d'investissement détecté(s) via accountInfo.`);
+    } catch (err) {
+      console.log("ℹ️ accountInfo non exploitable :", err?.message || String(err));
+    }
+  }
+
+  if (accounts.length === 0) {
+    console.error("❌ Impossible de trouver un compte-titres ou PEA.");
     process.exit(2);
   }
 
+  let totalFound = 0;
+
+  for (let i = 0; i < accounts.length; i++) {
+    const account = accounts[i];
+    const label = accountLabel(account, i);
+
+    console.log("");
+    console.log("========================================");
+    console.log(`📂 ${label}`);
+    console.log("========================================");
+
+    try {
+      const portfolio = await client.compactPortfolioByType.get({
+        secAccNo: account.secAccNo
+      });
+
+      const positions = flattenPositions(portfolio).map(normalizePosition);
+      console.log(`✅ ${positions.length} position(s) reçue(s).`);
+
+      let foundHere = 0;
+      for (const p of positions) {
+        const isin = String(p.isin || "").toUpperCase();
+        if (!TARGETS.has(isin)) continue;
+
+        foundHere++;
+        totalFound++;
+
+        console.log("");
+        console.log(`ISIN : ${isin}`);
+        if (p.name) console.log(`Nom : ${p.name}`);
+        console.log(`Parts : ${p.parts ?? "non fourni"}`);
+        console.log(`PRU : ${p.averageBuyIn ?? "non fourni"}`);
+      }
+
+      if (foundHere === 0) {
+        console.log("ℹ️ Aucun des 3 ISIN suivis sur ce compte.");
+      }
+
+    } catch (err) {
+      console.log(`⚠️ Lecture impossible pour ce compte : ${err?.message || String(err)}`);
+    }
+  }
+
+  console.log("");
+  console.log(`✅ Test terminé : ${totalFound} ligne(s) suivie(s) trouvée(s) au total.`);
   process.exit(0);
+
 } catch (error) {
   console.error("");
   console.error("❌ ÉCHEC DU TEST");
