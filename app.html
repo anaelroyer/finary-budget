@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- V26.1.12 : ordre catégories + lignes inline + ISIN sans répétition PEA/CTO -->
 <title>Budget & Patrimoine</title>
 <meta name="theme-color" content="#0d1117">
 <meta name="application-name" content="Budget & Patrimoine">
@@ -902,6 +903,13 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <label>ISIN</label>
         <input id="stockEditIsin" type="text" placeholder="Ex : IE0002XZSHO1" autocapitalize="characters" spellcheck="false">
       </div>
+      <div class="full">
+        <label>Enveloppe</label>
+        <select id="stockEditAccount">
+          <option value="PEA">PEA</option>
+          <option value="CTO">CTO</option>
+        </select>
+      </div>
       <div>
         <label>Nombre de parts</label>
         <input id="stockEditShares" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
@@ -1674,7 +1682,23 @@ function ensureAssetCategoryData(){
 function getActiveAssetCategoryKeys(){
   ensureAssetCategoryData();
   const active=new Set(data.activeAssetCategories);
-  return ASSET_CATEGORY_DEFINITIONS.filter(c=>active.has(c.key)).map(c=>c.key);
+
+  // Ordre visuel demandé :
+  // Epargne / Bourse / Crypto / Assurance vie / Autres actifs / Immobilier / Emprunts
+  const preferredOrder=['bourse','crypto','assurancevie','autres'];
+  const tailOrder=['immobilier'];
+  const ordered=[];
+
+  preferredOrder.forEach(key=>{if(active.has(key))ordered.push(key);});
+
+  ASSET_CATEGORY_DEFINITIONS.forEach(c=>{
+    if(active.has(c.key) && !preferredOrder.includes(c.key) && !tailOrder.includes(c.key)){
+      ordered.push(c.key);
+    }
+  });
+
+  tailOrder.forEach(key=>{if(active.has(key))ordered.push(key);});
+  return ordered;
 }
 
 function getActiveInvestmentCategoryKeys(){
@@ -4153,7 +4177,8 @@ function getStockMeta(item){
     priceUpdatedAt:raw.priceUpdatedAt||'',
     priceSourceUrl:raw.priceSourceUrl||'',
     priceSourceName:raw.priceSourceName||'',
-    priceFetchStatus:raw.priceFetchStatus||''
+    priceFetchStatus:raw.priceFetchStatus||'',
+    account:String(raw.account||'').toUpperCase()
   };
 }
 
@@ -4541,6 +4566,96 @@ function refreshStockPerformance(index){
 }
 
 
+
+let activeStockAccountTab=localStorage.getItem('finaryStockAccountTab')||'PEA';
+if(!['PEA','CTO'].includes(activeStockAccountTab))activeStockAccountTab='PEA';
+
+function inferLegacyStockAccount(item){
+  const meta=getStockMeta(item);
+  if(meta.account==='PEA'||meta.account==='CTO')return meta.account;
+  const isin=String(meta.isin||'').toUpperCase();
+
+  // Migration des anciennes lignes : Gold = CTO, Emerging = PEA.
+  if(isin==='IE00B4ND3602')return 'CTO';
+  if(isin==='FR0013412020')return 'PEA';
+
+  // Avant la séparation PEA/CTO, le MSCI World existant dans l'app
+  // correspondait au PEA. Les nouvelles lignes seront toujours créées
+  // avec une enveloppe explicite.
+  if(isin==='IE0002XZSHO1')return 'PEA';
+  return 'PEA';
+}
+
+function ensureStockAccounts(){
+  if(!Array.isArray(data.bourse))data.bourse=[];
+  let changed=false;
+
+  data.bourse.forEach(item=>{
+    const meta=getStockMeta(item);
+    if(meta.account!=='PEA'&&meta.account!=='CTO'){
+      meta.account=inferLegacyStockAccount(item);
+      item[2]=meta;
+      changed=true;
+    }
+  });
+
+  // Migration V26.1.6 : le MSCI World existe aussi sur le CTO.
+  // On crée la ligne uniquement si elle n'existe pas déjà.
+  const ctoWorldExists=data.bourse.some(item=>{
+    const meta=getStockMeta(item);
+    return meta.account==='CTO' && String(meta.isin||'').toUpperCase()==='IE0002XZSHO1';
+  });
+
+  if(!ctoWorldExists){
+    const peaWorld=data.bourse.find(item=>{
+      const meta=getStockMeta(item);
+      return meta.account==='PEA' && String(meta.isin||'').toUpperCase()==='IE0002XZSHO1';
+    });
+
+    const sourceMeta=peaWorld?getStockMeta(peaWorld):{};
+    const ctoMeta={
+      ...sourceMeta,
+      isin:'IE0002XZSHO1',
+      account:'CTO',
+      shares:0.151707,
+      pru:5.537,
+      pruSet:true
+    };
+    const ctoWorld=[
+      peaWorld?.[0] || 'MSCI World',
+      0,
+      ctoMeta
+    ];
+    recalculateStockItem(ctoWorld);
+    data.bourse.push(ctoWorld);
+    changed=true;
+  }
+
+  if(changed)saveLocalOnly();
+}
+
+function getStockAccount(item){
+  const a=getStockMeta(item).account;
+  return a==='CTO'?'CTO':'PEA';
+}
+
+function setStockAccountTab(account){
+  activeStockAccountTab=account==='CTO'?'CTO':'PEA';
+  localStorage.setItem('finaryStockAccountTab',activeStockAccountTab);
+  render();
+}
+
+function stockAccountTabsHtml(){
+  return '';
+}
+
+function stockAccountSectionTitle(account){
+  const count=(data.bourse||[]).filter(item=>getStockAccount(item)===account).length;
+  return `<div class="stock-envelope-heading ${account.toLowerCase()}">
+    <div class="stock-envelope-title">${account}<span class="stock-envelope-subtitle"> · ${count} ligne${count>1?'s':''}</span></div>
+  </div>`;
+}
+
 let activeStockEditIndex=-1;
 
 function stockModalNumber(id,allowZero=true){
@@ -4561,6 +4676,7 @@ function openStockEditModal(index=-1){
   document.getElementById('stockEditTitle').textContent=editing?'Modifier la ligne Bourse':'Ajouter une ligne Bourse';
   document.getElementById('stockEditLabel').value=editing?(item[0]||''):'';
   document.getElementById('stockEditIsin').value=editing?(meta.isin||''):'';
+  document.getElementById('stockEditAccount').value=editing?getStockAccount(item):'PEA';
   document.getElementById('stockEditShares').value=editing?meta.shares:'';
   document.getElementById('stockEditPru').value=editing && meta.pruSet===true?meta.pru:'';
   document.getElementById('stockEditPrice').value=editing?meta.pricePerShare:'';
@@ -4577,6 +4693,7 @@ function closeStockEditModal(){
 function submitStockEdit(){
   const label=String(document.getElementById('stockEditLabel')?.value||'').trim();
   const isin=String(document.getElementById('stockEditIsin')?.value||'').trim().toUpperCase();
+  const account=document.getElementById('stockEditAccount')?.value==='CTO'?'CTO':'PEA';
   const shares=stockModalNumber('stockEditShares',true);
   const pru=stockModalNumber('stockEditPru',true);
   const price=stockModalNumber('stockEditPrice',true);
@@ -4601,6 +4718,7 @@ function submitStockEdit(){
   item[2]={
     ...previous,
     isin,
+    account,
     shares,
     pru,
     pruSet:true,
@@ -4721,6 +4839,9 @@ function updateStockField(index,field,value){
     item[0]=String(value||'');
   }else if(field==='isin'){
     meta.isin=String(value||'').trim().toUpperCase();
+    item[2]=meta;
+  }else if(field==='account'){
+    meta.account=String(value||'').toUpperCase()==='CTO'?'CTO':'PEA';
     item[2]=meta;
   }else if(field==='shares'){
     const n=Number(value);
@@ -5085,7 +5206,7 @@ function renderOptionalAssetCategorySections(){
     const c=ASSET_CATEGORY_MAP[key];
     const allocationCard=key==='bourse'?`<div id="allocationTargetCard" class="smart-card">
       <div class="section-header">
-        <h2>🎯 Allocation cible — Bourse</h2>
+        <h2>🎯 Allocation cible — PEA</h2>
         <button class="btn btn-secondary" onclick="openAllocationTargetModal()" style="padding:6px 8px;font-size:10px">Modifier</button>
       </div>
       <div id="allocationTargetSummary" class="muted" style="text-transform:none">Aucune cible définie.</div>
@@ -5149,22 +5270,41 @@ function render(){
 
     if(key==='dettes'){renderLoanCards(cont);return;}
     if(key==='bourse'){
+      ensureStockAccounts();
       const stockOrder={
-        'IE0002XZSHO1':0, // MSCI World Swap / WPEA
+        'IE0002XZSHO1':0, // MSCI World
         'FR0013412020':1, // Emerging Market / PAEEM
         'IE00B4ND3602':2  // Gold
       };
 
-      data.bourse
-        .map((item,idx)=>({item,idx}))
-        .sort((a,b)=>{
-          const aIsin=String(getStockMeta(a.item).isin||'').toUpperCase();
-          const bIsin=String(getStockMeta(b.item).isin||'').toUpperCase();
-          const aOrder=stockOrder[aIsin] ?? 999;
-          const bOrder=stockOrder[bIsin] ?? 999;
-          return aOrder-bOrder || a.idx-b.idx;
-        })
-        .forEach(({item,idx})=>renderStockRow(item,idx,cont));
+      ['PEA','CTO'].forEach(account=>{
+        const rows=data.bourse
+          .map((item,idx)=>({item,idx}))
+          .filter(({item})=>getStockAccount(item)===account)
+          .sort((a,b)=>{
+            const aIsin=String(getStockMeta(a.item).isin||'').toUpperCase();
+            const bIsin=String(getStockMeta(b.item).isin||'').toUpperCase();
+
+            const orderForAccount = account==='CTO'
+              ? {
+                  'IE00B4ND3602':0, // Gold
+                  'IE0002XZSHO1':1  // MSCI World
+                }
+              : stockOrder;
+
+            const aOrder=orderForAccount[aIsin] ?? 999;
+            const bOrder=orderForAccount[bIsin] ?? 999;
+            return aOrder-bOrder || a.idx-b.idx;
+          });
+
+        cont.insertAdjacentHTML('beforeend',stockAccountSectionTitle(account));
+
+        if(rows.length===0){
+          cont.insertAdjacentHTML('beforeend',`<div class="stock-envelope-empty">Aucune ligne dans le ${account}</div>`);
+        }else{
+          rows.forEach(({item,idx})=>renderStockRow(item,idx,cont));
+        }
+      });
 
       return;
     }
@@ -5656,6 +5796,7 @@ function promoteRecurringBudget(index){
 
 function isAllocationTargetEligible(item){
   const meta=getStockMeta(item);
+  if(getStockAccount(item)!=='PEA')return false;
   const isin=String(meta.isin||'').trim().toUpperCase();
   const label=normalizeText(item?.[0]||'').trim();
 
@@ -5669,10 +5810,26 @@ function isAllocationTargetEligible(item){
 
 function stockTargetKey(item,index){
   const meta=getStockMeta(item);
-  return String(meta.isin||item?.[0]||`ligne-${index}`).trim().toUpperCase();
+  const base=String(meta.isin||item?.[0]||`ligne-${index}`).trim().toUpperCase();
+  return `${getStockAccount(item)}:${base}`;
+}
+function migrateLegacyAllocationTargets(){
+  ensureV26Data();
+  (data.bourse||[]).forEach((item,index)=>{
+    if(getStockAccount(item)!=='PEA')return;
+    const meta=getStockMeta(item);
+    const legacy=String(meta.isin||item?.[0]||`ligne-${index}`).trim().toUpperCase();
+    const modern=stockTargetKey(item,index);
+    if(data.allocationTargets[modern]===undefined && data.allocationTargets[legacy]!==undefined){
+      data.allocationTargets[modern]=data.allocationTargets[legacy];
+      delete data.allocationTargets[legacy];
+    }
+  });
 }
 function openAllocationTargetModal(){
   ensureV26Data();
+  ensureStockAccounts();
+  migrateLegacyAllocationTargets();
   delete data.allocationTargets['IE00B4ND3602'];
   const root=document.getElementById('allocationTargetFields');if(!root)return;
   root.innerHTML=(data.bourse||[])
@@ -5700,6 +5857,8 @@ function saveAllocationTargets(){
 function renderAllocationTargetSummary(){
   const root=document.getElementById('allocationTargetSummary');if(!root)return;
   ensureV26Data();
+  ensureStockAccounts();
+  migrateLegacyAllocationTargets();
   const eligible=(data.bourse||[])
     .map((item,index)=>({item,index}))
     .filter(({item})=>isAllocationTargetEligible(item));
@@ -6683,7 +6842,207 @@ function buildHistoryMonthReportHtml(model=getHistoryMonthShareModel()){
   }).join('');
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Historique budget — ${escapeHtml(model.month)}</title><style>
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111;margin:32px;line-height:1.35}h1{font-size:23px;margin:0 0 6px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #ddd;padding-bottom:6px}.sub{color:#666;font-size:12px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.stat{border:1px solid #ddd;border-radius:9px;padding:10px}.stat span{display:block;color:#666;font-size:10px;text-transform:uppercase}.stat strong{display:block;margin-top:3px;font-size:16px}table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-bottom:1px solid #eee;font-size:13px}.amount{text-align:right;white-space:nowrap;font-weight:700}.meta{color:#666;font-size:10px;margin-top:2px}.empty{color:#777;font-style:italic}.footer{margin-top:28px;padding-top:10px;border-top:1px solid #ddd;color:#777;font-size:10px;text-align:center}@media(max-width:650px){body{margin:16px}.summary{grid-template-columns:repeat(2,1fr)}}@media print{body{margin:12mm}.summary{break-inside:avoid}section{break-inside:avoid-page}}
-  </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
+  
+/* V26.1.3 — Bourse séparée PEA / CTO */
+.stock-account-tabs{
+  display:flex;
+  gap:8px;
+  padding:0 0 12px;
+}
+.stock-account-tab{
+  flex:1;
+  border:1px solid #30363d;
+  background:#161b22;
+  color:#8b949e;
+  border-radius:9px;
+  padding:9px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.stock-account-tab span{
+  display:inline-flex;
+  min-width:19px;
+  height:19px;
+  align-items:center;
+  justify-content:center;
+  margin-left:5px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#21262d;
+  font-size:10px;
+}
+.stock-account-tab.active{
+  border-color:#58a6ff;
+  color:#f0f6fc;
+  background:#0d2137;
+}
+.stock-account-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:1px 5px;
+  margin-right:6px;
+  border-radius:5px;
+  border:1px solid #30363d;
+  font-size:9px;
+  line-height:16px;
+  font-weight:800;
+  letter-spacing:.25px;
+}
+.stock-account-badge.pea{color:#3fb950;border-color:#238636;background:#0d2818;}
+.stock-account-badge.cto{color:#d2a8ff;border-color:#8957e5;background:#211633;}
+#stockEditAccount{
+  width:100%;
+  padding:10px 11px;
+  background:#0d1117;
+  border:1px solid #30363d;
+  border-radius:8px;
+  color:#e6edf3;
+  font:inherit;
+}
+
+
+/* V26.1.4 — Sous-onglets Bourse en arborescence */
+.stock-account-tabs{display:none!important;}
+
+.stock-account-tree{
+  position:relative;
+  margin:2px 0 12px 8px;
+  padding-left:15px;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.stock-account-tree::before{
+  content:"";
+  position:absolute;
+  left:5px;
+  top:5px;
+  bottom:14px;
+  width:1px;
+  background:#30363d;
+}
+.stock-account-branch{
+  position:relative;
+  width:100%;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 10px 7px 11px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:#8b949e;
+  text-align:left;
+  cursor:pointer;
+  font:inherit;
+}
+.stock-account-branch::before{
+  content:"";
+  position:absolute;
+  left:-10px;
+  top:50%;
+  width:10px;
+  height:1px;
+  background:#30363d;
+}
+.stock-account-branch:hover{
+  background:#161b22;
+  color:#c9d1d9;
+}
+.stock-account-branch.active{
+  background:#161b22;
+  color:#f0f6fc;
+}
+.stock-account-branch.active::after{
+  content:"";
+  position:absolute;
+  left:0;
+  top:8px;
+  bottom:8px;
+  width:2px;
+  border-radius:2px;
+  background:#58a6ff;
+}
+.stock-tree-line{display:none;}
+.stock-tree-chevron{
+  width:14px;
+  color:#6e7681;
+  font-size:16px;
+  line-height:1;
+  text-align:center;
+}
+.stock-account-branch.active .stock-tree-chevron{color:#58a6ff;}
+.stock-tree-name{
+  flex:1;
+  font-weight:700;
+}
+.stock-tree-count{
+  display:inline-flex;
+  min-width:22px;
+  height:20px;
+  padding:0 6px;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  border:1px solid #30363d;
+  background:#0d1117;
+  color:#8b949e;
+  font-size:10px;
+  font-weight:700;
+}
+.stock-account-branch.active .stock-tree-count{
+  color:#c9d1d9;
+  border-color:#484f58;
+}
+
+
+/* V26.1.5 — PEA et CTO visibles ensemble, l'un sous l'autre */
+.stock-account-tree,
+.stock-account-tabs{display:none!important;}
+
+.stock-envelope-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:16px 0 8px;
+  padding:9px 11px;
+  border:1px solid #30363d;
+  border-radius:9px;
+  background:#161b22;
+}
+.rows-container[data-key="bourse"] .stock-envelope-heading:first-child{
+  margin-top:2px;
+}
+.stock-envelope-title{
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.2px;
+  color:#f0f6fc;
+}
+.stock-envelope-subtitle{
+  font-size:10px;
+  font-weight:600;
+  color:#8b949e;
+  letter-spacing:0;
+  margin-left:2px;
+}
+.stock-envelope-heading.pea{border-left:3px solid #3fb950;}
+.stock-envelope-heading.cto{border-left:3px solid #8957e5;}
+.stock-envelope-empty{
+  margin:-1px 0 8px;
+  padding:10px 11px;
+  border:1px dashed #30363d;
+  border-radius:8px;
+  color:#6e7681;
+  font-size:11px;
+}
+
+
+/* V26.1.6 — Ajout automatique de la ligne MSCI World du CTO */
+
+</style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
 }
 
 function buildHistoryMonthReportText(model=getHistoryMonthShareModel()){
@@ -9329,7 +9688,7 @@ if(window.visualViewport){
 
 <div class="modal-overlay" id="allocationTargetModal" onclick="if(event.target===this)closeAllocationTargetModal()">
   <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto">
-    <h3>🎯 Allocation cible — Bourse</h3>
+    <h3>🎯 Allocation cible — PEA</h3>
     <div class="muted" style="text-transform:none">Indique le poids cible de chaque ligne. Le total peut être ajusté librement.</div>
     <div id="allocationTargetFields"></div>
     <div class="modal-buttons">
