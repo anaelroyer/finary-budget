@@ -56,6 +56,28 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-price-status{font-size:10px;color:#8b949e}
 .stock-price-status.ok{color:#3fb950}.stock-price-status.err{color:#f85149}.stock-price-status.loading{color:#d29922}
 
+.stock-history-panel{grid-column:1/-1;margin-top:2px;background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:9px 10px 7px;min-width:0}
+.stock-history-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px}
+.stock-history-title{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.35px;font-weight:800}
+.stock-history-periods{display:flex;gap:3px}
+.stock-history-period-btn{border:1px solid #30363d;background:#161b22;color:#8b949e;border-radius:6px;padding:3px 6px;font-size:9px;font-weight:800;cursor:pointer}
+.stock-history-period-btn.active{border-color:#58a6ff;color:#58a6ff;background:rgba(88,166,255,.08)}
+.stock-history-summary{display:flex;align-items:baseline;gap:7px;min-height:22px;margin-bottom:1px}
+.stock-history-last{font-size:14px;font-weight:800;color:#c9d1d9}
+.stock-history-change{font-size:11px;font-weight:800}
+.stock-history-change.positive{color:#3fb950}.stock-history-change.negative{color:#f85149}.stock-history-change.neutral{color:#8b949e}
+.stock-history-chart{width:100%;height:104px;position:relative;overflow:hidden}
+.stock-history-chart svg{display:block;width:100%;height:104px;overflow:visible}
+.stock-history-grid{stroke:#30363d;stroke-width:1;opacity:.55}
+.stock-history-line{fill:none;stroke:#58a6ff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.stock-history-area{fill:#58a6ff;opacity:.10}
+.stock-history-dot{fill:#58a6ff}
+.stock-history-axis{fill:#8b949e;font-size:8px}
+.stock-history-empty{height:76px;display:flex;align-items:center;justify-content:center;text-align:center;color:#8b949e;font-size:10px;line-height:1.35}
+.stock-history-tooltip{position:absolute;display:none;pointer-events:none;z-index:3;background:#161b22;border:1px solid #30363d;border-radius:7px;padding:5px 7px;color:#c9d1d9;font-size:9px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.stock-history-touch{fill:transparent;cursor:crosshair}
+body.hide-amounts .stock-history-last,body.hide-amounts .stock-history-change{visibility:hidden}
+
 @media(max-width:360px){.stock-row{grid-template-columns:1fr}}
 
 
@@ -2780,6 +2802,200 @@ async function loadStockQuotes(force=false){
   }
 }
 
+
+const STOCK_HISTORY_PERIODS={1:31,3:93,6:186,12:366};
+const STOCK_HISTORY_SELECTION={};
+
+function getStockHistoryPeriodKey(index){
+  const item=Array.isArray(data.bourse)?data.bourse[index]:null;
+  const isin=item?getStockMeta(item).isin:'';
+  return isin||`index-${index}`;
+}
+
+function getStockHistoryPeriod(index){
+  return STOCK_HISTORY_SELECTION[getStockHistoryPeriodKey(index)]||1;
+}
+
+function setStockHistoryPeriod(index,months){
+  const m=[1,3,6,12].includes(Number(months))?Number(months):1;
+  STOCK_HISTORY_SELECTION[getStockHistoryPeriodKey(index)]=m;
+  if(STOCK_QUOTES_CACHE)renderStockHistoryChart(index,STOCK_QUOTES_CACHE);
+}
+
+function normalizeStockHistory(quote){
+  const raw=Array.isArray(quote?.history)?quote.history:[];
+  return raw.map(point=>{
+    const price=Number(point?.price);
+    const date=String(point?.date||'').slice(0,10);
+    return {date,price,updatedAt:point?.updatedAt||''};
+  }).filter(point=>point.date && Number.isFinite(point.price) && point.price>0)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function filterStockHistory(points,months){
+  if(!points.length)return [];
+  const lastDate=new Date(points[points.length-1].date+'T12:00:00');
+  if(Number.isNaN(lastDate.getTime()))return points;
+  const cutoff=new Date(lastDate);
+  cutoff.setDate(cutoff.getDate()-(STOCK_HISTORY_PERIODS[months]||31));
+  return points.filter(point=>{
+    const d=new Date(point.date+'T12:00:00');
+    return !Number.isNaN(d.getTime()) && d>=cutoff;
+  });
+}
+
+function formatStockCourse(value){
+  return Number(value).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})+' €';
+}
+
+function formatStockHistoryDate(date){
+  const d=new Date(date+'T12:00:00');
+  if(Number.isNaN(d.getTime()))return date;
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+}
+
+function renderStockHistoryChart(index,payload){
+  const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+  const panel=row?.querySelector('.stock-history-panel');
+  if(!panel)return;
+
+  const item=Array.isArray(data.bourse)?data.bourse[index]:null;
+  const meta=item?getStockMeta(item):null;
+  const isin=String(meta?.isin||'').trim().toUpperCase();
+  const quote=payload?.quotes?.[isin];
+
+  if(!isin){
+    panel.innerHTML='<div class="stock-history-empty">Renseigne un ISIN pour afficher l’évolution du cours.</div>';
+    return;
+  }
+  if(!quote){
+    panel.innerHTML='<div class="stock-history-empty">Aucun historique disponible pour cet ISIN.</div>';
+    return;
+  }
+
+  const months=getStockHistoryPeriod(index);
+  const allPoints=normalizeStockHistory(quote);
+  const points=filterStockHistory(allPoints,months);
+  const labels={1:'1M',3:'3M',6:'6M',12:'1A'};
+  const buttons=[1,3,6,12].map(m=>`<button type="button" class="stock-history-period-btn ${months===m?'active':''}" onclick="setStockHistoryPeriod(${index},${m})">${labels[m]}</button>`).join('');
+
+  if(points.length<2){
+    const last=points[0]||allPoints[allPoints.length-1];
+    panel.innerHTML=`
+      <div class="stock-history-head">
+        <span class="stock-history-title">Évolution du cours</span>
+        <div class="stock-history-periods">${buttons}</div>
+      </div>
+      <div class="stock-history-summary">
+        <span class="stock-history-last">${last?formatStockCourse(last.price):formatStockCourse(quote.price)}</span>
+        <span class="stock-history-change neutral">Historique en cours</span>
+      </div>
+      <div class="stock-history-empty">Un second relevé quotidien est nécessaire pour tracer la courbe.</div>
+    `;
+    return;
+  }
+
+  const first=points[0];
+  const last=points[points.length-1];
+  const delta=last.price-first.price;
+  const pct=first.price?delta/first.price*100:0;
+  const cls=delta>0?'positive':delta<0?'negative':'neutral';
+  const sign=delta>0?'+':'';
+  const periodText=`${sign}${pct.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})}% · ${sign}${delta.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})} €`;
+
+  const w=360,h=92,padL=8,padR=8,padT=8,padB=18;
+  const innerW=w-padL-padR,innerH=h-padT-padB;
+  let minVal=Math.min(...points.map(p=>p.price));
+  let maxVal=Math.max(...points.map(p=>p.price));
+  if(minVal===maxVal){
+    const margin=Math.max(.01,Math.abs(minVal)*.01);
+    minVal-=margin;maxVal+=margin;
+  }else{
+    const margin=(maxVal-minVal)*.12;
+    minVal-=margin;maxVal+=margin;
+  }
+
+  const pts=points.map((p,i)=>({
+    ...p,
+    x:padL+(i/(points.length-1))*innerW,
+    y:padT+((maxVal-p.price)/(maxVal-minVal))*innerH
+  }));
+
+  let pathD=`M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p=pts[i],n=pts[i+1],mid=(p.x+n.x)/2;
+    pathD+=` C ${mid.toFixed(2)} ${p.y.toFixed(2)}, ${mid.toFixed(2)} ${n.y.toFixed(2)}, ${n.x.toFixed(2)} ${n.y.toFixed(2)}`;
+  }
+  const baseY=h-padB;
+  const areaD=`${pathD} L ${pts[pts.length-1].x.toFixed(2)} ${baseY} L ${pts[0].x.toFixed(2)} ${baseY} Z`;
+  const grid=[.25,.5,.75].map(r=>{
+    const y=padT+r*innerH;
+    return `<line class="stock-history-grid" x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}"></line>`;
+  }).join('');
+  const firstDate=formatStockHistoryDate(first.date);
+  const lastDate=formatStockHistoryDate(last.date);
+
+  panel.innerHTML=`
+    <div class="stock-history-head">
+      <span class="stock-history-title">Évolution du cours</span>
+      <div class="stock-history-periods">${buttons}</div>
+    </div>
+    <div class="stock-history-summary">
+      <span class="stock-history-last">${formatStockCourse(last.price)}</span>
+      <span class="stock-history-change ${cls}">${periodText}</span>
+    </div>
+    <div class="stock-history-chart">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Évolution du cours sur ${labels[months]}">
+        ${grid}
+        <path class="stock-history-area" d="${areaD}"></path>
+        <path class="stock-history-line" d="${pathD}"></path>
+        ${pts.map((p,i)=>`<circle class="stock-history-dot" cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?3.5:2}"></circle>`).join('')}
+        <text class="stock-history-axis" x="${padL}" y="${h-4}" text-anchor="start">${firstDate}</text>
+        <text class="stock-history-axis" x="${w-padR}" y="${h-4}" text-anchor="end">${lastDate}</text>
+        <rect class="stock-history-touch" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}" data-stock-history-index="${index}"></rect>
+      </svg>
+      <div class="stock-history-tooltip"></div>
+    </div>
+  `;
+
+  const chart=panel.querySelector('.stock-history-chart');
+  const touch=panel.querySelector('.stock-history-touch');
+  const tooltip=panel.querySelector('.stock-history-tooltip');
+  if(chart&&touch&&tooltip){
+    const show=e=>{
+      const rect=touch.getBoundingClientRect();
+      const clientX=e.touches?.[0]?.clientX ?? e.clientX;
+      if(!Number.isFinite(clientX))return;
+      const ratio=Math.max(0,Math.min(1,(clientX-rect.left)/Math.max(1,rect.width)));
+      const idx=Math.round(ratio*(pts.length-1));
+      const p=pts[idx];
+      tooltip.textContent=`${formatStockHistoryDate(p.date)} · ${formatStockCourse(p.price)}`;
+      tooltip.style.display='block';
+      const chartRect=chart.getBoundingClientRect();
+      const x=ratio*chartRect.width;
+      tooltip.style.left=Math.max(4,Math.min(chartRect.width-tooltip.offsetWidth-4,x-tooltip.offsetWidth/2))+'px';
+      tooltip.style.top='5px';
+    };
+    const hide=()=>{tooltip.style.display='none';};
+    touch.addEventListener('mousemove',show);
+    touch.addEventListener('mouseleave',hide);
+    touch.addEventListener('touchstart',show,{passive:true});
+    touch.addEventListener('touchmove',show,{passive:true});
+    touch.addEventListener('touchend',()=>setTimeout(hide,700),{passive:true});
+  }
+}
+
+async function ensureStockHistoryChart(index){
+  try{
+    const payload=await loadStockQuotes(false);
+    renderStockHistoryChart(index,payload);
+  }catch(_err){
+    const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+    const panel=row?.querySelector('.stock-history-panel');
+    if(panel)panel.innerHTML='<div class="stock-history-empty">Historique temporairement indisponible.</div>';
+  }
+}
+
 function setStockPriceStatus(index,text,state=''){
   const el=document.querySelector(`.stock-row[data-stock-index="${index}"] .stock-price-status`);
   if(!el)return;
@@ -2835,6 +3051,7 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
 
     updateTotals();
     renderAssetDistribution();
+    renderStockHistoryChart(index,payload);
     save();
   }catch(err){
     meta.priceFetchStatus='error';
@@ -2926,8 +3143,12 @@ function renderStockRow(item,idx,cont){
       </div>
       <button class="btn-del" onclick="delPatrimoine('bourse',${idx})" title="Supprimer">×</button>
     </div>
+    <div class="stock-history-panel">
+      <div class="stock-history-empty">Chargement de l’historique…</div>
+    </div>
   `;
   cont.appendChild(row);
+  setTimeout(()=>ensureStockHistoryChart(idx),0);
   if(shouldAutoRefreshStock(meta)){
     setTimeout(()=>refreshStockPrice(idx,{silent:true}),0);
   }
