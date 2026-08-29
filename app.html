@@ -631,6 +631,91 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
 
 #menuRecipeModal{display:flex}
+
+/* V26.0.1 — styles des nouvelles fonctions */
+#firebaseStatus{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:auto;max-width:none;margin:0;padding:7px 10px;
+  border:1px solid #30363d;border-radius:10px;background:#161b22;
+  color:#8b949e;font-size:11px;opacity:1;pointer-events:auto
+}
+#firebaseStatus.sync-ok{color:#3fb950;border-color:rgba(63,185,80,.35)}
+#firebaseStatus.sync-pending{color:#d29922;border-color:rgba(210,153,34,.35)}
+#firebaseStatus.sync-offline{color:#f85149;border-color:rgba(248,81,73,.35)}
+.sync-bar{display:flex;width:100%;gap:6px;align-items:center}
+.settings-btn{flex:0 0 auto;border:1px solid #30363d;background:#161b22;color:#c9d1d9;border-radius:9px;padding:7px 10px;cursor:pointer;font-size:14px}
+.smart-card{width:100%;background:#161b22;border:1px solid #30363d;border-radius:16px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:10px}
+.smart-card .section-header{width:100%}
+.smart-card .section-header h2{font-size:15px}
+.smart-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #21262d}
+.smart-row:last-child{border-bottom:0}
+.smart-row-main{min-width:0;flex:1}
+.smart-row-title{font-weight:700;font-size:13px;color:#fff}
+.smart-row-sub{font-size:11px;color:#8b949e;margin-top:2px;line-height:1.4}
+.target-bar{height:7px;border-radius:999px;background:#21262d;overflow:hidden;margin-top:6px}
+.target-bar > span{display:block;height:100%;background:#3fb950}
+.settings-section{border-top:1px solid #30363d;padding-top:12px;margin-top:12px}
+.settings-section:first-child{border-top:0;padding-top:0;margin-top:0}
+.archive-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #21262d}
+.archive-item:last-child{border-bottom:0}
+.shopping-group{margin-top:12px}
+.shopping-group-title{font-size:12px;font-weight:800;color:#c9d1d9;margin-bottom:6px}
+.shopping-manual-row{display:flex;gap:6px;margin-top:12px;align-items:center}
+.shopping-manual-row input,.shopping-manual-row select{
+  min-width:0;background:#0d1117;color:#fff;border:1px solid #30363d;border-radius:8px;padding:9px;font:inherit;font-size:12px
+}
+.shopping-manual-row select{max-width:145px}
+.shopping-item-dishes{display:block;color:#8b949e;font-size:11px;line-height:1.3;font-style:italic;margin-top:2px}
+.invoice-link-chip{display:inline-flex;border-radius:999px;padding:3px 7px;font-size:10px;background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+@media(max-width:520px){
+  .smart-row{align-items:flex-start}
+  .smart-row .btn{flex:0 0 auto}
+  .shopping-manual-row{flex-wrap:wrap}
+  .shopping-manual-row input{flex:1 1 100% !important}
+  .shopping-manual-row select{flex:1;max-width:none}
+}
+
+
+.shopping-aisle-select{
+  flex:0 0 auto;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;
+  border-radius:7px;padding:5px 7px;font-size:10px;max-width:130px;min-width:0
+}
+@media(max-width:520px){
+  .shopping-aisle-select{max-width:112px}
+}
+
+
+/* V26.1.2 — ergonomie des actions Bourse */
+.stock-compact-actions{
+  gap:10px;
+}
+.stock-stat-parts{
+  position:relative;
+  padding-bottom:30px;
+}
+.stock-parts-add-btn{
+  position:absolute;
+  right:6px;
+  bottom:6px;
+  width:23px;
+  height:23px;
+  border:1px solid #238636;
+  border-radius:7px;
+  background:#161b22;
+  color:#3fb950;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  font-size:16px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+}
+.stock-parts-add-btn:hover{
+  background:#21262d;
+}
+
 </style>
 </head>
 <body>
@@ -1097,6 +1182,14 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     </div>
 
     <div class="modal-field">
+      <label>Rattacher la facture à</label>
+      <select id="invoiceLinkedElement" class="invoice-select">
+        <option value="">Aucun autre élément</option>
+      </select>
+      <div class="budget-category-hint">Véhicule, compte ou élément du patrimoine. Le rattachement sert à retrouver les dépenses liées.</div>
+    </div>
+
+    <div class="modal-field">
       <label>Garantie applicable</label>
       <select id="invoiceWarrantyApplicable" onchange="toggleInvoiceWarrantyField()" style="width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none;">
         <option value="yes">Oui</option>
@@ -1166,7 +1259,10 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <button class="tab-btn" onclick="switchTab('menus')">🍽️ Menus</button>
   </div>
 
-  <div id="firebaseStatus">Synchronisation…</div>
+  <div class="sync-bar">
+    <div id="firebaseStatus" style="flex:1">Synchronisation…</div>
+    <button type="button" class="settings-btn" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
+  </div>
   <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
 
   <div id="tab-budget" class="tab-content active">
@@ -1176,6 +1272,12 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <button id="assistantTargetAccounts" class="btn btn-secondary" onclick="openBankAccountsModal()" style="padding:6px 5px;font-size:10px">🏦 Comptes</button>
       <button id="assistantTargetCloseMonth" class="btn btn-secondary" onclick="closeMonth()" style="padding:6px 5px;font-size:10px">🔒 Clôturer</button>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 5px;font-size:10px">👁️ Affiché</button>
+    </div>
+
+    <div id="budgetRecurringCard" class="smart-card" style="display:none">
+      <div class="section-header"><h2>🔁 Dépenses récurrentes détectées</h2></div>
+      <div class="muted" style="text-transform:none">Basé sur les derniers mois clôturés. Rien n’est ajouté sans confirmation.</div>
+      <div id="budgetRecurringSuggestions"></div>
     </div>
 
     <div class="card">
@@ -1270,8 +1372,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <button class="btn btn-secondary" onclick="resetPatrimoineChart()" style="width:100%;color:#f85149;margin-top:10px;font-size:12px">🗑️ Reset Graphique</button>
       </div>
     </div>
-
-    <div class="asset-category-manager">
+<div class="asset-category-manager">
       <button class="btn asset-category-manager-toggle" onclick="toggleAssetCategoryPicker()">＋ Ajouter une catégorie d'actifs</button>
       <div class="asset-category-add-panel" id="asset-category-add-panel">
         <select id="asset-category-select" aria-label="Catégorie d'actif à ajouter"></select>
@@ -1390,9 +1491,12 @@ let firebaseSaveTimer=null,
     firebaseSavePending=false,
     snapshotUnsubscribe=null;
 
-function setFirebaseStatus(message){
+function setFirebaseStatus(message,state=''){
   const el=document.getElementById('firebaseStatus');
-  if(el)el.textContent=message;
+  if(!el)return;
+  el.textContent=message;
+  el.classList.remove('sync-ok','sync-pending','sync-offline');
+  if(state)el.classList.add(state);
 }
 
 window.firebaseSave=function(){
@@ -1405,7 +1509,7 @@ window.firebaseSave=function(){
     }
     firebaseSaveInProgress=true;
     window.firebaseWriting=true;
-    setFirebaseStatus('Enregistrement…');
+    setFirebaseStatus('Enregistrement…','sync-pending');
     try{
       await setDoc(sharedRef,{
         data:JSON.stringify(window.data),
@@ -1413,10 +1517,10 @@ window.firebaseSave=function(){
         patrimoineHistory:JSON.stringify(window.patrimoineHistory),
         annotations:window.annotations||''
       },{merge:true});
-      setFirebaseStatus('Synchronisé');
+      setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
     }catch(error){
       console.error(error);
-      setFirebaseStatus('Erreur Firebase');
+      setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
     }finally{
       firebaseSaveInProgress=false;
       window.firebaseWriting=false;
@@ -1446,7 +1550,7 @@ async function applyRemoteSnapshot(snapshot){
 
 onAuthStateChanged(auth,async user=>{
   if(!user)return;
-  setFirebaseStatus('Chargement…');
+  setFirebaseStatus('Synchronisation…','sync-pending');
   try{
     const snap=await getDoc(sharedRef);
     window.firebaseReady=true;
@@ -1455,7 +1559,7 @@ onAuthStateChanged(auth,async user=>{
       // Premier démarrage seulement : envoie l'état local déjà chargé.
       window.firebaseSave();
     }
-    setFirebaseStatus('Synchronisé');
+    setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
     if(snapshotUnsubscribe) snapshotUnsubscribe();
     snapshotUnsubscribe=onSnapshot(sharedRef,snapshot=>{
       if(!snapshot.exists()||window.firebaseWriting)return;
@@ -1464,8 +1568,18 @@ onAuthStateChanged(auth,async user=>{
   }catch(error){
     console.error(error);
     window.firebaseReady=false;
-    setFirebaseStatus('Hors ligne');
+    setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
   }
+});
+
+
+window.addEventListener('offline',()=>{
+  setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
+});
+window.addEventListener('online',()=>{
+  setFirebaseStatus('Connexion retrouvée — synchronisation…','sync-pending');
+  window.firebaseReady=true;
+  if(window.firebaseSave)window.firebaseSave();
 });
 
 (async function initFirebase(){
@@ -1473,7 +1587,7 @@ onAuthStateChanged(auth,async user=>{
     await signInAnonymously(auth);
   }catch(error){
     console.error(error);
-    setFirebaseStatus('Hors ligne');
+    setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
   }
 })();
 </script>
@@ -1509,7 +1623,11 @@ function createEmptyBetaData(){
     factures:[],
     garageVehicles:[],
     vehicleMaintenance:[],
-    menus:{cycleStart:'',weeks:{},dishStats:{},lastArchivedCycle:''}
+    menus:{cycleStart:'',weeks:{},dishStats:{},lastArchivedCycle:'',shopping:{}},
+    allocationTargets:{},
+    archives:[],
+    recurringBudgetIgnored:[],
+    shoppingAisleLearning:{}
   };
 }
 
@@ -2039,6 +2157,10 @@ function ensureMenusData(){
 
   if(!data.menus.dishStats || typeof data.menus.dishStats!=='object' || Array.isArray(data.menus.dishStats)){
     data.menus.dishStats={};
+  }
+  if(!data.menus.shopping || typeof data.menus.shopping!=='object' || Array.isArray(data.menus.shopping)){
+    data.menus.shopping={};
+    changed=true;
   }
 
   const defaultMenuDishes=[
@@ -2609,6 +2731,10 @@ function deleteMenuRecipeLink(){
 
 
 document.addEventListener('keydown',e=>{
+  const settingsModal=document.getElementById('settingsModal');
+  if(settingsModal?.classList.contains('active') && e.key==='Escape'){e.preventDefault();closeSettingsModal();return;}
+  const targetModal=document.getElementById('allocationTargetModal');
+  if(targetModal?.classList.contains('active') && e.key==='Escape'){e.preventDefault();closeAllocationTargetModal();return;}
   const modal=document.getElementById('menuRecipeModal');
   const shoppingModal=document.getElementById('menuShoppingModal');
   if(shoppingModal && shoppingModal.classList.contains('active') && e.key==='Escape'){
@@ -2672,32 +2798,28 @@ function buildWeekShoppingList(cycleKey){
   Object.entries(meals).forEach(([mealKey,dishRaw])=>{
     const dish=String(dishRaw||'').trim();
     if(!dish)return;
-
     const effective=getEffectiveMenuIngredients(dish);
-    const ingredients=Array.isArray(effective.ingredients)
-      ? effective.ingredients.map(x=>String(x||'').trim()).filter(Boolean)
-      : [];
-
-    if(!ingredients.length){
-      missing.push(dish);
-      return;
-    }
-
+    const ingredients=Array.isArray(effective.ingredients)?effective.ingredients.map(x=>String(x||'').trim()).filter(Boolean):[];
+    if(!ingredients.length){missing.push(dish);return;}
     ingredients.forEach(line=>{
-      const key=normalizeShoppingIngredient(line);
+      const aisle=getShoppingAisle(line);
+      const key=normalizeShoppingIngredient(line)+'|'+aisle;
       if(!key)return;
       const current=merged.get(key);
       if(current){
         current.count+=1;
         if(!current.dishes.includes(dish))current.dishes.push(dish);
-      }else{
-        merged.set(key,{label:line,count:1,dishes:[dish]});
-      }
+      }else merged.set(key,{label:line,count:1,dishes:[dish],aisle,manual:false});
     });
   });
 
+  const state=ensureShoppingWeek(cycleKey);
+  state.manualItems.forEach(row=>{
+    if(row?.label)merged.set('manual|'+row.id,{label:row.label,count:1,dishes:['Ajout manuel'],aisle:row.aisle||'Autres',manual:true,id:row.id});
+  });
+
   return {
-    items:[...merged.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr',{sensitivity:'base'})),
+    items:[...merged.values()].sort((a,b)=>a.aisle.localeCompare(b.aisle,'fr')||a.label.localeCompare(b.label,'fr',{sensitivity:'base'})),
     missing:[...new Set(missing)].sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}))
   };
 }
@@ -2711,6 +2833,7 @@ function formatMenuShoppingPeriod(cycleKey){
 function openWeekShoppingList(cycleKey){
   const built=buildWeekShoppingList(cycleKey);
   currentShoppingList={cycleKey,items:built.items,missing:built.missing};
+  const state=ensureShoppingWeek(cycleKey);
 
   const modal=document.getElementById('menuShoppingModal');
   const title=document.getElementById('menuShoppingTitle');
@@ -2724,33 +2847,48 @@ function openWeekShoppingList(cycleKey){
 
   const totalLines=built.items.reduce((sum,item)=>sum+item.count,0);
   summary.innerHTML=`
-    <span class="shopping-summary-badge">${built.items.length} ingrédient${built.items.length>1?'s':''} distinct${built.items.length>1?'s':''}</span>
-    <span class="shopping-summary-badge">${totalLines} ligne${totalLines>1?'s':''} de recette</span>
-  `;
+    <span class="shopping-summary-badge">${built.items.length} ingrédient${built.items.length>1?'s':''}</span>
+    <span class="shopping-summary-badge">${totalLines} ligne${totalLines>1?'s':''} de recette</span>`;
 
-  if(built.items.length){
-    list.innerHTML=built.items.map((item,index)=>`
-      <label class="shopping-item" id="shoppingItem_${index}">
-        <input type="checkbox" onchange="toggleShoppingItem(${index},this.checked)">
-        <span class="shopping-item-main">
-          <span>${escapeHtml(item.label)}</span>
-          <span class="shopping-item-dishes">${escapeHtml(item.dishes.join(' · '))}</span>
-        </span>
-        ${item.count>1?`<span class="shopping-count">×${item.count}</span>`:''}
-      </label>
-    `).join('');
-  }else{
-    list.innerHTML='<div class="muted" style="padding:12px 2px">Aucun ingrédient renseigné pour cette semaine.</div>';
-  }
+  const groups={};
+  built.items.forEach((item,index)=>{
+    item._index=index;
+    (groups[item.aisle]||(groups[item.aisle]=[])).push(item);
+  });
+  list.innerHTML=Object.entries(groups).map(([aisle,items])=>`
+    <div class="shopping-group">
+      <div class="shopping-group-title">${escapeHtml(aisle)}</div>
+      ${items.map(item=>{
+        const key=shoppingItemKey(item),checked=!!state.checked[key];
+        return `<label class="shopping-item ${checked?'checked':''}" id="shoppingItem_${item._index}">
+          <input type="checkbox" ${checked?'checked':''} onchange="toggleShoppingItem(${item._index},this.checked)">
+          <span class="shopping-item-main"><span>${escapeHtml(item.label)}</span>
+          <span class="shopping-item-dishes">${escapeHtml(item.dishes.join(' · '))}</span></span>
+          ${item.count>1?`<span class="shopping-count">×${item.count}</span>`:''}
+          ${shoppingAisleSelectHtml(item,item._index)}
+        </label>`;
+      }).join('')}
+    </div>`).join('') || '<div class="muted" style="padding:12px 2px">Aucun ingrédient renseigné.</div>';
 
   if(built.missing.length){
     missing.style.display='block';
     missing.innerHTML=`⚠️ ${built.missing.length} plat${built.missing.length>1?'s':''} sans ingrédients : ${built.missing.map(escapeHtml).join(', ')}`;
-  }else{
-    missing.style.display='none';
-    missing.innerHTML='';
-  }
+  }else{missing.style.display='none';missing.innerHTML='';}
 
+  const oldManual=document.getElementById('shoppingManualArea');
+  if(oldManual)oldManual.remove();
+  const area=document.createElement('div');
+  area.id='shoppingManualArea';
+  area.innerHTML=`<div class="shopping-manual-row">
+    <input id="shoppingManualInput" type="text" placeholder="Ajouter un produit…" style="flex:1">
+    <select id="shoppingManualAisle">
+      <option>Fruits & légumes</option><option>Viandes & poissons</option><option>Produits frais</option>
+      <option>Épicerie</option><option>Boulangerie</option><option>Surgelés</option><option>Boissons</option>
+      <option>Maison & hygiène</option><option selected>Autres</option>
+    </select>
+    <button class="btn btn-secondary" onclick="addManualShoppingItem()">＋</button>
+  </div>`;
+  list.after(area);
   modal.classList.add('active');
 }
 
@@ -2760,6 +2898,13 @@ function closeMenuShoppingModal(){
 }
 
 function toggleShoppingItem(index,checked){
+  const item=currentShoppingList.items?.[index];
+  const state=ensureShoppingWeek(currentShoppingList.cycleKey);
+  if(item){
+    const key=shoppingItemKey(item);
+    if(checked)state.checked[key]=true;else delete state.checked[key];
+    save();
+  }
   const row=document.getElementById(`shoppingItem_${index}`);
   if(row)row.classList.toggle('checked',!!checked);
 }
@@ -3640,7 +3785,7 @@ function renderBankTransfers(){
         <div class="transfer-cycle ${t.recurrence==='permanent'?'permanent':''}">${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</div>
       </div>
       <div class="transfer-amount" onclick="openBankTransferModal(${index})">${euro(Number(t.amount)||0)}</div>
-      <button class="btn-del" onclick="deleteBankTransfer(${index})" title="Supprimer">×</button>
+      <button class="btn-del" onclick="deleteBankTransfer(${index})" title="Archiver">×</button>
     </div>
   `).join('');
 }
@@ -4638,19 +4783,19 @@ function renderStockRow(item,idx,cont){
         <div class="stock-compact-sub">${escapeHtml(meta.isin||'ISIN non renseigné')}</div>
       </div>
       <div class="stock-compact-actions">
-        <button class="stock-icon-btn add" type="button" onclick="openStockPurchaseModal(${idx})" title="Ajouter un achat" aria-label="Ajouter un achat">+</button>
         ${meta.isin?`<button class="stock-icon-btn refresh" type="button" onclick="refreshStockPrice(${idx},{force:true})" title="Actualiser le cours" aria-label="Actualiser le cours">↻</button>`:''}
         <button class="stock-icon-btn" type="button" onclick="openStockEditModal(${idx})" title="Modifier" aria-label="Modifier">✎</button>
-        <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('bourse',${idx})" title="Supprimer" aria-label="Supprimer">×</button>
+        <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('bourse',${idx})" title="Archiver" aria-label="Supprimer">×</button>
       </div>
     </div>
 
     <div class="stock-performance-head">${stockPerformanceHtml(meta)}</div>
 
     <div class="stock-compact-main">
-      <div class="stock-stat">
+      <div class="stock-stat stock-stat-parts">
         <span class="stock-stat-label">Parts</span>
         <span class="stock-stat-value">${sharesText}</span>
+        <button class="stock-parts-add-btn" type="button" onclick="openStockPurchaseModal(${idx})" title="Ajouter un achat" aria-label="Ajouter un achat">+</button>
       </div>
       <div class="stock-stat">
         <span class="stock-stat-label">PRU</span>
@@ -4938,7 +5083,14 @@ function renderOptionalAssetCategorySections(){
 
   host.innerHTML=getActiveAssetCategoryKeys().map(key=>{
     const c=ASSET_CATEGORY_MAP[key];
-    return `<div class="card">
+    const allocationCard=key==='bourse'?`<div id="allocationTargetCard" class="smart-card">
+      <div class="section-header">
+        <h2>🎯 Allocation cible — Bourse</h2>
+        <button class="btn btn-secondary" onclick="openAllocationTargetModal()" style="padding:6px 8px;font-size:10px">Modifier</button>
+      </div>
+      <div id="allocationTargetSummary" class="muted" style="text-transform:none">Aucune cible définie.</div>
+    </div>`:'';
+    return `${allocationCard}<div class="card">
       <div class="section-header">
         <h2>${c.icon} ${escapeHtml(c.label)}</h2>
         <div class="category-header-actions">
@@ -4971,6 +5123,7 @@ function renderChartSeriesControls(){
 
 /* RENDU */
 function render(){
+  ensureV26Data();
   ensureAssetCategoryData();
   if(getActiveAssetCategoryKeys().includes('crypto'))syncOkxBtcToCryptoData();
   renderOptionalAssetCategorySections();
@@ -5061,7 +5214,7 @@ function render(){
           <button
             class="btn-del"
             onclick="event.stopPropagation();del('${key}',${idx})"
-            title="Supprimer"
+            title="Archiver"
           >
             ×
           </button>
@@ -5115,6 +5268,8 @@ function render(){
   renderMenus();
   renderInvoices();
   renderVehicles();
+  renderRecurringBudgetSuggestions();
+  renderAllocationTargetSummary();
 }
 
 function escapeHtml(v){
@@ -5165,20 +5320,21 @@ function addItem(k){
 
 function delPatrimoine(k,i){
   if(!data[k]||!data[k][i])return;
-
-  const label=data[k][i][0]||'cet élément';
-
-  if(!confirm(`Voulez-vous vraiment supprimer « ${label} » ?`))return;
-
+  const item=data[k][i],label=item[0]||'cet élément';
+  if(!confirm(`Archiver « ${label} » ?`))return;
+  archiveDataItem('Patrimoine',label,item,{kind:'array',key:k});
   data[k].splice(i,1);
-  render();
-  save();
+  render();save();
 }
 
 function del(k,i){
+  if(!data[k]||!data[k][i])return;
+  const item=data[k][i];
+  const label=item?.[0]||'Élément';
+  if(!confirm(`Archiver « ${label} » ?`))return;
+  archiveDataItem(k,label,item,{kind:'array',key:k});
   data[k].splice(i,1);
-  render();
-  save();
+  render();save();
 }
 
 function clearList(k){
@@ -5206,6 +5362,536 @@ function saveLocalOnly(){
   localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));
   localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));
   localStorage.setItem('finaryAnnotations',annotations);
+}
+
+
+/* ===========================
+   V26 — paramètres, archivage, récurrence, allocation
+   =========================== */
+function ensureV26Data(){
+  if(!Array.isArray(data.archives))data.archives=[];
+  if(!Array.isArray(data.recurringBudgetIgnored))data.recurringBudgetIgnored=[];
+  if(!data.shoppingAisleLearning || typeof data.shoppingAisleLearning!=='object' || Array.isArray(data.shoppingAisleLearning))data.shoppingAisleLearning={};
+  if(!data.allocationTargets || typeof data.allocationTargets!=='object' || Array.isArray(data.allocationTargets))data.allocationTargets={};
+  ensureMenusData();
+  if(!data.menus.shopping || typeof data.menus.shopping!=='object')data.menus.shopping={};
+}
+
+function archiveDataItem(type,label,payload,restoreMeta={}){
+  ensureV26Data();
+  data.archives.unshift({
+    id:makeLocalId('arc'),
+    type:String(type||'element'),
+    label:String(label||'Élément'),
+    payload:JSON.parse(JSON.stringify(payload)),
+    restoreMeta:JSON.parse(JSON.stringify(restoreMeta||{})),
+    archivedAt:new Date().toISOString()
+  });
+  if(data.archives.length>100)data.archives=data.archives.slice(0,100);
+}
+
+function restoreArchivedItem(id){
+  ensureV26Data();
+  const index=data.archives.findIndex(x=>x.id===id);
+  if(index<0)return;
+  const a=data.archives[index];
+  const meta=a.restoreMeta||{};
+  if(meta.kind==='array' && meta.key){
+    if(!Array.isArray(data[meta.key]))data[meta.key]=[];
+    data[meta.key].push(a.payload);
+  }else if(meta.kind==='vehicle'){
+    if(!Array.isArray(data.garageVehicles))data.garageVehicles=[];
+    data.garageVehicles.push(a.payload.vehicle);
+    if(Array.isArray(a.payload.maintenance)){
+      if(!Array.isArray(data.vehicleMaintenance))data.vehicleMaintenance=[];
+      data.vehicleMaintenance.push(...a.payload.maintenance);
+    }
+  }else if(meta.kind==='invoice'){
+    if(!Array.isArray(data.factures))data.factures=[];
+    data.factures.unshift(a.payload);
+  }
+  data.archives.splice(index,1);
+  save();render();renderSettingsArchives();
+}
+
+function deleteArchivedItem(id){
+  ensureV26Data();
+  const index=data.archives.findIndex(x=>x.id===id);
+  if(index<0)return;
+  if(!confirm('Supprimer définitivement cet élément archivé ?'))return;
+  data.archives.splice(index,1);
+  save();renderSettingsArchives();
+}
+
+function renderSettingsArchives(){
+  const root=document.getElementById('archivedItemsList');
+  if(!root)return;
+  ensureV26Data();
+  if(!data.archives.length){
+    root.innerHTML='<div class="muted" style="text-transform:none;padding:8px 0">Aucun élément archivé.</div>';
+    return;
+  }
+  root.innerHTML=data.archives.slice(0,30).map(a=>`
+    <div class="archive-item">
+      <div><div style="font-size:12px;font-weight:700">${escapeHtml(a.label)}</div>
+      <div class="muted" style="text-transform:none">${escapeHtml(a.type)} · ${new Date(a.archivedAt).toLocaleDateString('fr-FR')}</div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px" onclick="restoreArchivedItem('${a.id}')">Restaurer</button>
+        <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px;color:#f85149" onclick="deleteArchivedItem('${a.id}')">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openSettingsModal(){
+  ensureV26Data();
+  renderSettingsArchives();
+  renderIgnoredRecurringSettings();
+  const sync=document.getElementById('settingsSyncState');
+  if(sync)sync.textContent=document.getElementById('firebaseStatus')?.textContent||'—';
+  document.getElementById('settingsModal')?.classList.add('active');
+}
+function closeSettingsModal(){document.getElementById('settingsModal')?.classList.remove('active');}
+
+
+function recurringLabelKey(value){
+  return String(value||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/\u00a0/g,' ')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+
+function recurringWords(value){
+  const stop=new Set(['de','du','des','la','le','les','a','au','aux','et','en','pour','sur','un','une','d','l']);
+  return recurringLabelKey(value).split(' ').filter(w=>w.length>1&&!stop.has(w));
+}
+function recurringLabelSimilarity(a,b){
+  const ka=recurringLabelKey(a),kb=recurringLabelKey(b);
+  if(!ka||!kb)return 0;
+  if(ka===kb)return 1;
+  if((ka.includes(kb)||kb.includes(ka)) && Math.min(ka.length,kb.length)>=8)return .9;
+
+  const wa=new Set(recurringWords(a)),wb=new Set(recurringWords(b));
+  if(!wa.size||!wb.size)return 0;
+  let common=0;
+  wa.forEach(w=>{if(wb.has(w))common++;});
+  const union=new Set([...wa,...wb]).size;
+  return union?common/union:0;
+}
+function recurringAlreadyInCurrentFixed(candidate){
+  const avg=Number(candidate?.avg)||0;
+  return (data.budgetFixes||[]).some(item=>{
+    const fixedLabel=String(item?.[0]||'');
+    const fixedAmount=Math.abs(Number(item?.[1])||0);
+    const similarity=recurringLabelSimilarity(candidate.label,fixedLabel);
+    const amountClose=!avg||!fixedAmount
+      ? true
+      : Math.abs(fixedAmount-avg)/Math.max(avg,fixedAmount)<=0.20;
+
+    // Exact / quasi-exact wording is enough.
+    if(similarity>=0.88)return true;
+
+    // For renamed wording, require both a strong token overlap and a close amount.
+    return similarity>=0.55 && amountClose;
+  });
+}
+
+
+function recurringIsIgnored(candidate){
+  ensureV26Data();
+  const label=String(candidate?.label||'');
+  const key=recurringLabelKey(label);
+
+  return data.recurringBudgetIgnored.some(entry=>{
+    const ignoredKey=recurringLabelKey(
+      typeof entry==='string' ? entry : (entry?.key || entry?.label || '')
+    );
+    if(!ignoredKey || !key)return false;
+    if(ignoredKey===key)return true;
+
+    // Si le libellé évolue légèrement, l'ignorance reste valable.
+    return recurringLabelSimilarity(label, typeof entry==='string' ? entry : (entry?.label||entry?.key||''))>=0.88;
+  });
+}
+
+function ignoreRecurringBudget(index){
+  const g=window._recurringBudgetSuggestions?.[index];
+  if(!g)return;
+  ensureV26Data();
+
+  const key=recurringLabelKey(g.label);
+  const already=data.recurringBudgetIgnored.some(entry=>
+    recurringLabelKey(typeof entry==='string'?entry:(entry?.key||entry?.label||''))===key
+  );
+
+  if(!already){
+    data.recurringBudgetIgnored.push({
+      key,
+      label:String(g.label||''),
+      ignoredAt:new Date().toISOString()
+    });
+  }
+
+  save();
+  renderRecurringBudgetSuggestions();
+  renderIgnoredRecurringSettings();
+}
+
+function restoreIgnoredRecurringBudget(key){
+  ensureV26Data();
+  const target=recurringLabelKey(key);
+  data.recurringBudgetIgnored=data.recurringBudgetIgnored.filter(entry=>
+    recurringLabelKey(typeof entry==='string'?entry:(entry?.key||entry?.label||''))!==target
+  );
+  save();
+  renderRecurringBudgetSuggestions();
+  renderIgnoredRecurringSettings();
+}
+
+function renderIgnoredRecurringSettings(){
+  const root=document.getElementById('ignoredRecurringList');
+  if(!root)return;
+  ensureV26Data();
+
+  if(!data.recurringBudgetIgnored.length){
+    root.innerHTML='<div class="muted" style="text-transform:none;padding:7px 0">Aucune suggestion ignorée.</div>';
+    return;
+  }
+
+  root.innerHTML=data.recurringBudgetIgnored.map(entry=>{
+    const label=typeof entry==='string'?entry:(entry?.label||entry?.key||'Suggestion');
+    const key=typeof entry==='string'?entry:(entry?.key||entry?.label||'');
+    return `<div class="archive-item">
+      <div>
+        <div style="font-size:12px;font-weight:700">${escapeHtml(label)}</div>
+        <div class="muted" style="text-transform:none">Ne sera plus proposée</div>
+      </div>
+      <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px" onclick="restoreIgnoredRecurringBudget('${escapeHtml(key)}')">Réactiver</button>
+    </div>`;
+  }).join('');
+}
+
+function detectRecurringBudgetSuggestions(){
+  const recent=(monthHistory||[]).slice(0,6);
+  const groups=new Map();
+
+  recent.forEach(month=>{
+    const rows=[...(month.depensesDetails||[])];
+    const seen=new Set();
+
+    rows.forEach(item=>{
+      const label=String(item?.[0]||'').trim();
+      const norm=recurringLabelKey(label);
+      if(!norm || seen.has(norm))return;
+      seen.add(norm);
+
+      const amount=Math.abs(Number(item?.[1])||0);
+      if(!amount)return;
+
+      const g=groups.get(norm)||{
+        label,
+        key:norm,
+        amounts:[],
+        months:0,
+        account:item?.[3]||'ca',
+        category:getItemBudgetCategory('budgetDepenses',item)
+      };
+      g.amounts.push(amount);
+      g.months+=1;
+      groups.set(norm,g);
+    });
+  });
+
+  return [...groups.values()]
+    .filter(g=>g.months>=2)
+    .map(g=>{
+      const avg=g.amounts.reduce((s,x)=>s+x,0)/g.amounts.length;
+      const max=Math.max(...g.amounts),min=Math.min(...g.amounts);
+      return {...g,avg,stable:avg>0 && (max-min)/avg<=0.18};
+    })
+    .filter(g=>g.stable)
+    // Exclusion après calcul de la moyenne : permet de reconnaître aussi
+    // une dépense déjà passée en frais fixes avec un libellé légèrement différent.
+    .filter(g=>!recurringAlreadyInCurrentFixed(g))
+    // Une suggestion ignorée est mémorisée dans Firebase et ne revient plus.
+    .filter(g=>!recurringIsIgnored(g))
+    .sort((a,b)=>b.months-a.months)
+    .slice(0,5);
+}
+
+function renderRecurringBudgetSuggestions(){
+  const card=document.getElementById('budgetRecurringCard');
+  const root=document.getElementById('budgetRecurringSuggestions');
+  if(!card||!root)return;
+
+  const rows=detectRecurringBudgetSuggestions();
+  card.style.display=rows.length?'flex':'none';
+
+  root.innerHTML=rows.map((g,i)=>`
+    <div class="smart-row">
+      <div class="smart-row-main">
+        <div class="smart-row-title">${escapeHtml(g.label)}</div>
+        <div class="smart-row-sub">${g.months} mois détectés · moyenne ${euro(g.avg)}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn btn-secondary" style="font-size:10px;padding:6px 8px" onclick="ignoreRecurringBudget(${i})">Ignorer</button>
+        <button class="btn btn-secondary" style="font-size:10px;padding:6px 8px" onclick="promoteRecurringBudget(${i})">Ajouter aux fixes</button>
+      </div>
+    </div>`).join('');
+
+  window._recurringBudgetSuggestions=rows;
+}
+function promoteRecurringBudget(index){
+  const g=window._recurringBudgetSuggestions?.[index];if(!g)return;
+  if(!confirm(`Ajouter « ${g.label} » aux frais fixes avec un montant de ${euro(g.avg)} ?`))return;
+  data.budgetFixes.push([g.label,Math.round(g.avg*100)/100,false,g.account||'ca',g.category||'autres']);
+  save();render();
+}
+
+
+function isAllocationTargetEligible(item){
+  const meta=getStockMeta(item);
+  const isin=String(meta.isin||'').trim().toUpperCase();
+  const label=normalizeText(item?.[0]||'').trim();
+
+  // L'or physique est suivi dans Bourse pour sa valorisation, mais ne fait pas
+  // partie de l'allocation cible souhaitée.
+  if(isin==='IE00B4ND3602')return false;
+  if(label.includes('ishares physical gold'))return false;
+
+  return true;
+}
+
+function stockTargetKey(item,index){
+  const meta=getStockMeta(item);
+  return String(meta.isin||item?.[0]||`ligne-${index}`).trim().toUpperCase();
+}
+function openAllocationTargetModal(){
+  ensureV26Data();
+  delete data.allocationTargets['IE00B4ND3602'];
+  const root=document.getElementById('allocationTargetFields');if(!root)return;
+  root.innerHTML=(data.bourse||[])
+    .map((item,index)=>({item,index}))
+    .filter(({item})=>isAllocationTargetEligible(item))
+    .map(({item,index})=>{
+    const key=stockTargetKey(item,index);
+    const current=Number(data.allocationTargets[key])||0;
+    return `<div class="modal-field"><label>${escapeHtml(item?.[0]||key)}</label>
+      <div style="display:flex;align-items:center;gap:8px"><input type="number" min="0" max="100" step="0.1" value="${current||''}" data-target-key="${escapeHtml(key)}" placeholder="0"><span>%</span></div></div>`;
+  }).join('') || '<div class="muted" style="text-transform:none">Ajoute d’abord des lignes dans Bourse.</div>';
+  document.getElementById('allocationTargetModal')?.classList.add('active');
+}
+function closeAllocationTargetModal(){document.getElementById('allocationTargetModal')?.classList.remove('active');}
+function saveAllocationTargets(){
+  ensureV26Data();
+  delete data.allocationTargets['IE00B4ND3602'];
+  document.querySelectorAll('#allocationTargetFields [data-target-key]').forEach(input=>{
+    const val=Math.max(0,Math.min(100,Number(input.value)||0));
+    if(val>0)data.allocationTargets[input.dataset.targetKey]=val;
+    else delete data.allocationTargets[input.dataset.targetKey];
+  });
+  save();closeAllocationTargetModal();renderAllocationTargetSummary();
+}
+function renderAllocationTargetSummary(){
+  const root=document.getElementById('allocationTargetSummary');if(!root)return;
+  ensureV26Data();
+  const eligible=(data.bourse||[])
+    .map((item,index)=>({item,index}))
+    .filter(({item})=>isAllocationTargetEligible(item));
+  const total=eligible.reduce((s,{item})=>s+(Number(item?.[1])||0),0);
+  const rows=eligible.map(({item,index})=>{
+    const key=stockTargetKey(item,index),target=Number(data.allocationTargets[key])||0;
+    if(!target)return null;
+    const actual=total>0?(Number(item?.[1])||0)/total*100:0;
+    const diff=actual-target;
+    return {label:item?.[0]||key,target,actual,diff};
+  }).filter(Boolean);
+  if(!rows.length){root.innerHTML='Aucune cible définie.';return;}
+  root.innerHTML=rows.map(r=>`
+    <div class="smart-row"><div class="smart-row-main"><div class="smart-row-title">${escapeHtml(r.label)}</div>
+    <div class="smart-row-sub">Réel ${r.actual.toFixed(1)} % · cible ${r.target.toFixed(1)} % · écart ${r.diff>=0?'+':''}${r.diff.toFixed(1)} pt</div>
+    <div class="target-bar"><span style="width:${Math.min(100,Math.max(0,r.actual))}%"></span></div></div></div>`).join('');
+}
+
+function getInvoiceLinkedElementLabel(invoice){
+  if(invoice?.vehicleId)return `🚗 ${getGarageVehicleLabel(invoice.vehicleId)}`;
+  if(invoice?.linkedAssetLabel)return `📊 ${invoice.linkedAssetLabel}`;
+  if(invoice?.linkedElementLabel)return invoice.linkedElementLabel;
+  return '';
+}
+function populateInvoiceLinkedElementSelect(invoice={}){
+  const sel=document.getElementById('invoiceLinkedElement');if(!sel)return;
+  const opts=['<option value="">Aucun autre élément</option>'];
+  (data.garageVehicles||[]).filter(v=>!v.archived).forEach(v=>opts.push(`<option value="vehicle:${v.id}">🚗 ${escapeHtml(getGarageVehicleLabel(v.id))}</option>`));
+  getPatrimoineKeys().forEach(key=>{
+    (data[key]||[]).forEach((item,index)=>{
+      const label=String(item?.[0]||'').trim();if(!label)return;
+      opts.push(`<option value="asset:${key}:${index}">📊 ${escapeHtml(label)}</option>`);
+    });
+  });
+  sel.innerHTML=opts.join('');
+  if(invoice.vehicleId)sel.value=`vehicle:${invoice.vehicleId}`;
+  else if(invoice.linkedAssetKey!==undefined && invoice.linkedAssetIndex!==undefined)sel.value=`asset:${invoice.linkedAssetKey}:${invoice.linkedAssetIndex}`;
+}
+
+function getShoppingAisle(label){
+  ensureV26Data();
+  const learnedKey=normalizeShoppingIngredient(label);
+  const learned=String(data.shoppingAisleLearning?.[learnedKey]||'').trim();
+  if(learned)return learned;
+
+  const s=normalizeText(label);
+
+  const tests=[
+    ['Fruits & légumes',[
+      'tomate','oignon','ail','echalote','échalote','courgette','aubergine','carotte','poireau',
+      'salade','laitue','roquette','epinard','épinard','citron','citron vert','orange','pomme',
+      'banane','poire','fraise','framboise','myrtille','raisin','kiwi','mangue','avocat',
+      'poivron','champignon','brocoli','chou','chou fleur','chou-fleur','haricot vert',
+      'petit pois','petits pois','concombre','celeri','céleri','betterave','navet','pomme de terre',
+      'patate douce','courge','potiron','butternut','persil frais','coriandre fraiche',
+      'coriandre fraîche','basilic frais','menthe fraiche','menthe fraîche','aneth frais'
+    ]],
+    ['Viandes & poissons',[
+      'viande','boeuf','bœuf','steak','haché','hache','poulet','dinde','porc','veau','agneau',
+      'saucisse','merguez','chipolata','jambon','lardon','bacon','chorizo','thon','saumon',
+      'cabillaud','colin','crevette','crevettes','poisson','moule','moules','surimi'
+    ]],
+    ['Produits frais',[
+      'oeuf','œuf','lait','beurre','creme','crème','fromage','mozzarella','emmental','gruyere',
+      'gruyère','parmesan','chevre','chèvre','ricotta','mascarpone','yaourt','yogourt',
+      'fromage blanc','creme fraiche','crème fraîche','lardons frais','pate feuilletee',
+      'pâte feuilletée','pate brisee','pâte brisée'
+    ]],
+    ['Épicerie',[
+      'pate','pâtes','spaghetti','tagliatelle','lasagne','riz','semoule','quinoa','boulgour',
+      'farine','sucre','cassonade','sucre glace','levure','maizena','maïzena',
+      'huile','huile olive','vinaigre','moutarde','ketchup','mayonnaise','sauce soja','sauce',
+      'bouillon','concentre de tomate','concentré de tomate','tomates concassees','tomates concassées',
+      'tomate pelée','tomates pelées','coulis','purée de tomate',
+      'sel','poivre','epice','épice','curcuma','cumin','curry','paprika','cannelle','muscade',
+      'gingembre','gingembre moulu','coriandre','coriandre moulue','chili','chilli','aneth','thym','romarin','origan',
+      'herbes de provence','basilic seche','basilic séché','persil seche','persil séché',
+      'piment','piment doux','piment fort','piment espelette','piment d espelette',
+      'ail semoule','ail poudre','oignon semoule','clou de girofle','girofle','cardamome',
+      'ras el hanout','garam masala','coriandre graine','graine de coriandre',
+      'cacao','chocolat','vanille','extrait de vanille','miel','sirop',
+      'lentille','lentilles','pois chiche','pois chiches','haricot rouge','haricots rouges',
+      'haricot blanc','haricots blancs','mais','maïs','conserve','boite','boîte',
+      'chapelure','pain de mie','tortilla','wrap','nouille','nouilles','ramen',
+      'noix','amande','amandes','noisette','noisettes','cacahuete','cacahuète',
+      'pignon','graines de sesame','graines de sésame','sesame','sésame'
+    ]],
+    ['Boulangerie',[
+      'pain','baguette','pain burger','pain hamburger','pain hot dog','brioche','croissant'
+    ]],
+    ['Surgelés',[
+      'surgele','surgelé','surgeles','surgelés','frites','glace','pizza surgelée','pizza surgelee'
+    ]],
+    ['Boissons',[
+      'eau','jus','soda','limonade','sirop','cafe','café','the','thé'
+    ]],
+    ['Maison & hygiène',[
+      'lessive','adoucissant','liquide vaisselle','pastille lave vaisselle','tablette lave vaisselle',
+      'papier toilette','essuie tout','essuie-tout','sac poubelle','savon','gel douche',
+      'shampoing','shampooing','dentifrice','deodorant','déodorant','nettoyant','eponges','éponges'
+    ]]
+  ];
+
+  for(const [name,words] of tests){
+    if(words.some(w=>s.includes(normalizeText(w))))return name;
+  }
+
+  return 'Autres';
+}
+
+const SHOPPING_AISLES=[
+  'Fruits & légumes',
+  'Viandes & poissons',
+  'Produits frais',
+  'Épicerie',
+  'Boulangerie',
+  'Surgelés',
+  'Boissons',
+  'Maison & hygiène',
+  'Autres'
+];
+
+function rememberShoppingAisle(label,aisle){
+  ensureV26Data();
+  const key=normalizeShoppingIngredient(label);
+  const value=String(aisle||'').trim();
+  if(!key || !SHOPPING_AISLES.includes(value))return;
+  data.shoppingAisleLearning[key]=value;
+}
+
+function changeShoppingIngredientAisle(index,newAisle){
+  const item=currentShoppingList.items?.[index];
+  if(!item)return;
+
+  const aisle=String(newAisle||'').trim();
+  if(!SHOPPING_AISLES.includes(aisle))return;
+
+  rememberShoppingAisle(item.label,aisle);
+
+  if(item.manual && item.id){
+    const state=ensureShoppingWeek(currentShoppingList.cycleKey);
+    const manual=state.manualItems.find(x=>x?.id===item.id);
+    if(manual)manual.aisle=aisle;
+  }
+
+  save();
+  openWeekShoppingList(currentShoppingList.cycleKey);
+}
+
+function shoppingAisleSelectHtml(item,index){
+  return `<select
+    class="shopping-aisle-select"
+    aria-label="Catégorie de ${escapeHtml(item.label)}"
+    onchange="changeShoppingIngredientAisle(${index},this.value)"
+    onclick="event.stopPropagation()"
+  >${SHOPPING_AISLES.map(aisle=>`<option value="${escapeHtml(aisle)}"${aisle===item.aisle?' selected':''}>${escapeHtml(aisle)}</option>`).join('')}</select>`;
+}
+
+function resetShoppingAisleLearning(){
+  ensureV26Data();
+  if(!Object.keys(data.shoppingAisleLearning||{}).length)return;
+  if(!confirm('Réinitialiser toutes les catégories d’ingrédients mémorisées ?'))return;
+  data.shoppingAisleLearning={};
+  save();
+  if(currentShoppingList.cycleKey)openWeekShoppingList(currentShoppingList.cycleKey);
+}
+
+function ensureShoppingWeek(cycleKey){
+  ensureV26Data();
+  if(!data.menus.shopping[cycleKey] || typeof data.menus.shopping[cycleKey]!=='object'){
+    data.menus.shopping[cycleKey]={manualItems:[],checked:{}};
+  }
+  const state=data.menus.shopping[cycleKey];
+  if(!Array.isArray(state.manualItems))state.manualItems=[];
+  if(!state.checked || typeof state.checked!=='object')state.checked={};
+  return state;
+}
+function shoppingItemKey(item){return normalizeShoppingIngredient(item.label)+'|'+String(item.aisle||'Autres');}
+function addManualShoppingItem(){
+  const cycleKey=currentShoppingList.cycleKey;if(!cycleKey)return;
+  const input=document.getElementById('shoppingManualInput');
+  const aisle=document.getElementById('shoppingManualAisle');
+  const label=String(input?.value||'').trim();if(!label)return;
+  const state=ensureShoppingWeek(cycleKey);
+  state.manualItems.push({id:makeLocalId('shop'),label,aisle:aisle?.value||'Autres'});
+  input.value='';save();openWeekShoppingList(cycleKey);
+}
+function clearMenuShoppingChecks(){
+  ensureV26Data();
+  Object.values(data.menus.shopping||{}).forEach(s=>{if(s&&typeof s==='object')s.checked={};});
+  save();
+  if(currentShoppingList.cycleKey)openWeekShoppingList(currentShoppingList.cycleKey);
 }
 
 function save(){
@@ -5405,6 +6091,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
 
   <div class="footer">Application crée par ROYER Anaël</div>
 </main>
+
 
 </body>
 </html>`;
@@ -6444,10 +7131,9 @@ function submitVehicleModal(){
 
 function deleteGarageVehicle(id){
   const v=getGarageVehicleById(id);if(!v)return;
-  const linked=(data.factures||[]).filter(i=>i.vehicleId===id).length;
-  const maintenance=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===id).length;
-  const extra=(linked||maintenance)?`\n\n${maintenance} ancienne(s) intervention(s) seront supprimée(s). ${linked} facture(s) resteront enregistrée(s) mais seront dissociée(s) du véhicule.`:'';
-  if(!confirm(`Supprimer le véhicule « ${getGarageVehicleLabel(id)} » ?${extra}`))return;
+  const maintenance=(data.vehicleMaintenance||[]).filter(m=>m.vehicleId===id);
+  if(!confirm(`Archiver le véhicule « ${getGarageVehicleLabel(id)} » ?`))return;
+  archiveDataItem('Véhicule',getGarageVehicleLabel(id),{vehicle:v,maintenance},{kind:'vehicle'});
   data.garageVehicles=data.garageVehicles.filter(x=>x.id!==id);
   data.vehicleMaintenance=data.vehicleMaintenance.filter(m=>m.vehicleId!==id);
   (data.factures||[]).forEach(inv=>{if(inv.vehicleId===id)inv.vehicleId='';});
@@ -6651,6 +7337,17 @@ function formatMonthYearFR(iso){
   return new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(d);
 }
 
+
+function getVehicleCostBreakdown(vehicle){
+  const now=new Date(),limit=new Date(now.getFullYear()-1,now.getMonth(),now.getDate());
+  const groups={};
+  (data.factures||[]).filter(inv=>inv?.vehicleId===vehicle.id).forEach(inv=>{
+    const d=parseLocalDate(inv.date);if(!d||d<limit)return;
+    const cat=String(inv.category||'Autre');
+    groups[cat]=(groups[cat]||0)+Math.max(0,Number(inv.amount)||0);
+  });
+  return Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+}
 function getVehicleExpenses(vehicle){
   const now=new Date();
   const limit=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -7047,6 +7744,7 @@ function renderVehicles(){
     </div>
     <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
     <div class="vehicle-cost-strip"><div class="vehicle-cost-mini"><span>Dépenses 12 mois</span><strong class="invoice-amount">${euro(expenses.last12m)}</strong></div><div class="vehicle-cost-mini"><span>Dépenses enregistrées</span><strong class="invoice-amount">${euro(expenses.total)}</strong></div><div class="vehicle-cost-mini"><span>Coût/km suivi</span><strong class="invoice-amount">${expenses.costPerKm!==null?expenses.costPerKm.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €/km':'—'}</strong></div></div>
+    ${getVehicleCostBreakdown(v).length?`<div style="margin-top:10px"><div class="muted">Répartition des coûts sur 12 mois</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${getVehicleCostBreakdown(v).map(([cat,amount])=>`<span class="invoice-chip">${escapeHtml(cat)} · ${euro(amount)}</span>`).join('')}</div></div>`:''}
     <div class="vehicle-actions"><button id="assistantTargetPerformedMaintenance" class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button id="assistantTargetMileage" class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><button id="assistantTargetMaintenanceHistory" class="btn btn-secondary" onclick="openVehicleMaintenanceHistoryModal()">📜 Historique</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal('${v.id}')" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
 
   const ihost=document.getElementById('vehicle-invoices');
@@ -7229,6 +7927,8 @@ function openInvoiceModal(index=-1){
 
   document.getElementById('invoiceModal').classList.add('active');
   setTimeout(()=>document.getElementById('invoiceDescription').focus(),50);
+  populateInvoiceLinkedElementSelect(invoiceEditIndex>=0?data.factures[invoiceEditIndex]:{});
+
 }
 
 function closeInvoiceModal(){
@@ -7545,6 +8245,17 @@ function submitInvoice(){
   const category=document.getElementById('invoiceCategory').value;
   const receiptType=document.getElementById('invoiceReceiptType').value;
   const vehicleId=document.getElementById('invoiceVehicle')?.value||'';
+  const linkedElementValue=document.getElementById('invoiceLinkedElement')?.value||'';
+  let linkedAssetKey='',linkedAssetIndex='',linkedAssetLabel='';
+  let resolvedVehicleId=vehicleId;
+  if(linkedElementValue.startsWith('vehicle:')){
+    resolvedVehicleId=linkedElementValue.slice(8);
+  }else if(linkedElementValue.startsWith('asset:')){
+    const parts=linkedElementValue.split(':');
+    linkedAssetKey=parts[1]||'';
+    linkedAssetIndex=parts[2]||'';
+    linkedAssetLabel=String(data[linkedAssetKey]?.[Number(linkedAssetIndex)]?.[0]||'');
+  }
   const warrantyApplicable=document.getElementById('invoiceWarrantyApplicable').value!=='no';
   const warrantyRaw=document.getElementById('invoiceWarrantyMonths').value;
   const photoUrl=invoicePendingPhotoUrl;
@@ -7603,7 +8314,10 @@ function submitInvoice(){
     reference,
     category,
     receiptType,
-    vehicleId,
+    vehicleId:resolvedVehicleId,
+    linkedAssetKey,
+    linkedAssetIndex,
+    linkedAssetLabel,
     warrantyApplicable,
     warrantyMonths,
     photoUrl
@@ -7634,12 +8348,12 @@ function submitInvoice(){
 function deleteInvoice(index){
   if(!Array.isArray(data.factures)||!data.factures[index])return;
   const invoice=data.factures[index];
-  if(!confirm(`Supprimer la facture « ${invoice.description||'Sans description'} » ?`))return;
+  if(!confirm(`Archiver la facture « ${invoice.description||'Sans description'} » ?`))return;
+  archiveDataItem('Facture',invoice.description||'Sans description',invoice,{kind:'invoice'});
   const deletedId=invoice.id||'';
   data.factures.splice(index,1);
   if(deletedId)(data.vehicleMaintenance||[]).forEach(m=>{if(m.invoiceId===deletedId)m.invoiceId='';});
-  save();
-  renderInvoices();
+  save();renderInvoices();
 }
 
 
@@ -7876,7 +8590,7 @@ function renderInvoices(){
               <div>
                 <span class="invoice-chip">${escapeHtml(invoice.category||'Autre')}</span>
                 <span class="invoice-chip">${escapeHtml(invoice.receiptType||'Facture')}</span>
-                ${invoice.vehicleId?`<span class="invoice-chip">🚗 ${escapeHtml(getGarageVehicleLabel(invoice.vehicleId))}</span>`:''}
+                ${getInvoiceLinkedElementLabel(invoice)?`<span class="invoice-link-chip">${escapeHtml(getInvoiceLinkedElementLabel(invoice))}</span>`:''}
               </div>
               ${warrantyEnd}
             </div>
@@ -7892,7 +8606,7 @@ function renderInvoices(){
           <button class="btn btn-secondary" onclick="downloadInvoicePhoto(${index})">⬇️ Télécharger</button>
           `:''}
           <button class="btn btn-secondary" onclick="openInvoiceModal(${index})">✏️ Modifier</button>
-          <button class="btn btn-secondary" style="color:#f85149" onclick="deleteInvoice(${index})">🗑️ Supprimer</button>
+          <button class="btn btn-secondary" style="color:#f85149" onclick="deleteInvoice(${index})">📦 Archiver</button>
         </div>
       </div>
     `;
@@ -8609,6 +9323,67 @@ if(window.visualViewport){
       <button type="button" class="btn btn-secondary" onclick="toggleAllShoppingItems()">☑ Tout cocher</button>
       <button type="button" class="btn btn-primary" onclick="copyWeekShoppingList()">Copier la liste</button>
     </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="allocationTargetModal" onclick="if(event.target===this)closeAllocationTargetModal()">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto">
+    <h3>🎯 Allocation cible — Bourse</h3>
+    <div class="muted" style="text-transform:none">Indique le poids cible de chaque ligne. Le total peut être ajusté librement.</div>
+    <div id="allocationTargetFields"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAllocationTargetModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveAllocationTargets()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettingsModal()">
+  <div class="modal" style="max-width:470px;max-height:92vh;overflow-y:auto">
+    <h3>⚙️ Paramètres</h3>
+
+    <div class="settings-section">
+      <div style="font-weight:700">Synchronisation</div>
+      <div id="settingsSyncState" class="muted" style="text-transform:none;margin-top:4px">—</div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-weight:700">Sauvegarde</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-secondary" onclick="exportData()">⬇️ Exporter les données</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-weight:700">Éléments archivés</div>
+      <div class="muted" style="text-transform:none;margin-top:3px">Les suppressions importantes sont conservées ici et peuvent être restaurées.</div>
+      <div id="archivedItemsList" style="margin-top:6px"></div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-weight:700">Dépenses récurrentes ignorées</div>
+      <div class="muted" style="text-transform:none;margin-top:3px">Une ligne ignorée ne sera plus proposée, même après fermeture ou changement d’appareil.</div>
+      <div id="ignoredRecurringList" style="margin-top:6px"></div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-weight:700">Catégories des ingrédients</div>
+      <div class="muted" style="text-transform:none;margin-top:3px">Les changements manuels de rayon sont mémorisés et prioritaires sur le classement automatique.</div>
+      <div style="margin-top:8px">
+        <button class="btn btn-secondary" onclick="resetShoppingAisleLearning()">Réinitialiser les catégories mémorisées</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-weight:700">Menus</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-secondary" onclick="clearMenuShoppingChecks()">Décocher les listes de courses</button>
+      </div>
+    </div>
+
+    <div class="modal-buttons"><button class="btn btn-primary" style="flex:1" onclick="closeSettingsModal()">Fermer</button></div>
   </div>
 </div>
 
