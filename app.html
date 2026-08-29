@@ -236,26 +236,6 @@ svg.patrimoine-chart{width:100%;height:190px;overflow:visible;touch-action:none;
 .modal{background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;width:90%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 30px rgba(0,0,0,.6);transform:scale(.95);transition:transform .2s ease}.modal-overlay.active .modal{transform:scale(1)}
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
 
-/* Sur smartphone, les modales de modification restent en haut pour ne pas être masquées par le clavier */
-#patrimoineAmountModal,
-#genericModal.budget-edit-position{
-  align-items:flex-start;
-  padding-top:8vh;
-  padding-bottom:20px;
-  overflow-y:auto;
-}
-
-@media (max-width:600px){
-  #patrimoineAmountModal,
-  #genericModal.budget-edit-position{
-    padding-top:max(18px,calc(env(safe-area-inset-top) + 18px));
-  }
-
-  #patrimoineAmountModal .modal,
-  #genericModal.budget-edit-position .modal{
-    margin-top:0;
-  }
-}
 #firebaseStatus{align-self:center;width:max-content;max-width:100%;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none;margin:-6px auto 0}
 /* Schéma minimaliste, épuré, points et traits affinés */
 #patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
@@ -1828,6 +1808,11 @@ window.applyFirebaseState=function(remote){
   ensureBankingData();
   if(remote.monthHistory)monthHistory=remote.monthHistory;
   ensureHistoricalBudgetCategories();
+
+  // La migration doit aussi être appliquée aux données réellement reçues de Firebase.
+  // Si elle corrige quelque chose, on réécrit une seule fois l'état corrigé.
+  const beautyMigrationChanged=migrateBeautyBudgetCategories();
+
   if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
   if(typeof remote.annotations==='string')annotations=remote.annotations;
   window.data=data;
@@ -1836,6 +1821,10 @@ window.applyFirebaseState=function(remote){
   window.annotations=annotations;
   saveLocalOnly();
   render();
+
+  if(beautyMigrationChanged && window.firebaseSave){
+    window.firebaseSave();
+  }
 };
 
 const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
@@ -2613,32 +2602,12 @@ let activeModalKey='';
 let activeModalMode='add';
 let activeModalIndex=-1;
 
-function adjustGenericModalForKeyboard(){
-  const overlay=document.getElementById('genericModal');
-  if(!overlay || !overlay.classList.contains('budget-edit-position'))return;
-
-  if(window.innerWidth>600){
-    overlay.style.paddingTop='8vh';
-    return;
-  }
-
-  const vv=window.visualViewport;
-  if(vv){
-    const top=Math.max(16,Math.min(32,vv.height*0.04));
-    overlay.style.paddingTop=`${top}px`;
-  }else{
-    overlay.style.paddingTop='18px';
-  }
-}
-
 function openModal(key){
   activeModalKey=key;
   activeModalMode='add';
   activeModalIndex=-1;
 
   const genericModal=document.getElementById('genericModal');
-  genericModal.classList.remove('budget-edit-position');
-  genericModal.style.paddingTop='';
 
   const title=document.getElementById('modalTitle');
 
@@ -2709,7 +2678,11 @@ function openBudgetEditModal(key,index){
   populateBankSelect(accountSelect,item[3]||'ca');
   if(typeSelect){typeSelect.value=key;typeSelect.onchange=()=>syncModalBudgetType(typeSelect.value,{resetCategory:true});}
   const categorySelect=document.getElementById('modalCategory');
-  if(categorySelect){categorySelect.dataset.manual='1';populateBudgetCategorySelect(key,getItemBudgetCategory(key,item));categorySelect.onchange=()=>{categorySelect.dataset.manual='1';};}
+  if(categorySelect){
+    categorySelect.dataset.manual='0';
+    populateBudgetCategorySelect(key,getItemBudgetCategory(key,item));
+    categorySelect.onchange=()=>{categorySelect.dataset.manual='1';};
+  }
   labelInput.oninput=()=>{};
 
   labelInput.placeholder='Modifier le libellé';
@@ -2718,11 +2691,9 @@ function openBudgetEditModal(key,index){
   document.getElementById('modalSubmitBtn').textContent='Enregistrer';
 
   const genericModal=document.getElementById('genericModal');
-  genericModal.classList.add('budget-edit-position','active');
-  adjustGenericModalForKeyboard();
+  genericModal.classList.add('active');
 
   setTimeout(()=>{
-    adjustGenericModalForKeyboard();
     amountInput.focus();
     amountInput.select();
   },50);
@@ -2731,7 +2702,6 @@ function openBudgetEditModal(key,index){
 function closeModal(){
   const genericModal=document.getElementById('genericModal');
   genericModal.classList.remove('active','budget-edit-position');
-  genericModal.style.paddingTop='';
   activeModalKey='';
   activeModalMode='add';
   activeModalIndex=-1;
@@ -2830,28 +2800,6 @@ function submitModal(){
 let patrimoineAmountKey='',patrimoineAmountIndex=-1;
 const patrimoineKeys=getPatrimoineKeys();
 
-function adjustPatrimoineModalForKeyboard(){
-  const overlay=document.getElementById('patrimoineAmountModal');
-  if(!overlay)return;
-
-  // Sur ordinateur on garde simplement le positionnement CSS.
-  if(window.innerWidth>600){
-    overlay.style.paddingTop='8vh';
-    return;
-  }
-
-  const vv=window.visualViewport;
-
-  if(vv){
-    // La valeur reste volontairement faible : la modale est placée
-    // près du haut de la zone réellement visible, clavier compris.
-    const top=Math.max(16,Math.min(32,vv.height*0.04));
-    overlay.style.paddingTop=`${top}px`;
-  }else{
-    overlay.style.paddingTop='18px';
-  }
-}
-
 function openPatrimoineAmountModal(key,index){
   if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;
   patrimoineAmountKey=key;
@@ -2862,17 +2810,16 @@ function openPatrimoineAmountModal(key,index){
   document.getElementById('patrimoineAmountTitle').textContent='Modifier le montant';
   input.value=Number.isFinite(currentAmount)?currentAmount:'';
   document.getElementById('patrimoineAmountModal').classList.add('active');
-  adjustPatrimoineModalForKeyboard();
-
   setTimeout(()=>{
-    adjustPatrimoineModalForKeyboard();
     input.focus();
     input.select();
   },50);
 }
 
 function closePatrimoineAmountModal(){
-  document.getElementById('patrimoineAmountModal').classList.remove('active');
+  const overlay=document.getElementById('patrimoineAmountModal');
+  appResetKeyboardSafeModal(overlay);
+  overlay.classList.remove('active');
   patrimoineAmountKey='';
   patrimoineAmountIndex=-1;
 }
@@ -2904,19 +2851,6 @@ function submitPatrimoineAmount(){
 }
 
 
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',()=>{
-    const patrimoineModal=document.getElementById('patrimoineAmountModal');
-    if(patrimoineModal && patrimoineModal.classList.contains('active')){
-      adjustPatrimoineModalForKeyboard();
-    }
-
-    const budgetModal=document.getElementById('genericModal');
-    if(budgetModal && budgetModal.classList.contains('active') && budgetModal.classList.contains('budget-edit-position')){
-      adjustGenericModalForKeyboard();
-    }
-  });
-}
 
 /* ANNOTATIONS */
 function openAnnotationsModal(){
@@ -7434,9 +7368,18 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* Correctif clavier virtuel mobile */
+/* Correctif clavier virtuel mobile — mécanisme unique pour toutes les modales */
 function appIsModalFormField(el){
   return !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+}
+function appResetKeyboardSafeModal(overlay){
+  if(!overlay)return;
+  overlay.classList.remove('keyboard-safe');
+  overlay.style.removeProperty('--keyboard-visible-height');
+  overlay.style.top='';
+  overlay.style.left='';
+  overlay.style.width='';
+  overlay.style.height='';
 }
 function appUpdateKeyboardSafeModal(){
   const active=document.activeElement;
@@ -7446,12 +7389,7 @@ function appUpdateKeyboardSafeModal(){
 
   document.querySelectorAll('.modal-overlay.keyboard-safe').forEach(el=>{
     if(el!==overlay || !mobile || !appIsModalFormField(active)){
-      el.classList.remove('keyboard-safe');
-      el.style.removeProperty('--keyboard-visible-height');
-      el.style.top='';
-      el.style.left='';
-      el.style.width='';
-      el.style.height='';
+      appResetKeyboardSafeModal(el);
     }
   });
 
