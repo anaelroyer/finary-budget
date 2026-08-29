@@ -1,1 +1,136 @@
+name: Mise à jour des cours
 
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-quotes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Récupérer les cours
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          import html as html_lib
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ISIN = "IE00B4ND3602"
+
+          SOURCES = [
+              {
+                  "name": "Bourse Direct · Xetra",
+                  "url": "https://www.boursedirect.fr/fr/marche/xetra/ishares-phys-met-o-end-zt-IE00B4ND3602-PPFB-EUR-XETR/seance",
+              },
+              {
+                  "name": "Zonebourse · Xetra",
+                  "url": "https://www.zonebourse.com/cours/etf/ISHARES-PHYSICAL-GOLD-ETC-124881157/",
+              },
+          ]
+
+          def fetch(url):
+              req = urllib.request.Request(
+                  url,
+                  headers={
+                      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+                      "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return r.read().decode("utf-8", errors="ignore")
+
+          def textify(raw):
+              raw = re.sub(r"<script\b[^>]*>.*?</script>", " ", raw, flags=re.I | re.S)
+              raw = re.sub(r"<style\b[^>]*>.*?</style>", " ", raw, flags=re.I | re.S)
+              raw = re.sub(r"<[^>]+>", " ", raw)
+              raw = html_lib.unescape(raw)
+              return re.sub(r"\s+", " ", raw).strip()
+
+          def parse_price(raw):
+              text = textify(raw)
+              upper = text.upper()
+              pos = upper.find(ISIN)
+              zones = []
+              if pos >= 0:
+                  zones.append(text[max(0, pos - 300):pos + 1200])
+              zones.append(text)
+
+              patterns = [
+                  r"\b([0-9]{1,4}[,.][0-9]{2,4})\s*(?:€|EUR)\b",
+                  r"(?:Cours|Dernier|Last|Price)[^0-9]{0,80}([0-9]{1,4}[,.][0-9]{2,4})",
+              ]
+
+              for zone in zones:
+                  for pattern in patterns:
+                      m = re.search(pattern, zone, flags=re.I)
+                      if m:
+                          value = float(m.group(1).replace(",", "."))
+                          if 10 < value < 500:
+                              return value
+              return None
+
+          price = None
+          used_source = None
+          errors = []
+
+          for source in SOURCES:
+              try:
+                  raw = fetch(source["url"])
+                  candidate = parse_price(raw)
+                  if candidate:
+                      price = candidate
+                      used_source = source
+                      break
+                  errors.append(f'{source["name"]}: cours introuvable')
+              except Exception as e:
+                  errors.append(f'{source["name"]}: {e}')
+
+          if price is None:
+              raise SystemExit("Échec récupération du cours : " + " | ".join(errors))
+
+          path = Path("quotes.json")
+          try:
+              payload = json.loads(path.read_text(encoding="utf-8"))
+          except Exception:
+              payload = {"quotes": {}}
+
+          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          payload["updatedAt"] = now
+          payload.setdefault("quotes", {})
+          payload["quotes"][ISIN] = {
+              "price": round(price, 4),
+              "currency": "EUR",
+              "source": used_source["name"],
+              "sourceUrl": used_source["url"],
+              "updatedAt": now,
+          }
+
+          path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(f"{ISIN} = {price:.4f} EUR via {used_source['name']}")
+          PY
+
+      - name: Enregistrer quotes.json
+        shell: bash
+        run: |
+          if git diff --quiet -- quotes.json; then
+            echo "Aucune modification."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add quotes.json
+          git commit -m "Mise à jour automatique des cours"
+          git push
