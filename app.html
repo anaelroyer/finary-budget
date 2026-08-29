@@ -543,6 +543,17 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-recipe-link.has-link{color:#3fb950}
 .menu-recipe-edit{font-size:11px;color:#8b949e}
 .menu-recipe-link:hover,.menu-recipe-edit:hover{text-decoration:underline}
+.menu-ingredients-btn{
+  border:0;background:transparent;color:#58a6ff;font:inherit;font-size:11px;
+  font-weight:800;padding:2px 0;cursor:pointer
+}
+.menu-ingredients-btn:hover{text-decoration:underline}
+.menu-ingredients-wait{font-size:11px;color:#8b949e}
+.recipe-ingredients-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.recipe-ingredient-item{
+  display:flex;gap:9px;align-items:flex-start;padding:9px 10px;
+  background:#0d1117;border:1px solid #21262d;border-radius:9px;font-size:13px
+}
 .menu-meal.disabled{opacity:.28}
 .menu-meal.disabled textarea{pointer-events:none}
 .menu-hint{font-size:11px;color:#8b949e;line-height:1.45}
@@ -1367,6 +1378,7 @@ async function applyRemoteSnapshot(snapshot){
   if(!snapshot?.exists())return false;
   const r=snapshot.data();
   window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
+  window.recipeDataState=(r.recipeData && typeof r.recipeData==='object')?r.recipeData:{};
   if(window.applyFirebaseState){
     window.applyFirebaseState({
       data:r.data?JSON.parse(r.data):undefined,
@@ -2221,6 +2233,75 @@ function getMenuRecipeUrl(label){
   const stat=data.menus.dishStats[key];
   return stat ? String(stat.recipeUrl||'') : '';
 }
+
+function recipeUrlKey(url){
+  // Même clé stable que le workflow : hash léger côté navigateur pour lookup
+  // Le workflow stocke aussi l'URL brute ; si cette clé ne matche pas,
+  // on fait un fallback par comparaison d'URL.
+  const s=String(url||'').trim();
+  let h=2166136261;
+  for(let i=0;i<s.length;i++){
+    h^=s.charCodeAt(i);
+    h=Math.imul(h,16777619);
+  }
+  return 'u'+(h>>>0).toString(16);
+}
+function getExtractedRecipeData(label){
+  const url=getMenuRecipeUrl(label);
+  if(!url)return null;
+  const all=(window.recipeDataState && typeof window.recipeDataState==='object')?window.recipeDataState:{};
+
+  const direct=all[recipeUrlKey(url)];
+  if(direct && String(direct.url||'')===url)return direct;
+
+  for(const item of Object.values(all)){
+    if(item && String(item.url||'')===url)return item;
+  }
+  return null;
+}
+function menuIngredientsHtml(label){
+  const url=getMenuRecipeUrl(label);
+  if(!url)return '';
+  const rec=getExtractedRecipeData(label);
+  if(rec && rec.status==='ok' && Array.isArray(rec.ingredients) && rec.ingredients.length){
+    return `<button type="button" class="menu-ingredients-btn"
+      onclick="openMenuIngredients(${JSON.stringify(String(label||'')).replace(/"/g,'&quot;')})">
+      🧺 Ingrédients (${rec.ingredients.length})
+    </button>`;
+  }
+  if(rec && rec.status==='error'){
+    return `<span class="menu-ingredients-wait" title="${escapeHtml(String(rec.error||''))}">⚠️ ingrédients non récupérés</span>`;
+  }
+  return `<span class="menu-ingredients-wait">⏳ ingrédients en attente</span>`;
+}
+function openMenuIngredients(label){
+  const rec=getExtractedRecipeData(label);
+  if(!rec || !Array.isArray(rec.ingredients) || !rec.ingredients.length)return;
+
+  const modal=document.getElementById('menuIngredientsModal');
+  const title=document.getElementById('menuIngredientsTitle');
+  const source=document.getElementById('menuIngredientsSource');
+  const list=document.getElementById('menuIngredientsList');
+
+  title.textContent=rec.title || label || 'Ingrédients';
+  source.textContent=label && rec.title && label!==rec.title ? `Plat : ${label}` : '';
+  list.innerHTML=rec.ingredients.map(x=>`<div class="recipe-ingredient-item"><span>•</span><span>${escapeHtml(String(x))}</span></div>`).join('');
+  modal.classList.add('active');
+}
+function closeMenuIngredientsModal(){
+  const modal=document.getElementById('menuIngredientsModal');
+  if(modal)modal.classList.remove('active');
+}
+function copyMenuIngredients(){
+  const modal=document.getElementById('menuIngredientsModal');
+  const title=document.getElementById('menuIngredientsTitle')?.textContent||'Recette';
+  const lines=[...modal.querySelectorAll('.recipe-ingredient-item span:last-child')].map(x=>x.textContent);
+  const payload=title+'\\n\\n'+lines.map(x=>'• '+x).join('\\n');
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(payload).then(()=>alert('Liste copiée.')).catch(()=>{});
+  }
+}
+
 function menuRecipeHtml(cycleKey,mealKey,label){
   const clean=String(label||'').trim();
   if(!clean)return '';
@@ -2229,8 +2310,9 @@ function menuRecipeHtml(cycleKey,mealKey,label){
     return `<div class="menu-recipe-row">
       <button type="button" class="menu-recipe-link has-link"
         onclick="openMenuRecipe('${cycleKey}','${mealKey}')">↗ Recette</button>
+      ${menuIngredientsHtml(clean)}
       <button type="button" class="menu-recipe-edit"
-        onclick="editMenuRecipe('${cycleKey}','${mealKey}')">✎ modifier le lien</button>
+        onclick="editMenuRecipe('${cycleKey}','${mealKey}')">✎ lien</button>
     </div>`;
   }
   return `<div class="menu-recipe-row">
@@ -2306,6 +2388,16 @@ function saveMenuRecipeLink(){
   if(!stat)return;
   stat.recipeUrl=url;
 
+  // Le workflow GitHub récupérera automatiquement les ingrédients.
+  // On retire seulement un éventuel ancien résultat local lié à une autre URL.
+  if(window.recipeDataState && typeof window.recipeDataState==='object'){
+    for(const [k,v] of Object.entries(window.recipeDataState)){
+      if(v && normalizeMenuDish(v.label||'')===normalizeMenuDish(label) && String(v.url||'')!==url){
+        delete window.recipeDataState[k];
+      }
+    }
+  }
+
   save();
   closeMenuRecipeModal();
   renderMenus();
@@ -2327,6 +2419,12 @@ function deleteMenuRecipeLink(){
 
 document.addEventListener('keydown',e=>{
   const modal=document.getElementById('menuRecipeModal');
+  const ingredientsModal=document.getElementById('menuIngredientsModal');
+  if(ingredientsModal && ingredientsModal.classList.contains('active') && e.key==='Escape'){
+    e.preventDefault();
+    closeMenuIngredientsModal();
+    return;
+  }
   if(!modal || !modal.classList.contains('active'))return;
   if(e.key==='Escape'){
     e.preventDefault();
@@ -8092,6 +8190,23 @@ if(window.visualViewport){
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button id="menuRecipeDeleteBtn" type="button" class="btn btn-secondary" onclick="deleteMenuRecipeLink()" style="display:none">Supprimer le lien</button>
       <button type="button" class="btn btn-primary" onclick="saveMenuRecipeLink()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="menuIngredientsModal" class="modal-overlay" onclick="if(event.target===this)closeMenuIngredientsModal()">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div>
+        <div id="menuIngredientsTitle" class="modal-title">🧺 Ingrédients</div>
+        <div id="menuIngredientsSource" class="muted" style="margin-top:2px"></div>
+      </div>
+      <button type="button" class="btn btn-secondary" onclick="closeMenuIngredientsModal()">✕</button>
+    </div>
+    <div id="menuIngredientsList" class="recipe-ingredients-list"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button type="button" class="btn btn-secondary" onclick="copyMenuIngredients()">Copier la liste</button>
     </div>
   </div>
 </div>
