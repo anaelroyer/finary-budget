@@ -1219,6 +1219,7 @@ window.firebaseSave=function(){
 async function applyRemoteSnapshot(snapshot){
   if(!snapshot?.exists())return false;
   const r=snapshot.data();
+  window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
   if(window.applyFirebaseState){
     window.applyFirebaseState({
       data:r.data?JSON.parse(r.data):undefined,
@@ -3390,6 +3391,171 @@ function renderStockRow(item,idx,cont){
   }
 }
 
+
+/* CRYPTO — BITCOIN / OKX */
+window.okxBtcState=window.okxBtcState||null;
+
+function getCryptoBtcMeta(){
+  if(!Array.isArray(data.crypto))data.crypto=[];
+  const item=data.crypto[0];
+  const raw=item && typeof item[2]==='object' && item[2]!==null ? item[2] : {};
+  return {
+    pru:Number(raw.pru)||0,
+    pruSet:raw.pruSet===true || (raw.pru!==undefined && raw.pru!==null && raw.pru!==''),
+    quantity:Number(raw.quantity)||0,
+    priceEur:Number(raw.priceEur)||0,
+    updatedAt:raw.updatedAt||'',
+    source:raw.source||'OKX',
+    history:Array.isArray(raw.history)?raw.history:[]
+  };
+}
+
+function syncOkxBtcToCryptoData(){
+  if(!Array.isArray(data.crypto))data.crypto=[];
+  const existing=data.crypto[0];
+  const oldMeta=getCryptoBtcMeta();
+  const state=window.okxBtcState;
+
+  if(state && typeof state==='object'){
+    const quantity=Math.max(0,Number(state.quantity)||0);
+    const priceEur=Math.max(0,Number(state.priceEur)||0);
+    const meta={
+      ...oldMeta,
+      quantity,
+      priceEur,
+      updatedAt:state.updatedAt||oldMeta.updatedAt||'',
+      source:state.source||'OKX',
+      history:Array.isArray(state.history)?state.history:oldMeta.history
+    };
+    data.crypto=[['Bitcoin',quantity*priceEur,meta]];
+  }else if(existing){
+    const quantity=Math.max(0,Number(oldMeta.quantity)||0);
+    const priceEur=Math.max(0,Number(oldMeta.priceEur)||0);
+    data.crypto=[['Bitcoin',quantity*priceEur,oldMeta]];
+  }else{
+    data.crypto=[['Bitcoin',0,{pru:0,pruSet:false,quantity:0,priceEur:0,updatedAt:'',source:'OKX',history:[]}]];
+  }
+}
+
+function updateCryptoBtcPru(value){
+  syncOkxBtcToCryptoData();
+  const item=data.crypto[0];
+  if(!item)return;
+  const meta=getCryptoBtcMeta();
+  const raw=String(value??'').trim().replace(',','.');
+  if(raw===''){
+    meta.pru=0;
+    meta.pruSet=false;
+  }else{
+    const n=Number(raw);
+    meta.pru=Number.isFinite(n)&&n>=0?n:0;
+    meta.pruSet=true;
+  }
+  item[2]=meta;
+  save();
+  render();
+}
+
+function cryptoBtcPerformanceHtml(meta){
+  if(!meta.pruSet)return '<span class="stock-performance neutral">PRU non renseigné</span>';
+  if(meta.pru===0)return '<span class="stock-performance positive">PRU 0 € · gain intégral</span>';
+  if(meta.priceEur<=0)return '<span class="stock-performance neutral">Cours indisponible</span>';
+  const perf=((meta.priceEur/meta.pru)-1)*100;
+  const cls=perf>0?'positive':perf<0?'negative':'neutral';
+  const sign=perf>0?'+':'';
+  return `<span class="stock-performance ${cls}">${sign}${perf.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} % vs PRU</span>`;
+}
+
+function cryptoBtcHistoryHtml(meta){
+  const points=(Array.isArray(meta.history)?meta.history:[])
+    .map(p=>({date:String(p?.date||'').slice(0,10),price:Number(p?.price)}))
+    .filter(p=>p.date && Number.isFinite(p.price) && p.price>0)
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .slice(-366);
+
+  if(points.length<2){
+    return '<div class="stock-history-empty">Historique BTC en cours de constitution.</div>';
+  }
+
+  const visible=points.slice(-31);
+  const prices=visible.map(p=>p.price);
+  let min=Math.min(...prices),max=Math.max(...prices);
+  if(max===min){max+=1;min-=1;}
+  const w=320,h=94,padL=6,padR=6,padT=8,padB=18;
+  const iw=w-padL-padR, ih=h-padT-padB;
+  const coords=visible.map((p,i)=>{
+    const x=padL+(visible.length===1?iw/2:(i/(visible.length-1))*iw);
+    const y=padT+((max-p.price)/(max-min))*ih;
+    return {x,y,p};
+  });
+  const path=coords.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+  const first=visible[0], last=visible[visible.length-1];
+  const diff=last.price-first.price;
+  const pct=first.price?diff/first.price*100:0;
+  const cls=pct>0?'positive':pct<0?'negative':'neutral';
+  const sign=pct>0?'+':'';
+
+  return `
+    <div class="stock-history-head">
+      <span class="stock-history-title">Évolution BTC · 30 jours</span>
+    </div>
+    <div class="stock-history-summary">
+      <span class="stock-history-last">${formatStockCourse(last.price)}</span>
+      <span class="stock-history-change ${cls}">${sign}${pct.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} %</span>
+    </div>
+    <div class="stock-history-chart">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Évolution du cours Bitcoin">
+        <path class="stock-history-line" d="${path}"></path>
+        <text class="stock-history-axis" x="${padL}" y="${h-4}" text-anchor="start">${formatStockHistoryDate(first.date)}</text>
+        <text class="stock-history-axis" x="${w-padR}" y="${h-4}" text-anchor="end">${formatStockHistoryDate(last.date)}</text>
+      </svg>
+    </div>`;
+}
+
+function renderCryptoBtcRow(cont){
+  syncOkxBtcToCryptoData();
+  const item=data.crypto[0];
+  const meta=getCryptoBtcMeta();
+  const value=Math.max(0,Number(item?.[1])||0);
+  const qtyText=meta.quantity.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:8});
+  const updated=meta.updatedAt ? new Date(meta.updatedAt).toLocaleString('fr-FR') : '';
+  const row=document.createElement('div');
+  row.className='stock-row crypto-okx-row';
+  row.innerHTML=`
+    <div class="stock-performance-head">${cryptoBtcPerformanceHtml(meta)}</div>
+    <div class="stock-field">
+      <label>Actif</label>
+      <input type="text" value="Bitcoin" readonly>
+    </div>
+    <div class="stock-field">
+      <label>Plateforme</label>
+      <input type="text" value="OKX" readonly>
+    </div>
+    <div class="stock-field">
+      <label>Quantité détenue</label>
+      <input type="text" value="${qtyText} BTC" readonly>
+    </div>
+    <div class="stock-field">
+      <label>PRU (€)</label>
+      <input type="number" value="${meta.pruSet?meta.pru:''}" placeholder="0,00" min="0" step="any" inputmode="decimal" onchange="updateCryptoBtcPru(this.value)">
+    </div>
+    <div class="stock-field" style="grid-column:1/-1">
+      <label>Cours BTC / EUR</label>
+      <input type="text" value="${meta.priceEur>0?formatStockCourse(meta.priceEur):'En attente de synchronisation'}" readonly>
+    </div>
+    <div class="stock-row-footer">
+      <div>
+        <span class="stock-calculated-value">Valeur calculée : <strong>${euro(value)}</strong></span>
+        <div class="stock-price-tools">
+          <span class="stock-price-status">${updated?`OKX · dernière synchronisation : ${updated}`:'En attente de la première synchronisation OKX'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="stock-history-panel">${cryptoBtcHistoryHtml(meta)}</div>
+  `;
+  cont.appendChild(row);
+}
+
 /* EMPRUNTS */
 let activeLoanIndex=-1;
 function getLoanMeta(item){
@@ -3528,7 +3694,7 @@ function renderOptionalAssetCategorySections(){
         </div>
       </div>
       <div class="rows-container" data-key="${c.key}"></div>
-      <button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>
+      ${c.key==='crypto'?'':`<button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>`}
     </div>`;
   }).join('');
 
@@ -3553,6 +3719,7 @@ function renderChartSeriesControls(){
 /* RENDU */
 function render(){
   ensureAssetCategoryData();
+  if(getActiveAssetCategoryKeys().includes('crypto'))syncOkxBtcToCryptoData();
   renderOptionalAssetCategorySections();
   renderChartSeriesControls();
 
@@ -3577,6 +3744,10 @@ function render(){
     if(key==='dettes'){renderLoanCards(cont);return;}
     if(key==='bourse'){
       data.bourse.forEach((item,idx)=>renderStockRow(item,idx,cont));
+      return;
+    }
+    if(key==='crypto'){
+      renderCryptoBtcRow(cont);
       return;
     }
 
