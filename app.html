@@ -513,7 +513,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-day-name{font-size:14px;font-weight:800;color:#f0f6fc;text-transform:capitalize}
 .menu-day-date{font-size:11px;color:#8b949e}
 .menu-meals{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.menu-meal{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:9px}
+.menu-meal{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:9px;display:flex;flex-direction:column;min-height:112px}
 .menu-meal-label{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;font-weight:800;margin-bottom:5px}
 .menu-meal input{
   width:100%;min-height:42px;border:0;background:transparent;color:#e6edf3;
@@ -535,7 +535,9 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-dish-option:hover,.menu-dish-option:focus{background:#21262d;outline:none}
 .menu-dish-count{color:#8b949e;font-size:11px;white-space:nowrap}
 .menu-dish-empty{padding:9px 10px;color:#8b949e;font-size:12px}
-.menu-recipe-row{display:flex;align-items:center;gap:8px;margin-top:6px;min-height:22px}
+.menu-recipe-row{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:6px;min-height:22px;width:100%;justify-content:space-between}
+.menu-recipe-left{display:flex;align-items:center;justify-content:flex-start;min-width:0}
+.menu-recipe-right{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}
 .menu-recipe-link,.menu-recipe-edit{
   border:0;background:transparent;font:inherit;cursor:pointer;padding:2px 0
 }
@@ -556,6 +558,13 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-ingredients-btn:hover{text-decoration:underline}
 .menu-ingredients-wait{font-size:11px;color:#8b949e}
 .recipe-ingredients-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.recipe-ingredients-editor{
+  width:100%;min-height:180px;resize:vertical;background:#0d1117;color:#e6edf3;
+  border:1px solid #30363d;border-radius:10px;padding:10px;font:inherit;font-size:13px;
+  line-height:1.45;outline:none
+}
+.recipe-ingredients-editor:focus{border-color:#58a6ff}
+.recipe-ingredients-help{font-size:11px;color:#8b949e;margin-top:6px}
 .recipe-ingredient-item{
   display:flex;gap:9px;align-items:flex-start;padding:9px 10px;
   background:#0d1117;border:1px solid #21262d;border-radius:9px;font-size:13px
@@ -579,6 +588,45 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-week-badge{
   font-size:10px;font-weight:800;color:#8b949e;background:#161b22;
   border:1px solid #30363d;border-radius:999px;padding:4px 7px;white-space:nowrap
+}
+.menu-week-nav{display:flex;align-items:center;gap:6px}
+.menu-week-jump{
+  border:0;background:transparent;color:#58a6ff;font:inherit;font-size:10px;
+  font-weight:800;padding:4px 2px;cursor:pointer;white-space:nowrap
+}
+.menu-week-jump:hover{text-decoration:underline}
+.menu-shopping-action{
+  display:flex;justify-content:flex-start;padding:8px 2px 2px
+}
+.menu-shopping-btn{
+  border:1px solid #238636;background:#238636;color:#fff;border-radius:9px;
+  padding:8px 11px;font:inherit;font-size:12px;font-weight:800;cursor:pointer
+}
+.menu-shopping-btn:hover{filter:brightness(1.08)}
+.shopping-summary{
+  display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px
+}
+.shopping-summary-badge{
+  font-size:11px;color:#c9d1d9;background:#161b22;border:1px solid #30363d;
+  border-radius:999px;padding:4px 8px
+}
+.shopping-list{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.shopping-item{
+  display:flex;align-items:flex-start;gap:9px;padding:9px 10px;background:#0d1117;
+  border:1px solid #21262d;border-radius:9px;font-size:13px
+}
+.shopping-item input{margin-top:2px;accent-color:#238636}
+.shopping-item.checked span{text-decoration:line-through;color:#8b949e}
+.shopping-count{
+  margin-left:auto;color:#8b949e;font-size:11px;font-weight:800;white-space:nowrap
+}
+.shopping-item-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.shopping-item-dishes{
+  color:#8b949e;font-size:11px;line-height:1.3;font-style:italic
+}
+.shopping-missing{
+  margin-top:12px;padding:9px 10px;border:1px solid #6e5200;background:#2d2200;
+  border-radius:9px;color:#e3b341;font-size:12px
 }
 
 
@@ -2233,6 +2281,9 @@ function ensureMenuDishStat(label){
     if(clean)data.menus.dishStats[key].label=clean;
     if(data.menus.dishStats[key].recipeUrl===undefined)data.menus.dishStats[key].recipeUrl='';
   }
+  if(!Array.isArray(data.menus.dishStats[key].manualIngredients)){
+    data.menus.dishStats[key].manualIngredients=[];
+  }
   return data.menus.dishStats[key];
 }
 function getMenuRecipeUrl(label){
@@ -2267,43 +2318,159 @@ function getExtractedRecipeData(label){
   }
   return null;
 }
-function menuIngredientsHtml(label){
-  const url=getMenuRecipeUrl(label);
-  if(!url)return '';
+function getManualMenuIngredients(label){
+  const key=normalizeMenuDish(label);
+  const stat=key && data.menus?.dishStats ? data.menus.dishStats[key] : null;
+  return stat && Array.isArray(stat.manualIngredients)
+    ? stat.manualIngredients.map(x=>String(x||'').trim()).filter(Boolean)
+    : [];
+}
+function getEffectiveMenuIngredients(label){
+  const manual=getManualMenuIngredients(label);
+  if(manual.length){
+    return {ingredients:manual,source:'manual',title:String(label||'')};
+  }
+
   const rec=getExtractedRecipeData(label);
   if(rec && rec.status==='ok' && Array.isArray(rec.ingredients) && rec.ingredients.length){
+    return {
+      ingredients:rec.ingredients.map(x=>String(x||'').trim()).filter(Boolean),
+      source:'online',
+      title:rec.title || String(label||'')
+    };
+  }
+
+  return {ingredients:[],source:'none',title:String(label||'')};
+}
+function menuIngredientsHtml(label){
+  const clean=String(label||'').trim();
+  if(!clean)return '';
+
+  const effective=getEffectiveMenuIngredients(clean);
+  if(effective.ingredients.length){
     return `<button type="button" class="menu-ingredients-btn"
-      onclick="openMenuIngredients(${JSON.stringify(String(label||'')).replace(/"/g,'&quot;')})">
-      🧺 Ingrédients (${rec.ingredients.length})
+      onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})">
+      🧺 Ingrédients (${effective.ingredients.length})
     </button>`;
   }
-  if(rec && rec.status==='error'){
-    return `<span class="menu-ingredients-wait" title="${escapeHtml(String(rec.error||''))}">⚠️ ingrédients non récupérés</span>`;
-  }
-  return `<span class="menu-ingredients-wait">⏳ ingrédients en attente</span>`;
-}
-function openMenuIngredients(label){
-  const rec=getExtractedRecipeData(label);
-  if(!rec || !Array.isArray(rec.ingredients) || !rec.ingredients.length)return;
 
+  const rec=getExtractedRecipeData(clean);
+  const url=getMenuRecipeUrl(clean);
+  if(url && rec && rec.status==='error'){
+    return `<button type="button" class="menu-ingredients-btn"
+      onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})"
+      title="${escapeHtml(String(rec.error||''))}">
+      🧺 Saisir les ingrédients
+    </button>`;
+  }
+
+  if(url && !rec){
+    return `<button type="button" class="menu-ingredients-btn"
+      onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})">
+      🧺 Ingrédients
+    </button>`;
+  }
+
+  return `<button type="button" class="menu-ingredients-btn"
+    onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})">
+    🧺 Ingrédients
+  </button>`;
+}
+
+let menuIngredientsEditingLabel='';
+
+function openMenuIngredients(label){
+  const clean=String(label||'').trim();
+  if(!clean)return;
+
+  menuIngredientsEditingLabel=clean;
   const modal=document.getElementById('menuIngredientsModal');
   const title=document.getElementById('menuIngredientsTitle');
   const source=document.getElementById('menuIngredientsSource');
-  const list=document.getElementById('menuIngredientsList');
+  const editor=document.getElementById('menuIngredientsEditor');
+  const resetBtn=document.getElementById('menuIngredientsResetBtn');
 
-  title.textContent=rec.title || label || 'Ingrédients';
-  source.textContent=label && rec.title && label!==rec.title ? `Plat : ${label}` : '';
-  list.innerHTML=rec.ingredients.map(x=>`<div class="recipe-ingredient-item"><span>•</span><span>${escapeHtml(String(x))}</span></div>`).join('');
+  const manual=getManualMenuIngredients(clean);
+  const rec=getExtractedRecipeData(clean);
+  const online=(rec && rec.status==='ok' && Array.isArray(rec.ingredients))
+    ? rec.ingredients.map(x=>String(x||'').trim()).filter(Boolean)
+    : [];
+
+  title.textContent=`🧺 Ingrédients · ${clean}`;
+
+  if(manual.length){
+    source.textContent='Saisie manuelle';
+    editor.value=manual.join('\n');
+    resetBtn.style.display=online.length?'inline-flex':'none';
+    resetBtn.textContent='↺ Reprendre la recette en ligne';
+  }else if(online.length){
+    source.textContent='Récupérés depuis la recette en ligne · modifiables';
+    editor.value=online.join('\n');
+    resetBtn.style.display='none';
+  }else{
+    source.textContent='Un ingrédient par ligne';
+    editor.value='';
+    resetBtn.style.display='none';
+  }
+
   modal.classList.add('active');
+  setTimeout(()=>editor.focus(),80);
 }
+
 function closeMenuIngredientsModal(){
   const modal=document.getElementById('menuIngredientsModal');
   if(modal)modal.classList.remove('active');
+  menuIngredientsEditingLabel='';
 }
+
+function saveMenuIngredientsManual(){
+  const label=menuIngredientsEditingLabel;
+  if(!label)return;
+
+  const editor=document.getElementById('menuIngredientsEditor');
+  const items=String(editor?.value||'')
+    .split(/\r?\n/)
+    .map(x=>x.trim())
+    .filter(Boolean);
+
+  const stat=ensureMenuDishStat(label);
+  if(!stat)return;
+
+  const rec=getExtractedRecipeData(label);
+  const online=(rec && rec.status==='ok' && Array.isArray(rec.ingredients))
+    ? rec.ingredients.map(x=>String(x||'').trim()).filter(Boolean)
+    : [];
+
+  // Si le contenu est identique à l'extraction automatique, on ne crée pas
+  // inutilement une surcharge manuelle.
+  const sameAsOnline=
+    items.length===online.length &&
+    items.every((x,i)=>x===online[i]);
+
+  stat.manualIngredients=sameAsOnline ? [] : items;
+
+  save();
+  closeMenuIngredientsModal();
+  renderMenus();
+}
+
+function resetMenuIngredientsToOnline(){
+  const label=menuIngredientsEditingLabel;
+  if(!label)return;
+  const stat=ensureMenuDishStat(label);
+  if(stat)stat.manualIngredients=[];
+  save();
+  closeMenuIngredientsModal();
+  renderMenus();
+}
+
 function copyMenuIngredients(){
-  const modal=document.getElementById('menuIngredientsModal');
-  const title=document.getElementById('menuIngredientsTitle')?.textContent||'Recette';
-  const lines=[...modal.querySelectorAll('.recipe-ingredient-item span:last-child')].map(x=>x.textContent);
+  const editor=document.getElementById('menuIngredientsEditor');
+  const title=menuIngredientsEditingLabel || 'Recette';
+  const lines=String(editor?.value||'')
+    .split(/\r?\n/)
+    .map(x=>x.trim())
+    .filter(Boolean);
   const payload=title+'\\n\\n'+lines.map(x=>'• '+x).join('\\n');
   if(navigator.clipboard?.writeText){
     navigator.clipboard.writeText(payload).then(()=>alert('Liste copiée.')).catch(()=>{});
@@ -2329,14 +2496,19 @@ function menuRecipeHtml(cycleKey,mealKey,label){
   const url=getMenuRecipeUrl(clean);
   if(url){
     return `<div class="menu-recipe-row">
-      ${menuIngredientsHtml(clean)}
-      <button type="button" class="menu-recipe-edit"
-        onclick="editMenuRecipe('${cycleKey}','${mealKey}')">✎ lien</button>
+      <div class="menu-recipe-left">${menuIngredientsHtml(clean)}</div>
+      <div class="menu-recipe-right">
+        <button type="button" class="menu-recipe-edit"
+          onclick="editMenuRecipe('${cycleKey}','${mealKey}')">✎ lien</button>
+      </div>
     </div>`;
   }
   return `<div class="menu-recipe-row">
-    <button type="button" class="menu-recipe-link"
-      onclick="editMenuRecipe('${cycleKey}','${mealKey}')">🔗 Ajouter la recette</button>
+    <div class="menu-recipe-left">${menuIngredientsHtml(clean)}</div>
+    <div class="menu-recipe-right">
+      <button type="button" class="menu-recipe-link"
+        onclick="editMenuRecipe('${cycleKey}','${mealKey}')">🔗 Ajouter la recette</button>
+    </div>
   </div>`;
 }
 function getMealDishLabel(cycleKey,mealKey){
@@ -2438,11 +2610,25 @@ function deleteMenuRecipeLink(){
 
 document.addEventListener('keydown',e=>{
   const modal=document.getElementById('menuRecipeModal');
-  const ingredientsModal=document.getElementById('menuIngredientsModal');
-  if(ingredientsModal && ingredientsModal.classList.contains('active') && e.key==='Escape'){
+  const shoppingModal=document.getElementById('menuShoppingModal');
+  if(shoppingModal && shoppingModal.classList.contains('active') && e.key==='Escape'){
     e.preventDefault();
-    closeMenuIngredientsModal();
+    closeMenuShoppingModal();
     return;
+  }
+
+  const ingredientsModal=document.getElementById('menuIngredientsModal');
+  if(ingredientsModal && ingredientsModal.classList.contains('active')){
+    if(e.key==='Escape'){
+      e.preventDefault();
+      closeMenuIngredientsModal();
+      return;
+    }
+    if(e.key==='Enter' && (e.ctrlKey || e.metaKey)){
+      e.preventDefault();
+      saveMenuIngredientsManual();
+      return;
+    }
   }
   if(!modal || !modal.classList.contains('active'))return;
   if(e.key==='Escape'){
@@ -2464,6 +2650,159 @@ function formatMenuPeriodDate(date,withYear=false){
     ...(withYear?{year:'numeric'}:{})
   });
 }
+
+let currentShoppingList={cycleKey:'',items:[],missing:[]};
+
+function normalizeShoppingIngredient(value){
+  return String(value||'')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[’']/g,"'")
+    .replace(/\s+/g,' ');
+}
+
+function buildWeekShoppingList(cycleKey){
+  const week=data.menus?.weeks?.[cycleKey];
+  const meals=week?.meals||{};
+  const merged=new Map();
+  const missing=[];
+
+  Object.entries(meals).forEach(([mealKey,dishRaw])=>{
+    const dish=String(dishRaw||'').trim();
+    if(!dish)return;
+
+    const effective=getEffectiveMenuIngredients(dish);
+    const ingredients=Array.isArray(effective.ingredients)
+      ? effective.ingredients.map(x=>String(x||'').trim()).filter(Boolean)
+      : [];
+
+    if(!ingredients.length){
+      missing.push(dish);
+      return;
+    }
+
+    ingredients.forEach(line=>{
+      const key=normalizeShoppingIngredient(line);
+      if(!key)return;
+      const current=merged.get(key);
+      if(current){
+        current.count+=1;
+        if(!current.dishes.includes(dish))current.dishes.push(dish);
+      }else{
+        merged.set(key,{label:line,count:1,dishes:[dish]});
+      }
+    });
+  });
+
+  return {
+    items:[...merged.values()].sort((a,b)=>a.label.localeCompare(b.label,'fr',{sensitivity:'base'})),
+    missing:[...new Set(missing)].sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}))
+  };
+}
+
+function formatMenuShoppingPeriod(cycleKey){
+  const start=menuDateFromKey(cycleKey);
+  const end=menuAddDays(start,7);
+  return `Du ${formatMenuPeriodDate(start)} au ${formatMenuPeriodDate(end,true)}`;
+}
+
+function openWeekShoppingList(cycleKey){
+  const built=buildWeekShoppingList(cycleKey);
+  currentShoppingList={cycleKey,items:built.items,missing:built.missing};
+
+  const modal=document.getElementById('menuShoppingModal');
+  const title=document.getElementById('menuShoppingTitle');
+  const period=document.getElementById('menuShoppingPeriod');
+  const summary=document.getElementById('menuShoppingSummary');
+  const list=document.getElementById('menuShoppingList');
+  const missing=document.getElementById('menuShoppingMissing');
+
+  title.textContent='🛒 Liste de courses';
+  period.textContent=formatMenuShoppingPeriod(cycleKey);
+
+  const totalLines=built.items.reduce((sum,item)=>sum+item.count,0);
+  summary.innerHTML=`
+    <span class="shopping-summary-badge">${built.items.length} ingrédient${built.items.length>1?'s':''} distinct${built.items.length>1?'s':''}</span>
+    <span class="shopping-summary-badge">${totalLines} ligne${totalLines>1?'s':''} de recette</span>
+  `;
+
+  if(built.items.length){
+    list.innerHTML=built.items.map((item,index)=>`
+      <label class="shopping-item" id="shoppingItem_${index}">
+        <input type="checkbox" onchange="toggleShoppingItem(${index},this.checked)">
+        <span class="shopping-item-main">
+          <span>${escapeHtml(item.label)}</span>
+          <span class="shopping-item-dishes">${escapeHtml(item.dishes.join(' · '))}</span>
+        </span>
+        ${item.count>1?`<span class="shopping-count">×${item.count}</span>`:''}
+      </label>
+    `).join('');
+  }else{
+    list.innerHTML='<div class="muted" style="padding:12px 2px">Aucun ingrédient renseigné pour cette semaine.</div>';
+  }
+
+  if(built.missing.length){
+    missing.style.display='block';
+    missing.innerHTML=`⚠️ ${built.missing.length} plat${built.missing.length>1?'s':''} sans ingrédients : ${built.missing.map(escapeHtml).join(', ')}`;
+  }else{
+    missing.style.display='none';
+    missing.innerHTML='';
+  }
+
+  modal.classList.add('active');
+}
+
+function closeMenuShoppingModal(){
+  const modal=document.getElementById('menuShoppingModal');
+  if(modal)modal.classList.remove('active');
+}
+
+function toggleShoppingItem(index,checked){
+  const row=document.getElementById(`shoppingItem_${index}`);
+  if(row)row.classList.toggle('checked',!!checked);
+}
+
+function toggleAllShoppingItems(){
+  const boxes=[...document.querySelectorAll('#menuShoppingList input[type="checkbox"]')];
+  if(!boxes.length)return;
+  const shouldCheck=boxes.some(box=>!box.checked);
+  boxes.forEach((box,index)=>{
+    box.checked=shouldCheck;
+    toggleShoppingItem(index,shouldCheck);
+  });
+}
+
+function copyWeekShoppingList(){
+  const {items,missing,cycleKey}=currentShoppingList;
+  if(!cycleKey)return;
+
+  const lines=[
+    'Liste de courses',
+    formatMenuShoppingPeriod(cycleKey),
+    '',
+    ...items.map(item=>`☐ ${item.label}${item.count>1?` ×${item.count}`:''} — ${item.dishes.join(' · ')}`)
+  ];
+
+  if(missing.length){
+    lines.push('','Plats sans ingrédients : '+missing.join(', '));
+  }
+
+  const payload=lines.join('\n');
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(payload)
+      .then(()=>alert('Liste de courses copiée.'))
+      .catch(()=>{});
+  }
+}
+
+function jumpToMenuWeek(index){
+  const el=document.getElementById(`menuWeek${index+1}`);
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function renderMenuWeek(cycleKey,index){
   const week=data.menus.weeks[cycleKey];
   const meals=week.meals||{};
@@ -2485,10 +2824,19 @@ function renderMenuWeek(cycleKey,index){
   const heading=`Du ${formatMenuPeriodDate(start)} au ${formatMenuPeriodDate(end,true)}`;
 
   return `
-    <section class="menu-week-block">
+    <section class="menu-week-block" id="menuWeek${index+1}">
       <div class="menu-week-heading">
         <div class="menu-week-title">${escapeHtml(heading)}</div>
-        <div class="menu-week-badge">${badge}</div>
+        <div class="menu-week-nav">
+          <div class="menu-week-badge">${badge}</div>
+          ${index===0
+            ? `<button type="button" class="menu-week-jump" onclick="jumpToMenuWeek(1)">→ Semaine 2</button>`
+            : `<button type="button" class="menu-week-jump" onclick="jumpToMenuWeek(0)">← Semaine 1</button>`}
+        </div>
+      </div>
+      <div class="menu-shopping-action">
+        <button type="button" class="menu-shopping-btn"
+          onclick="openWeekShoppingList('${cycleKey}')">🛒 Générer ma liste de courses</button>
       </div>
       ${days.map(day=>{
         const midiKey=menuMealKey(day.offset,'midi');
@@ -8225,9 +8573,41 @@ if(window.visualViewport){
       </div>
       <button type="button" class="btn btn-secondary" onclick="closeMenuIngredientsModal()">✕</button>
     </div>
-    <div id="menuIngredientsList" class="recipe-ingredients-list"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:14px">
-      <button type="button" class="btn btn-secondary" onclick="copyMenuIngredients()">Copier la liste</button>
+
+    <textarea id="menuIngredientsEditor"
+      class="recipe-ingredients-editor"
+      placeholder="500 g de viande hachée&#10;1 oignon&#10;400 g de tomates concassées"></textarea>
+    <div class="recipe-ingredients-help">Un ingrédient par ligne. Les quantités peuvent être écrites directement dans le texte.</div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-secondary" onclick="copyMenuIngredients()">Copier</button>
+        <button id="menuIngredientsResetBtn" type="button" class="btn btn-secondary"
+          style="display:none" onclick="resetMenuIngredientsToOnline()">↺ Reprendre la recette en ligne</button>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="saveMenuIngredientsManual()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="menuShoppingModal" class="modal-overlay" onclick="if(event.target===this)closeMenuShoppingModal()">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div>
+        <div id="menuShoppingTitle" class="modal-title">🛒 Liste de courses</div>
+        <div id="menuShoppingPeriod" class="muted" style="margin-top:2px"></div>
+      </div>
+      <button type="button" class="btn btn-secondary" onclick="closeMenuShoppingModal()">✕</button>
+    </div>
+
+    <div id="menuShoppingSummary" class="shopping-summary"></div>
+    <div id="menuShoppingList" class="shopping-list"></div>
+    <div id="menuShoppingMissing" class="shopping-missing" style="display:none"></div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:14px">
+      <button type="button" class="btn btn-secondary" onclick="toggleAllShoppingItems()">☑ Tout cocher</button>
+      <button type="button" class="btn btn-primary" onclick="copyWeekShoppingList()">Copier la liste</button>
     </div>
   </div>
 </div>
