@@ -217,6 +217,9 @@ body.hide-amounts .invoice-amount::after{content:"***";color:#c9d1d9;position:ab
 .budget-line-main{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .budget-line-account{display:flex;align-items:center;gap:5px;color:#8b949e;font-size:10px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .budget-line-account .bank-dot{width:6px;height:6px}
+.budget-line-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}.budget-category-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:2px 6px;border-radius:999px;background:#21262d;border:1px solid #30363d;color:#8b949e;font-size:9px;font-weight:800;line-height:1.25}.budget-category-badge.auto{color:#c9d1d9}.budget-category-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:14px;outline:none}.budget-category-hint{font-size:10px;color:#8b949e;line-height:1.35;margin-top:3px}
+.history-category-select{display:block;width:max-content;max-width:100%;margin-top:5px;padding:3px 24px 3px 6px;background:#161b22;border:1px solid #30363d;border-radius:999px;color:#c9d1d9;font-size:9px;font-weight:800;outline:none}.history-category-audit{padding:9px 10px;border-radius:9px;font-size:11px;font-weight:700;line-height:1.4}.history-category-audit.ok{background:rgba(35,134,54,.10);border:1px solid rgba(63,185,80,.28);color:#3fb950}.history-category-audit.warn{background:rgba(210,153,34,.10);border:1px solid rgba(210,153,34,.30);color:#d29922}
+.history-search-results{display:flex;flex-direction:column;gap:8px}.history-search-result{width:100%;border:1px solid #30363d;background:#0d1117;border-radius:10px;padding:10px 11px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;text-align:left;color:#e6edf3;cursor:pointer}.history-search-result:hover{background:#21262d}.history-search-result:active{background:#30363d}.history-search-result-label{font-size:13px;font-weight:800;color:#fff;overflow-wrap:anywhere}.history-search-result-amount{font-size:13px;font-weight:800;color:#c9d1d9;white-space:nowrap}.history-search-result-meta{grid-column:1/-1;font-size:10px;color:#8b949e;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.history-search-result-type{display:inline-flex;padding:2px 6px;border-radius:999px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;font-weight:700}.history-search-target{position:relative;background:rgba(88,166,255,.14)!important;outline:2px solid #58a6ff;outline-offset:-2px;border-radius:8px;animation:historySearchTargetPulse 1s ease-in-out 3}.history-search-target::before{content:'Résultat recherché';position:absolute;right:6px;top:4px;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.35px;color:#58a6ff;background:#0d1117;border:1px solid rgba(88,166,255,.45);border-radius:999px;padding:2px 5px}@keyframes historySearchTargetPulse{0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,0)}50%{box-shadow:0 0 0 5px rgba(88,166,255,.13)}}@media(prefers-reduced-motion:reduce){.history-search-target{animation:none}}
 .bank-select{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}
 .bank-account-settings{display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow-y:auto}
 .bank-account-setting-row{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto 36px;gap:8px;align-items:center}
@@ -443,6 +446,22 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <select id="modalAccount" class="bank-select"></select>
     </div>
 
+    <div class="modal-field">
+      <label>Type d’enregistrement</label>
+      <select id="modalBudgetType" class="budget-category-select">
+        <option value="budgetDepenses">Dépense</option>
+        <option value="budgetFixes">Frais fixe</option>
+        <option value="budgetRevenus">Entrée</option>
+      </select>
+      <div class="budget-category-hint">Tu peux déplacer une ligne d’un onglet à l’autre sans la supprimer.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Catégorie</label>
+      <select id="modalCategory" class="budget-category-select"></select>
+      <div id="modalCategoryHint" class="budget-category-hint">Détectée automatiquement d’après le libellé. Tu peux la modifier à tout moment.</div>
+    </div>
+
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Annuler</button>
       <button class="btn btn-primary" id="modalSubmitBtn" style="flex:1" onclick="submitModal()">Ajouter</button>
@@ -502,7 +521,11 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <h3 id="historyMonthTitle">Mois clôturé</h3>
     <input type="text" id="historyModalSearchInput" placeholder="🔍 Rechercher dans ce mois (libellé, montant)..." oninput="filterHistoryMonthModal()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;">
     <div id="historyMonthContent" style="overflow-y:auto;display:flex;flex-direction:column;gap:14px;"></div>
-    <div class="modal-buttons"><button class="btn btn-secondary" style="flex:1;" onclick="closeHistoryMonthModal()">Fermer</button></div>
+    <div class="modal-buttons" style="flex-wrap:wrap;">
+      <button class="btn btn-secondary" style="flex:1;min-width:105px;" onclick="printHistoryMonth()">🖨️ Imprimer</button>
+      <button class="btn btn-secondary" style="flex:1;min-width:105px;" onclick="shareHistoryMonth()">↗️ Partager</button>
+      <button class="btn btn-secondary" style="flex:1;min-width:105px;" onclick="closeHistoryMonthModal()">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -1377,6 +1400,160 @@ function ensureBankingData(){
   ['budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
     if(!Array.isArray(data[key]))data[key]=[];
     data[key].forEach(item=>{
+/* =========================================================
+   CATÉGORISATION AUTOMATIQUE DU BUDGET
+   item[5] = identifiant de catégorie. Les anciens éléments restent compatibles.
+   ========================================================= */
+const BUDGET_EXPENSE_CATEGORIES=[
+  {id:'courses',label:'🛒 Courses'},
+  {id:'logement',label:'🏠 Logement & énergie'},
+  {id:'maison',label:'🛠️ Maison & travaux'},
+  {id:'transport',label:'🚗 Transport'},
+  {id:'enfants',label:'🎓 Enfants & éducation'},
+  {id:'sante',label:'💊 Santé & beauté'},
+  {id:'restaurants',label:'🍽️ Restaurants & sorties'},
+  {id:'loisirs',label:'🛍️ Loisirs & achats'},
+  {id:'abonnements',label:'📱 Abonnements & services'},
+  {id:'epargne',label:'💰 Épargne & investissement'},
+  {id:'credits',label:'🏦 Crédits & assurances'},
+  {id:'impots',label:'🧾 Impôts & taxes'},
+  {id:'autres',label:'📦 Autres'}
+];
+const BUDGET_INCOME_CATEGORIES=[
+  {id:'salaire',label:'💼 Salaire / solde'},
+  {id:'prestations',label:'👨‍👩‍👧 Prestations'},
+  {id:'remboursement',label:'↩️ Remboursement'},
+  {id:'revenus_financiers',label:'📈 Revenus financiers'},
+  {id:'exceptionnel',label:'✨ Revenu exceptionnel'},
+  {id:'autres',label:'📦 Autres'}
+];
+const BUDGET_KEYWORDS={
+  courses:['carrefour','carrefour market','leclerc','e leclerc','lidl','aldi','intermarche','super u','hyper u','u express','auchan','monoprix','franprix','casino','netto','biocoop','picard','grand frais','leader price','cora','match','spar','vival','proxi','naturalia','la vie claire','thiriet','metro france','costco','marche frais','primeur','boucherie','boulangerie'],
+  logement:['edf','engie','enedis','gaz tarif','eau du ponant','veolia','suez eau','saur','eau potable','electricite','gaz','chauffage','fioul','granules','pellets','loyer','charges copro','copropriete'],
+  maison:['leroy merlin','castorama','brico depot','bricodepot','bricomarche','mr bricolage','weldom','ikea','maisons du monde','maison du monde','conforama','but ','but.fr','jysk','action','gifi','b&m','centrakor','la foir fouille','foir fouille','manomano','brico cash','lapeyre','point p','chausson materiaux','gedimat','saint maclou','4 murs','alinea','zodio','habitat','homebox'],
+  transport:['totalenergies','total access','total ','esso','shell','avia','bp ','dyneff','eni ','agip','station service','carburant','essence','gazole','diesel','sans plomb','sp95','sp98','e10','e85','adblue','norauto','feu vert','midas','speedy','carter cash','road y','euromaster','first stop','allopneus','1001 pneus','vroomly','autodoc','oscaro','mister auto','parking','indigo','effia','vinci autoroutes','ulys','bip&go','peage','sncf','ouigo','blablacar','ratp','bibus','tan nantes','ter bretagne','uber','bolt'],
+  enfants:['ecole','college','lycee','cantine','scolarite','fournitures scolaires','papeterie','auto ecole','auto-ecole','permis ewan','permis','pension scolaire','internat','garderie','creche','centre loisirs','centre de loisirs','activite enfant'],
+  sante:['pharmacie','parapharmacie','doctolib','medecin','dentiste','orthodont','kine','osteopathe','opticien','krys','afflelou','optical center','generale d optique','grandoptical','sephora','marionnaud','nocibe','yves rocher','coiffeur','barbier','epilation','body minute','institut beaute','mutuelle'],
+  restaurants:['mcdonald','mcdo','burger king','kfc','subway','dominos','domino s','pizza hut','buffalo grill','courtepaille','flunch','quick','sushi shop','del arte','bistro regent','hippopotamus','restaurant','brasserie','creperie','pizzeria','uber eats','ubereats','deliveroo','just eat','bar ','cafe ','starbucks','columbus cafe'],
+  loisirs:['amazon','amzn','fnac','darty','boulanger','cdiscount','electro depot','apple store','decathlon','intersport','go sport','kiabi','gemo','h&m','zara','celio','jules','cache cache','bonobo','uniqlo','primark','lacoste','armor lux','armor-lux','levis','levi s','courir','foot locker','zalando','veepee','vinted','tissot','yema','cinema','cineville','pathe','ugc','bowling','parc attraction','futuroscope','disneyland','puy du fou','librairie','joueclub','joue club','king jouet','cultura'],
+  abonnements:['netflix','spotify','deezer','disney+','disney plus','prime video','amazon prime','canal+','canal plus','youtube premium','apple music','icloud','google one','microsoft 365','office 365','orange','sosh','sfr','red by sfr','red sfr','bouygues telecom','b&you','b and you','free mobile','freebox','box internet','internet','telephone mobile','forfait mobile'],
+  epargne:['pea','trade republic','assurance vie','assurance-vie','linxea','livret a','ldds','lep ','lep','epargne','investissement','boursorama bourse','fortuneo bourse','binance','coinbase','okx','crypto','bitcoin','btc','scpi'],
+  credits:['credit immobilier','pret immobilier','emprunt immobilier','credit voiture','credit auto','pret auto','emprunt veranda','pret veranda','mensualite credit','assurance emprunteur','assurance auto','assurance habitation','maif','macif','matmut','mma','axa','allianz','groupama','generali','direct assurance','l olivier assurance'],
+  impots:['impot','impots','taxe fonciere','taxe habitation','dgfip','finances publiques','tresor public','prelevement a la source'],
+  salaire:['salaire','solde marine','solde','traitement','paie','remuneration','employeur'],
+  prestations:['caf','allocations familiales','allocation','paje','apl','msa'],
+  remboursement:['remboursement','rembours','indemnite','indemnisation','avoir ','securite sociale','cpam','ameli'],
+  revenus_financiers:['interets','interet livret','dividende','coupon','loyer recu','revenus scpi'],
+  exceptionnel:['prime','vente ','cession ','heritage','donation','gain exceptionnel']
+};
+function normalizeBudgetText(value){
+  return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9+&]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function budgetTextHas(text,keyword){
+  const k=normalizeBudgetText(keyword); if(!k)return false;
+  return (` ${text} `).includes(` ${k} `)||text.includes(k);
+}
+function getBudgetCategories(key){return key==='budgetRevenus'?BUDGET_INCOME_CATEGORIES:BUDGET_EXPENSE_CATEGORIES;}
+function getBudgetCategoryLabel(key,id){return getBudgetCategories(key).find(c=>c.id===id)?.label||getBudgetCategories(key).find(c=>c.id==='autres')?.label||'Autres';}
+function getVehicleKeywords(){
+  ensureVehicleData();
+  const words=[];
+  (data.garageVehicles||[]).forEach(v=>{
+    [v.make,v.model,v.registration].forEach(x=>{const n=normalizeBudgetText(x);if(n&&n.length>=2)words.push(n);});
+    const both=normalizeBudgetText([v.make,v.model].filter(Boolean).join(' '));if(both)words.push(both);
+  });
+  return [...new Set(words)];
+}
+function detectBudgetCategory(key,label){
+  const text=normalizeBudgetText(label);
+  if(!text)return 'autres';
+  if(key==='budgetRevenus'){
+    for(const id of ['remboursement','prestations','revenus_financiers','exceptionnel','salaire']){
+      if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;
+    }
+    return 'autres';
+  }
+  // Priorité au contexte véhicule : Carrefour + Skoda/Hyundai/etc. = carburant/transport.
+  const vehicleMatch=getVehicleKeywords().some(k=>budgetTextHas(text,k));
+  const fuelOrStation=[...(BUDGET_KEYWORDS.transport||[]),...(BUDGET_KEYWORDS.courses||[])].some(k=>budgetTextHas(text,k));
+  if(vehicleMatch&&fuelOrStation)return 'transport';
+  const priorities=['epargne','credits','impots','sante','enfants','abonnements','transport','restaurants','maison','logement','courses','loisirs'];
+  for(const id of priorities){if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;}
+  return 'autres';
+}
+function getItemBudgetCategory(key,item){return (Array.isArray(item)&&item[5])?String(item[5]):detectBudgetCategory(key,Array.isArray(item)?item[0]:'');}
+function ensureHistoricalBudgetCategories(){
+  let changed=0,total=0,other=0;
+  const sections=[['revenusDetails','budgetRevenus'],['fixesDetails','budgetFixes'],['depensesDetails','budgetDepenses']];
+  (monthHistory||[]).forEach(month=>{
+    sections.forEach(([detailsKey,budgetKey])=>{
+      (month?.[detailsKey]||[]).forEach(item=>{
+        if(!Array.isArray(item))return;
+        total++;
+        if(!item[5]){item[5]=detectBudgetCategory(budgetKey,item[0]);changed++;}
+        if(String(item[5]||'autres')==='autres')other++;
+      });
+    });
+  });
+  if(changed){
+    try{localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));}catch{}
+    window.monthHistory=monthHistory;
+  }
+  return {changed,total,other};
+}
+function updateHistoricalBudgetCategory(detailsKey,itemIndex,budgetKey,newCategory){
+  if(currentOpenedHistoryIndex===null)return;
+  const month=monthHistory[currentOpenedHistoryIndex];
+  const item=month?.[detailsKey]?.[itemIndex];
+  if(!Array.isArray(item))return;
+  const allowed=getBudgetCategories(budgetKey).some(c=>c.id===newCategory);
+  item[5]=allowed?newCategory:'autres';
+  save();
+  renderHistory();
+  renderHistoryMonthModalContent(month);
+}
+function historicalCategoryAudit(month){
+  const sections=[['revenusDetails','budgetRevenus'],['fixesDetails','budgetFixes'],['depensesDetails','budgetDepenses']];
+  let total=0,other=0;
+  sections.forEach(([detailsKey,budgetKey])=>{
+    (month?.[detailsKey]||[]).forEach(item=>{
+      if(!Array.isArray(item))return;
+      total++;
+      const cat=item[5]||detectBudgetCategory(budgetKey,item[0]);
+      if(cat==='autres')other++;
+    });
+  });
+  return {total,other};
+}
+function populateBudgetCategorySelect(key,selectedId=''){
+  const select=document.getElementById('modalCategory');if(!select)return;
+  const cats=getBudgetCategories(key);const selected=cats.some(c=>c.id===selectedId)?selectedId:'autres';
+  select.innerHTML=cats.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');select.value=selected;
+}
+function getModalBudgetType(){
+  return document.getElementById('modalBudgetType')?.value||activeModalKey||'budgetDepenses';
+}
+function updateModalCategorySuggestion(force=false){
+  const key=getModalBudgetType();
+  if(!key)return;
+  const label=document.getElementById('modalLabel')?.value||'';
+  const select=document.getElementById('modalCategory');if(!select)return;
+  if(force||select.dataset.manual!=='1')select.value=detectBudgetCategory(key,label);
+}
+function syncModalBudgetType(key,{resetCategory=false}={}){
+  const typeSelect=document.getElementById('modalBudgetType');
+  if(typeSelect)typeSelect.value=key;
+  const categorySelect=document.getElementById('modalCategory');
+  const label=document.getElementById('modalLabel')?.value||'';
+  if(categorySelect){
+    if(resetCategory)categorySelect.dataset.manual='0';
+    const current=categorySelect.value;
+    const cats=getBudgetCategories(key);
+    const keep=!resetCategory&&cats.some(c=>c.id===current);
+    populateBudgetCategorySelect(key,keep?current:detectBudgetCategory(key,label));
+  }
+}
+
       if(!Array.isArray(item))return;
       const accountExists=data.bankAccounts.some(a=>a.id===item[3]);
       if(!accountExists)item[3]=fallbackAccountId;
@@ -1388,6 +1565,7 @@ function ensureBankingData(){
 }
 
 ensureBankingData();
+ensureHistoricalBudgetCategories();
 
 window.prepareBetaUserSession=function(){
   // Non utilisé en version personnelle : l'espace reste le document partagé historique.
@@ -1421,6 +1599,7 @@ window.applyFirebaseState=function(remote){
   if(!Array.isArray(data.factures))data.factures=[];
   ensureBankingData();
   if(remote.monthHistory)monthHistory=remote.monthHistory;
+  ensureHistoricalBudgetCategories();
   if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
   if(typeof remote.annotations==='string')annotations=remote.annotations;
   window.data=data;
@@ -2248,10 +2427,16 @@ function openModal(key){
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
   const accountSelect=document.getElementById('modalAccount');
+  const typeSelect=document.getElementById('modalBudgetType');
 
   labelInput.value='';
   amountInput.value='';
   populateBankSelect(accountSelect,localStorage.getItem('finaryLastBudgetAccount')||'fortuneo');
+  if(typeSelect){typeSelect.value=key;typeSelect.onchange=()=>syncModalBudgetType(typeSelect.value,{resetCategory:true});}
+  const categorySelect=document.getElementById('modalCategory');
+  if(categorySelect){categorySelect.dataset.manual='0';populateBudgetCategorySelect(key,detectBudgetCategory(key,''));}
+  labelInput.oninput=()=>updateModalCategorySuggestion(false);
+  if(categorySelect)categorySelect.onchange=()=>{categorySelect.dataset.manual='1';};
   labelInput.placeholder='Ex: Loyer, Salaire, Courses...';
   amountInput.placeholder='0';
 
@@ -2288,12 +2473,17 @@ function openBudgetEditModal(key,index){
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
   const accountSelect=document.getElementById('modalAccount');
+  const typeSelect=document.getElementById('modalBudgetType');
 
   /* Comme dans Patrimoine : les valeurs actuelles sont directement préremplies. */
   labelInput.value=item[0] || '';
   const currentAmount=Number(item[1]||0);
   amountInput.value=Number.isFinite(currentAmount)?currentAmount:'';
   populateBankSelect(accountSelect,item[3]||'ca');
+  if(typeSelect){typeSelect.value=key;typeSelect.onchange=()=>syncModalBudgetType(typeSelect.value,{resetCategory:true});}
+  const categorySelect=document.getElementById('modalCategory');
+  if(categorySelect){categorySelect.dataset.manual='1';populateBudgetCategorySelect(key,getItemBudgetCategory(key,item));categorySelect.onchange=()=>{categorySelect.dataset.manual='1';};}
+  labelInput.oninput=()=>{};
 
   labelInput.placeholder='Modifier le libellé';
   amountInput.placeholder='0';
@@ -2358,6 +2548,16 @@ function submitModal(){
     }
 
     item[3]=accountId;
+    const targetKey=getModalBudgetType();
+    item[5]=document.getElementById('modalCategory')?.value||getItemBudgetCategory(targetKey,item);
+
+    // Si le type a été modifié, on déplace la ligne dans le bon onglet
+    // en conservant le libellé, le montant, l’état coché et le compte bancaire.
+    if(targetKey!==activeModalKey){
+      if(!Array.isArray(data[targetKey]))data[targetKey]=[];
+      data[activeModalKey].splice(activeModalIndex,1);
+      data[targetKey].unshift(item);
+    }
 
     closeModal();
     render();
@@ -2368,15 +2568,18 @@ function submitModal(){
   /* AJOUT */
   const amount=amountVal==='' ? 0 : Number(amountVal);
 
-  if(!data[activeModalKey]){
-    data[activeModalKey]=[];
+  const targetKey=getModalBudgetType();
+  if(!data[targetKey]){
+    data[targetKey]=[];
   }
 
-  data[activeModalKey].unshift([
+  data[targetKey].unshift([
     label,
     Number.isFinite(amount) ? amount : 0,
     false,
-    accountId
+    accountId,
+    null,
+    document.getElementById('modalCategory')?.value||detectBudgetCategory(targetKey,label)
   ]);
 
   closeModal();
@@ -2727,7 +2930,7 @@ function render(){
 
           <div class="budget-line-label" title="Cliquer pour modifier">
             <div class="budget-line-main">${escapeHtml(item[0] || 'Sans libellé')}</div>
-            <div class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</div>
+            <div class="budget-line-meta"><span class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</span><span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span></div>
           </div>
 
           <div class="budget-line-amount" title="Cliquer pour modifier">
@@ -2926,7 +3129,14 @@ function getPatrimoineReportModel(){
     {key:'dettes',label:'Emprunts'}
   ].map(c=>({
     ...c,
-    items:(data[c.key]||[]).map(i=>({label:String(i?.[0]||'Sans libellé'),amount:Number(i?.[1])||0})),
+    items:(data[c.key]||[]).map(i=>{
+      const base={label:String(i?.[0]||'Sans libellé'),amount:Number(i?.[1])||0};
+      if(c.key==='dettes'){
+        const meta=getLoanMeta(i);
+        return {...base,loanMeta:meta,progress:calculateLoanProgress(meta.initialAmount,base.amount)};
+      }
+      return base;
+    }),
     total:(data[c.key]||[]).reduce((sum,i)=>sum+(Number(i?.[1])||0),0)
   }));
 
@@ -2969,6 +3179,20 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
   `).join('');
 
   const details=model.categories.map(c=>{
+    if(c.key==='dettes'){
+      const loanCards=c.items.length ? c.items.map(i=>{
+        const meta=i.loanMeta||{};
+        const progress=Number(i.progress)||0;
+        const hasDetails=Number(meta.initialAmount)>0||meta.startDate||meta.endDate||Number(meta.monthlyPayment)>0||Number(meta.rate)>0;
+        return `<div class="loan-report-card">
+          <div class="loan-report-head"><div><strong>${esc(i.label)}</strong><div class="loan-report-sub">${Number(meta.initialAmount)>0?euro(meta.initialAmount)+' empruntés':'Montant initial non renseigné'}</div></div><div class="loan-report-current">${euro(i.amount)}<span>restant dû</span></div></div>
+          ${hasDetails?`<div class="loan-report-progress-line"><span>Avancement du remboursement</span><strong>${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</strong></div><div class="loan-report-progress"><div style="width:${Math.max(0,Math.min(100,progress))}%"></div></div>
+          <div class="loan-report-grid"><div><span>Capital emprunté</span><strong>${Number(meta.initialAmount)>0?euro(meta.initialAmount):'—'}</strong></div><div><span>Capital restant</span><strong>${euro(i.amount)}</strong></div><div><span>Taux</span><strong>${Number(meta.rate)>0?Number(meta.rate).toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div><span>Mensualité</span><strong>${Number(meta.monthlyPayment)>0?euro(meta.monthlyPayment):'—'}</strong></div><div><span>Date de début</span><strong>${esc(formatLoanDate(meta.startDate))}</strong></div><div><span>Date de fin</span><strong>${esc(formatLoanDate(meta.endDate))}</strong></div></div>`:`<div class="empty" style="padding:10px">Détails de l’emprunt non renseignés</div>`}
+        </div>`;
+      }).join('') : `<div class="empty" style="padding:10px">Aucun emprunt</div>`;
+      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="loan-report-list">${loanCards}</div></section>`;
+    }
+
     const rows=c.items.length
       ? c.items.map(i=>`<tr><td>${esc(i.label)}</td><td class="num">${euro(i.amount)}</td></tr>`).join('')
       : `<tr><td colspan="2" class="empty">Aucune ligne</td></tr>`;
@@ -3026,6 +3250,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
   .panel{border:1px solid #bbb;border-radius:9px;overflow:hidden}.panel-title{font-size:12px;font-weight:800;padding:9px 11px;background:#f2f2f2;border-bottom:1px solid #bbb}.distribution-wrap{display:flex;align-items:center;gap:12px;padding:10px}.distribution-wrap table{flex:1}.report-pie{width:92px;height:92px;border-radius:50%;flex:0 0 auto}
   table{width:100%;border-collapse:collapse}td,th{padding:7px 9px;border-bottom:1px solid #ddd;text-align:left}tr:last-child td{border-bottom:0}.num{text-align:right;font-weight:700;white-space:nowrap}.debt{color:#9b1c1c}.empty{color:#777;font-style:italic;text-align:center}
   .detail-section,.chart-section{break-inside:avoid;margin:0 0 14px;border:1px solid #bbb;border-radius:9px;overflow:hidden}.section-title{background:#f2f2f2;padding:9px 11px;display:flex;justify-content:space-between;gap:12px;font-size:12px}.detail-table td{padding:6px 11px}
+  .loan-report-list{padding:10px;display:flex;flex-direction:column;gap:10px}.loan-report-card{border:1px solid #ccc;border-radius:8px;padding:10px;break-inside:avoid}.loan-report-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.loan-report-head>div:first-child{min-width:0}.loan-report-head strong{font-size:13px}.loan-report-sub{font-size:10px;color:#666;margin-top:2px}.loan-report-current{text-align:right;font-size:15px;font-weight:800;white-space:nowrap}.loan-report-current span{display:block;font-size:9px;color:#666;font-weight:700;text-transform:uppercase}.loan-report-progress-line{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:10px;color:#555}.loan-report-progress{height:8px;border:1px solid #bbb;background:#eee;border-radius:999px;overflow:hidden;margin-top:4px}.loan-report-progress>div{height:100%;background:#444}.loan-report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.loan-report-grid>div{border:1px solid #ddd;border-radius:6px;padding:7px}.loan-report-grid span{display:block;font-size:9px;color:#666;text-transform:uppercase;font-weight:700}.loan-report-grid strong{display:block;font-size:11px;margin-top:2px}
   .chart-caption{font-size:10px;color:#666;padding:7px 11px 0;text-align:right}.report-chart{padding:6px 10px 10px;overflow:hidden}.report-chart .chart-tooltip{display:none!important}.report-chart svg{width:100%;height:210px;display:block}.report-chart .chart-line{fill:none;stroke:#222;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.report-chart .chart-area{fill:#ddd;opacity:.45}.report-chart .chart-grid-line{stroke:#ccc;stroke-width:1}.report-chart .chart-axis-label,.report-chart .chart-last-label{fill:#555;font-size:9px}.report-chart .chart-point,.report-chart .chart-point-last{fill:#222}.report-chart .chart-cursor-line{display:none}
   .footer{text-align:center;color:#555;font-size:10px;margin-top:20px;padding-top:10px;border-top:1px solid #ddd}
   @media(max-width:640px){.report{padding:18px}.two-cols{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}}
@@ -3076,8 +3301,21 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
 
   model.categories.forEach(c=>{
     lines.push('',c.label.toUpperCase());
-    if(!c.items.length)lines.push('Aucune ligne');
-    else c.items.forEach(i=>lines.push(`• ${i.label} : ${euro(i.amount)}`));
+    if(!c.items.length){lines.push('Aucune ligne');return;}
+    if(c.key==='dettes'){
+      c.items.forEach(i=>{
+        const meta=i.loanMeta||{};
+        const progress=Number(i.progress)||0;
+        lines.push(`• ${i.label}`);
+        lines.push(`  Capital emprunté : ${Number(meta.initialAmount)>0?euro(meta.initialAmount):'—'}`);
+        lines.push(`  Capital restant dû : ${euro(i.amount)}`);
+        lines.push(`  Taux : ${Number(meta.rate)>0?Number(meta.rate).toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}`);
+        lines.push(`  Mensualité : ${Number(meta.monthlyPayment)>0?euro(meta.monthlyPayment):'—'}`);
+        lines.push(`  Date de début : ${formatLoanDate(meta.startDate)}`);
+        lines.push(`  Date de fin : ${formatLoanDate(meta.endDate)}`);
+        lines.push(`  Avancement du remboursement : ${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %`);
+      });
+    }else c.items.forEach(i=>lines.push(`• ${i.label} : ${euro(i.amount)}`));
   });
 
   lines.push('','Application crée par ROYER Anaël');
@@ -3415,52 +3653,71 @@ function renderHistory(){
 
   const query = (document.getElementById('historySearchInput')?.value || '').trim();
 
-  const filteredHistory = monthHistory
-    .map((m, originalIdx) => ({m, originalIdx}))
-    .filter(({m}) => {
-      if(!query) return true;
-      if(normalizeText(m.month).includes(normalizeText(query))) return true;
-      if(m.resteVivre.toString().includes(query.replace(',', '.'))) return true;
-
-      const allItems = [
-        ...(m.revenusDetails||[]),
-        ...(m.fixesDetails||[]),
-        ...(m.depensesDetails||[])
-      ];
-
-      const budgetMatch=allItems.some(item =>
-        matchesQuery(item[0], item[1], query) ||
-        Boolean(item[3]) && normalizeText(getHistoricalBudgetAccountName(item)).includes(normalizeText(query))
-      );
-
-      const transferMatch=(m.transfersDetails||[]).some(t=>
-        matchesQuery(t.label,t.amount,query) ||
-        normalizeText(getHistoricalTransferAccountName(t,'from')).includes(normalizeText(query)) ||
-        normalizeText(getHistoricalTransferAccountName(t,'to')).includes(normalizeText(query))
-      );
-
-      return budgetMatch||transferMatch;
+  // Sans recherche : on conserve la vue synthétique par mois.
+  if(!query){
+    let h = '<table class="history-table"><thead><tr><th>Mois</th><th style="text-align:right">Reste à vivre</th><th style="width:30px"></th></tr></thead><tbody>';
+    monthHistory.forEach((m, originalIdx)=>{
+      h += `<tr class="history-clickable" onclick="openHistoryMonthModal(${originalIdx})"><td><strong>${escapeHtml(m.month)}</strong></td><td style="text-align:right;font-weight:600;color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</td><td style="text-align:right;color:#8b949e">➔</td></tr>`;
     });
-
-  if(!filteredHistory.length){
-    c.innerHTML = '<div class="muted" style="text-align:center;padding:12px">Aucun résultat trouvé</div>';
+    h += '</tbody></table>';
+    c.innerHTML = h;
     return;
   }
 
-  let h = '<table class="history-table"><thead><tr><th>Mois</th><th style="text-align:right">Reste à vivre</th><th style="width:30px"></th></tr></thead><tbody>';
+  // Avec une recherche : afficher chaque opération correspondante, et non seulement le mois.
+  const nq=normalizeText(query);
+  const results=[];
+  const sections=[
+    {detailsKey:'revenusDetails',budgetKey:'budgetRevenus',typeLabel:'Entrée'},
+    {detailsKey:'fixesDetails',budgetKey:'budgetFixes',typeLabel:'Frais fixe'},
+    {detailsKey:'depensesDetails',budgetKey:'budgetDepenses',typeLabel:'Dépense'}
+  ];
 
-  filteredHistory.forEach(({m, originalIdx})=>{
-    h += `<tr class="history-clickable" onclick="openHistoryMonthModal(${originalIdx})"><td><strong>${escapeHtml(m.month)}</strong></td><td style="text-align:right;font-weight:600;color:${m.resteVivre>=0?'#3fb950':'#f85149'}">${euro(m.resteVivre)}</td><td style="text-align:right;color:#8b949e">➔</td></tr>`;
+  monthHistory.forEach((m,monthIndex)=>{
+    sections.forEach(section=>{
+      (m[section.detailsKey]||[]).forEach((item,itemIndex)=>{
+        const categoryId=item[5]||detectBudgetCategory(section.budgetKey,item[0]);
+        const categoryLabel=getBudgetCategoryLabel(section.budgetKey,categoryId);
+        const accountName=item[3]?getHistoricalBudgetAccountName(item):'';
+        const monthMatch=normalizeText(m.month).includes(nq);
+        const matches=monthMatch || matchesQuery(item[0],item[1],query) || normalizeText(categoryLabel).includes(nq) || (accountName&&normalizeText(accountName).includes(nq));
+        if(matches){
+          results.push({kind:'budget',monthIndex,itemIndex,detailsKey:section.detailsKey,budgetKey:section.budgetKey,typeLabel:section.typeLabel,month:m.month,item,categoryLabel,accountName});
+        }
+      });
+    });
+
+    (m.transfersDetails||[]).forEach((t,itemIndex)=>{
+      const from=getHistoricalTransferAccountName(t,'from');
+      const to=getHistoricalTransferAccountName(t,'to');
+      const monthMatch=normalizeText(m.month).includes(nq);
+      const matches=monthMatch || matchesQuery(t.label,t.amount,query) || normalizeText(from).includes(nq) || normalizeText(to).includes(nq);
+      if(matches)results.push({kind:'transfer',monthIndex,itemIndex,typeLabel:'Virement interne',month:m.month,item:t,accountName:`${from} → ${to}`});
+    });
   });
 
-  h += '</tbody></table>';
-  c.innerHTML = h;
+  if(!results.length){
+    c.innerHTML = `<div class="muted" style="text-align:center;padding:12px">Aucun résultat pour "${escapeHtml(query)}"</div>`;
+    return;
+  }
+
+  let h=`<div class="muted" style="margin-bottom:8px">${results.length} résultat${results.length>1?'s':''}</div><div class="history-search-results">`;
+  results.forEach(r=>{
+    const label=r.kind==='budget'?(r.item[0]||'Sans nom'):(r.item.label||'Virement interne');
+    const amount=r.kind==='budget'?(r.item[1]||0):(r.item.amount||0);
+    const extra=r.kind==='budget'?[r.categoryLabel,r.accountName].filter(Boolean):[r.accountName].filter(Boolean);
+    h += `<button type="button" class="history-search-result" onclick="openHistorySearchResult(${r.monthIndex},'${r.kind}','${r.kind==='budget'?r.detailsKey:'transfersDetails'}',${r.itemIndex})"><span class="history-search-result-label">${escapeHtml(label)}</span><span class="history-search-result-amount">${euro(amount)}</span><span class="history-search-result-meta"><strong>${escapeHtml(r.month)}</strong><span class="history-search-result-type">${escapeHtml(r.typeLabel)}</span>${extra.map(x=>`<span>${escapeHtml(x)}</span>`).join('')}</span></button>`;
+  });
+  h += '</div>';
+  c.innerHTML=h;
 }
 
 let currentOpenedHistoryIndex = null;
+let currentHistorySearchTarget = null;
 
 function openHistoryMonthModal(index){
   currentOpenedHistoryIndex=index;
+  currentHistorySearchTarget=null;
 
   const m=monthHistory[index];
   if(!m)return;
@@ -3474,8 +3731,28 @@ function openHistoryMonthModal(index){
   document.getElementById('historyMonthModal').classList.add('active');
 }
 
+function openHistorySearchResult(monthIndex,kind,detailsKey,itemIndex){
+  currentOpenedHistoryIndex=monthIndex;
+  currentHistorySearchTarget={kind,detailsKey,itemIndex};
+  const m=monthHistory[monthIndex];
+  if(!m)return;
+
+  document.getElementById('historyMonthTitle').textContent=`Mois : ${m.month}`;
+  const searchInput=document.getElementById('historyModalSearchInput');
+  if(searchInput)searchInput.value='';
+
+  renderHistoryMonthModalContent(m);
+  const modal=document.getElementById('historyMonthModal');
+  modal.classList.add('active');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const target=document.querySelector('[data-history-search-target="1"]');
+    if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+}
+
 function filterHistoryMonthModal(){
   if(currentOpenedHistoryIndex===null)return;
+  currentHistorySearchTarget=null;
 
   const m=monthHistory[currentOpenedHistoryIndex];
   if(!m)return;
@@ -3495,9 +3772,15 @@ function renderHistoryMonthModalContent(m){
     </div>
   `;
 
-  const renderSection = (title, items) => {
-    const filteredItems = (items || []).filter(it =>
+  const audit=historicalCategoryAudit(m);
+  content += audit.other
+    ? `<div class="history-category-audit warn">⚠️ ${audit.other} ligne${audit.other>1?'s':''} classée${audit.other>1?'s':''} « Autres » sur ${audit.total}. À vérifier : le moteur n’a pas reconnu leur libellé.</div>`
+    : `<div class="history-category-audit ok">✓ ${audit.total} ligne${audit.total>1?'s':''} catégorisée${audit.total>1?'s':''}. Aucune ligne « Autres ».</div>`;
+
+  const renderSection = (title, items, budgetKey, detailsKey) => {
+    const filteredItems = (items || []).map((it,index)=>({it,index})).filter(({it}) =>
       matchesQuery(it[0], it[1], query) ||
+      normalizeText(getBudgetCategoryLabel(budgetKey,it[5]||detectBudgetCategory(budgetKey,it[0]))).includes(normalizeText(query)) ||
       (it[3] && normalizeText(getHistoricalBudgetAccountName(it)).includes(normalizeText(query)))
     );
 
@@ -3509,20 +3792,23 @@ function renderHistoryMonthModalContent(m){
 
     let html = `<div class="history-view-section"><h4>${title}</h4>`;
 
-    filteredItems.forEach(it => {
+    filteredItems.forEach(({it,index}) => {
       const accountText=it[3]?`<span class="history-account">${escapeHtml(getHistoricalBudgetAccountName(it))}</span>`:'';
-      html += `<div class="history-view-row"><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
+      const selected=it[5]||detectBudgetCategory(budgetKey,it[0]);
+      const categorySelect=`<select class="history-category-select" aria-label="Catégorie" onchange="updateHistoricalBudgetCategory('${detailsKey}',${index},'${budgetKey}',this.value)">${getBudgetCategories(budgetKey).map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${escapeHtml(c.label)}</option>`).join('')}</select>`;
+      const isTarget=currentHistorySearchTarget?.kind==='budget'&&currentHistorySearchTarget.detailsKey===detailsKey&&currentHistorySearchTarget.itemIndex===index;
+      html += `<div class="history-view-row${isTarget?' history-search-target':''}" ${isTarget?'data-history-search-target="1"':''}><span class="history-view-label">${escapeHtml(it[0]||'Sans nom')}${accountText}${categorySelect}</span><span class="history-view-amount">${euro(it[1]||0)}</span></div>`;
     });
 
     html += `</div>`;
     return html;
   };
 
-  let secRev = renderSection('📥 Entrées', m.revenusDetails);
-  let secFix = renderSection('🏠 Frais fixes', m.fixesDetails);
-  let secDep = renderSection('🛒 Dépenses', m.depensesDetails);
+  let secRev = renderSection('📥 Entrées', m.revenusDetails, 'budgetRevenus', 'revenusDetails');
+  let secFix = renderSection('🏠 Frais fixes', m.fixesDetails, 'budgetFixes', 'fixesDetails');
+  let secDep = renderSection('🛒 Dépenses', m.depensesDetails, 'budgetDepenses', 'depensesDetails');
 
-  const filteredTransfers=(m.transfersDetails||[]).filter(t=>
+  const filteredTransfers=(m.transfersDetails||[]).map((t,index)=>({t,index})).filter(({t})=>
     matchesQuery(t.label,t.amount,query) ||
     normalizeText(getHistoricalTransferAccountName(t,'from')).includes(normalizeText(query)) ||
     normalizeText(getHistoricalTransferAccountName(t,'to')).includes(normalizeText(query))
@@ -3531,8 +3817,9 @@ function renderHistoryMonthModalContent(m){
   let secTransfers='';
   if(filteredTransfers.length){
     secTransfers='<div class="history-view-section"><h4>⇄ Virements internes</h4>';
-    filteredTransfers.forEach(t=>{
-      secTransfers+=`<div class="history-view-row"><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getHistoricalTransferAccountName(t,'from'))} → ${escapeHtml(getHistoricalTransferAccountName(t,'to'))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
+    filteredTransfers.forEach(({t,index})=>{
+      const isTarget=currentHistorySearchTarget?.kind==='transfer'&&currentHistorySearchTarget.itemIndex===index;
+      secTransfers+=`<div class="history-view-row${isTarget?' history-search-target':''}" ${isTarget?'data-history-search-target="1"':''}><span class="history-view-label">${escapeHtml(t.label||'Virement interne')}<span class="history-account">${escapeHtml(getHistoricalTransferAccountName(t,'from'))} → ${escapeHtml(getHistoricalTransferAccountName(t,'to'))} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</span></span><span class="history-view-amount">${euro(t.amount||0)}</span></div>`;
     });
     secTransfers+='</div>';
   }else if((m.transfersDetails||[]).length&&!query){
@@ -3546,6 +3833,90 @@ function renderHistoryMonthModalContent(m){
   }
 
   document.getElementById('historyMonthContent').innerHTML = content;
+}
+
+function getHistoryMonthShareModel(){
+  if(currentOpenedHistoryIndex===null)return null;
+  const m=monthHistory[currentOpenedHistoryIndex];
+  if(!m)return null;
+  return {
+    month:String(m.month||'Mois clôturé'),
+    revenus:Number(m.revenus)||0,
+    fixes:Number(m.fixes)||0,
+    depenses:Number(m.depenses)||0,
+    resteVivre:Number(m.resteVivre)||0,
+    revenusDetails:Array.isArray(m.revenusDetails)?m.revenusDetails:[],
+    fixesDetails:Array.isArray(m.fixesDetails)?m.fixesDetails:[],
+    depensesDetails:Array.isArray(m.depensesDetails)?m.depensesDetails:[],
+    transfersDetails:Array.isArray(m.transfersDetails)?m.transfersDetails:[]
+  };
+}
+
+function buildHistoryMonthReportHtml(model=getHistoryMonthShareModel()){
+  if(!model)return '';
+  const section=(title,items,budgetKey)=>{
+    const rows=(items||[]).map(it=>{
+      const catId=it[5]||detectBudgetCategory(budgetKey,it[0]);
+      const category=escapeHtml(getBudgetCategoryLabel(budgetKey,catId));
+      const account=it[3]?escapeHtml(getHistoricalBudgetAccountName(it)):'';
+      return `<tr><td><strong>${escapeHtml(it[0]||'Sans nom')}</strong><div class="meta">${category}${account?` · ${account}`:''}</div></td><td class="amount">${euro(it[1]||0)}</td></tr>`;
+    }).join('');
+    return `<section><h2>${title}</h2><table>${rows||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section>`;
+  };
+  const transfers=(model.transfersDetails||[]).map(t=>{
+    const route=`${escapeHtml(getHistoricalTransferAccountName(t,'from'))} → ${escapeHtml(getHistoricalTransferAccountName(t,'to'))}`;
+    return `<tr><td><strong>${escapeHtml(t.label||'Virement interne')}</strong><div class="meta">${route} · ${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</div></td><td class="amount">${euro(t.amount||0)}</td></tr>`;
+  }).join('');
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Historique budget — ${escapeHtml(model.month)}</title><style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111;margin:32px;line-height:1.35}h1{font-size:23px;margin:0 0 6px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #ddd;padding-bottom:6px}.sub{color:#666;font-size:12px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.stat{border:1px solid #ddd;border-radius:9px;padding:10px}.stat span{display:block;color:#666;font-size:10px;text-transform:uppercase}.stat strong{display:block;margin-top:3px;font-size:16px}table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-bottom:1px solid #eee;font-size:13px}.amount{text-align:right;white-space:nowrap;font-weight:700}.meta{color:#666;font-size:10px;margin-top:2px}.empty{color:#777;font-style:italic}.footer{margin-top:28px;padding-top:10px;border-top:1px solid #ddd;color:#777;font-size:10px;text-align:center}@media(max-width:650px){body{margin:16px}.summary{grid-template-columns:repeat(2,1fr)}}@media print{body{margin:12mm}.summary{break-inside:avoid}section{break-inside:avoid-page}}
+  </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
+}
+
+function buildHistoryMonthReportText(model=getHistoryMonthShareModel()){
+  if(!model)return '';
+  const lines=[`HISTORIQUE BUDGET — ${model.month}`,'',`Entrées : ${euro(model.revenus)}`,`Frais fixes : ${euro(model.fixes)}`,`Dépenses : ${euro(model.depenses)}`,`Reste à vivre : ${euro(model.resteVivre)}`];
+  const addSection=(title,items,budgetKey)=>{
+    lines.push('',title);
+    if(!items.length){lines.push('Aucun élément');return;}
+    items.forEach(it=>{
+      const cat=getBudgetCategoryLabel(budgetKey,it[5]||detectBudgetCategory(budgetKey,it[0]));
+      const account=it[3]?getHistoricalBudgetAccountName(it):'';
+      lines.push(`• ${it[0]||'Sans nom'} : ${euro(it[1]||0)} — ${cat}${account?` — ${account}`:''}`);
+    });
+  };
+  addSection('ENTRÉES',model.revenusDetails,'budgetRevenus');
+  addSection('FRAIS FIXES',model.fixesDetails,'budgetFixes');
+  addSection('DÉPENSES',model.depensesDetails,'budgetDepenses');
+  lines.push('','VIREMENTS INTERNES');
+  if(!model.transfersDetails.length)lines.push('Aucun élément');
+  else model.transfersDetails.forEach(t=>lines.push(`• ${t.label||'Virement interne'} : ${euro(t.amount||0)} — ${getHistoricalTransferAccountName(t,'from')} → ${getHistoricalTransferAccountName(t,'to')}`));
+  lines.push('','Application crée par ROYER Anaël');
+  return lines.join('\n');
+}
+
+function printHistoryMonth(){
+  const model=getHistoryMonthShareModel();
+  if(!model)return;
+  const w=window.open('','_blank');
+  if(!w){alert("L'ouverture de la fenêtre d'impression a été bloquée par le navigateur.");return;}
+  w.document.open();w.document.write(buildHistoryMonthReportHtml(model));w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+
+async function shareHistoryMonth(){
+  const model=getHistoryMonthShareModel();
+  if(!model)return;
+  const reportHtml=buildHistoryMonthReportHtml(model);
+  const reportText=buildHistoryMonthReportText(model);
+  const safeMonth=normalizeText(model.month).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'historique';
+  try{
+    const file=new File([reportHtml],`historique_budget_${safeMonth}.html`,{type:'text/html'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({title:`Historique Budget — ${model.month}`,text:'Historique Budget & Patrimoine',files:[file]});return;
+    }
+    if(navigator.share){await navigator.share({title:`Historique Budget — ${model.month}`,text:reportText});return;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(reportText);alert("L'historique a été copié dans le presse-papiers.");return;}
+    const ta=document.createElement('textarea');ta.value=reportText;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert("L'historique a été copié dans le presse-papiers.");
+  }catch(err){if(err&&err.name==='AbortError')return;console.error(err);alert("Le partage n'a pas pu être lancé sur ce navigateur.");}
 }
 
 function closeHistoryMonthModal(){
