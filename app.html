@@ -3099,8 +3099,7 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
       Number(meta.pricePerShare)!==price ||
       meta.priceUpdatedAt!==nextUpdatedAt ||
       meta.priceSourceUrl!==nextSourceUrl ||
-      meta.priceSourceName!==nextSourceName ||
-      meta.priceFetchStatus!=='ok';
+      meta.priceSourceName!==nextSourceName;
 
     meta.pricePerShare=price;
     meta.priceUpdatedAt=nextUpdatedAt;
@@ -3131,10 +3130,10 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
     renderStockHistoryChart(index,payload);
     refreshStockPerformance(index);
 
-    // Sauvegarde uniquement si le cours/source/date a changé.
-    // Si quotes.json contient déjà exactement la donnée locale, aucune
-    // écriture Firebase n'est provoquée : la boucle de rendu est coupée.
-    if(quoteChanged)save();
+    // Les cours viennent de quotes.json et ne doivent jamais déclencher
+    // une écriture Firebase. Chaque appareil les relit directement.
+    // On garde seulement une copie locale pour l'affichage hors ligne.
+    if(quoteChanged)saveLocalOnly();
   }catch(err){
     meta.priceFetchStatus='error';
     item[2]=meta;
@@ -3277,7 +3276,7 @@ function submitStockPurchase(){
 
   const index=activeStockPurchaseIndex;
   closeStockPurchaseModal();
-  renderPatrimoine();
+  render();
 
   // Le cours actuel ne change pas : seul le nombre de parts et le PRU sont recalculés.
   refreshStockPerformance(index);
@@ -3326,7 +3325,7 @@ function updateStockField(index,field,value){
   save();
 
   if(field==='isin'){
-    renderPatrimoine();
+    render();
     const currentIndex=Array.isArray(data.bourse)?data.bourse.indexOf(item):-1;
     if(currentIndex>=0 && getStockMeta(item).isin){
       setTimeout(()=>refreshStockPrice(currentIndex,{silent:true}),0);
