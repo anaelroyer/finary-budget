@@ -1,4 +1,4 @@
-name: Mise à jour des cours — V22 sources TR
+name: Mise à jour des cours — V22.1 Quotrix
 
 on:
   workflow_dispatch:
@@ -70,18 +70,18 @@ jobs:
                   "max": 200,
               },
               "IE0002XZSHO1": {
-                  "primary_url": "https://www.boerse-stuttgart.de/en/products/etps/etfs/stuttgart/a3e1jv-ishares-msci-world-swap-pea-ucits-etf-eur-acc/",
-                  "primary_source": "Börse Stuttgart · WPEA",
-                  "primary_parser": "stuttgart_bid",
+                  "primary_url": "https://www.quotrix.de/etf/IE0002XZSHO1/",
+                  "primary_source": "Quotrix · WPEA",
+                  "primary_parser": "quotrix_last",
                   "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
                   "fallback_source": "Borsa Italiana · Paris · WPEA",
                   "min": 1,
                   "max": 20,
               },
               "FR0013412020": {
-                  "primary_url": "https://www.boerse-stuttgart.de/en/products/etps/etfs/stuttgart/a2pkzp-amundi-pea-emergent-msci-emerging-esg-transition-ucits-etf-acc/",
-                  "primary_source": "Börse Stuttgart · PAEEM",
-                  "primary_parser": "stuttgart_bid",
+                  "primary_url": "https://www.quotrix.de/etf/FR0013412020/",
+                  "primary_source": "Quotrix · PAEEM",
+                  "primary_parser": "quotrix_last",
                   "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
                   "fallback_source": "Borsa Italiana · Paris · PAEEM",
                   "min": 20,
@@ -146,15 +146,17 @@ jobs:
 
           def parse_quotrix_last(raw, low, high):
               text = textify(raw)
-              # Quotrix : "Letzter 74,54" dans Kursdaten.
-              m = re.search(
+              # Quotrix expose normalement le dernier cours sous "Letzter".
+              patterns = [
                   r"\bLetzter\s+([0-9]+(?:[.,][0-9]+)?)\b",
-                  text, flags=re.I
-              )
-              if m:
-                  v = number(m.group(1))
-                  if valid(v, low, high):
-                      return v, "Dernier cours"
+                  r"\bLetzter\s+Kurs\s+([0-9]+(?:[.,][0-9]+)?)\b",
+              ]
+              for pattern in patterns:
+                  m = re.search(pattern, text, flags=re.I)
+                  if m:
+                      v = number(m.group(1))
+                      if valid(v, low, high):
+                          return v, "Dernier cours"
               return None, None
 
           def parse_borsa(raw, low, high):
