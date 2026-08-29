@@ -393,6 +393,13 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 /* Assistant d'aide 100 % hors ligne */
 .offline-assistant-launcher{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;border:1px solid #2ea043;background:#238636;color:#fff;border-radius:999px;padding:10px 14px;min-height:44px;display:flex;align-items:center;gap:7px;font-weight:800;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.36);cursor:pointer}
 .offline-assistant-launcher:hover{background:#2ea043}.offline-assistant-launcher:focus-visible{outline:2px solid #58a6ff;outline-offset:2px}
+.offline-assistant-launcher-avatar,.offline-assistant-head-avatar{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:900;
+  color:#fff;background:linear-gradient(145deg,#58a6ff,#8957e5);
+  box-shadow:0 2px 8px rgba(88,166,255,.28)
+}
+.offline-assistant-head-avatar{width:26px;height:26px;margin-right:6px;vertical-align:middle}
 .offline-assistant-panel{position:fixed;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9500;width:min(390px,calc(100vw - 24px));max-height:min(650px,72vh);background:#161b22;border:1px solid #30363d;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.58);display:none;flex-direction:column;overflow:hidden}
 .offline-assistant-panel.active{display:flex}
 .offline-assistant-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border-bottom:1px solid #30363d;background:#0d1117}
@@ -403,6 +410,17 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .offline-assistant-message{max-width:88%;padding:9px 10px;border-radius:12px;font-size:11px;line-height:1.5;white-space:pre-line}
 .offline-assistant-message.bot{align-self:flex-start;background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-bottom-left-radius:4px}
 .offline-assistant-message.user{align-self:flex-end;background:#1f6f35;border:1px solid #2ea043;color:#fff;border-bottom-right-radius:4px}
+.offline-assistant-message.bot{position:relative;padding-left:34px}
+.offline-assistant-message.bot::before{
+  content:'A';position:absolute;left:8px;top:8px;width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;
+  background:linear-gradient(145deg,#58a6ff,#8957e5)
+}
+.offline-assistant-typing{display:flex;align-items:center;gap:4px;min-width:52px}
+.offline-assistant-typing span{width:5px;height:5px;border-radius:50%;background:#8b949e;animation:archieTyping 1s infinite ease-in-out}
+.offline-assistant-typing span:nth-child(2){animation-delay:.14s}
+.offline-assistant-typing span:nth-child(3){animation-delay:.28s}
+@keyframes archieTyping{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-3px);opacity:1}}
 .offline-assistant-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
 .offline-assistant-action{border:1px solid #3d444d;background:#0d1117;color:#c9d1d9;border-radius:8px;padding:6px 8px;font-size:10px;font-weight:700;cursor:pointer}.offline-assistant-action:hover{border-color:#58a6ff;color:#fff}
 .offline-assistant-quick{border-top:1px solid #21262d;padding:9px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;background:#161b22}
@@ -918,22 +936,22 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 </div>
 
 <!-- ASSISTANT D'AIDE HORS LIGNE -->
-<button id="offlineAssistantLauncher" class="offline-assistant-launcher" type="button" aria-controls="offlineAssistantPanel" aria-expanded="false">💬 <span>Assistant</span></button>
+<button id="offlineAssistantLauncher" class="offline-assistant-launcher" type="button" aria-controls="offlineAssistantPanel" aria-expanded="false"><span class="offline-assistant-launcher-avatar">A</span><span>Archie</span></button>
 <section id="offlineAssistantPanel" class="offline-assistant-panel" aria-label="Assistant d'aide de l'application" aria-hidden="true">
   <div class="offline-assistant-head">
     <div class="offline-assistant-head-main">
-      <div class="offline-assistant-title">💬 Assistant <span class="offline-assistant-local">● hors ligne</span></div>
-      <div class="offline-assistant-subtitle">Guide intégré à Budget & Patrimoine</div>
+      <div class="offline-assistant-title"><span class="offline-assistant-head-avatar">A</span> Archie <span class="offline-assistant-local">● hors ligne</span></div>
+      <div class="offline-assistant-subtitle">Ton petit guide Budget & Patrimoine</div>
     </div>
     <button id="offlineAssistantClose" class="offline-assistant-close" type="button" aria-label="Fermer l'assistant">×</button>
   </div>
   <div id="offlineAssistantMessages" class="offline-assistant-messages" aria-live="polite"></div>
   <div id="offlineAssistantQuick" class="offline-assistant-quick" aria-label="Questions suggérées"></div>
   <form id="offlineAssistantForm" class="offline-assistant-compose">
-    <input id="offlineAssistantInput" class="offline-assistant-input" type="text" autocomplete="off" placeholder="Pose une question sur l'application…" aria-label="Question à l'assistant">
+    <input id="offlineAssistantInput" class="offline-assistant-input" type="text" autocomplete="off" placeholder="Demande-moi quelque chose…" aria-label="Question à l'assistant">
     <button class="offline-assistant-send" type="submit" aria-label="Envoyer">➤</button>
   </form>
-  <div class="offline-assistant-note">Aucune question n'est envoyée sur Internet. Cet assistant répond uniquement à partir du guide intégré à l'application.</div>
+  <div class="offline-assistant-note">🔒 Archie fonctionne directement dans l’application : aucune question n’est envoyée sur Internet.</div>
 </section>
 
 <div class="wrap">
@@ -6829,7 +6847,7 @@ function offlineAssistantAppendMessage(text,role='bot',entry=null){
     const show=document.createElement('button');
     show.type='button';
     show.className='offline-assistant-action';
-    show.textContent='👁️ Montre-moi';
+    show.textContent='👉 Montre-moi';
     show.addEventListener('click',()=>offlineAssistantShowTarget(entry));
     actions.appendChild(show);
     bubble.appendChild(actions);
@@ -6869,7 +6887,7 @@ function offlineAssistantShowTarget(entry){
     let target=null;
     try{target=document.querySelector(resolvedTarget);}catch(_e){target=null;}
     if(!target||target.offsetParent===null){
-      offlineAssistantAppendMessage("Cette zone n’est pas visible dans l’état actuel de l’application. Elle apparaîtra lorsqu’elle aura des données à afficher.",'bot');
+      offlineAssistantAppendMessage("Je ne peux pas te montrer cette zone pour l’instant 🙂 Elle apparaîtra dès que l’application aura les données nécessaires.",'bot');
       return;
     }
     target.scrollIntoView({behavior:'smooth',block:'center'});
@@ -6880,17 +6898,34 @@ function offlineAssistantShowTarget(entry){
   },80);
 }
 
+function offlineAssistantShowTyping(){
+  const host=document.getElementById('offlineAssistantMessages');
+  if(!host)return null;
+  const bubble=document.createElement('div');
+  bubble.className='offline-assistant-message bot offline-assistant-typing';
+  bubble.setAttribute('aria-label','Archie réfléchit');
+  bubble.innerHTML='<span></span><span></span><span></span>';
+  host.appendChild(bubble);
+  host.scrollTop=host.scrollHeight;
+  return bubble;
+}
+
 function offlineAssistantAsk(question){
   const text=String(question||'').trim();
   if(!text)return;
   offlineAssistantAppendMessage(text,'user');
   const entry=offlineAssistantFindAnswer(text);
   offlineAssistantLastEntry=entry;
-  if(entry){
-    offlineAssistantAppendMessage(entry.answer,'bot',entry);
-  }else{
-    offlineAssistantAppendMessage("Je n’ai pas de réponse fiable pour cette question. Mon rôle est uniquement d’expliquer les fonctions de Budget & Patrimoine. Essaie une question proposée ci-dessous ou demande-moi comment utiliser une fonction précise de l’onglet actuel.",'bot');
-  }
+  const typing=offlineAssistantShowTyping();
+  const delay=Math.min(520,220+text.length*4);
+  setTimeout(()=>{
+    typing?.remove();
+    if(entry){
+      offlineAssistantAppendMessage(entry.answer,'bot',entry);
+    }else{
+      offlineAssistantAppendMessage("Hmm… je ne suis pas sûr de la réponse 🤔 Je préfère ne pas t’induire en erreur. Essaie de reformuler, ou choisis une des questions proposées juste en dessous.",'bot');
+    }
+  },delay);
 }
 
 function updateOfflineAssistantContext(){
@@ -6917,7 +6952,7 @@ function openOfflineAssistant(){
   updateOfflineAssistantContext();
   if(!offlineAssistantWelcomeShown){
     offlineAssistantWelcomeShown=true;
-    offlineAssistantAppendMessage("Bonjour 👋 Je suis le guide hors ligne de Budget & Patrimoine. Pose-moi une question sur l’onglet actuel ou choisis une suggestion ci-dessous.",'bot');
+    offlineAssistantAppendMessage("Salut 👋 Moi c’est Archie ! Je suis là pour t’aider à retrouver rapidement une fonction ou comprendre comment utiliser l’application. Tu peux me poser une question, ou choisir une suggestion juste en dessous.",'bot');
   }
   setTimeout(()=>document.getElementById('offlineAssistantInput')?.focus(),50);
 }
