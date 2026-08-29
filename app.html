@@ -543,6 +543,12 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-recipe-link.has-link{color:#3fb950}
 .menu-recipe-edit{font-size:11px;color:#8b949e}
 .menu-recipe-link:hover,.menu-recipe-edit:hover{text-decoration:underline}
+.menu-dish-input.has-recipe-link{
+  color:#58a6ff;
+  font-weight:700;
+  cursor:pointer;
+}
+.menu-dish-input.has-recipe-link:hover{text-decoration:underline}
 .menu-ingredients-btn{
   border:0;background:transparent;color:#58a6ff;font:inherit;font-size:11px;
   font-weight:800;padding:2px 0;cursor:pointer
@@ -2157,6 +2163,8 @@ function closeMenuDishPickers(exceptId=''){
 }
 function openMenuDishDropdown(input){
   if(!input)return;
+  const label=String(input.value||'').trim();
+  if(label && getMenuRecipeUrl(label))return;
   const picker=document.getElementById(input.id+'_picker');
   if(!picker)return;
   closeMenuDishPickers(picker.id);
@@ -2302,14 +2310,25 @@ function copyMenuIngredients(){
   }
 }
 
+
+function menuDishInputClass(label){
+  return getMenuRecipeUrl(label) ? 'menu-dish-input has-recipe-link' : 'menu-dish-input';
+}
+function menuDishInputClick(cycleKey,mealKey,input){
+  const label=String(input?.value||'').trim();
+  if(label && getMenuRecipeUrl(label)){
+    openMenuRecipe(cycleKey,mealKey);
+  }else{
+    openMenuDishDropdown(input);
+  }
+}
+
 function menuRecipeHtml(cycleKey,mealKey,label){
   const clean=String(label||'').trim();
   if(!clean)return '';
   const url=getMenuRecipeUrl(clean);
   if(url){
     return `<div class="menu-recipe-row">
-      <button type="button" class="menu-recipe-link has-link"
-        onclick="openMenuRecipe('${cycleKey}','${mealKey}')">↗ Recette</button>
       ${menuIngredientsHtml(clean)}
       <button type="button" class="menu-recipe-edit"
         onclick="editMenuRecipe('${cycleKey}','${mealKey}')">✎ lien</button>
@@ -2492,13 +2511,14 @@ function renderMenuWeek(cycleKey,index){
                   id="menu_${cycleKey}_${midiKey}"
                   type="text"
                   autocomplete="off"
+                  class="${menuDishInputClass(midi)}"
                   data-cycle-key="${cycleKey}"
                   data-meal-key="${midiKey}"
                   ${day.showMidi?'':'disabled'}
                   placeholder="${day.showMidi?'Ex. Poulet / riz':''}"
                   value="${escapeHtml(midi)}"
                   onfocus="openMenuDishDropdown(this)"
-                  onclick="openMenuDishDropdown(this)"
+                  onclick="menuDishInputClick('${cycleKey}','${midiKey}',this)"
                   oninput="updateMenuMeal('${cycleKey}','${midiKey}',this.value);filterMenuDishDropdown(this)"
                   onblur="setTimeout(()=>renderMenus(),140)"
                 >
@@ -2511,13 +2531,14 @@ function renderMenuWeek(cycleKey,index){
                   id="menu_${cycleKey}_${soirKey}"
                   type="text"
                   autocomplete="off"
+                  class="${menuDishInputClass(soir)}"
                   data-cycle-key="${cycleKey}"
                   data-meal-key="${soirKey}"
                   ${day.showSoir?'':'disabled'}
                   placeholder="${day.showSoir?'Ex. Lasagnes':''}"
                   value="${escapeHtml(soir)}"
                   onfocus="openMenuDishDropdown(this)"
-                  onclick="openMenuDishDropdown(this)"
+                  onclick="menuDishInputClick('${cycleKey}','${soirKey}',this)"
                   oninput="updateMenuMeal('${cycleKey}','${soirKey}',this.value);filterMenuDishDropdown(this)"
                   onblur="setTimeout(()=>renderMenus(),140)"
                 >
