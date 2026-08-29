@@ -1,0 +1,293 @@
+name: Extraire les ingrédients des recettes
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  extract-recipes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lire les recettes et synchroniser les ingrédients
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import html
+          import json
+          import re
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+          from html.parser import HTMLParser
+
+          FIREBASE_API_KEY = "AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0"
+          FIREBASE_PROJECT = "finances-royer"
+          FIRESTORE_DOC = "budget_shared/main_account"
+
+          def now_iso():
+              return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+          def request_json(url, headers=None, data=None, method=None):
+              body = None if data is None else json.dumps(data).encode("utf-8")
+              req = urllib.request.Request(
+                  url,
+                  data=body,
+                  headers={
+                      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+                      "Accept": "application/json,text/html,application/xhtml+xml,*/*",
+                      "Accept-Encoding": "identity",
+                      "Content-Type": "application/json",
+                      **(headers or {}),
+                  },
+                  method=method or ("POST" if body is not None else "GET"),
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      raw=response.read()
+                      ctype=response.headers.get_content_charset() or "utf-8"
+                      return json.loads(raw.decode(ctype, errors="replace"))
+              except urllib.error.HTTPError as e:
+                  detail=e.read().decode("utf-8", errors="ignore")
+                  raise RuntimeError(f"HTTP {e.code} sur {url}: {detail[:500]}") from e
+
+          def fetch_html(url):
+              req=urllib.request.Request(
+                  url,
+                  headers={
+                      "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1",
+                      "Accept":"text/html,application/xhtml+xml",
+                      "Accept-Language":"fr-FR,fr;q=0.9,en;q=0.7",
+                      "Accept-Encoding":"identity",
+                  }
+              )
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  raw=r.read()
+                  enc=r.headers.get_content_charset() or "utf-8"
+                  return raw.decode(enc,errors="replace")
+
+          class JsonLdParser(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.in_jsonld=False
+                  self.buf=[]
+                  self.blocks=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()!="script":
+                      return
+                  attrs=dict(attrs)
+                  t=(attrs.get("type") or "").lower().strip()
+                  if "ld+json" in t:
+                      self.in_jsonld=True
+                      self.buf=[]
+              def handle_endtag(self,tag):
+                  if tag.lower()=="script" and self.in_jsonld:
+                      self.blocks.append("".join(self.buf).strip())
+                      self.in_jsonld=False
+                      self.buf=[]
+              def handle_data(self,data):
+                  if self.in_jsonld:
+                      self.buf.append(data)
+
+          def is_recipe_type(v):
+              if isinstance(v,str):
+                  return v.lower()=="recipe" or v.lower().endswith("/recipe")
+              if isinstance(v,list):
+                  return any(is_recipe_type(x) for x in v)
+              return False
+
+          def find_recipe(obj):
+              if isinstance(obj,dict):
+                  if is_recipe_type(obj.get("@type")):
+                      return obj
+                  # @graph est très fréquent
+                  for k in ("@graph","mainEntity","mainEntityOfPage","itemListElement"):
+                      if k in obj:
+                          found=find_recipe(obj[k])
+                          if found:
+                              return found
+                  for v in obj.values():
+                      found=find_recipe(v)
+                      if found:
+                          return found
+              elif isinstance(obj,list):
+                  for x in obj:
+                      found=find_recipe(x)
+                      if found:
+                          return found
+              return None
+
+          def clean_ingredient(x):
+              if isinstance(x,dict):
+                  x=x.get("text") or x.get("name") or ""
+              x=html.unescape(str(x or ""))
+              x=re.sub(r"<[^>]+>"," ",x)
+              x=re.sub(r"\s+"," ",x).strip(" \t\r\n•-")
+              return x
+
+          def extract_recipe(url):
+              page=fetch_html(url)
+              parser=JsonLdParser()
+              parser.feed(page)
+
+              last_error=""
+              for block in parser.blocks:
+                  if not block:
+                      continue
+                  candidates=[block]
+                  # Quelques pages entourent le JSON-LD de commentaires JS.
+                  cleaned=re.sub(r"^\s*<!--|-->\s*$","",block.strip())
+                  if cleaned!=block:
+                      candidates.append(cleaned)
+                  for candidate in candidates:
+                      try:
+                          obj=json.loads(candidate)
+                      except Exception as exc:
+                          last_error=str(exc)
+                          continue
+                      recipe=find_recipe(obj)
+                      if not recipe:
+                          continue
+                      ingredients=recipe.get("recipeIngredient") or recipe.get("ingredients") or []
+                      if isinstance(ingredients,str):
+                          ingredients=[ingredients]
+                      ingredients=[clean_ingredient(x) for x in ingredients]
+                      ingredients=[x for x in ingredients if x]
+                      title=clean_ingredient(recipe.get("name") or "")
+                      if ingredients:
+                          return {
+                              "status":"ok",
+                              "title":title,
+                              "ingredients":ingredients[:120],
+                          }
+
+              raise RuntimeError("Aucune liste d’ingrédients Recipe/JSON-LD exploitable trouvée" + (f" ({last_error})" if last_error else ""))
+
+          def fs_to_python(value):
+              if not isinstance(value,dict):
+                  return None
+              if "stringValue" in value:return value["stringValue"]
+              if "booleanValue" in value:return value["booleanValue"]
+              if "integerValue" in value:
+                  try:return int(value["integerValue"])
+                  except:return 0
+              if "doubleValue" in value:
+                  try:return float(value["doubleValue"])
+                  except:return 0.0
+              if "nullValue" in value:return None
+              if "arrayValue" in value:
+                  return [fs_to_python(x) for x in value["arrayValue"].get("values",[])]
+              if "mapValue" in value:
+                  return {k:fs_to_python(v) for k,v in value["mapValue"].get("fields",{}).items()}
+              return None
+
+          def python_to_fs(value):
+              if value is None:return {"nullValue":None}
+              if isinstance(value,bool):return {"booleanValue":value}
+              if isinstance(value,int):return {"integerValue":str(value)}
+              if isinstance(value,float):return {"doubleValue":value}
+              if isinstance(value,str):return {"stringValue":value}
+              if isinstance(value,list):return {"arrayValue":{"values":[python_to_fs(x) for x in value]}}
+              if isinstance(value,dict):return {"mapValue":{"fields":{str(k):python_to_fs(v) for k,v in value.items()}}}
+              return {"stringValue":str(value)}
+
+          auth=request_json(
+              "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key="+FIREBASE_API_KEY,
+              data={"returnSecureToken":True},
+          )
+          token=auth["idToken"]
+          fs_headers={"Authorization":"Bearer "+token}
+
+          doc_url=(
+              f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT}"
+              f"/databases/(default)/documents/{FIRESTORE_DOC}"
+          )
+          current=request_json(doc_url,headers=fs_headers)
+          fields=current.get("fields",{})
+
+          data_raw=fields.get("data",{}).get("stringValue","")
+          if not data_raw:
+              raise RuntimeError("Champ data Firebase absent")
+          app_data=json.loads(data_raw)
+
+          existing=fs_to_python(fields.get("recipeData",{"mapValue":{"fields":{}}})) or {}
+          dish_stats=((app_data.get("menus") or {}).get("dishStats") or {})
+
+          wanted={}
+          for stat in dish_stats.values():
+              if not isinstance(stat,dict):
+                  continue
+              url=str(stat.get("recipeUrl") or "").strip()
+              label=str(stat.get("label") or "").strip()
+              if url:
+                  # Même URL = même extraction, quel que soit le nom du plat.
+                  h=2166136261
+                  for b in url.encode("utf-8"):
+                      h ^= b
+                      h = (h * 16777619) & 0xffffffff
+                  key="u"+format(h,"x")
+                  wanted[key]={"url":url,"label":label}
+
+          if not wanted:
+              print("Aucune recette avec URL à analyser.")
+              raise SystemExit(0)
+
+          out={}
+          changed=False
+          for key,item in wanted.items():
+              url=item["url"]
+              label=item["label"]
+              cached=existing.get(key) if isinstance(existing,dict) else None
+
+              # Réutilise un succès existant si l'URL est identique.
+              if isinstance(cached,dict) and cached.get("url")==url and cached.get("status")=="ok" and cached.get("ingredients"):
+                  out[key]=cached
+                  print(f"CACHE {label or url}: {len(cached.get('ingredients') or [])} ingrédients")
+                  continue
+
+              try:
+                  rec=extract_recipe(url)
+                  out[key]={
+                      "url":url,
+                      "label":label,
+                      "status":"ok",
+                      "title":rec.get("title") or label,
+                      "ingredients":rec.get("ingredients") or [],
+                      "fetchedAt":now_iso(),
+                      "error":"",
+                  }
+                  changed=True
+                  print(f"OK {label or url}: {len(out[key]['ingredients'])} ingrédients")
+              except Exception as exc:
+                  out[key]={
+                      "url":url,
+                      "label":label,
+                      "status":"error",
+                      "title":label,
+                      "ingredients":[],
+                      "fetchedAt":now_iso(),
+                      "error":str(exc)[:500],
+                  }
+                  changed=True
+                  print(f"ERREUR {label or url}: {exc}")
+
+          # Supprime automatiquement du cache les URLs qui ne sont plus utilisées.
+          if set(existing.keys()) != set(out.keys()):
+              changed=True
+
+          if not changed:
+              print("Aucune mise à jour à écrire.")
+              raise SystemExit(0)
+
+          patch_url=doc_url+"?updateMask.fieldPaths=recipeData"
+          request_json(
+              patch_url,
+              headers=fs_headers,
+              data={"fields":{"recipeData":python_to_fs(out)}},
+              method="PATCH",
+          )
+          print(f"Firebase mis à jour : {len(out)} recette(s).")
+          PY
