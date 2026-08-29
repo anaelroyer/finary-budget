@@ -3,7 +3,13 @@ name: Mise à jour des cours
 on:
   workflow_dispatch:
   schedule:
+    # Relevés réguliers toutes les 6 h
     - cron: "17 */6 * * *"
+    # Dernier relevé quotidien à 22 h 45 heure de Paris :
+    # 20:45 UTC en heure d'été, 21:45 UTC en heure d'hiver.
+    # Les deux sont planifiés ; un contrôle Europe/Paris n'en laisse passer qu'un.
+    - cron: "45 20 * * *"
+    - cron: "45 21 * * *"
 
 permissions:
   contents: write
@@ -13,10 +19,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Vérifier l'heure du relevé final
+        id: timing
+        shell: bash
+        run: |
+          # Les exécutions manuelles et le cron toutes les 6 h passent toujours.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "17 */6 * * *" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Pour les deux crons 20:45/21:45 UTC, on ne poursuit que s'il est
+          # réellement 22:45 dans le fuseau Europe/Paris (été comme hiver).
+          PARIS_TIME="$(TZ=Europe/Paris date +%H:%M)"
+          echo "Heure de Paris : $PARIS_TIME"
+          if [ "$PARIS_TIME" = "22:45" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Exécution ignorée : ce n'est pas 22:45 à Paris."
+          fi
+
       - name: Récupérer le dépôt
+        if: steps.timing.outputs.run == 'true'
         uses: actions/checkout@v4
 
       - name: Récupérer les cours Borsa Italiana
+        if: steps.timing.outputs.run == 'true'
         shell: bash
         run: |
           python3 - <<'PY'
@@ -142,16 +171,65 @@ jobs:
                       preview = textify(raw)[:800]
                       raise RuntimeError("aucun cours exploitable trouvé; aperçu=" + repr(preview))
 
+                  previous = payload["quotes"].get(isin, {})
+                  history = previous.get("history", [])
+                  if not isinstance(history, list):
+                      history = []
+
+                  # Si l'ancien quotes.json contient un cours d'un jour précédent,
+                  # on le récupère une fois comme premier point historique.
+                  previous_price = previous.get("price")
+                  previous_updated = str(previous.get("updatedAt", ""))
+                  previous_day = previous_updated[:10] if len(previous_updated) >= 10 else ""
+                  if previous_day and previous_day != now[:10]:
+                      try:
+                          old_price = float(previous_price)
+                          if old_price > 0 and not any(str(p.get("date", ""))[:10] == previous_day for p in history if isinstance(p, dict)):
+                              history.append({
+                                  "date": previous_day,
+                                  "price": round(old_price, 6),
+                                  "updatedAt": previous_updated,
+                              })
+                      except (TypeError, ValueError):
+                          pass
+
+                  # Un seul point par jour : les passages suivants (toutes les 6 h)
+                  # remplacent le point du jour par le dernier cours disponible.
+                  today = now[:10]
+                  daily_point = {
+                      "date": today,
+                      "price": round(price, 6),
+                      "updatedAt": now,
+                  }
+                  history = [
+                      p for p in history
+                      if isinstance(p, dict) and str(p.get("date", ""))[:10] != today
+                  ]
+                  history.append(daily_point)
+                  history.sort(key=lambda p: str(p.get("date", ""))[:10])
+
+                  # On conserve 366 jours maximum.
+                  cutoff = datetime.now(timezone.utc).date().toordinal() - 366
+                  cleaned_history = []
+                  for p in history:
+                      try:
+                          d = datetime.strptime(str(p.get("date", ""))[:10], "%Y-%m-%d").date()
+                          if d.toordinal() >= cutoff:
+                              cleaned_history.append(p)
+                      except Exception:
+                          pass
+
                   payload["quotes"][isin] = {
                       "price": round(price, 6),
                       "currency": "EUR",
                       "source": cfg["source"] + " · " + mode,
                       "sourceUrl": cfg["url"],
                       "updatedAt": now,
+                      "history": cleaned_history,
                   }
 
                   successes += 1
-                  print(f"OK {isin} = {price:.6f} EUR ({mode})")
+                  print(f"OK {isin} = {price:.6f} EUR ({mode}) · historique {len(cleaned_history)} jour(s)")
 
               except Exception as e:
                   failures.append(f"{isin}: {e}")
@@ -175,6 +253,7 @@ jobs:
           PY
 
       - name: Enregistrer quotes.json
+        if: steps.timing.outputs.run == 'true'
         shell: bash
         run: |
           if git diff --quiet -- quotes.json; then
@@ -185,5 +264,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add quotes.json
-          git commit -m "Mise à jour automatique des cours Borsa Italiana"
+          git commit -m "Mise à jour automatique des cours et historique"
           git push
