@@ -1,12 +1,26 @@
 {
-  "updatedAt": "2026-08-29T12:43:53Z",
+  "updatedAt": "2026-08-29T13:03:18Z",
   "quotes": {
     "IE00B4ND3602": {
-      "price": 76.55,
+      "price": 76.31,
       "currency": "EUR",
-      "source": "Valeur initiale de test",
-      "sourceUrl": "https://www.zonebourse.com/cours/etf/ISHARES-PHYSICAL-GOLD-ETC-124881157/",
-      "updatedAt": "2026-08-27T15:36:01Z"
+      "source": "Borsa Italiana · Milan · SGLN · ultimo corso",
+      "sourceUrl": "https://www.borsaitaliana.it/borsa/etc-etn/scheda/IE00B4ND3602-ETFP.html?lang=it",
+      "updatedAt": "2026-08-29T13:03:18Z"
+    },
+    "IE0002XZSHO1": {
+      "price": 7.027,
+      "currency": "EUR",
+      "source": "Borsa Italiana · Paris · WPEA · ultimo corso",
+      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
+      "updatedAt": "2026-08-29T13:03:18Z"
+    },
+    "FR0013412020": {
+      "price": 36.095,
+      "currency": "EUR",
+      "source": "Borsa Italiana · Paris · PAEEM · ultimo corso",
+      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
+      "updatedAt": "2026-08-29T13:03:18Z"
     }
   }
 }
