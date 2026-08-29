@@ -1400,6 +1400,19 @@ function ensureBankingData(){
   ['budgetRevenus','budgetFixes','budgetDepenses'].forEach(key=>{
     if(!Array.isArray(data[key]))data[key]=[];
     data[key].forEach(item=>{
+
+
+      if(!Array.isArray(item))return;
+      const accountExists=data.bankAccounts.some(a=>a.id===item[3]);
+      if(!accountExists)item[3]=fallbackAccountId;
+    });
+  });
+
+  ensureAssetCategoryData();
+  ensureVehicleData();
+}
+
+
 /* =========================================================
    CATÉGORISATION AUTOMATIQUE DU BUDGET
    item[5] = identifiant de catégorie. Les anciens éléments restent compatibles.
@@ -1552,16 +1565,6 @@ function syncModalBudgetType(key,{resetCategory=false}={}){
     const keep=!resetCategory&&cats.some(c=>c.id===current);
     populateBudgetCategorySelect(key,keep?current:detectBudgetCategory(key,label));
   }
-}
-
-      if(!Array.isArray(item))return;
-      const accountExists=data.bankAccounts.some(a=>a.id===item[3]);
-      if(!accountExists)item[3]=fallbackAccountId;
-    });
-  });
-
-  ensureAssetCategoryData();
-  ensureVehicleData();
 }
 
 ensureBankingData();
