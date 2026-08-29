@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- V26.1.24 : Allocation Réelle / Cible en bleu -->
+<!-- V26.1.27 : correction structurelle des écarts entre onglets Patrimoine -->
 <title>Budget & Patrimoine</title>
 <meta name="theme-color" content="#0d1117">
 <meta name="application-name" content="Budget & Patrimoine">
@@ -928,6 +928,16 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   color:#58a6ff!important;
 }
 
+
+
+/* V26.1.27 — Écart strictement identique entre tous les onglets Patrimoine */
+#tab-patrimoine #optional-asset-categories{
+  display:contents;
+}
+#tab-patrimoine .asset-accordion-card{
+  margin:0!important;
+}
+
 </style>
 </head>
 <body>
@@ -1678,8 +1688,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   </div>
 
   <div id="tab-vehicles" class="tab-content">
-    <div class="top" style="justify-content:space-between;gap:8px;">
-      <div style="font-weight:700;color:#fff">🚗 Véhicules</div>
+    <div class="top" style="justify-content:flex-end;gap:8px;">
       <button id="assistantTargetAddVehicle" class="btn btn-primary" onclick="openVehicleModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
     </div>
 
