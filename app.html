@@ -51,6 +51,11 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-row-footer{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:2px}
 .stock-calculated-value{font-size:11px;color:#8b949e}.stock-calculated-value strong{color:#c9d1d9;font-size:13px}
 .stock-row-footer .btn-del{margin-left:auto}
+.stock-price-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+.stock-refresh-btn{padding:5px 8px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;font-size:10px;font-weight:700;cursor:pointer}
+.stock-price-status{font-size:10px;color:#8b949e}
+.stock-price-status.ok{color:#3fb950}.stock-price-status.err{color:#f85149}.stock-price-status.loading{color:#d29922}
+
 @media(max-width:360px){.stock-row{grid-template-columns:1fr}}
 
 
@@ -2735,7 +2740,9 @@ function getStockMeta(item){
     shares:Number(raw.shares)||0,
     pricePerShare:Number(raw.pricePerShare)||0,
     priceUpdatedAt:raw.priceUpdatedAt||'',
-    priceSourceUrl:raw.priceSourceUrl||''
+    priceSourceUrl:raw.priceSourceUrl||'',
+    priceSourceName:raw.priceSourceName||'',
+    priceFetchStatus:raw.priceFetchStatus||''
   };
 }
 
@@ -2746,6 +2753,102 @@ function recalculateStockItem(item){
   item[1]=Number.isFinite(value)?value:0;
   item[2]=meta;
   return item[1];
+}
+
+
+let STOCK_QUOTES_CACHE=null;
+let STOCK_QUOTES_LOADING=null;
+
+async function loadStockQuotes(force=false){
+  if(STOCK_QUOTES_CACHE && !force)return STOCK_QUOTES_CACHE;
+  if(STOCK_QUOTES_LOADING && !force)return STOCK_QUOTES_LOADING;
+
+  STOCK_QUOTES_LOADING=(async()=>{
+    const url=`./quotes.json${force?`?t=${Date.now()}`:''}`;
+    const res=await fetch(url,{cache:force?'no-store':'default'});
+    if(!res.ok)throw new Error(`quotes.json HTTP ${res.status}`);
+    const payload=await res.json();
+    if(!payload || typeof payload!=='object' || !payload.quotes)throw new Error('quotes.json invalide');
+    STOCK_QUOTES_CACHE=payload;
+    return payload;
+  })();
+
+  try{
+    return await STOCK_QUOTES_LOADING;
+  }finally{
+    STOCK_QUOTES_LOADING=null;
+  }
+}
+
+function setStockPriceStatus(index,text,state=''){
+  const el=document.querySelector(`.stock-row[data-stock-index="${index}"] .stock-price-status`);
+  if(!el)return;
+  el.textContent=text||'';
+  el.className=`stock-price-status${state?' '+state:''}`;
+}
+
+async function refreshStockPrice(index,{silent=false,force=false}={}){
+  if(!Array.isArray(data.bourse)||!data.bourse[index])return;
+
+  const item=data.bourse[index];
+  const meta=getStockMeta(item);
+  const isin=String(meta.isin||'').trim().toUpperCase();
+
+  if(!isin){
+    if(!silent)setStockPriceStatus(index,'Renseigne d’abord l’ISIN');
+    return;
+  }
+
+  setStockPriceStatus(index,'Lecture du cours GitHub…','loading');
+
+  try{
+    const payload=await loadStockQuotes(force);
+    const quote=payload.quotes?.[isin];
+    if(!quote)throw new Error(`Aucun cours pour ${isin}`);
+
+    const price=Number(quote.price);
+    if(!Number.isFinite(price)||price<=0)throw new Error('Cours invalide');
+
+    meta.pricePerShare=price;
+    meta.priceUpdatedAt=quote.updatedAt||payload.updatedAt||new Date().toISOString();
+    meta.priceSourceUrl=quote.sourceUrl||'';
+    meta.priceSourceName=quote.source||'GitHub';
+    meta.priceFetchStatus='ok';
+    item[2]=meta;
+
+    recalculateStockItem(item);
+
+    const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+    const priceInput=row?.querySelector('input[data-stock-field="pricePerShare"]');
+    if(priceInput)priceInput.value=String(price);
+    const valueEl=row?.querySelector('.stock-calculated-value strong');
+    if(valueEl)valueEl.textContent=euro(Number(item[1])||0);
+
+    const dateText=meta.priceUpdatedAt
+      ? new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')
+      : '';
+    setStockPriceStatus(
+      index,
+      `Cours : ${price.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})} € · ${meta.priceSourceName}${dateText?' · '+dateText:''}`,
+      'ok'
+    );
+
+    updateTotals();
+    renderAssetDistribution();
+    save();
+  }catch(err){
+    meta.priceFetchStatus='error';
+    item[2]=meta;
+    setStockPriceStatus(index,'Cours GitHub indisponible','err');
+    if(!silent)console.warn('Cours GitHub indisponible :',err);
+  }
+}
+
+function shouldAutoRefreshStock(meta){
+  if(!meta?.isin)return false;
+  if(!meta.priceUpdatedAt)return true;
+  const t=new Date(meta.priceUpdatedAt).getTime();
+  return !Number.isFinite(t)||(Date.now()-t)>6*60*60*1000;
 }
 
 function updateStockField(index,field,value){
@@ -2777,6 +2880,14 @@ function updateStockField(index,field,value){
   updateTotals();
   renderAssetDistribution();
   save();
+
+  if(field==='isin'){
+    renderPatrimoine();
+    const currentIndex=Array.isArray(data.bourse)?data.bourse.indexOf(item):-1;
+    if(currentIndex>=0 && getStockMeta(item).isin){
+      setTimeout(()=>refreshStockPrice(currentIndex,{silent:true}),0);
+    }
+  }
 }
 
 function renderStockRow(item,idx,cont){
@@ -2803,14 +2914,23 @@ function renderStockRow(item,idx,cont){
     </div>
     <div class="stock-field">
       <label>Prix par part (€)</label>
-      <input type="number" value="${meta.pricePerShare||''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pricePerShare',this.value)">
+      <input data-stock-field="pricePerShare" type="number" value="${meta.pricePerShare||''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pricePerShare',this.value)">
     </div>
     <div class="stock-row-footer">
-      <span class="stock-calculated-value">Valeur calculée : <strong>${euro(Number(item[1])||0)}</strong></span>
+      <div>
+        <span class="stock-calculated-value">Valeur calculée : <strong>${euro(Number(item[1])||0)}</strong></span>
+        <div class="stock-price-tools">
+          ${meta.isin?`<button class="stock-refresh-btn" type="button" onclick="refreshStockPrice(${idx},{force:true})">↻ Actualiser le cours</button>`:''}
+          <span class="stock-price-status">${meta.priceUpdatedAt&&meta.priceSourceName?`Dernière mise à jour : ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')} · ${escapeHtml(meta.priceSourceName)}`:''}</span>
+        </div>
+      </div>
       <button class="btn-del" onclick="delPatrimoine('bourse',${idx})" title="Supprimer">×</button>
     </div>
   `;
   cont.appendChild(row);
+  if(shouldAutoRefreshStock(meta)){
+    setTimeout(()=>refreshStockPrice(idx,{silent:true}),0);
+  }
 }
 
 /* EMPRUNTS */
@@ -3125,7 +3245,7 @@ function addItem(k){
   if(k==='dettes'){openLoanModal(-1);return;}
   if(!data[k])data[k]=[];
   if(k==='bourse'){
-    data[k].push(['',0,{isin:'',shares:0,pricePerShare:0,priceUpdatedAt:'',priceSourceUrl:''}]);
+    data[k].push(['',0,{isin:'',shares:0,pricePerShare:0,priceUpdatedAt:'',priceSourceUrl:'',priceSourceName:'',priceFetchStatus:''}]);
   }else{
     data[k].push(['',0]);
   }
