@@ -47,6 +47,24 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .stock-field label{font-size:9px;color:#8b949e;text-transform:uppercase;letter-spacing:.35px;font-weight:800}
 .stock-field input{width:100%;min-width:0;padding:8px 9px;background:#0d1117;border:1px solid #30363d;border-radius:7px;color:#fff;font-size:13px;outline:none}
+.stock-price-inline{display:flex;align-items:center;gap:6px}
+.stock-price-inline input{flex:1;min-width:0}
+.stock-refresh-icon{flex:0 0 34px;width:34px;height:34px;padding:0;border:1px solid #30363d;border-radius:7px;background:#161b22;color:#8b949e;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.stock-refresh-icon:hover{color:#58a6ff;border-color:#58a6ff}
+.stock-refresh-icon:active{transform:scale(.96)}
+.stock-share-inline{display:flex;align-items:center;gap:6px}
+.stock-share-inline input{flex:1;min-width:0}
+.stock-add-icon{flex:0 0 34px;width:34px;height:34px;padding:0;border:1px solid #238636;border-radius:7px;background:rgba(35,134,54,.12);color:#3fb950;font-size:20px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.stock-add-icon:hover{background:rgba(35,134,54,.22);border-color:#3fb950}
+.stock-add-icon:active{transform:scale(.96)}
+.stock-performance-head{grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;min-height:20px;margin-bottom:-2px}
+.stock-performance{font-size:11px;font-weight:800;padding:3px 7px;border-radius:999px;border:1px solid #30363d;background:#0d1117;color:#8b949e}
+.stock-performance.positive{color:#3fb950;border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.08)}
+.stock-performance.negative{color:#f85149;border-color:rgba(248,81,73,.35);background:rgba(248,81,73,.08)}
+.stock-performance.neutral{color:#8b949e}
+#stockPurchaseModal .modal{max-width:380px}
+.stock-purchase-preview{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:10px 12px;font-size:12px;color:#8b949e;line-height:1.5}
+.stock-purchase-preview strong{color:#fff}
 .stock-field input:focus{border-color:#58a6ff}
 .stock-row-footer{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:2px}
 .stock-calculated-value{font-size:11px;color:#8b949e}.stock-calculated-value strong{color:#c9d1d9;font-size:13px}
@@ -603,6 +621,26 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
 
 <!-- MODAL EMPRUNT -->
+<div class="modal-overlay" id="stockPurchaseModal">
+  <div class="modal">
+    <h3>Ajouter un achat</h3>
+    <div class="stock-purchase-preview" id="stockPurchaseCurrent"></div>
+    <div class="modal-field">
+      <label>Nombre de parts achetées</label>
+      <input type="number" id="stockPurchaseShares" placeholder="0" min="0" step="any" inputmode="decimal" oninput="updateStockPurchasePreview()">
+    </div>
+    <div class="modal-field">
+      <label>Prix d'achat unitaire (€)</label>
+      <input type="number" id="stockPurchasePrice" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockPurchasePreview()">
+    </div>
+    <div class="stock-purchase-preview" id="stockPurchasePreview"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeStockPurchaseModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitStockPurchase()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="loanModal">
   <div class="modal">
     <h3 id="loanModalTitle">Ajouter un emprunt</h3>
@@ -2761,6 +2799,8 @@ function getStockMeta(item){
     isin:String(raw.isin||''),
     shares:Number(raw.shares)||0,
     pricePerShare:Number(raw.pricePerShare)||0,
+    pru:Number(raw.pru)||0,
+    pruSet:raw.pruSet===true || (raw.pru!==undefined && raw.pru!==null && raw.pru!==''),
     priceUpdatedAt:raw.priceUpdatedAt||'',
     priceSourceUrl:raw.priceSourceUrl||'',
     priceSourceName:raw.priceSourceName||'',
@@ -2783,16 +2823,40 @@ let STOCK_QUOTES_LOADING=null;
 
 async function loadStockQuotes(force=false){
   if(STOCK_QUOTES_CACHE && !force)return STOCK_QUOTES_CACHE;
-  if(STOCK_QUOTES_LOADING && !force)return STOCK_QUOTES_LOADING;
+  if(STOCK_QUOTES_LOADING)return STOCK_QUOTES_LOADING;
 
   STOCK_QUOTES_LOADING=(async()=>{
-    const url=`./quotes.json${force?`?t=${Date.now()}`:''}`;
-    const res=await fetch(url,{cache:force?'no-store':'default'});
-    if(!res.ok)throw new Error(`quotes.json HTTP ${res.status}`);
-    const payload=await res.json();
-    if(!payload || typeof payload!=='object' || !payload.quotes)throw new Error('quotes.json invalide');
-    STOCK_QUOTES_CACHE=payload;
-    return payload;
+    const stamp=Date.now();
+    const urls=[];
+
+    // 1. Même origine : fonctionnement normal sur GitHub Pages.
+    if(location.protocol==='http:' || location.protocol==='https:'){
+      urls.push(`./quotes.json?t=${stamp}`);
+    }
+
+    // 2. URL GitHub Pages absolue : utile si l'app est ouverte depuis une autre URL.
+    urls.push(`https://anaelroyer.github.io/finary-budget/quotes.json?t=${stamp}`);
+
+    // 3. Secours : fichier brut du dépôt GitHub.
+    urls.push(`https://raw.githubusercontent.com/anaelroyer/finary-budget/main/quotes.json?t=${stamp}`);
+
+    let lastError=null;
+    for(const url of urls){
+      try{
+        const res=await fetch(url,{cache:'no-store'});
+        if(!res.ok)throw new Error(`HTTP ${res.status}`);
+        const payload=await res.json();
+        if(!payload || typeof payload!=='object' || !payload.quotes){
+          throw new Error('quotes.json invalide');
+        }
+        STOCK_QUOTES_CACHE=payload;
+        return payload;
+      }catch(err){
+        lastError=err;
+        console.warn('Échec lecture cours :',url,err);
+      }
+    }
+    throw lastError||new Error('Aucune source de cours disponible');
   })();
 
   try{
@@ -2801,7 +2865,6 @@ async function loadStockQuotes(force=false){
     STOCK_QUOTES_LOADING=null;
   }
 }
-
 
 const STOCK_HISTORY_PERIODS={1:31,3:93,6:186,12:366};
 const STOCK_HISTORY_SELECTION={};
@@ -3015,7 +3078,7 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
     return;
   }
 
-  setStockPriceStatus(index,'Lecture du cours GitHub…','loading');
+  if(!silent)setStockPriceStatus(index,'Actualisation du cours…','loading');
 
   try{
     const payload=await loadStockQuotes(force);
@@ -3025,10 +3088,24 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
     const price=Number(quote.price);
     if(!Number.isFinite(price)||price<=0)throw new Error('Cours invalide');
 
+    const nextUpdatedAt=quote.updatedAt||payload.updatedAt||new Date().toISOString();
+    const nextSourceUrl=quote.sourceUrl||'';
+    const nextSourceName=quote.source||'GitHub';
+
+    // Important : ne synchroniser vers Firebase que si la donnée de cours
+    // a réellement changé. Sinon le snapshot Firebase relance render(),
+    // qui relançait la lecture du cours, puis save(), etc. => clignotement.
+    const quoteChanged=
+      Number(meta.pricePerShare)!==price ||
+      meta.priceUpdatedAt!==nextUpdatedAt ||
+      meta.priceSourceUrl!==nextSourceUrl ||
+      meta.priceSourceName!==nextSourceName ||
+      meta.priceFetchStatus!=='ok';
+
     meta.pricePerShare=price;
-    meta.priceUpdatedAt=quote.updatedAt||payload.updatedAt||new Date().toISOString();
-    meta.priceSourceUrl=quote.sourceUrl||'';
-    meta.priceSourceName=quote.source||'GitHub';
+    meta.priceUpdatedAt=nextUpdatedAt;
+    meta.priceSourceUrl=nextSourceUrl;
+    meta.priceSourceName=nextSourceName;
     meta.priceFetchStatus='ok';
     item[2]=meta;
 
@@ -3052,12 +3129,27 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
     updateTotals();
     renderAssetDistribution();
     renderStockHistoryChart(index,payload);
-    save();
+    refreshStockPerformance(index);
+
+    // Sauvegarde uniquement si le cours/source/date a changé.
+    // Si quotes.json contient déjà exactement la donnée locale, aucune
+    // écriture Firebase n'est provoquée : la boucle de rendu est coupée.
+    if(quoteChanged)save();
   }catch(err){
     meta.priceFetchStatus='error';
     item[2]=meta;
-    setStockPriceStatus(index,'Cours GitHub indisponible','err');
-    if(!silent)console.warn('Cours GitHub indisponible :',err);
+    if(!silent){
+      setStockPriceStatus(index,'Cours indisponible','err');
+      console.warn('Cours indisponible :',err);
+    }else{
+      // En automatique, on garde le dernier cours et son statut visible.
+      const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+      const status=row?.querySelector('.stock-price-status');
+      if(status && meta.priceUpdatedAt && meta.priceSourceName){
+        status.textContent=`Dernière mise à jour : ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')} · ${meta.priceSourceName}`;
+        status.className='stock-price-status';
+      }
+    }
   }
 }
 
@@ -3066,6 +3158,129 @@ function shouldAutoRefreshStock(meta){
   if(!meta.priceUpdatedAt)return true;
   const t=new Date(meta.priceUpdatedAt).getTime();
   return !Number.isFinite(t)||(Date.now()-t)>6*60*60*1000;
+}
+
+
+function getStockPerformance(meta){
+  const pru=Number(meta?.pru)||0;
+  const current=Number(meta?.pricePerShare)||0;
+  if(meta?.pruSet!==true || current<=0)return null;
+  if(pru===0)return Infinity;
+  return ((current-pru)/pru)*100;
+}
+
+function stockPerformanceHtml(meta){
+  const perf=getStockPerformance(meta);
+  if(perf===null)return '<span class="stock-performance neutral">PRU non renseigné</span>';
+  if(perf===Infinity)return '<span class="stock-performance positive">PRU 0 € · gain intégral</span>';
+  const cls=perf>0?'positive':perf<0?'negative':'neutral';
+  const sign=perf>0?'+':'';
+  return `<span class="stock-performance ${cls}">${sign}${perf.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} % vs PRU</span>`;
+}
+
+function refreshStockPerformance(index){
+  const item=Array.isArray(data.bourse)?data.bourse[index]:null;
+  if(!item)return;
+  const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+  const head=row?.querySelector('.stock-performance-head');
+  if(head)head.innerHTML=stockPerformanceHtml(getStockMeta(item));
+}
+
+let activeStockPurchaseIndex=-1;
+
+function openStockPurchaseModal(index){
+  if(!Array.isArray(data.bourse)||!data.bourse[index])return;
+  activeStockPurchaseIndex=index;
+  const item=data.bourse[index];
+  const meta=getStockMeta(item);
+
+  if(meta.shares>0 && meta.pruSet!==true){
+    alert('Renseigne d’abord ton PRU actuel avant d’ajouter un nouvel achat. Il peut être égal à 0 €.');
+    const pruInput=document.querySelector(`.stock-row[data-stock-index="${index}"] input[data-stock-field="pru"]`);
+    if(pruInput)pruInput.focus();
+    activeStockPurchaseIndex=-1;
+    return;
+  }
+
+  document.getElementById('stockPurchaseShares').value='';
+  document.getElementById('stockPurchasePrice').value='';
+  document.getElementById('stockPurchaseCurrent').innerHTML=
+    `<strong>${escapeHtml(item[0]||'Ligne Bourse')}</strong><br>`+
+    `${meta.shares.toLocaleString('fr-FR',{maximumFractionDigits:6})} part(s)`+
+    (meta.pruSet===true?` · PRU ${euro(meta.pru)}`:' · aucun PRU');
+  updateStockPurchasePreview();
+  document.getElementById('stockPurchaseModal').classList.add('active');
+  setTimeout(()=>document.getElementById('stockPurchaseShares')?.focus(),100);
+}
+
+function closeStockPurchaseModal(){
+  document.getElementById('stockPurchaseModal').classList.remove('active');
+  activeStockPurchaseIndex=-1;
+}
+
+function readStockPurchaseNumber(id){
+  const raw=String(document.getElementById(id)?.value||'').replace(',','.');
+  const n=Number(raw);
+  return Number.isFinite(n)&&n>0?n:0;
+}
+
+function calculateStockPurchaseResult(index,newShares,buyPrice){
+  const item=Array.isArray(data.bourse)?data.bourse[index]:null;
+  if(!item)return null;
+  const meta=getStockMeta(item);
+  const oldShares=Math.max(0,Number(meta.shares)||0);
+  const oldPru=Math.max(0,Number(meta.pru)||0);
+  const added=Math.max(0,Number(newShares)||0);
+  const price=Math.max(0,Number(buyPrice)||0);
+  const totalShares=oldShares+added;
+  const newPru=totalShares>0?((oldShares*oldPru)+(added*price))/totalShares:0;
+  return {oldShares,oldPru,added,price,totalShares,newPru};
+}
+
+function updateStockPurchasePreview(){
+  if(activeStockPurchaseIndex<0)return;
+  const qty=readStockPurchaseNumber('stockPurchaseShares');
+  const price=readStockPurchaseNumber('stockPurchasePrice');
+  const preview=document.getElementById('stockPurchasePreview');
+  if(!preview)return;
+  if(qty<=0 || price<=0){
+    preview.textContent='Saisis le nombre de parts achetées et leur prix unitaire.';
+    return;
+  }
+  const result=calculateStockPurchaseResult(activeStockPurchaseIndex,qty,price);
+  if(!result)return;
+  preview.innerHTML=
+    `Après achat : <strong>${result.totalShares.toLocaleString('fr-FR',{maximumFractionDigits:6})} part(s)</strong><br>`+
+    `Nouveau PRU : <strong>${euro(result.newPru)}</strong>`;
+}
+
+function submitStockPurchase(){
+  if(activeStockPurchaseIndex<0)return;
+  const qty=readStockPurchaseNumber('stockPurchaseShares');
+  const price=readStockPurchaseNumber('stockPurchasePrice');
+  if(qty<=0 || price<=0){
+    alert('Renseigne le nombre de parts achetées et le prix d’achat unitaire.');
+    return;
+  }
+
+  const item=data.bourse[activeStockPurchaseIndex];
+  const result=calculateStockPurchaseResult(activeStockPurchaseIndex,qty,price);
+  if(!item || !result)return;
+
+  const meta=getStockMeta(item);
+  meta.shares=result.totalShares;
+  meta.pru=result.newPru;
+  meta.pruSet=true;
+  item[2]=meta;
+  recalculateStockItem(item);
+  save();
+
+  const index=activeStockPurchaseIndex;
+  closeStockPurchaseModal();
+  renderPatrimoine();
+
+  // Le cours actuel ne change pas : seul le nombre de parts et le PRU sont recalculés.
+  refreshStockPerformance(index);
 }
 
 function updateStockField(index,field,value){
@@ -3088,11 +3303,23 @@ function updateStockField(index,field,value){
     meta.pricePerShare=Number.isFinite(n)&&n>=0?n:0;
     item[2]=meta;
     recalculateStockItem(item);
+  }else if(field==='pru'){
+    const raw=String(value??'').trim().replace(',','.');
+    if(raw===''){
+      meta.pru=0;
+      meta.pruSet=false;
+    }else{
+      const n=Number(raw);
+      meta.pru=Number.isFinite(n)&&n>=0?n:0;
+      meta.pruSet=true;
+    }
+    item[2]=meta;
   }
 
   const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
   const valueEl=row?.querySelector('.stock-calculated-value strong');
   if(valueEl)valueEl.textContent=euro(Number(item[1])||0);
+  refreshStockPerformance(index);
 
   updateTotals();
   renderAssetDistribution();
@@ -3117,6 +3344,7 @@ function renderStockRow(item,idx,cont){
   row.className='stock-row';
   row.dataset.stockIndex=String(idx);
   row.innerHTML=`
+    <div class="stock-performance-head">${stockPerformanceHtml(meta)}</div>
     <div class="stock-field">
       <label>Libellé</label>
       <input type="text" value="${escapeHtml(item[0]||'')}" placeholder="Ex : MSCI World PEA" oninput="updateStockField(${idx},'label',this.value)">
@@ -3127,17 +3355,26 @@ function renderStockRow(item,idx,cont){
     </div>
     <div class="stock-field">
       <label>Nombre de parts possédées</label>
-      <input type="number" value="${meta.shares||''}" placeholder="0" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'shares',this.value)">
+      <div class="stock-share-inline">
+        <input type="number" value="${meta.shares||''}" placeholder="0" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'shares',this.value)">
+        <button class="stock-add-icon" type="button" onclick="openStockPurchaseModal(${idx})" title="Ajouter un achat" aria-label="Ajouter un achat">+</button>
+      </div>
     </div>
     <div class="stock-field">
+      <label>PRU (€)</label>
+      <input data-stock-field="pru" type="number" value="${meta.pruSet===true?meta.pru:''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pru',this.value)">
+    </div>
+    <div class="stock-field" style="grid-column:1/-1">
       <label>Prix par part (€)</label>
-      <input data-stock-field="pricePerShare" type="number" value="${meta.pricePerShare||''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pricePerShare',this.value)">
+      <div class="stock-price-inline">
+        <input data-stock-field="pricePerShare" type="number" value="${meta.pricePerShare||''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pricePerShare',this.value)">
+        ${meta.isin?`<button class="stock-refresh-icon" type="button" onclick="refreshStockPrice(${idx},{force:true})" title="Actualiser le cours" aria-label="Actualiser le cours">↻</button>`:''}
+      </div>
     </div>
     <div class="stock-row-footer">
       <div>
         <span class="stock-calculated-value">Valeur calculée : <strong>${euro(Number(item[1])||0)}</strong></span>
         <div class="stock-price-tools">
-          ${meta.isin?`<button class="stock-refresh-btn" type="button" onclick="refreshStockPrice(${idx},{force:true})">↻ Actualiser le cours</button>`:''}
           <span class="stock-price-status">${meta.priceUpdatedAt&&meta.priceSourceName?`Dernière mise à jour : ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')} · ${escapeHtml(meta.priceSourceName)}`:''}</span>
         </div>
       </div>
@@ -3149,8 +3386,8 @@ function renderStockRow(item,idx,cont){
   `;
   cont.appendChild(row);
   setTimeout(()=>ensureStockHistoryChart(idx),0);
-  if(shouldAutoRefreshStock(meta)){
-    setTimeout(()=>refreshStockPrice(idx,{silent:true}),0);
+  if(meta.isin){
+    setTimeout(()=>refreshStockPrice(idx,{silent:true,force:false}),0);
   }
 }
 
