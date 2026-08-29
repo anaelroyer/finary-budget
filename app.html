@@ -63,6 +63,74 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-performance.negative{color:#f85149;border-color:rgba(248,81,73,.35);background:rgba(248,81,73,.08)}
 .stock-performance.neutral{color:#8b949e}
 #stockPurchaseModal .modal{max-width:380px}
+
+#stockEditModal .modal{max-width:420px}
+.stock-compact-card,.crypto-compact-card{
+  display:block;
+  padding:12px;
+  margin:0 0 10px;
+  border:1px solid #21262d;
+  border-radius:12px;
+  background:#0d1117;
+}
+.stock-compact-top,.crypto-compact-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+}
+.stock-compact-title,.crypto-compact-title{min-width:0}
+.stock-compact-title strong,.crypto-compact-title strong{
+  display:block;font-size:15px;line-height:1.2;color:#f0f6fc;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.stock-compact-sub,.crypto-compact-sub{
+  margin-top:3px;font-size:11px;color:#8b949e;word-break:break-all
+}
+.stock-compact-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.stock-icon-btn{
+  width:29px;height:29px;border:1px solid #30363d;border-radius:8px;
+  background:#161b22;color:#c9d1d9;display:inline-flex;align-items:center;
+  justify-content:center;font-size:15px;line-height:1;cursor:pointer;padding:0
+}
+.stock-icon-btn:hover{background:#21262d}
+.stock-icon-btn.add{color:#3fb950;border-color:#238636}
+.stock-icon-btn.refresh{color:#58a6ff}
+.stock-icon-btn.delete{color:#f85149}
+.stock-compact-main,.crypto-compact-main{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px
+}
+.crypto-compact-main{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stock-stat{
+  min-width:0;padding:7px 8px;border-radius:9px;background:#161b22;
+}
+.stock-stat-label{display:block;font-size:10px;color:#8b949e;margin-bottom:2px}
+.stock-stat-value{
+  display:block;font-size:13px;font-weight:700;color:#f0f6fc;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.stock-compact-bottom,.crypto-compact-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-top:9px;padding-top:8px;border-top:1px solid #21262d
+}
+.stock-compact-value{font-size:13px;color:#c9d1d9}
+.stock-compact-value strong{font-size:15px;color:#f0f6fc}
+.stock-compact-status{
+  font-size:10px;color:#8b949e;text-align:right;line-height:1.25
+}
+.stock-compact-card .stock-history-panel,
+.crypto-compact-card .stock-history-panel{margin-top:9px}
+.stock-compact-card .stock-performance-head{margin:7px 0 0}
+.stock-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stock-edit-grid .full{grid-column:1/-1}
+.stock-edit-grid label{display:block;font-size:12px;color:#8b949e;margin-bottom:4px}
+.stock-edit-grid input{width:100%}
+@media(max-width:420px){
+  .stock-compact-main{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .crypto-compact-main{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stock-edit-grid{grid-template-columns:1fr}
+  .stock-edit-grid .full{grid-column:auto}
+  .stock-compact-bottom,.crypto-compact-bottom{align-items:flex-start;flex-direction:column}
+  .stock-compact-status{text-align:left}
+}
+
 .stock-purchase-preview{background:#0d1117;border:1px solid #30363d;border-radius:9px;padding:10px 12px;font-size:12px;color:#8b949e;line-height:1.5}
 .stock-purchase-preview strong{color:#fff}
 .stock-field input:focus{border-color:#58a6ff}
@@ -621,6 +689,39 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
 
 <!-- MODAL EMPRUNT -->
+
+<div class="modal-overlay" id="stockEditModal">
+  <div class="modal">
+    <h3 id="stockEditTitle">Ajouter une ligne Bourse</h3>
+    <div class="stock-edit-grid">
+      <div class="full">
+        <label>Libellé</label>
+        <input id="stockEditLabel" type="text" placeholder="Ex : MSCI World PEA">
+      </div>
+      <div class="full">
+        <label>ISIN</label>
+        <input id="stockEditIsin" type="text" placeholder="Ex : IE0002XZSHO1" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div>
+        <label>Nombre de parts</label>
+        <input id="stockEditShares" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+      </div>
+      <div>
+        <label>PRU (€)</label>
+        <input id="stockEditPru" type="number" min="0" step="any" inputmode="decimal" placeholder="0,00">
+      </div>
+      <div class="full">
+        <label>Prix par part (€)</label>
+        <input id="stockEditPrice" type="number" min="0" step="any" inputmode="decimal" placeholder="0,00">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" type="button" onclick="closeStockEditModal()">Annuler</button>
+      <button class="btn-primary" type="button" onclick="submitStockEdit()">Valider</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="stockPurchaseModal">
   <div class="modal">
     <h3>Ajouter un achat</h3>
@@ -2919,7 +3020,7 @@ function formatStockHistoryDate(date){
 }
 
 function renderStockHistoryChart(index,payload){
-  const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+  const row=document.querySelector(`[data-stock-index="${index}"]`);
   const panel=row?.querySelector('.stock-history-panel');
   if(!panel)return;
 
@@ -3054,14 +3155,14 @@ async function ensureStockHistoryChart(index){
     const payload=await loadStockQuotes(false);
     renderStockHistoryChart(index,payload);
   }catch(_err){
-    const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+    const row=document.querySelector(`[data-stock-index="${index}"]`);
     const panel=row?.querySelector('.stock-history-panel');
     if(panel)panel.innerHTML='<div class="stock-history-empty">Historique temporairement indisponible.</div>';
   }
 }
 
 function setStockPriceStatus(index,text,state=''){
-  const el=document.querySelector(`.stock-row[data-stock-index="${index}"] .stock-price-status`);
+  const el=document.querySelector(`[data-stock-index="${index}"] .stock-compact-status`);
   if(!el)return;
   el.textContent=text||'';
   el.className=`stock-price-status${state?' '+state:''}`;
@@ -3111,7 +3212,7 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
 
     recalculateStockItem(item);
 
-    const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+    const row=document.querySelector(`[data-stock-index="${index}"]`);
     const priceInput=row?.querySelector('input[data-stock-field="pricePerShare"]');
     if(priceInput)priceInput.value=String(price);
     const valueEl=row?.querySelector('.stock-calculated-value strong');
@@ -3143,7 +3244,7 @@ async function refreshStockPrice(index,{silent=false,force=false}={}){
       console.warn('Cours indisponible :',err);
     }else{
       // En automatique, on garde le dernier cours et son statut visible.
-      const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+      const row=document.querySelector(`[data-stock-index="${index}"]`);
       const status=row?.querySelector('.stock-price-status');
       if(status && meta.priceUpdatedAt && meta.priceSourceName){
         status.textContent=`Dernière mise à jour : ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')} · ${meta.priceSourceName}`;
@@ -3181,9 +3282,85 @@ function stockPerformanceHtml(meta){
 function refreshStockPerformance(index){
   const item=Array.isArray(data.bourse)?data.bourse[index]:null;
   if(!item)return;
-  const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+  const row=document.querySelector(`[data-stock-index="${index}"]`);
   const head=row?.querySelector('.stock-performance-head');
   if(head)head.innerHTML=stockPerformanceHtml(getStockMeta(item));
+}
+
+
+let activeStockEditIndex=-1;
+
+function stockModalNumber(id,allowZero=true){
+  const raw=String(document.getElementById(id)?.value??'').trim().replace(',','.');
+  if(raw==='')return null;
+  const n=Number(raw);
+  if(!Number.isFinite(n))return null;
+  if(allowZero ? n<0 : n<=0)return null;
+  return n;
+}
+
+function openStockEditModal(index=-1){
+  activeStockEditIndex=index;
+  const editing=index>=0 && Array.isArray(data.bourse) && data.bourse[index];
+  const item=editing?data.bourse[index]:null;
+  const meta=editing?getStockMeta(item):null;
+
+  document.getElementById('stockEditTitle').textContent=editing?'Modifier la ligne Bourse':'Ajouter une ligne Bourse';
+  document.getElementById('stockEditLabel').value=editing?(item[0]||''):'';
+  document.getElementById('stockEditIsin').value=editing?(meta.isin||''):'';
+  document.getElementById('stockEditShares').value=editing?meta.shares:'';
+  document.getElementById('stockEditPru').value=editing && meta.pruSet===true?meta.pru:'';
+  document.getElementById('stockEditPrice').value=editing?meta.pricePerShare:'';
+
+  document.getElementById('stockEditModal').classList.add('active');
+  setTimeout(()=>document.getElementById('stockEditLabel')?.focus(),100);
+}
+
+function closeStockEditModal(){
+  document.getElementById('stockEditModal').classList.remove('active');
+  activeStockEditIndex=-1;
+}
+
+function submitStockEdit(){
+  const label=String(document.getElementById('stockEditLabel')?.value||'').trim();
+  const isin=String(document.getElementById('stockEditIsin')?.value||'').trim().toUpperCase();
+  const shares=stockModalNumber('stockEditShares',true);
+  const pru=stockModalNumber('stockEditPru',true);
+  const price=stockModalNumber('stockEditPrice',true);
+
+  if(!label || !isin || shares===null || pru===null || price===null){
+    alert('Renseigne le libellé, l’ISIN, le nombre de parts, le PRU et le prix par part.');
+    return;
+  }
+
+  let item;
+  if(activeStockEditIndex>=0 && Array.isArray(data.bourse) && data.bourse[activeStockEditIndex]){
+    item=data.bourse[activeStockEditIndex];
+  }else{
+    if(!Array.isArray(data.bourse))data.bourse=[];
+    item=['',0,{}];
+    data.bourse.push(item);
+    activeStockEditIndex=data.bourse.length-1;
+  }
+
+  const previous=getStockMeta(item);
+  item[0]=label;
+  item[2]={
+    ...previous,
+    isin,
+    shares,
+    pru,
+    pruSet:true,
+    pricePerShare:price
+  };
+  recalculateStockItem(item);
+  save();
+  const index=activeStockEditIndex;
+  closeStockEditModal();
+  render();
+
+  // Après création/modification, on tente silencieusement le cours automatique.
+  if(isin)setTimeout(()=>refreshStockPrice(index,{silent:true,force:false}),0);
 }
 
 let activeStockPurchaseIndex=-1;
@@ -3195,10 +3372,9 @@ function openStockPurchaseModal(index){
   const meta=getStockMeta(item);
 
   if(meta.shares>0 && meta.pruSet!==true){
-    alert('Renseigne d’abord ton PRU actuel avant d’ajouter un nouvel achat. Il peut être égal à 0 €.');
-    const pruInput=document.querySelector(`.stock-row[data-stock-index="${index}"] input[data-stock-field="pru"]`);
-    if(pruInput)pruInput.focus();
+    alert('Renseigne d’abord le PRU actuel de cette ligne. Il peut être égal à 0 €.');
     activeStockPurchaseIndex=-1;
+    openStockEditModal(index);
     return;
   }
 
@@ -3316,7 +3492,7 @@ function updateStockField(index,field,value){
     item[2]=meta;
   }
 
-  const row=document.querySelector(`.stock-row[data-stock-index="${index}"]`);
+  const row=document.querySelector(`[data-stock-index="${index}"]`);
   const valueEl=row?.querySelector('.stock-calculated-value strong');
   if(valueEl)valueEl.textContent=euro(Number(item[1])||0);
   refreshStockPerformance(index);
@@ -3336,59 +3512,60 @@ function updateStockField(index,field,value){
 
 function renderStockRow(item,idx,cont){
   const meta=getStockMeta(item);
-  // Anciennes lignes : on conserve leur montant tant que l'utilisateur
-  // n'a pas encore renseigné parts + prix, afin de ne pas perdre de valeur.
   if(meta.shares>0 || meta.pricePerShare>0)recalculateStockItem(item);
 
   const row=document.createElement('div');
-  row.className='stock-row';
+  row.className='stock-compact-card';
   row.dataset.stockIndex=String(idx);
+
+  const updated=meta.priceUpdatedAt?new Date(meta.priceUpdatedAt).toLocaleString('fr-FR'):'';
+  const sharesText=Number(meta.shares||0).toLocaleString('fr-FR',{maximumFractionDigits:6});
+  const pruText=meta.pruSet===true?euro(meta.pru):'—';
+  const courseText=meta.pricePerShare>0?formatStockCourse(meta.pricePerShare):'—';
+
   row.innerHTML=`
+    <div class="stock-compact-top">
+      <div class="stock-compact-title">
+        <strong>${escapeHtml(item[0]||'Ligne Bourse')}</strong>
+        <div class="stock-compact-sub">${escapeHtml(meta.isin||'ISIN non renseigné')}</div>
+      </div>
+      <div class="stock-compact-actions">
+        <button class="stock-icon-btn add" type="button" onclick="openStockPurchaseModal(${idx})" title="Ajouter un achat" aria-label="Ajouter un achat">+</button>
+        ${meta.isin?`<button class="stock-icon-btn refresh" type="button" onclick="refreshStockPrice(${idx},{force:true})" title="Actualiser le cours" aria-label="Actualiser le cours">↻</button>`:''}
+        <button class="stock-icon-btn" type="button" onclick="openStockEditModal(${idx})" title="Modifier" aria-label="Modifier">✎</button>
+        <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('bourse',${idx})" title="Supprimer" aria-label="Supprimer">×</button>
+      </div>
+    </div>
+
     <div class="stock-performance-head">${stockPerformanceHtml(meta)}</div>
-    <div class="stock-field">
-      <label>Libellé</label>
-      <input type="text" value="${escapeHtml(item[0]||'')}" placeholder="Ex : MSCI World PEA" oninput="updateStockField(${idx},'label',this.value)">
-    </div>
-    <div class="stock-field">
-      <label>ISIN</label>
-      <input type="text" value="${escapeHtml(meta.isin)}" placeholder="Ex : IE0002XZSHO1" autocapitalize="characters" spellcheck="false" oninput="updateStockField(${idx},'isin',this.value)">
-    </div>
-    <div class="stock-field">
-      <label>Nombre de parts possédées</label>
-      <div class="stock-share-inline">
-        <input type="number" value="${meta.shares||''}" placeholder="0" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'shares',this.value)">
-        <button class="stock-add-icon" type="button" onclick="openStockPurchaseModal(${idx})" title="Ajouter un achat" aria-label="Ajouter un achat">+</button>
+
+    <div class="stock-compact-main">
+      <div class="stock-stat">
+        <span class="stock-stat-label">Parts</span>
+        <span class="stock-stat-value">${sharesText}</span>
+      </div>
+      <div class="stock-stat">
+        <span class="stock-stat-label">PRU</span>
+        <span class="stock-stat-value">${pruText}</span>
+      </div>
+      <div class="stock-stat">
+        <span class="stock-stat-label">Cours</span>
+        <span class="stock-stat-value">${courseText}</span>
       </div>
     </div>
-    <div class="stock-field">
-      <label>PRU (€)</label>
-      <input data-stock-field="pru" type="number" value="${meta.pruSet===true?meta.pru:''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pru',this.value)">
+
+    <div class="stock-compact-bottom">
+      <span class="stock-compact-value">Valeur : <strong>${euro(Number(item[1])||0)}</strong></span>
+      <span class="stock-compact-status">${updated?`${updated}${meta.priceSourceName?` · ${escapeHtml(meta.priceSourceName)}`:''}`:'Cours non actualisé'}</span>
     </div>
-    <div class="stock-field" style="grid-column:1/-1">
-      <label>Prix par part (€)</label>
-      <div class="stock-price-inline">
-        <input data-stock-field="pricePerShare" type="number" value="${meta.pricePerShare||''}" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockField(${idx},'pricePerShare',this.value)">
-        ${meta.isin?`<button class="stock-refresh-icon" type="button" onclick="refreshStockPrice(${idx},{force:true})" title="Actualiser le cours" aria-label="Actualiser le cours">↻</button>`:''}
-      </div>
-    </div>
-    <div class="stock-row-footer">
-      <div>
-        <span class="stock-calculated-value">Valeur calculée : <strong>${euro(Number(item[1])||0)}</strong></span>
-        <div class="stock-price-tools">
-          <span class="stock-price-status">${meta.priceUpdatedAt&&meta.priceSourceName?`Dernière mise à jour : ${new Date(meta.priceUpdatedAt).toLocaleString('fr-FR')} · ${escapeHtml(meta.priceSourceName)}`:''}</span>
-        </div>
-      </div>
-      <button class="btn-del" onclick="delPatrimoine('bourse',${idx})" title="Supprimer">×</button>
-    </div>
+
     <div class="stock-history-panel">
       <div class="stock-history-empty">Chargement de l’historique…</div>
     </div>
   `;
   cont.appendChild(row);
   setTimeout(()=>ensureStockHistoryChart(idx),0);
-  if(meta.isin){
-    setTimeout(()=>refreshStockPrice(idx,{silent:true,force:false}),0);
-  }
+  if(meta.isin)setTimeout(()=>refreshStockPrice(idx,{silent:true,force:false}),0);
 }
 
 
@@ -3437,34 +3614,7 @@ function syncOkxBtcToCryptoData(){
   }
 }
 
-function updateCryptoBtcPru(value){
-  syncOkxBtcToCryptoData();
-  const item=data.crypto[0];
-  if(!item)return;
-  const meta=getCryptoBtcMeta();
-  const raw=String(value??'').trim().replace(',','.');
-  if(raw===''){
-    meta.pru=0;
-    meta.pruSet=false;
-  }else{
-    const n=Number(raw);
-    meta.pru=Number.isFinite(n)&&n>=0?n:0;
-    meta.pruSet=true;
-  }
-  item[2]=meta;
-  save();
-  render();
-}
 
-function cryptoBtcPerformanceHtml(meta){
-  if(!meta.pruSet)return '<span class="stock-performance neutral">PRU non renseigné</span>';
-  if(meta.pru===0)return '<span class="stock-performance positive">PRU 0 € · gain intégral</span>';
-  if(meta.priceEur<=0)return '<span class="stock-performance neutral">Cours indisponible</span>';
-  const perf=((meta.priceEur/meta.pru)-1)*100;
-  const cls=perf>0?'positive':perf<0?'negative':'neutral';
-  const sign=perf>0?'+':'';
-  return `<span class="stock-performance ${cls}">${sign}${perf.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} % vs PRU</span>`;
-}
 
 function cryptoBtcHistoryHtml(meta){
   const points=(Array.isArray(meta.history)?meta.history:[])
@@ -3519,38 +3669,33 @@ function renderCryptoBtcRow(cont){
   const value=Math.max(0,Number(item?.[1])||0);
   const qtyText=meta.quantity.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:8});
   const updated=meta.updatedAt ? new Date(meta.updatedAt).toLocaleString('fr-FR') : '';
+
   const row=document.createElement('div');
-  row.className='stock-row crypto-okx-row';
+  row.className='crypto-compact-card';
   row.innerHTML=`
-    <div class="stock-performance-head">${cryptoBtcPerformanceHtml(meta)}</div>
-    <div class="stock-field">
-      <label>Actif</label>
-      <input type="text" value="Bitcoin" readonly>
-    </div>
-    <div class="stock-field">
-      <label>Plateforme</label>
-      <input type="text" value="OKX" readonly>
-    </div>
-    <div class="stock-field">
-      <label>Quantité détenue</label>
-      <input type="text" value="${qtyText} BTC" readonly>
-    </div>
-    <div class="stock-field">
-      <label>PRU (€)</label>
-      <input type="number" value="${meta.pruSet?meta.pru:''}" placeholder="0,00" min="0" step="any" inputmode="decimal" onchange="updateCryptoBtcPru(this.value)">
-    </div>
-    <div class="stock-field" style="grid-column:1/-1">
-      <label>Cours BTC / EUR</label>
-      <input type="text" value="${meta.priceEur>0?formatStockCourse(meta.priceEur):'En attente de synchronisation'}" readonly>
-    </div>
-    <div class="stock-row-footer">
-      <div>
-        <span class="stock-calculated-value">Valeur calculée : <strong>${euro(value)}</strong></span>
-        <div class="stock-price-tools">
-          <span class="stock-price-status">${updated?`OKX · dernière synchronisation : ${updated}`:'En attente de la première synchronisation OKX'}</span>
-        </div>
+    <div class="crypto-compact-top">
+      <div class="crypto-compact-title">
+        <strong>Bitcoin</strong>
+        <div class="crypto-compact-sub">OKX · Simple Earn</div>
       </div>
     </div>
+
+    <div class="crypto-compact-main">
+      <div class="stock-stat">
+        <span class="stock-stat-label">Quantité</span>
+        <span class="stock-stat-value">${qtyText} BTC</span>
+      </div>
+      <div class="stock-stat">
+        <span class="stock-stat-label">Cours BTC/EUR</span>
+        <span class="stock-stat-value">${meta.priceEur>0?formatStockCourse(meta.priceEur):'—'}</span>
+      </div>
+    </div>
+
+    <div class="crypto-compact-bottom">
+      <span class="stock-compact-value">Valeur : <strong>${euro(value)}</strong></span>
+      <span class="stock-compact-status">${updated?`OKX · ${updated}`:'En attente de synchronisation OKX'}</span>
+    </div>
+
     <div class="stock-history-panel">${cryptoBtcHistoryHtml(meta)}</div>
   `;
   cont.appendChild(row);
@@ -3873,7 +4018,8 @@ function addItem(k){
   if(k==='dettes'){openLoanModal(-1);return;}
   if(!data[k])data[k]=[];
   if(k==='bourse'){
-    data[k].push(['',0,{isin:'',shares:0,pricePerShare:0,priceUpdatedAt:'',priceSourceUrl:'',priceSourceName:'',priceFetchStatus:''}]);
+    openStockEditModal(-1);
+    return;
   }else{
     data[k].push(['',0]);
   }
