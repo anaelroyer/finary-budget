@@ -17,7 +17,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e6edf3;line-height:1.5;padding:8px}
 .wrap{max-width:480px;margin:auto;display:flex;flex-direction:column;gap:16px}
 .nav-tabs{display:flex;gap:6px;background:#161b22;border:1px solid #30363d;padding:6px;border-radius:12px}
-.tab-btn{flex:1;background:transparent;border:0;color:#8b949e;font-size:14px;font-weight:600;padding:10px;border-radius:8px;cursor:pointer;transition:all .2s;text-align:center}
+.tab-btn{flex:1;background:transparent;border:0;color:#8b949e;font-size:12px;font-weight:600;padding:9px 5px;border-radius:8px;cursor:pointer;transition:all .2s;text-align:center;min-width:0}
 .tab-btn:hover{color:#fff;background:#21262d}.tab-btn.active{background:#238636;color:#fff}
 .tab-content{display:none;flex-direction:column;gap:16px}.tab-content.active{display:flex}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.top h1{font-size:20px;font-weight:700;color:#fff}
@@ -496,6 +496,76 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   }
 }
 
+
+
+/* MENUS — cycle Drive du lundi soir au lundi midi suivant */
+.menu-period-card{gap:10px}
+.menu-period-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.menu-period-title{font-size:18px;font-weight:800;color:#fff;line-height:1.25}
+.menu-period-sub{font-size:11px;color:#8b949e;margin-top:3px}
+.menu-reset-btn{flex:0 0 auto;padding:7px 9px;font-size:11px}
+.menu-days{display:flex;flex-direction:column;gap:10px}
+.menu-day-card{
+  background:#161b22;border:1px solid #30363d;border-radius:14px;padding:12px;
+  box-shadow:0 3px 14px rgba(0,0,0,.24)
+}
+.menu-day-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.menu-day-name{font-size:14px;font-weight:800;color:#f0f6fc;text-transform:capitalize}
+.menu-day-date{font-size:11px;color:#8b949e}
+.menu-meals{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-meal{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:9px}
+.menu-meal-label{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;font-weight:800;margin-bottom:5px}
+.menu-meal input{
+  width:100%;min-height:42px;border:0;background:transparent;color:#e6edf3;
+  font:inherit;font-size:13px;line-height:1.35;outline:none;padding:0
+}
+.menu-meal input::placeholder{color:#484f58}
+.menu-meal{position:relative}
+.menu-dish-picker{
+  display:none;position:absolute;left:7px;right:7px;top:calc(100% - 3px);z-index:60;
+  max-height:220px;overflow-y:auto;background:#161b22;border:1px solid #30363d;
+  border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.45);padding:5px
+}
+.menu-dish-picker.open{display:block}
+.menu-dish-option{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:0;background:transparent;color:#e6edf3;text-align:left;padding:9px 10px;
+  border-radius:7px;font:inherit;font-size:13px;cursor:pointer
+}
+.menu-dish-option:hover,.menu-dish-option:focus{background:#21262d;outline:none}
+.menu-dish-count{color:#8b949e;font-size:11px;white-space:nowrap}
+.menu-dish-empty{padding:9px 10px;color:#8b949e;font-size:12px}
+.menu-recipe-row{display:flex;align-items:center;gap:8px;margin-top:6px;min-height:22px}
+.menu-recipe-link,.menu-recipe-edit{
+  border:0;background:transparent;font:inherit;cursor:pointer;padding:2px 0
+}
+.menu-recipe-link{font-size:11px;font-weight:800;color:#8b949e}
+.menu-recipe-link.has-link{color:#3fb950}
+.menu-recipe-edit{font-size:11px;color:#8b949e}
+.menu-recipe-link:hover,.menu-recipe-edit:hover{text-decoration:underline}
+.menu-meal.disabled{opacity:.28}
+.menu-meal.disabled textarea{pointer-events:none}
+.menu-hint{font-size:11px;color:#8b949e;line-height:1.45}
+@media(max-width:380px){
+  .menu-meals{grid-template-columns:1fr}
+}
+
+
+
+.menu-week-block{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.menu-week-block:last-child{margin-bottom:0}
+.menu-week-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:2px 2px 0
+}
+.menu-week-title{font-size:15px;font-weight:800;color:#f0f6fc}
+.menu-week-badge{
+  font-size:10px;font-weight:800;color:#8b949e;background:#161b22;
+  border:1px solid #30363d;border-radius:999px;padding:4px 7px;white-space:nowrap
+}
+
+
+#menuRecipeModal{display:flex}
 </style>
 </head>
 <body>
@@ -1028,6 +1098,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <button class="tab-btn" onclick="switchTab('patrimoine')">📊 Patrimoine</button>
     <button class="tab-btn" onclick="switchTab('factures')">🧾 Factures</button>
     <button class="tab-btn" onclick="switchTab('vehicles')">🚗 Véhicules</button>
+    <button class="tab-btn" onclick="switchTab('menus')">🍽️ Menus</button>
   </div>
 
   <div id="firebaseStatus">Synchronisation…</div>
@@ -1150,6 +1221,18 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
     <div class="card"><div class="section-header"><h2>💳 Emprunts</h2><span class="section-total" id="total-dettes">0 €</span></div><div class="rows-container" data-key="dettes"></div><button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button></div>
     <div class="app-footer">Application crée par ROYER Anaël</div>
+  </div>
+
+  
+  <div id="tab-menus" class="tab-content">
+    <div class="menu-period-head" style="margin-bottom:10px">
+      <div>
+        <div class="menu-period-title" id="menuPeriodTitle">Menus</div>
+              </div>
+      <button class="btn btn-secondary menu-reset-btn" type="button" onclick="resetCurrentMenus()">↺ Vider</button>
+    </div>
+
+    <div id="menuDays" class="menu-days"></div>
   </div>
 
   <div id="tab-factures" class="tab-content">
@@ -1359,7 +1442,8 @@ function createEmptyBetaData(){
     bankTransfers:[],
     factures:[],
     garageVehicles:[],
-    vehicleMaintenance:[]
+    vehicleMaintenance:[],
+    menus:{cycleStart:'',weeks:{},dishStats:{},lastArchivedCycle:''}
   };
 }
 
@@ -1831,6 +1915,563 @@ window.applyFirebaseState=function(remote){
 const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
 let currentActiveTab='budget';
 
+
+/* ===========================
+   MENUS — lundi soir → lundi midi
+   Deux périodes à venir sont toujours visibles.
+   =========================== */
+function menuLocalDateKey(date){
+  const y=date.getFullYear();
+  const m=String(date.getMonth()+1).padStart(2,'0');
+  const d=String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function menuDateFromKey(key){
+  const [y,m,d]=String(key||'').split('-').map(Number);
+  return new Date(y||1970,(m||1)-1,d||1,12,0,0,0);
+}
+function menuAddDays(date,days){
+  const d=new Date(date);
+  d.setDate(d.getDate()+days);
+  return d;
+}
+function getUpcomingMonday(date=new Date()){
+  const d=new Date(date);
+  d.setHours(12,0,0,0);
+  const day=d.getDay(); // 0 dim ... 1 lun
+  const delta=(8-day)%7; // lundi courant si lundi, sinon prochain lundi
+  d.setDate(d.getDate()+delta);
+  return d;
+}
+function normalizeMenuDish(value){
+  return String(value||'')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ');
+}
+function ensureMenusData(){
+  let changed=false;
+
+  if(!data.menus || typeof data.menus!=='object' || Array.isArray(data.menus)){
+    data.menus={cycleStart:'',weeks:{},dishStats:{},lastArchivedCycle:''};
+    changed=true;
+  }
+
+  // Migration transparente depuis V25.3 : l'ancienne semaine unique devient la première.
+  if(!data.menus.weeks || typeof data.menus.weeks!=='object' || Array.isArray(data.menus.weeks)){
+    const legacyMeals=(data.menus.meals && typeof data.menus.meals==='object' && !Array.isArray(data.menus.meals))
+      ? {...data.menus.meals}
+      : {};
+    data.menus.weeks={};
+    if(data.menus.cycleStart){
+      data.menus.weeks[data.menus.cycleStart]={meals:legacyMeals};
+    }
+    delete data.menus.meals;
+  }
+
+  if(!data.menus.dishStats || typeof data.menus.dishStats!=='object' || Array.isArray(data.menus.dishStats)){
+    data.menus.dishStats={};
+  }
+
+  const defaultMenuDishes=[
+    'Tarte rustique',
+    'Pâtes carbonara',
+    'Pâtes bolognaises',
+    'Croque-monsieur',
+    'Tarte au thon',
+    'Rougail saucisse',
+    'Courgettes farcies',
+    'Ramen',
+    'Lasagnes'
+  ];
+  defaultMenuDishes.forEach(label=>{
+    const key=normalizeMenuDish(label);
+    if(!data.menus.dishStats[key]){
+      data.menus.dishStats[key]={label,count:0,lastUsed:'',recipeUrl:''};
+      changed=true;
+    }
+  });
+
+  if(typeof data.menus.lastArchivedCycle!=='string'){
+    data.menus.lastArchivedCycle='';
+  }
+
+  const now=new Date();
+
+  if(!data.menus.cycleStart){
+    data.menus.cycleStart=menuLocalDateKey(getUpcomingMonday(now));
+    changed=true;
+  }
+
+  // Si plusieurs périodes sont passées (application non ouverte pendant un moment),
+  // on avance autant que nécessaire. Chaque semaine terminée alimente seulement
+  // les statistiques de plats, jamais un historique de planning.
+  let guard=0;
+  while(guard++<12){
+    const start=menuDateFromKey(data.menus.cycleStart);
+    const rollover=menuAddDays(start,7);
+    rollover.setHours(14,0,0,0);
+
+    if(now<rollover)break;
+
+    archiveMenuWeekDishes(data.menus.cycleStart);
+
+    const nextKey=menuLocalDateKey(menuAddDays(start,7));
+    const nextMeals=(data.menus.weeks[nextKey] && data.menus.weeks[nextKey].meals)
+      ? {...data.menus.weeks[nextKey].meals}
+      : {};
+
+    // La semaine suivante devient la première.
+    data.menus.cycleStart=nextKey;
+    data.menus.weeks={[nextKey]:{meals:nextMeals}};
+    data.menus.lastArchivedCycle=menuLocalDateKey(start);
+    changed=true;
+  }
+
+  // Toujours conserver exactement deux périodes visibles : première + suivante.
+  const firstKey=data.menus.cycleStart;
+  const secondKey=menuLocalDateKey(menuAddDays(menuDateFromKey(firstKey),7));
+
+  if(!data.menus.weeks[firstKey] || typeof data.menus.weeks[firstKey]!=='object'){
+    data.menus.weeks[firstKey]={meals:{}};
+    changed=true;
+  }
+  if(!data.menus.weeks[firstKey].meals || typeof data.menus.weeks[firstKey].meals!=='object'){
+    data.menus.weeks[firstKey].meals={};
+    changed=true;
+  }
+
+  if(!data.menus.weeks[secondKey] || typeof data.menus.weeks[secondKey]!=='object'){
+    data.menus.weeks[secondKey]={meals:{}};
+    changed=true;
+  }
+  if(!data.menus.weeks[secondKey].meals || typeof data.menus.weeks[secondKey].meals!=='object'){
+    data.menus.weeks[secondKey].meals={};
+    changed=true;
+  }
+
+  // Ne jamais conserver d'anciennes périodes ni plus de deux semaines de planning.
+  const kept={
+    [firstKey]:data.menus.weeks[firstKey],
+    [secondKey]:data.menus.weeks[secondKey]
+  };
+  if(Object.keys(data.menus.weeks).sort().join('|')!==Object.keys(kept).sort().join('|')){
+    data.menus.weeks=kept;
+    changed=true;
+  }
+
+  return changed;
+}
+function archiveMenuWeekDishes(cycleKey){
+  const week=data.menus && data.menus.weeks ? data.menus.weeks[cycleKey] : null;
+  const meals=week && week.meals ? week.meals : {};
+  const nowIso=new Date().toISOString();
+
+  Object.values(meals).forEach(raw=>{
+    const label=String(raw||'').trim();
+    const key=normalizeMenuDish(label);
+    if(!key)return;
+
+    const prev=data.menus.dishStats[key]||{};
+    data.menus.dishStats[key]={
+      label,
+      count:(Number(prev.count)||0)+1,
+      lastUsed:nowIso,
+      recipeUrl:String(prev.recipeUrl||'')
+    };
+  });
+}
+function getMenuDishSuggestions(){
+  ensureMenusData();
+
+  const combined={};
+
+  // Mémoire agrégée des semaines terminées.
+  Object.entries(data.menus.dishStats||{}).forEach(([key,stat])=>{
+    const norm=normalizeMenuDish(key || (stat&&stat.label));
+    if(!norm)return;
+    combined[norm]={
+      label:String(stat.label||key).trim(),
+      count:Number(stat.count)||0,
+      lastUsed:String(stat.lastUsed||''),
+      recipeUrl:String(stat.recipeUrl||'')
+    };
+  });
+
+  // Les plats des deux semaines visibles sont proposés immédiatement.
+  Object.values(data.menus.weeks||{}).forEach(week=>{
+    Object.values((week&&week.meals)||{}).forEach(raw=>{
+      const label=String(raw||'').trim();
+      const norm=normalizeMenuDish(label);
+      if(!norm)return;
+      if(!combined[norm])combined[norm]={label,count:0,lastUsed:'',recipeUrl:''};
+      combined[norm].label=label;
+      combined[norm].count+=1;
+      const saved=data.menus.dishStats[norm];
+      if(saved && saved.recipeUrl)combined[norm].recipeUrl=String(saved.recipeUrl);
+    });
+  });
+
+  return Object.values(combined)
+    .filter(x=>x.label)
+    .sort((a,b)=>
+      (b.count-a.count) ||
+      String(b.lastUsed||'').localeCompare(String(a.lastUsed||'')) ||
+      a.label.localeCompare(b.label,'fr',{sensitivity:'base'})
+    )
+    .slice(0,80);
+}
+function menuDishPickerHtml(inputId){
+  const items=getMenuDishSuggestions();
+  if(!items.length){
+    return `<div class="menu-dish-picker" id="${inputId}_picker"><div class="menu-dish-empty">Aucun plat enregistré</div></div>`;
+  }
+  return `<div class="menu-dish-picker" id="${inputId}_picker">` +
+    items.map(item=>{
+      const count=Number(item.count)||0;
+      return `<button type="button" class="menu-dish-option" onclick="chooseMenuDish('${inputId}',${JSON.stringify(item.label).replace(/"/g,'&quot;')})">
+        <span>${escapeHtml(item.label)}</span>
+        ${count>0?`<span class="menu-dish-count">${count}×</span>`:''}
+      </button>`;
+    }).join('') +
+  `</div>`;
+}
+function closeMenuDishPickers(exceptId=''){
+  document.querySelectorAll('.menu-dish-picker.open').forEach(el=>{
+    if(!exceptId || el.id!==exceptId)el.classList.remove('open');
+  });
+}
+function openMenuDishDropdown(input){
+  if(!input)return;
+  const picker=document.getElementById(input.id+'_picker');
+  if(!picker)return;
+  closeMenuDishPickers(picker.id);
+  picker.classList.add('open');
+}
+function filterMenuDishDropdown(input){
+  if(!input)return;
+  const picker=document.getElementById(input.id+'_picker');
+  if(!picker)return;
+
+  const q=normalizeMenuDish(input.value);
+  const items=getMenuDishSuggestions().filter(item=>
+    !q || normalizeMenuDish(item.label).includes(q)
+  );
+
+  picker.innerHTML=items.length
+    ? items.map(item=>{
+        const count=Number(item.count)||0;
+        return `<button type="button" class="menu-dish-option" data-dish="${escapeHtml(item.label)}">
+          <span>${escapeHtml(item.label)}</span>
+          ${count>0?`<span class="menu-dish-count">${count}×</span>`:''}
+        </button>`;
+      }).join('')
+    : `<div class="menu-dish-empty">Aucune suggestion</div>`;
+
+  picker.querySelectorAll('.menu-dish-option').forEach(btn=>{
+    btn.addEventListener('mousedown',e=>e.preventDefault());
+    btn.addEventListener('click',()=>chooseMenuDish(input.id,btn.dataset.dish||''));
+  });
+  picker.classList.add('open');
+}
+function chooseMenuDish(inputId,label){
+  const input=document.getElementById(inputId);
+  if(!input)return;
+  input.value=String(label||'');
+  const cycleKey=input.dataset.cycleKey||'';
+  const mealKey=input.dataset.mealKey||'';
+  if(cycleKey && mealKey)updateMenuMeal(cycleKey,mealKey,input.value);
+  closeMenuDishPickers();
+  setTimeout(()=>renderMenus(),0);
+}
+document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('.menu-meal'))closeMenuDishPickers();
+});
+
+function normalizeRecipeUrl(value){
+  let url=String(value||'').trim();
+  if(!url)return '';
+  if(!/^https?:\/\//i.test(url))url='https://'+url;
+  try{
+    const parsed=new URL(url);
+    if(parsed.protocol!=='http:' && parsed.protocol!=='https:')return '';
+    return parsed.href;
+  }catch(e){
+    return '';
+  }
+}
+function ensureMenuDishStat(label){
+  ensureMenusData();
+  const clean=String(label||'').trim();
+  const key=normalizeMenuDish(clean);
+  if(!key)return null;
+  if(!data.menus.dishStats[key]){
+    data.menus.dishStats[key]={label:clean,count:0,lastUsed:'',recipeUrl:''};
+  }else{
+    if(clean)data.menus.dishStats[key].label=clean;
+    if(data.menus.dishStats[key].recipeUrl===undefined)data.menus.dishStats[key].recipeUrl='';
+  }
+  return data.menus.dishStats[key];
+}
+function getMenuRecipeUrl(label){
+  const key=normalizeMenuDish(label);
+  if(!key || !data.menus || !data.menus.dishStats)return '';
+  const stat=data.menus.dishStats[key];
+  return stat ? String(stat.recipeUrl||'') : '';
+}
+function menuRecipeHtml(cycleKey,mealKey,label){
+  const clean=String(label||'').trim();
+  if(!clean)return '';
+  const url=getMenuRecipeUrl(clean);
+  if(url){
+    return `<div class="menu-recipe-row">
+      <button type="button" class="menu-recipe-link has-link"
+        onclick="openMenuRecipe('${cycleKey}','${mealKey}')">↗ Recette</button>
+      <button type="button" class="menu-recipe-edit"
+        onclick="editMenuRecipe('${cycleKey}','${mealKey}')">✎ modifier le lien</button>
+    </div>`;
+  }
+  return `<div class="menu-recipe-row">
+    <button type="button" class="menu-recipe-link"
+      onclick="editMenuRecipe('${cycleKey}','${mealKey}')">🔗 Ajouter la recette</button>
+  </div>`;
+}
+function getMealDishLabel(cycleKey,mealKey){
+  const week=data.menus && data.menus.weeks ? data.menus.weeks[cycleKey] : null;
+  return week && week.meals ? String(week.meals[mealKey]||'').trim() : '';
+}
+function openMenuRecipe(cycleKey,mealKey){
+  const label=getMealDishLabel(cycleKey,mealKey);
+  const url=getMenuRecipeUrl(label);
+  if(!url){
+    editMenuRecipe(cycleKey,mealKey);
+    return;
+  }
+  window.open(url,'_blank','noopener');
+}
+let menuRecipeEditing={cycleKey:'',mealKey:''};
+
+function editMenuRecipe(cycleKey,mealKey){
+  const label=getMealDishLabel(cycleKey,mealKey);
+  if(!label){
+    alert('Saisissez d’abord le nom du plat.');
+    return;
+  }
+
+  menuRecipeEditing={cycleKey,mealKey};
+
+  const modal=document.getElementById('menuRecipeModal');
+  const name=document.getElementById('menuRecipeDishName');
+  const input=document.getElementById('menuRecipeUrlInput');
+  const del=document.getElementById('menuRecipeDeleteBtn');
+
+  const current=getMenuRecipeUrl(label);
+  name.textContent=label;
+  input.value=current;
+  del.style.display=current?'inline-flex':'none';
+
+  modal.classList.add('active');
+  setTimeout(()=>input.focus(),80);
+}
+
+function closeMenuRecipeModal(){
+  const modal=document.getElementById('menuRecipeModal');
+  if(modal)modal.classList.remove('active');
+  menuRecipeEditing={cycleKey:'',mealKey:''};
+}
+
+function saveMenuRecipeLink(){
+  const {cycleKey,mealKey}=menuRecipeEditing;
+  const label=getMealDishLabel(cycleKey,mealKey);
+  if(!label)return;
+
+  const input=document.getElementById('menuRecipeUrlInput');
+  const raw=String(input.value||'').trim();
+  if(!raw){
+    alert('Collez d’abord le lien de la recette.');
+    input.focus();
+    return;
+  }
+
+  const url=normalizeRecipeUrl(raw);
+  if(!url){
+    alert('Le lien saisi ne semble pas valide.');
+    input.focus();
+    return;
+  }
+
+  const stat=ensureMenuDishStat(label);
+  if(!stat)return;
+  stat.recipeUrl=url;
+
+  save();
+  closeMenuRecipeModal();
+  renderMenus();
+}
+
+function deleteMenuRecipeLink(){
+  const {cycleKey,mealKey}=menuRecipeEditing;
+  const label=getMealDishLabel(cycleKey,mealKey);
+  if(!label)return;
+
+  const stat=ensureMenuDishStat(label);
+  if(stat)stat.recipeUrl='';
+
+  save();
+  closeMenuRecipeModal();
+  renderMenus();
+}
+
+
+document.addEventListener('keydown',e=>{
+  const modal=document.getElementById('menuRecipeModal');
+  if(!modal || !modal.classList.contains('active'))return;
+  if(e.key==='Escape'){
+    e.preventDefault();
+    closeMenuRecipeModal();
+  }else if(e.key==='Enter' && document.activeElement===document.getElementById('menuRecipeUrlInput')){
+    e.preventDefault();
+    saveMenuRecipeLink();
+  }
+});
+
+function menuMealKey(dayOffset,meal){
+  return `${dayOffset}_${meal}`;
+}
+function formatMenuPeriodDate(date,withYear=false){
+  return date.toLocaleDateString('fr-FR',{
+    day:'numeric',
+    month:'long',
+    ...(withYear?{year:'numeric'}:{})
+  });
+}
+function renderMenuWeek(cycleKey,index){
+  const week=data.menus.weeks[cycleKey];
+  const meals=week.meals||{};
+  const start=menuDateFromKey(cycleKey);
+  const end=menuAddDays(start,7);
+
+  const days=[];
+  for(let offset=0;offset<=7;offset++){
+    const date=menuAddDays(start,offset);
+    days.push({
+      offset,
+      date,
+      showMidi:offset!==0,
+      showSoir:offset!==7
+    });
+  }
+
+  const badge=index===0?'Semaine 1':'Semaine 2';
+  const heading=`Du ${formatMenuPeriodDate(start)} au ${formatMenuPeriodDate(end,true)}`;
+
+  return `
+    <section class="menu-week-block">
+      <div class="menu-week-heading">
+        <div class="menu-week-title">${escapeHtml(heading)}</div>
+        <div class="menu-week-badge">${badge}</div>
+      </div>
+      ${days.map(day=>{
+        const midiKey=menuMealKey(day.offset,'midi');
+        const soirKey=menuMealKey(day.offset,'soir');
+        const midi=String(meals[midiKey]||'');
+        const soir=String(meals[soirKey]||'');
+        const dayName=day.date.toLocaleDateString('fr-FR',{weekday:'long'});
+        const dateText=day.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+
+        return `
+          <div class="menu-day-card">
+            <div class="menu-day-head">
+              <div class="menu-day-name">${escapeHtml(dayName)}</div>
+              <div class="menu-day-date">${escapeHtml(dateText)}</div>
+            </div>
+            <div class="menu-meals">
+              <div class="menu-meal${day.showMidi?'':' disabled'}">
+                <div class="menu-meal-label">☀️ Midi</div>
+                <input
+                  id="menu_${cycleKey}_${midiKey}"
+                  type="text"
+                  autocomplete="off"
+                  data-cycle-key="${cycleKey}"
+                  data-meal-key="${midiKey}"
+                  ${day.showMidi?'':'disabled'}
+                  placeholder="${day.showMidi?'Ex. Poulet / riz':''}"
+                  value="${escapeHtml(midi)}"
+                  onfocus="openMenuDishDropdown(this)"
+                  onclick="openMenuDishDropdown(this)"
+                  oninput="updateMenuMeal('${cycleKey}','${midiKey}',this.value);filterMenuDishDropdown(this)"
+                  onblur="setTimeout(()=>renderMenus(),140)"
+                >
+                ${day.showMidi?menuDishPickerHtml(`menu_${cycleKey}_${midiKey}`):''}
+                ${day.showMidi?menuRecipeHtml(cycleKey,midiKey,midi):''}
+              </div>
+              <div class="menu-meal${day.showSoir?'':' disabled'}">
+                <div class="menu-meal-label">🌙 Soir</div>
+                <input
+                  id="menu_${cycleKey}_${soirKey}"
+                  type="text"
+                  autocomplete="off"
+                  data-cycle-key="${cycleKey}"
+                  data-meal-key="${soirKey}"
+                  ${day.showSoir?'':'disabled'}
+                  placeholder="${day.showSoir?'Ex. Lasagnes':''}"
+                  value="${escapeHtml(soir)}"
+                  onfocus="openMenuDishDropdown(this)"
+                  onclick="openMenuDishDropdown(this)"
+                  oninput="updateMenuMeal('${cycleKey}','${soirKey}',this.value);filterMenuDishDropdown(this)"
+                  onblur="setTimeout(()=>renderMenus(),140)"
+                >
+                ${day.showSoir?menuDishPickerHtml(`menu_${cycleKey}_${soirKey}`):''}
+                ${day.showSoir?menuRecipeHtml(cycleKey,soirKey,soir):''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </section>
+  `;
+}
+function renderMenus(){
+  const root=document.getElementById('menuDays');
+  const title=document.getElementById('menuPeriodTitle');
+  if(!root||!title)return;
+
+  const changed=ensureMenusData();
+  const firstKey=data.menus.cycleStart;
+  const secondKey=menuLocalDateKey(menuAddDays(menuDateFromKey(firstKey),7));
+
+  title.textContent='Menus';
+
+  root.innerHTML=
+    renderMenuWeek(firstKey,0) +
+    renderMenuWeek(secondKey,1);
+
+  if(changed)save();
+}
+let menuSaveTimer=null;
+function updateMenuMeal(cycleKey,key,value){
+  ensureMenusData();
+  if(!data.menus.weeks[cycleKey])data.menus.weeks[cycleKey]={meals:{}};
+  if(!data.menus.weeks[cycleKey].meals)data.menus.weeks[cycleKey].meals={};
+  data.menus.weeks[cycleKey].meals[key]=String(value||'');
+  clearTimeout(menuSaveTimer);
+  menuSaveTimer=setTimeout(()=>save(),350);
+}
+function resetCurrentMenus(){
+  ensureMenusData();
+  if(!confirm('Vider les menus des deux semaines affichées ?'))return;
+
+  const firstKey=data.menus.cycleStart;
+  const secondKey=menuLocalDateKey(menuAddDays(menuDateFromKey(firstKey),7));
+  data.menus.weeks[firstKey]={meals:{}};
+  data.menus.weeks[secondKey]={meals:{}};
+
+  renderMenus();
+  save();
+}
+
 function switchTab(t){
   currentActiveTab=t;
   document.querySelectorAll('.tab-content').forEach(e=>e.classList.toggle('active',e.id==='tab-'+t));
@@ -1838,6 +2479,7 @@ function switchTab(t){
     const target=e.getAttribute('onclick')||'';
     e.classList.toggle('active',target.includes(`'${t}'`));
   });
+  if(t==='menus')renderMenus();
   if(t==='factures')renderInvoices();
   if(t==='vehicles')renderVehicles();
 }
@@ -1854,7 +2496,7 @@ document.addEventListener('touchend',e=>{
       dx=x-touchStartX,
       dy=y-touchStartY;
   if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
-    const tabs=['budget','patrimoine','factures','vehicles'];
+    const tabs=['budget','patrimoine','factures','vehicles','menus'];
     const idx=tabs.indexOf(currentActiveTab);
     if(dx<0&&idx<tabs.length-1)switchTab(tabs[idx+1]);
     else if(dx>0&&idx>0)switchTab(tabs[idx-1]);
@@ -4003,6 +4645,7 @@ function render(){
   updatePatrimoineMonthlyVariation();
   renderChart();
   renderAssetDistribution();
+  renderMenus();
   renderInvoices();
   renderVehicles();
 }
@@ -7428,5 +8071,30 @@ if(window.visualViewport){
 }
 
 </script>
+
+<div id="menuRecipeModal" class="modal-overlay" onclick="if(event.target===this)closeMenuRecipeModal()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🔗 Recette</div>
+        <div id="menuRecipeDishName" class="muted" style="margin-top:2px"></div>
+      </div>
+      <button type="button" class="btn btn-secondary" onclick="closeMenuRecipeModal()">✕</button>
+    </div>
+
+    <div class="form-group" style="margin-top:12px">
+      <label for="menuRecipeUrlInput">Lien de la recette</label>
+      <input id="menuRecipeUrlInput" type="url" inputmode="url"
+             placeholder="https://..."
+             autocomplete="off">
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button id="menuRecipeDeleteBtn" type="button" class="btn btn-secondary" onclick="deleteMenuRecipeLink()" style="display:none">Supprimer le lien</button>
+      <button type="button" class="btn btn-primary" onclick="saveMenuRecipeLink()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
