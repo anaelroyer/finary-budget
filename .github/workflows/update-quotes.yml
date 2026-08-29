@@ -1,4 +1,4 @@
-name: Mise à jour des cours
+name: Mise à jour des cours — test Bid
 
 on:
   workflow_dispatch:
@@ -58,20 +58,20 @@ jobs:
 
           INSTRUMENTS = {
               "IE00B4ND3602": {
-                  "url": "https://www.borsaitaliana.it/borsa/etc-etn/scheda/IE00B4ND3602-ETFP.html?lang=it",
-                  "source": "Borsa Italiana · Milan · SGLN",
+                  "url": "https://www.borsaitaliana.it/borsa/etc-etn/dettaglio.html?isin=IE00B4ND3602&lang=it&mic=ETFP",
+                  "source": "Borsa Italiana · Milan · SGLN · Bid",
                   "min": 10,
                   "max": 200,
               },
               "IE0002XZSHO1": {
-                  "url": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
-                  "source": "Borsa Italiana · Paris · WPEA",
+                  "url": "https://www.borsaitaliana.it/borsa/etf/dettaglio.html?isin=IE0002XZSHO1&lang=it&mic=XPAR",
+                  "source": "Borsa Italiana · Paris · WPEA · Bid",
                   "min": 1,
                   "max": 20,
               },
               "FR0013412020": {
-                  "url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
-                  "source": "Borsa Italiana · Paris · PAEEM",
+                  "url": "https://www.borsaitaliana.it/borsa/etf/dettaglio.html?isin=FR0013412020&lang=it&mic=XPAR",
+                  "source": "Borsa Italiana · Paris · PAEEM · Bid",
                   "min": 20,
                   "max": 60,
               },
@@ -114,19 +114,25 @@ jobs:
           def parse_price(raw, low, high):
               text = textify(raw)
 
-              # 1) Cours affiché en haut de la fiche :
-              #    "35,855 +0,29% Fase:" ou "76,62 +0,17% Fase:"
-              m = re.search(
-                  r"(?<![\d.,])([0-9]+(?:[.,][0-9]+)?)\s*[+-]\s*[0-9]+(?:[.,][0-9]+)?%\s*Fase\s*:",
+              # 1) Priorité au meilleur prix acheteur (Bid / Prezzo Acquisto).
+              # C'est la valeur la plus proche d'une valorisation de portefeuille
+              # basée sur le prix auquel la position pourrait être vendue.
+              #
+              # Après textify(), le début du carnet prend typiquement la forme :
+              # "N Numero Proposte Volume Acquisto Prezzo Acquisto Prezzo Vendita
+              #  Volume Vendita Numero Proposte 1 5 57 35,90 35,95 1.617 3 ..."
+              book = re.search(
+                  r"Prezzo\s+Acquisto\s+Prezzo\s+Vendita\s+Volume\s+Vendita\s+Numero\s+Proposte\s+"
+                  r"1\s+\S+\s+\S+\s+([0-9]+(?:[.,][0-9]+)?)\s+([0-9]+(?:[.,][0-9]+)?)",
                   text,
                   flags=re.I,
               )
-              if m:
-                  v = number(m.group(1))
-                  if valid(v, low, high):
-                      return v, "ultimo corso"
+              if book:
+                  bid = number(book.group(1))
+                  if valid(bid, low, high):
+                      return bid, "prezzo acquisto (bid)"
 
-              # 2) Prix de clôture, si présent.
+              # 2) Prix de clôture si le carnet n'est pas exploitable.
               m = re.search(
                   r"Prezzo di Chiusura\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
                   text,
@@ -137,7 +143,7 @@ jobs:
                   if valid(v, low, high):
                       return v, "prezzo di chiusura"
 
-              # 3) Secours fiable : prix de référence de la séance précédente.
+              # 3) Prix de référence.
               m = re.search(
                   r"Prezzo di riferimento\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
                   text,
@@ -147,6 +153,17 @@ jobs:
                   v = number(m.group(1))
                   if valid(v, low, high):
                       return v, "prezzo di riferimento"
+
+              # 4) Dernier cours affiché en dernier recours.
+              m = re.search(
+                  r"(?<![\d.,])([0-9]+(?:[.,][0-9]+)?)\s*[+-]\s*[0-9]+(?:[.,][0-9]+)?%\s*Fase\s*:",
+                  text,
+                  flags=re.I,
+              )
+              if m:
+                  v = number(m.group(1))
+                  if valid(v, low, high):
+                      return v, "ultimo corso"
 
               return None, None
 
