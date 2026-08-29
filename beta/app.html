@@ -1360,6 +1360,7 @@ function createEmptyBetaData(){
     budgetRevenus:[],
     budgetFixes:[],
     budgetDepenses:[],
+    budgetCategoryLearning:{},
     bankAccounts:[
       {id:'fortuneo',name:'Compte principal',active:true},
       {id:'ca',name:'Compte secondaire',active:true}
@@ -1439,7 +1440,8 @@ const BUDGET_EXPENSE_CATEGORIES=[
   {id:'maison',label:'🛠️ Maison & travaux'},
   {id:'transport',label:'🚗 Transport'},
   {id:'enfants',label:'🎓 Enfants & éducation'},
-  {id:'sante',label:'💊 Santé & beauté'},
+  {id:'sante',label:'💊 Santé'},
+  {id:'beaute',label:'✂️ Beauté'},
   {id:'restaurants',label:'🍽️ Restaurants & sorties'},
   {id:'loisirs',label:'🛍️ Loisirs & achats'},
   {id:'abonnements',label:'📱 Abonnements & services'},
@@ -1462,7 +1464,8 @@ const BUDGET_KEYWORDS={
   maison:['leroy merlin','castorama','brico depot','bricodepot','bricomarche','mr bricolage','weldom','ikea','maisons du monde','maison du monde','conforama','but ','but.fr','jysk','action','gifi','b&m','centrakor','la foir fouille','foir fouille','manomano','brico cash','lapeyre','point p','chausson materiaux','gedimat','saint maclou','4 murs','alinea','zodio','habitat','homebox'],
   transport:['totalenergies','total access','total ','esso','shell','avia','bp ','dyneff','eni ','agip','station service','carburant','essence','gazole','diesel','sans plomb','sp95','sp98','e10','e85','adblue','norauto','feu vert','midas','speedy','carter cash','road y','euromaster','first stop','allopneus','1001 pneus','vroomly','autodoc','oscaro','mister auto','parking','indigo','effia','vinci autoroutes','ulys','bip&go','peage','sncf','ouigo','blablacar','ratp','bibus','tan nantes','ter bretagne','uber','bolt'],
   enfants:['ecole','college','lycee','cantine','scolarite','fournitures scolaires','papeterie','auto ecole','auto-ecole','permis ewan','permis','pension scolaire','internat','garderie','creche','centre loisirs','centre de loisirs','activite enfant'],
-  sante:['pharmacie','parapharmacie','doctolib','medecin','dentiste','orthodont','kine','osteopathe','opticien','krys','afflelou','optical center','generale d optique','grandoptical','sephora','marionnaud','nocibe','yves rocher','coiffeur','barbier','epilation','body minute','institut beaute','mutuelle'],
+  sante:['pharmacie','parapharmacie','doctolib','medecin','dentiste','orthodont','kine','osteopathe','opticien','krys','afflelou','optical center','generale d optique','grandoptical','mutuelle','securite sociale','cpam','ameli'],
+  beaute:['sephora','marionnaud','nocibe','yves rocher','coiffeur','barbier','epilation','body minute','institut beaute','beaute','salon coiffure'],
   restaurants:['mcdonald','mcdo','burger king','kfc','subway','dominos','domino s','pizza hut','buffalo grill','courtepaille','flunch','quick','sushi shop','del arte','bistro regent','hippopotamus','restaurant','brasserie','creperie','pizzeria','uber eats','ubereats','deliveroo','just eat','bar ','cafe ','starbucks','columbus cafe'],
   loisirs:['amazon','amzn','fnac','darty','boulanger','cdiscount','electro depot','apple store','decathlon','intersport','go sport','kiabi','gemo','h&m','zara','celio','jules','cache cache','bonobo','uniqlo','primark','lacoste','armor lux','armor-lux','levis','levi s','courir','foot locker','zalando','veepee','vinted','tissot','yema','cinema','cineville','pathe','ugc','bowling','parc attraction','futuroscope','disneyland','puy du fou','librairie','joueclub','joue club','king jouet','cultura'],
   abonnements:['netflix','spotify','deezer','disney+','disney plus','prime video','amazon prime','canal+','canal plus','youtube premium','apple music','icloud','google one','microsoft 365','office 365','orange','sosh','sfr','red by sfr','red sfr','bouygues telecom','b&you','b and you','free mobile','freebox','box internet','internet','telephone mobile','forfait mobile'],
@@ -1482,6 +1485,34 @@ function budgetTextHas(text,keyword){
   const k=normalizeBudgetText(keyword); if(!k)return false;
   return (` ${text} `).includes(` ${k} `)||text.includes(k);
 }
+
+/* Apprentissage local au compte utilisateur :
+   une correction manuelle du libellé -> catégorie devient prioritaire. */
+function ensureBudgetCategoryLearning(){
+  if(!data || typeof data!=='object')return {};
+  if(!data.budgetCategoryLearning || typeof data.budgetCategoryLearning!=='object' || Array.isArray(data.budgetCategoryLearning)){
+    data.budgetCategoryLearning={};
+  }
+  return data.budgetCategoryLearning;
+}
+function getLearnedBudgetCategory(key,label){
+  const normalized=normalizeBudgetText(label);
+  if(!normalized)return '';
+  const rules=ensureBudgetCategoryLearning();
+  const bucket=rules[key];
+  if(!bucket || typeof bucket!=='object')return '';
+  const learned=String(bucket[normalized]||'');
+  return getBudgetCategories(key).some(c=>c.id===learned)?learned:'';
+}
+function learnBudgetCategory(key,label,categoryId){
+  const normalized=normalizeBudgetText(label);
+  if(!normalized || !getBudgetCategories(key).some(c=>c.id===categoryId))return false;
+  const rules=ensureBudgetCategoryLearning();
+  if(!rules[key] || typeof rules[key]!=='object' || Array.isArray(rules[key]))rules[key]={};
+  if(rules[key][normalized]===categoryId)return false;
+  rules[key][normalized]=categoryId;
+  return true;
+}
 function getBudgetCategories(key){return key==='budgetRevenus'?BUDGET_INCOME_CATEGORIES:BUDGET_EXPENSE_CATEGORIES;}
 function getBudgetCategoryLabel(key,id){return getBudgetCategories(key).find(c=>c.id===id)?.label||getBudgetCategories(key).find(c=>c.id==='autres')?.label||'Autres';}
 function getVehicleKeywords(){
@@ -1496,6 +1527,10 @@ function getVehicleKeywords(){
 function detectBudgetCategory(key,label){
   const text=normalizeBudgetText(label);
   if(!text)return 'autres';
+
+  const learned=getLearnedBudgetCategory(key,label);
+  if(learned)return learned;
+
   if(key==='budgetRevenus'){
     for(const id of ['remboursement','prestations','revenus_financiers','exceptionnel','salaire']){
       if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;
@@ -1506,7 +1541,7 @@ function detectBudgetCategory(key,label){
   const vehicleMatch=getVehicleKeywords().some(k=>budgetTextHas(text,k));
   const fuelOrStation=[...(BUDGET_KEYWORDS.transport||[]),...(BUDGET_KEYWORDS.courses||[])].some(k=>budgetTextHas(text,k));
   if(vehicleMatch&&fuelOrStation)return 'transport';
-  const priorities=['epargne','credits','impots','sante','enfants','abonnements','transport','restaurants','maison','logement','courses','loisirs'];
+  const priorities=['epargne','credits','impots','sante','beaute','enfants','abonnements','transport','restaurants','maison','logement','courses','loisirs'];
   for(const id of priorities){if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;}
   return 'autres';
 }
@@ -1618,6 +1653,22 @@ function ensureVehicleData(){
   });
 }
 
+function migrateBeautyBudgetCategories(){
+  let changed=false;
+  const beautyWords=BUDGET_KEYWORDS.beaute||[];
+  ['budgetFixes','budgetDepenses'].forEach(key=>{
+    (data[key]||[]).forEach(item=>{
+      if(!Array.isArray(item) || String(item[5]||'')!=='sante')return;
+      const t=normalizeBudgetText(item[0]);
+      if(beautyWords.some(k=>budgetTextHas(t,k))){
+        item[5]='beaute';
+        changed=true;
+      }
+    });
+  });
+  return changed;
+}
+
 function ensureBankingData(){
   if(!Array.isArray(data.bankAccounts)||!data.bankAccounts.length){
     data.bankAccounts=[
@@ -1669,6 +1720,7 @@ window.prepareBetaUserSession=function(uid,email){
   patrimoineHistory=safeLocalJSON(betaStorageKey('patrimoineHistory'),[]);
   annotations=betaStoragePrefix?(localStorage.getItem(betaStorageKey('annotations'))||''):'';
   ensureBankingData();
+  migrateBeautyBudgetCategories();
   window.data=data;
   window.monthHistory=monthHistory;
   window.patrimoineHistory=patrimoineHistory;
@@ -2664,7 +2716,12 @@ function submitModal(){
 
     item[3]=accountId;
     const targetKey=getModalBudgetType();
-    item[5]=document.getElementById('modalCategory')?.value||getItemBudgetCategory(targetKey,item);
+    const modalCategorySelect=document.getElementById('modalCategory');
+    item[5]=modalCategorySelect?.value||getItemBudgetCategory(targetKey,item);
+
+    if(modalCategorySelect?.dataset.manual==='1'){
+      learnBudgetCategory(targetKey,item[0],item[5]);
+    }
 
     // Si le type a été modifié, on déplace la ligne dans le bon onglet
     // en conservant le libellé, le montant, l’état coché et le compte bancaire.
@@ -2688,14 +2745,21 @@ function submitModal(){
     data[targetKey]=[];
   }
 
+  const modalCategorySelect=document.getElementById('modalCategory');
+  const chosenCategory=modalCategorySelect?.value||detectBudgetCategory(targetKey,label);
+
   data[targetKey].unshift([
     label,
     Number.isFinite(amount) ? amount : 0,
     false,
     accountId,
     null,
-    document.getElementById('modalCategory')?.value||detectBudgetCategory(targetKey,label)
+    chosenCategory
   ]);
+
+  if(modalCategorySelect?.dataset.manual==='1'){
+    learnBudgetCategory(targetKey,label,chosenCategory);
+  }
 
   closeModal();
   render();
