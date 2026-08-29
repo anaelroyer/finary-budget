@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-08-29T18:23:57Z",
+  "updatedAt": "2026-08-29T20:46:34Z",
   "quotes": {
     "IE00B4ND3602": {
       "price": 74.54,
       "currency": "EUR",
       "source": "Quotrix · Gold · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
-      "updatedAt": "2026-08-29T18:23:57Z",
+      "updatedAt": "2026-08-29T20:46:34Z",
       "history": [
         {
           "date": "2026-08-29",
           "price": 74.54,
-          "updatedAt": "2026-08-29T18:23:57Z"
+          "updatedAt": "2026-08-29T20:46:34Z"
         }
       ]
     },
@@ -20,12 +20,12 @@
       "currency": "EUR",
       "source": "Quotrix · WPEA · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etf/IE0002XZSHO1/",
-      "updatedAt": "2026-08-29T18:23:57Z",
+      "updatedAt": "2026-08-29T20:46:34Z",
       "history": [
         {
           "date": "2026-08-29",
           "price": 6.968,
-          "updatedAt": "2026-08-29T18:23:57Z"
+          "updatedAt": "2026-08-29T20:46:34Z"
         }
       ]
     },
@@ -34,12 +34,12 @@
       "currency": "EUR",
       "source": "Lang & Schwarz · PAEEM · Bid",
       "sourceUrl": "https://www.ls-tc.de/en/etf/1371933",
-      "updatedAt": "2026-08-29T18:23:57Z",
+      "updatedAt": "2026-08-29T20:46:34Z",
       "history": [
         {
           "date": "2026-08-29",
           "price": 35.5,
-          "updatedAt": "2026-08-29T18:23:57Z"
+          "updatedAt": "2026-08-29T20:46:34Z"
         }
       ]
     }
