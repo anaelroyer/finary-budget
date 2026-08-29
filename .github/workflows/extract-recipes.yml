@@ -3,7 +3,7 @@ name: Extraire les ingrédients des recettes
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: read
@@ -242,7 +242,7 @@ jobs:
               label=item["label"]
               cached=existing.get(key) if isinstance(existing,dict) else None
 
-              # Réutilise un succès existant si l'URL est identique.
+              # Succès déjà sauvegardé pour cette URL : ne jamais réinterroger le site.
               if isinstance(cached,dict) and cached.get("url")==url and cached.get("status")=="ok" and cached.get("ingredients"):
                   out[key]=cached
                   print(f"CACHE {label or url}: {len(cached.get('ingredients') or [])} ingrédients")
