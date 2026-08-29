@@ -1,12 +1,12 @@
 {
   "name": "trade-republic-portfolio-test",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "test:tr": "node test-tr.mjs"
   },
   "dependencies": {
-    "trade-republic-sdk": "latest"
+    "trade-republic-sdk": "0.2.2"
   }
 }
