@@ -1,4 +1,4 @@
-name: Mise à jour des cours — V22.1 Quotrix
+name: Mise à jour des cours — V22.2 test L&S PAEEM
 
 on:
   workflow_dispatch:
@@ -79,9 +79,9 @@ jobs:
                   "max": 20,
               },
               "FR0013412020": {
-                  "primary_url": "https://www.quotrix.de/etf/FR0013412020/",
-                  "primary_source": "Quotrix · PAEEM",
-                  "primary_parser": "quotrix_last",
+                  "primary_url": "https://www.ls-tc.de/en/etf/1371933",
+                  "primary_source": "Lang & Schwarz · PAEEM",
+                  "primary_parser": "ls_bid",
                   "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
                   "fallback_source": "Borsa Italiana · Paris · PAEEM",
                   "min": 20,
@@ -144,6 +144,22 @@ jobs:
                       return v, "Bid"
               return None, None
 
+          def parse_ls_bid(raw, low, high):
+              text = textify(raw)
+              # L&S page exposes the quote as:
+              # "... Bid 35.1500 € Bid Size ... Ask 35.9750 € ..."
+              patterns = [
+                  r"\bBid\s+([0-9]+(?:[.,][0-9]+)?)\s*€",
+                  r"\bGeld\s+([0-9]+(?:[.,][0-9]+)?)\s*€",
+              ]
+              for pattern in patterns:
+                  m = re.search(pattern, text, flags=re.I)
+                  if m:
+                      v = number(m.group(1))
+                      if valid(v, low, high):
+                          return v, "Bid"
+              return None, None
+
           def parse_quotrix_last(raw, low, high):
               text = textify(raw)
               # Quotrix expose normalement le dernier cours sous "Letzter".
@@ -193,6 +209,8 @@ jobs:
                   raw = fetch(cfg["primary_url"])
                   if cfg["primary_parser"] == "stuttgart_bid":
                       price, mode = parse_stuttgart_bid(raw, cfg["min"], cfg["max"])
+                  elif cfg["primary_parser"] == "ls_bid":
+                      price, mode = parse_ls_bid(raw, cfg["min"], cfg["max"])
                   else:
                       price, mode = parse_quotrix_last(raw, cfg["min"], cfg["max"])
                   if price is not None:
