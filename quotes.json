@@ -1,45 +1,45 @@
 {
-  "updatedAt": "2026-08-29T13:59:01Z",
+  "updatedAt": "2026-08-29T14:05:20Z",
   "quotes": {
     "IE00B4ND3602": {
       "price": 74.54,
       "currency": "EUR",
       "source": "Quotrix · Gold · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
-      "updatedAt": "2026-08-29T13:59:01Z",
+      "updatedAt": "2026-08-29T14:05:20Z",
       "history": [
         {
           "date": "2026-08-29",
           "price": 74.54,
-          "updatedAt": "2026-08-29T13:59:01Z"
+          "updatedAt": "2026-08-29T14:05:20Z"
         }
       ]
     },
     "IE0002XZSHO1": {
-      "price": 7.027,
+      "price": 6.968,
       "currency": "EUR",
-      "source": "Borsa Italiana · Paris · WPEA · ultimo corso · fallback",
-      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
-      "updatedAt": "2026-08-29T13:59:01Z",
+      "source": "Quotrix · WPEA · Dernier cours",
+      "sourceUrl": "https://www.quotrix.de/etf/IE0002XZSHO1/",
+      "updatedAt": "2026-08-29T14:05:20Z",
       "history": [
         {
           "date": "2026-08-29",
-          "price": 7.027,
-          "updatedAt": "2026-08-29T13:59:01Z"
+          "price": 6.968,
+          "updatedAt": "2026-08-29T14:05:20Z"
         }
       ]
     },
     "FR0013412020": {
-      "price": 36.095,
+      "price": 36.02,
       "currency": "EUR",
-      "source": "Borsa Italiana · Paris · PAEEM · ultimo corso · fallback",
-      "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
-      "updatedAt": "2026-08-29T13:59:01Z",
+      "source": "Quotrix · PAEEM · Dernier cours",
+      "sourceUrl": "https://www.quotrix.de/etf/FR0013412020/",
+      "updatedAt": "2026-08-29T14:05:20Z",
       "history": [
         {
           "date": "2026-08-29",
-          "price": 36.095,
-          "updatedAt": "2026-08-29T13:59:01Z"
+          "price": 36.02,
+          "updatedAt": "2026-08-29T14:05:20Z"
         }
       ]
     }
