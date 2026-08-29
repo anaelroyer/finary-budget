@@ -16,7 +16,7 @@ jobs:
       - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
-      - name: Récupérer les cours
+      - name: Récupérer les cours Euronext
         shell: bash
         run: |
           python3 - <<'PY'
@@ -29,7 +29,28 @@ jobs:
 
           HEADERS = {
               "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
-              "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
+          }
+
+          INSTRUMENTS = {
+              "IE00B4ND3602": {
+                  "url": "https://live.euronext.com/en/product/etfs/IE00B4ND3602-ETFP",
+                  "source": "Euronext · ETFP",
+                  "min": 10,
+                  "max": 200,
+              },
+              "IE0002XZSHO1": {
+                  "url": "https://live.euronext.com/en/product/etfs/IE0002XZSHO1-XPAR",
+                  "source": "Euronext Paris · WPEA",
+                  "min": 1,
+                  "max": 20,
+              },
+              "FR0013412020": {
+                  "url": "https://live.euronext.com/en/product/etfs/FR0013412020-XPAR",
+                  "source": "Euronext Paris · PAEEM",
+                  "min": 20,
+                  "max": 60,
+              },
           }
 
           def fetch(url):
@@ -44,8 +65,8 @@ jobs:
               raw = html_lib.unescape(raw)
               return re.sub(r"\s+", " ", raw).strip()
 
-          def to_float(value):
-              s = value.strip().replace("\u202f", "").replace("\xa0", "")
+          def number(s):
+              s = s.strip().replace("\u202f", "").replace("\xa0", "")
               if "," in s and "." in s:
                   if s.rfind(",") > s.rfind("."):
                       s = s.replace(".", "").replace(",", ".")
@@ -55,80 +76,20 @@ jobs:
                   s = s.replace(",", ".")
               return float(s)
 
-          def parse_zonebourse(raw, isin, min_price, max_price):
+          def parse_euronext(raw, low, high):
               text = textify(raw)
-              upper = text.upper()
-              pos = upper.find(isin.upper())
-
-              # Zone prioritaire : juste après l'ISIN, là où Zonebourse affiche
-              # "Temps réel Euronext Paris ... 6,967 EUR".
-              zones = []
-              if pos >= 0:
-                  zones.append(text[pos:pos + 1000])
-                  zones.append(text[max(0, pos - 250):pos + 1400])
-              zones.append(text[:5000])
-
               patterns = [
-                  r"(?:Temps réel Euronext Paris|Marché Fermé[^0-9]{0,80}|Cours)[^0-9]{0,120}([0-9]+(?:[.,][0-9]+)?)\s*(?:EUR|€)",
-                  r"\b([0-9]+(?:[.,][0-9]+)?)\s*(?:EUR|€)\b",
+                  r"Last Traded\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
+                  r"Dernier traité\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
+                  r"Valuation Close\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
               ]
-
-              for zone in zones:
-                  for pattern in patterns:
-                      for m in re.finditer(pattern, zone, flags=re.I):
-                          try:
-                              value = to_float(m.group(1))
-                          except Exception:
-                              continue
-                          if min_price < value < max_price:
-                              return value
+              for pattern in patterns:
+                  m = re.search(pattern, text, flags=re.I)
+                  if m:
+                      value = number(m.group(1))
+                      if low < value < high:
+                          return value
               return None
-
-          def parse_gold(raw, isin):
-              return parse_zonebourse(raw, isin, 10, 500)
-
-          instruments = [
-              {
-                  "isin": "IE00B4ND3602",
-                  "currency": "EUR",
-                  "min": 10,
-                  "max": 500,
-                  "sources": [
-                      {
-                          "name": "Bourse Direct · Xetra",
-                          "url": "https://www.boursedirect.fr/fr/marche/xetra/ishares-phys-met-o-end-zt-IE00B4ND3602-PPFB-EUR-XETR/seance",
-                      },
-                      {
-                          "name": "Zonebourse",
-                          "url": "https://www.zonebourse.com/cours/etf/ISHARES-PHYSICAL-GOLD-ETC-124881157/",
-                      },
-                  ],
-              },
-              {
-                  "isin": "IE0002XZSHO1",
-                  "currency": "EUR",
-                  "min": 1,
-                  "max": 20,
-                  "sources": [
-                      {
-                          "name": "Zonebourse · Euronext Paris · WPEA",
-                          "url": "https://www.zonebourse.com/cours/etf/ISHARES-MSCI-WORLD-SWAP-P-168053339/",
-                      },
-                  ],
-              },
-              {
-                  "isin": "FR0013412020",
-                  "currency": "EUR",
-                  "min": 20,
-                  "max": 60,
-                  "sources": [
-                      {
-                          "name": "Zonebourse · Euronext Paris · PAEEM",
-                          "url": "https://www.zonebourse.com/cours/etf/AMUNDI-PEA-EMERGENT-MSCI--58379425/",
-                      },
-                  ],
-              },
-          ]
 
           path = Path("quotes.json")
           try:
@@ -138,79 +99,59 @@ jobs:
 
           payload.setdefault("quotes", {})
           now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-          payload["updatedAt"] = now
-
+          successes = 0
           failures = []
 
-          for instrument in instruments:
-              isin = instrument["isin"]
-              price = None
-              used_source = None
-              errors = []
+          for isin, cfg in INSTRUMENTS.items():
+              try:
+                  raw = fetch(cfg["url"])
+                  price = parse_euronext(raw, cfg["min"], cfg["max"])
+                  if price is None:
+                      raise RuntimeError("champ Last Traded introuvable")
 
-              for source in instrument["sources"]:
-                  try:
-                      raw = fetch(source["url"])
+                  payload["quotes"][isin] = {
+                      "price": round(price, 6),
+                      "currency": "EUR",
+                      "source": cfg["source"],
+                      "sourceUrl": cfg["url"],
+                      "updatedAt": now,
+                  }
+                  successes += 1
+                  print(f"OK {isin} = {price:.6f} EUR via {cfg['source']}")
+              except Exception as e:
+                  failures.append(f"{isin}: {e}")
+                  print(f"ERREUR {isin}: {e} — ancien cours conservé")
 
-                      if isin == "IE00B4ND3602" and "boursedirect.fr" in source["url"]:
-                          # La méthode déjà fonctionnelle pour l'or :
-                          text = textify(raw)
-                          pos = text.upper().find(isin.upper())
-                          zone = text[max(0, pos - 300):pos + 1200] if pos >= 0 else text
-                          m = re.search(r"\b([0-9]{1,5}(?:[.,][0-9]{1,6})?)\s*EUR\b", zone, flags=re.I)
-                          candidate = to_float(m.group(1)) if m else None
-                      else:
-                          candidate = parse_zonebourse(
-                              raw,
-                              isin,
-                              instrument["min"],
-                              instrument["max"],
-                          )
-
-                      if candidate is not None and instrument["min"] < candidate < instrument["max"]:
-                          price = candidate
-                          used_source = source
-                          break
-
-                      errors.append(f'{source["name"]}: cours introuvable')
-                  except Exception as e:
-                      errors.append(f'{source["name"]}: {e}')
-
-              if price is None:
-                  failures.append(f'{isin} -> ' + " | ".join(errors))
-                  print(f"⚠️ {isin}: échec, ancien cours conservé")
-                  continue
-
-              payload["quotes"][isin] = {
-                  "price": round(price, 6),
-                  "currency": instrument["currency"],
-                  "source": used_source["name"],
-                  "sourceUrl": used_source["url"],
-                  "updatedAt": now,
-              }
-              print(f"✅ {isin} = {price:.6f} EUR via {used_source['name']}")
+          if successes:
+              payload["updatedAt"] = now
 
           path.write_text(
               json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
               encoding="utf-8"
           )
 
+          print(f"\nRésultat : {successes}/3 cours récupérés.")
           if failures:
-              print("\nSources en échec (ancien cours conservé) :")
-              for failure in failures:
-                  print(" -", failure)
+              print("Échecs :")
+              for f in failures:
+                  print(" -", f)
+
+          # Pour le test V17 : l'Action devient rouge si aucun cours Euronext
+          # n'est accessible, afin de ne plus masquer un échec complet.
+          if successes == 0:
+              raise SystemExit("Aucun cours Euronext récupéré.")
           PY
 
       - name: Enregistrer quotes.json
         shell: bash
         run: |
           if git diff --quiet -- quotes.json; then
-            echo "Aucune modification."
+            echo "Aucune modification de quotes.json."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add quotes.json
-          git commit -m "Mise à jour automatique des cours"
+          git commit -m "Mise à jour automatique des cours Euronext"
           git push
