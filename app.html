@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- V26.1.56 : Bourse — suppression des boutons Actualiser le cours et Ajouter des parts -->
 <!-- V26.1.55 : Linxea — valorisation + performance + date des AV enfants -->
 <title>Budget & Patrimoine</title>
 <meta name="theme-color" content="#0d1117">
@@ -5953,7 +5954,6 @@ function renderStockRow(item,idx,cont){
         ${stockAllocationInlineHtml(item,idx)}
       </div>
       <div class="stock-compact-actions">
-        ${meta.isin?`<button class="stock-icon-btn refresh" type="button" onclick="refreshStockPrice(${idx},{force:true})" title="Actualiser le cours" aria-label="Actualiser le cours">↻</button>`:''}
         <button class="stock-icon-btn" type="button" onclick="openStockEditModal(${idx})" title="Modifier" aria-label="Modifier">✎</button>
         <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('bourse',${idx})" title="Archiver" aria-label="Supprimer">×</button>
       </div>
@@ -5965,7 +5965,6 @@ function renderStockRow(item,idx,cont){
       <div class="stock-stat stock-stat-parts">
         <span class="stock-stat-label">Parts</span>
         <span class="stock-stat-value">${sharesText}</span>
-        <button class="stock-parts-add-btn" type="button" onclick="openStockPurchaseModal(${idx})" title="Ajouter un achat" aria-label="Ajouter un achat">+</button>
       </div>
       <div class="stock-stat">
         <span class="stock-stat-label">PRU</span>
