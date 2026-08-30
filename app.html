@@ -1125,13 +1125,8 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <label>Mot de passe</label>
       <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mot de passe">
     </div>
-    <div id="authConfirmField" class="auth-field auth-register-only">
-      <label>Confirmer le mot de passe</label>
-      <input id="authPasswordConfirm" type="password" autocomplete="new-password" placeholder="Confirmer le mot de passe">
-    </div>
     <div id="authMessage" class="auth-message"></div>
     <button id="authSubmitBtn" class="btn btn-primary" type="button" onclick="submitPersonalAuth()">Se connecter</button>
-    <button id="authModeSwitch" class="auth-switch" type="button" onclick="togglePersonalAuthMode()">Créer mon compte</button>
     <button id="authForgotBtn" class="auth-forgot" type="button" onclick="resetPersonalPassword()">Mot de passe oublié ?</button>
   </div>
 </div>
@@ -1944,7 +1939,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged,
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   sendPasswordResetEmail, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -2001,36 +1996,15 @@ function authErrorMessage(error){
   };
   return map[code]||error?.message||'Une erreur est survenue.';
 }
-window.personalAuthMode='login';
-window.togglePersonalAuthMode=function(){
-  window.personalAuthMode=window.personalAuthMode==='register'?'login':'register';
-  const register=window.personalAuthMode==='register';
-  const confirmField=document.getElementById('authConfirmField');
-  const submit=document.getElementById('authSubmitBtn');
-  const switchBtn=document.getElementById('authModeSwitch');
-  const forgot=document.getElementById('authForgotBtn');
-  const password=document.getElementById('authPassword');
-  if(confirmField)confirmField.style.display=register?'flex':'none';
-  if(submit)submit.textContent=register?'Créer mon compte':'Se connecter';
-  if(switchBtn)switchBtn.textContent=register?'J’ai déjà un compte':'Créer mon compte';
-  if(forgot)forgot.style.display=register?'none':'block';
-  if(password)password.autocomplete=register?'new-password':'current-password';
-  setAuthMessage(register?'Le premier compte créé retrouvera les données familiales déjà enregistrées.':'');
-};
 window.submitPersonalAuth=async function(){
   const email=(document.getElementById('authEmail')?.value||'').trim();
   const password=document.getElementById('authPassword')?.value||'';
-  const confirm=document.getElementById('authPasswordConfirm')?.value||'';
-  const register=window.personalAuthMode==='register';
   if(!email||!password){setAuthMessage('Saisissez votre e-mail et votre mot de passe.','error');return;}
-  if(register && password!==confirm){setAuthMessage('Les deux mots de passe ne correspondent pas.','error');return;}
-  if(register && password.length<6){setAuthMessage('Le mot de passe doit contenir au moins 6 caractères.','error');return;}
   const btn=document.getElementById('authSubmitBtn');
   if(btn)btn.disabled=true;
-  setAuthMessage(register?'Création du compte…':'Connexion…');
+  setAuthMessage('Connexion…');
   try{
-    if(register)await createUserWithEmailAndPassword(auth,email,password);
-    else await signInWithEmailAndPassword(auth,email,password);
+    await signInWithEmailAndPassword(auth,email,password);
   }catch(error){console.error(error);setAuthMessage(authErrorMessage(error),'error');}
   finally{if(btn)btn.disabled=false;}
 };
@@ -10839,7 +10813,7 @@ document.addEventListener('keydown',e=>{
   const overlay=document.getElementById('authOverlay');
   if(e.key==='Enter' && overlay && getComputedStyle(overlay).display!=='none'){
     const active=document.activeElement?.id||'';
-    if(active==='authEmail'||active==='authPassword'||active==='authPasswordConfirm'){e.preventDefault();window.submitPersonalAuth?.();}
+    if(active==='authEmail'||active==='authPassword'){e.preventDefault();window.submitPersonalAuth?.();}
   }
 });
 </script>
