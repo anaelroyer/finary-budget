@@ -1943,9 +1943,14 @@ window.updateTradeRepublicSyncUI=function(){
   const statusEl=document.getElementById('tradeRepublicSyncStatus');
   if(!btn||!statusEl)return;
 
+  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)?activePatrimoineOwner:'couple';
   const state=window.tradeRepublicSyncRequestState||null;
-  const status=String(state?.status||'').toLowerCase();
+  const stateOwner=String(state?.owner||'couple');
+  const ownerState=state && stateOwner===owner ? state : null;
+  const status=String(ownerState?.status||'').toLowerCase();
   btn.disabled=status==='pending'||status==='processing';
+  btn.title=`Actualiser Trade Republic · ${typeof getPatrimoineOwnerLabel==='function'?getPatrimoineOwnerLabel(owner):owner}`;
+  btn.setAttribute('aria-label',btn.title);
 
   if(status==='pending'){
     btn.textContent='⏳ Trade Republic';
@@ -1964,15 +1969,16 @@ window.updateTradeRepublicSyncUI=function(){
   btn.textContent='↻ Trade Republic';
 
   if(status==='done'){
-    const when=tradeRepublicSyncTimeLabel(state.completedAt);
-    const count=Number(state.updatedPositions||0);
-    statusEl.textContent=`✓ Synchronisation Trade Republic terminée${when?` · ${when}`:''}${count?` · ${count} ligne${count>1?'s':''} synchronisée${count>1?'s':''}`:''}.`;
+    const when=tradeRepublicSyncTimeLabel(ownerState.completedAt);
+    const count=Number(ownerState.updatedPositions||0);
+    const cashUpdated=Number(ownerState.cashUpdated||0)>0;
+    statusEl.textContent=`✓ Synchronisation Trade Republic terminée${when?` · ${when}`:''}${count?` · ${count} ligne${count>1?'s':''} synchronisée${count>1?'s':''}`:''}${cashUpdated?' · compte courant actualisé':''}.`;
     statusEl.className='tr-sync-status ok';
     return;
   }
 
   if(status==='error'){
-    statusEl.textContent=`⚠️ Échec de la synchronisation${state.errorMessage?` : ${state.errorMessage}`:''}`;
+    statusEl.textContent=`⚠️ Échec de la synchronisation${ownerState.errorMessage?` : ${ownerState.errorMessage}`:''}`;
     statusEl.className='tr-sync-status error';
     return;
   }
@@ -1987,6 +1993,12 @@ window.requestTradeRepublicSync=async function(){
     return;
   }
 
+  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)?activePatrimoineOwner:'couple';
+  if(!['couple','ewan'].includes(owner)){
+    alert('Aucun compte Trade Republic n’est configuré pour ce profil.');
+    return;
+  }
+
   const current=window.tradeRepublicSyncRequestState||null;
   if(current && ['pending','processing'].includes(String(current.status||'').toLowerCase()))return;
 
@@ -1996,6 +2008,7 @@ window.requestTradeRepublicSync=async function(){
 
   const request={
     id,
+    owner,
     status:'pending',
     requestedAt:new Date().toISOString()
   };
@@ -2203,6 +2216,56 @@ function migrateChildInsuranceLifeOwners(){
     }
   });
   data._childInsuranceLifeOwnersMigratedV1=true;
+  return true;
+}
+
+// Migration unique : prépare le compte Trade Republic d'Ewan.
+// Les quantités, PRU et le solde restent à 0 jusqu'à la première synchronisation réelle.
+function migrateEwanTradeRepublicAssets(){
+  if(!data || data._ewanTradeRepublicAssetsMigratedV1===true)return false;
+  if(!Array.isArray(data.bourse))data.bourse=[];
+  if(!Array.isArray(data.epargne))data.epargne=[];
+  let changed=false;
+
+  const wanted=[
+    {isin:'IE0002XZSHO1',label:'iShares MSCI World Swap PEA'},
+    {isin:'FR0013412020',label:'Amundi PEA Emergent'},
+    {isin:'FR0011550193',label:'BNP Paribas Easy STOXX Europe 600'}
+  ];
+
+  wanted.forEach(({isin,label})=>{
+    const exists=data.bourse.some(item=>{
+      if(!Array.isArray(item))return false;
+      const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
+      return (meta.owner||'couple')==='ewan'
+        && String(meta.account||'PEA').toUpperCase()==='PEA'
+        && String(meta.isin||'').toUpperCase()===isin;
+    });
+    if(!exists){
+      data.bourse.push([label,0,{
+        owner:'ewan',
+        account:'PEA',
+        isin,
+        shares:0,
+        pru:0,
+        pruSet:false,
+        pricePerShare:0
+      }]);
+      changed=true;
+    }
+  });
+
+  const cashExists=data.epargne.some(item=>{
+    if(!Array.isArray(item))return false;
+    const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
+    return (meta.owner||'couple')==='ewan' && meta.tradeRepublicCash===true;
+  });
+  if(!cashExists){
+    data.epargne.push(['Compte courant Trade Republic',0,{owner:'ewan',tradeRepublicCash:true}]);
+    changed=true;
+  }
+
+  data._ewanTradeRepublicAssetsMigratedV1=true;
   return true;
 }
 function setPatrimoineOwner(owner){
@@ -2643,7 +2706,8 @@ ensureBankingData();
 ensureHistoricalBudgetCategories();
 const initialBeautyMigrationChanged=migrateBeautyBudgetCategories();
 const initialChildAvMigrationChanged=migrateChildInsuranceLifeOwners();
-if(initialBeautyMigrationChanged || initialChildAvMigrationChanged){
+const initialEwanTrMigrationChanged=migrateEwanTradeRepublicAssets();
+if(initialBeautyMigrationChanged || initialChildAvMigrationChanged || initialEwanTrMigrationChanged){
   try{
     localStorage.setItem('finaryData',JSON.stringify(data));
     localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));
@@ -2688,6 +2752,7 @@ window.applyFirebaseState=function(remote){
   // Si elle corrige quelque chose, on réécrit une seule fois l'état corrigé.
   const beautyMigrationChanged=migrateBeautyBudgetCategories();
   const childAvMigrationChanged=migrateChildInsuranceLifeOwners();
+  const ewanTrMigrationChanged=migrateEwanTradeRepublicAssets();
 
   if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
   if(typeof remote.annotations==='string')annotations=remote.annotations;
@@ -2698,7 +2763,7 @@ window.applyFirebaseState=function(remote){
   saveLocalOnly();
   render();
 
-  if((beautyMigrationChanged || childAvMigrationChanged) && window.firebaseSave){
+  if((beautyMigrationChanged || childAvMigrationChanged || ewanTrMigrationChanged) && window.firebaseSave){
     window.firebaseSave();
   }
 };
@@ -5177,6 +5242,7 @@ function inferLegacyStockAccount(item){
   // Migration des anciennes lignes : Gold = CTO, Emerging = PEA.
   if(isin==='IE00B4ND3602')return 'CTO';
   if(isin==='FR0013412020')return 'PEA';
+  if(isin==='FR0011550193')return 'PEA';
 
   // Avant la séparation PEA/CTO, le MSCI World existant dans l'app
   // correspondait au PEA. Les nouvelles lignes seront toujours créées
@@ -5566,7 +5632,9 @@ function stockTradeRepublicSyncBadge(meta){
   // Compatibilité avec les lignes déjà existantes : si elles n'ont pas encore
   // tradeRepublicUpdatedAt, on reprend la date de la dernière synchro globale réussie.
   const globalState=window.tradeRepublicSyncRequestState||null;
-  const fallbackUpdatedAt=(globalState && globalState.status==='done')
+  const lineOwner=String(meta?.owner||'couple');
+  const globalOwner=String(globalState?.owner||'couple');
+  const fallbackUpdatedAt=(globalState && globalState.status==='done' && globalOwner===lineOwner)
     ? (globalState.completedAt||globalState.updatedAt||'')
     : '';
   const syncUpdatedAt=meta?.tradeRepublicUpdatedAt||fallbackUpdatedAt;
@@ -5954,14 +6022,14 @@ function renderOptionalAssetCategorySections(){
     return `<div class="card asset-accordion-card" data-asset-accordion="${c.key}">
       <div class="section-header asset-accordion-header ${c.key==='bourse'?'bourse-accordion-header':''}" role="button" tabindex="0" aria-expanded="false" onclick="toggleAssetAccordion('${c.key}',event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAssetAccordion('${c.key}',event)}">
         <h2>${c.icon} ${escapeHtml(c.label)}</h2>
-        ${c.key==='bourse'?`<button id="tradeRepublicSyncBtn" class="tr-sync-btn-red" type="button" onclick="event.stopPropagation();requestTradeRepublicSync()" title="Actualiser depuis Trade Republic" aria-label="Actualiser depuis Trade Republic">↻ Trade Republic</button>`:''}
+        ${c.key==='bourse' && ['couple','ewan'].includes(activePatrimoineOwner)?`<button id="tradeRepublicSyncBtn" class="tr-sync-btn-red" type="button" onclick="event.stopPropagation();requestTradeRepublicSync()" title="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}" aria-label="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}">↻ Trade Republic</button>`:''}
         <div class="category-header-actions">
           <span class="section-total" id="total-${c.key}">0 €</span>
           <span class="asset-accordion-chevron" aria-hidden="true">⌄</span>
         </div>
       </div>
       <div class="asset-accordion-content">
-        ${c.key==='bourse'?`<div id="tradeRepublicSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
+        ${c.key==='bourse' && ['couple','ewan'].includes(activePatrimoineOwner)?`<div id="tradeRepublicSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
         <div class="rows-container" data-key="${c.key}"></div>
         ${c.key==='crypto'?'':`<button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>`}
       </div>
@@ -6022,7 +6090,8 @@ function render(){
       const stockOrder={
         'IE0002XZSHO1':0, // MSCI World
         'FR0013412020':1, // Emerging Market / PAEEM
-        'IE00B4ND3602':2  // Gold
+        'FR0011550193':2, // STOXX Europe 600 (Ewan)
+        'IE00B4ND3602':3  // Gold
       };
 
       ['PEA','CTO'].forEach(account=>{
