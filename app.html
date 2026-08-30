@@ -2219,10 +2219,16 @@ function migrateChildInsuranceLifeOwners(){
   return true;
 }
 
-// Migration unique : prépare le compte Trade Republic d'Ewan.
-// Les quantités, PRU et le solde restent à 0 jusqu'à la première synchronisation réelle.
+// Migration Trade Republic d'Ewan.
+// Le compte courant TR appartient désormais à la rubrique Bourse, séparé du PEA/CTO.
+function isTradeRepublicCashItem(item){
+  if(!Array.isArray(item))return false;
+  const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
+  return meta.tradeRepublicCash===true;
+}
+
 function migrateEwanTradeRepublicAssets(){
-  if(!data || data._ewanTradeRepublicAssetsMigratedV1===true)return false;
+  if(!data)return false;
   if(!Array.isArray(data.bourse))data.bourse=[];
   if(!Array.isArray(data.epargne))data.epargne=[];
   let changed=false;
@@ -2238,6 +2244,7 @@ function migrateEwanTradeRepublicAssets(){
       if(!Array.isArray(item))return false;
       const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
       return (meta.owner||'couple')==='ewan'
+        && !meta.tradeRepublicCash
         && String(meta.account||'PEA').toUpperCase()==='PEA'
         && String(meta.isin||'').toUpperCase()===isin;
     });
@@ -2255,18 +2262,36 @@ function migrateEwanTradeRepublicAssets(){
     }
   });
 
-  const cashExists=data.epargne.some(item=>{
-    if(!Array.isArray(item))return false;
-    const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
-    return (meta.owner||'couple')==='ewan' && meta.tradeRepublicCash===true;
-  });
-  if(!cashExists){
-    data.epargne.push(['Compte courant Trade Republic',0,{owner:'ewan',tradeRepublicCash:true}]);
+  // Récupère l'éventuel ancien compte courant placé dans Épargne.
+  let cashValue=0;
+  let cashUpdatedAt='';
+  data.epargne=data.epargne.filter(item=>{
+    if(!isTradeRepublicCashItem(item) || getItemOwner(item,'epargne')!=='ewan')return true;
+    cashValue=Number(item[1])||cashValue;
+    const meta=item[2]||{};
+    cashUpdatedAt=meta.tradeRepublicUpdatedAt||cashUpdatedAt;
     changed=true;
+    return false;
+  });
+
+  let cashItem=data.bourse.find(item=>isTradeRepublicCashItem(item) && getItemOwner(item,'bourse')==='ewan');
+  if(!cashItem){
+    cashItem=['Compte courant Trade Republic',cashValue,{owner:'ewan',account:'CASH',tradeRepublicCash:true}];
+    if(cashUpdatedAt)cashItem[2].tradeRepublicUpdatedAt=cashUpdatedAt;
+    data.bourse.push(cashItem);
+    changed=true;
+  }else{
+    const meta=cashItem[2]&&typeof cashItem[2]==='object'?cashItem[2]:(cashItem[2]={});
+    if(meta.account!=='CASH'){meta.account='CASH';changed=true;}
+    meta.owner='ewan';
+    meta.tradeRepublicCash=true;
+    if(cashValue && !(Number(cashItem[1])||0)){cashItem[1]=cashValue;changed=true;}
+    if(cashUpdatedAt && !meta.tradeRepublicUpdatedAt){meta.tradeRepublicUpdatedAt=cashUpdatedAt;changed=true;}
   }
 
   data._ewanTradeRepublicAssetsMigratedV1=true;
-  return true;
+  data._ewanTradeRepublicCashInBourseV2=true;
+  return changed;
 }
 function setPatrimoineOwner(owner){
   if(!PATRIMOINE_OWNERS.some(o=>o.id===owner))return;
@@ -5256,6 +5281,7 @@ function ensureStockAccounts(){
   let changed=false;
 
   data.bourse.forEach(item=>{
+    if(isTradeRepublicCashItem(item))return;
     const meta=getStockMeta(item);
     if(meta.account!=='PEA'&&meta.account!=='CTO'){
       meta.account=inferLegacyStockAccount(item);
@@ -5367,11 +5393,35 @@ document.getElementById('peaOpeningModal')?.addEventListener('click',function(e)
   if(e.target===this)closePeaOpeningModal();
 });
 function stockAccountSectionTitle(account){
-  const count=(data.bourse||[]).filter(item=>getItemOwner(item,'bourse')===activePatrimoineOwner && getStockAccount(item)===account).length;
+  const count=(data.bourse||[]).filter(item=>getItemOwner(item,'bourse')===activePatrimoineOwner && !isTradeRepublicCashItem(item) && getStockAccount(item)===account).length;
   const taxBadge=account==='PEA'?peaTaxBadgeHtml():'';
   return `<div class="stock-envelope-heading ${account.toLowerCase()}">
     <div class="stock-envelope-title">${account}<span class="stock-envelope-subtitle"> · ${count} ligne${count>1?'s':''}</span>${taxBadge}</div>
   </div>`;
+}
+
+function renderTradeRepublicCashSection(cont){
+  const entry=(data.bourse||[]).map((item,idx)=>({item,idx})).find(({item})=>
+    getItemOwner(item,'bourse')===activePatrimoineOwner && isTradeRepublicCashItem(item)
+  );
+  if(!entry)return;
+  const {item}=entry;
+  const meta=item[2]&&typeof item[2]==='object'?item[2]:{};
+  const updated=meta.tradeRepublicUpdatedAt?new Date(meta.tradeRepublicUpdatedAt):null;
+  const updatedText=updated && !Number.isNaN(updated.getTime())
+    ? `Synchronisé le ${updated.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`
+    : 'En attente de la première synchronisation';
+  cont.insertAdjacentHTML('beforeend',`
+    <div class="stock-envelope-heading tr-cash">
+      <div class="stock-envelope-title">Compte courant Trade Republic<span class="stock-envelope-subtitle"> · liquidités</span></div>
+    </div>
+    <div class="stock-tr-cash-card">
+      <div>
+        <strong>Solde disponible</strong>
+        <div class="stock-tr-cash-status">${escapeHtml(updatedText)}</div>
+      </div>
+      <strong class="stock-tr-cash-value">${euro(Number(item[1])||0)}</strong>
+    </div>`);
 }
 
 let activeStockEditIndex=-1;
@@ -6094,10 +6144,12 @@ function render(){
         'IE00B4ND3602':3  // Gold
       };
 
+      renderTradeRepublicCashSection(cont);
+
       ['PEA','CTO'].forEach(account=>{
         const rows=data.bourse
           .map((item,idx)=>({item,idx}))
-          .filter(({item})=>getItemOwner(item,'bourse')===activePatrimoineOwner && getStockAccount(item)===account)
+          .filter(({item})=>getItemOwner(item,'bourse')===activePatrimoineOwner && !isTradeRepublicCashItem(item) && getStockAccount(item)===account)
           .sort((a,b)=>{
             const aIsin=String(getStockMeta(a.item).isin||'').toUpperCase();
             const bIsin=String(getStockMeta(b.item).isin||'').toUpperCase();
@@ -7879,6 +7931,16 @@ function buildHistoryMonthReportHtml(model=getHistoryMonthShareModel()){
 
 
 
+
+
+/* V26.1.42 — Compte courant Trade Republic séparé dans Bourse */
+.stock-envelope-heading.tr-cash{border-left:3px solid #58a6ff;margin-top:2px;}
+.stock-tr-cash-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-1px 0 12px;padding:11px;border:1px solid #30363d;border-radius:9px;background:#0d1117;}
+.stock-tr-cash-card strong{font-size:12px;color:#f0f6fc;}
+.stock-tr-cash-status{margin-top:3px;font-size:10px;color:#8b949e;}
+.stock-tr-cash-value{font-size:16px!important;white-space:nowrap;}
+body.hide-amounts .stock-tr-cash-value{color:transparent!important;position:relative;}
+body.hide-amounts .stock-tr-cash-value::after{content:'•••• €';color:#8b949e;position:absolute;right:0;top:0;}
 
 </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
 }
