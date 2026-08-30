@@ -1083,6 +1083,14 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 }
 .stock-tr-sync-badge-pending{color:#8b949e;}
 
+
+/* V26.1.38 — profils patrimoine */
+.patrimoine-profile-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.patrimoine-profile-tabs::-webkit-scrollbar{display:none}
+.patrimoine-profile-btn{flex:0 0 auto;border:1px solid #30363d;background:#161b22;color:#8b949e;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+.patrimoine-profile-btn.active{color:#fff;border-color:#58a6ff;background:rgba(88,166,255,.12)}
+.patrimoine-owner-select{width:100%;margin-top:5px;padding:4px 6px;border:1px solid #30363d;border-radius:7px;background:#0d1117;color:#8b949e;font-size:10px}
+.patrimoine-profile-title{font-size:12px;font-weight:800;color:#c9d1d9;margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -1289,6 +1297,15 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <select id="stockEditAccount">
           <option value="PEA">PEA</option>
           <option value="CTO">CTO</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>Propriétaire</label>
+        <select id="stockEditOwner">
+          <option value="couple">Anaël et Laurène</option>
+          <option value="ewan">Ewan</option>
+          <option value="louane">Louane</option>
+          <option value="aedan">Aëdan</option>
         </select>
       </div>
       <div>
@@ -1702,6 +1719,9 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   </div>
 
   <div id="tab-patrimoine" class="tab-content">
+    <div class="patrimoine-profile-title">Patrimoine de</div>
+    <div class="patrimoine-profile-tabs" id="patrimoineProfileTabs"></div>
+
     <div class="top" style="justify-content:space-between;gap:8px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="printPatrimoineReport()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
@@ -2131,6 +2151,74 @@ function createEmptyBetaData(){
   };
 }
 
+const PATRIMOINE_OWNERS=[
+  {id:'couple',label:'Anaël et Laurène'},
+  {id:'ewan',label:'Ewan'},
+  {id:'louane',label:'Louane'},
+  {id:'aedan',label:'Aëdan'}
+];
+let activePatrimoineOwner='couple';
+
+function getPatrimoineOwnerLabel(owner=activePatrimoineOwner){
+  return PATRIMOINE_OWNERS.find(o=>o.id===owner)?.label||'Anaël et Laurène';
+}
+function getItemOwner(item,key=''){
+  if(key==='dettes')return 'couple';
+  const meta=item&&typeof item[2]==='object'&&item[2]!==null?item[2]:{};
+  return PATRIMOINE_OWNERS.some(o=>o.id===meta.owner)?meta.owner:'couple';
+}
+function setItemOwner(key,index,owner){
+  if(key==='dettes'||!Array.isArray(data[key])||!data[key][index])return;
+  const item=data[key][index];
+  const meta=item&&typeof item[2]==='object'&&item[2]!==null?{...item[2]}:{};
+  meta.owner=PATRIMOINE_OWNERS.some(o=>o.id===owner)?owner:'couple';
+  item[2]=meta;
+  render();save();
+}
+function ownerOptionsHtml(selected){
+  return PATRIMOINE_OWNERS.map(o=>`<option value="${o.id}" ${o.id===selected?'selected':''}>${o.label}</option>`).join('');
+}
+function getOwnedItems(key,owner=activePatrimoineOwner){
+  if(key==='dettes')return owner==='couple'?(data.dettes||[]):[];
+  return (data[key]||[]).filter(item=>getItemOwner(item,key)===owner);
+}
+
+// Migration unique : les assurances-vie déjà nommées Louane / Aëdan
+// sont rattachées automatiquement à leur espace personnel.
+function migrateChildInsuranceLifeOwners(){
+  if(!data || data._childInsuranceLifeOwnersMigratedV1===true)return false;
+  let changed=false;
+  (data.assurancevie||[]).forEach(item=>{
+    if(!Array.isArray(item))return;
+    const label=String(item[0]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    let owner='';
+    if(label.includes('louane'))owner='louane';
+    else if(label.includes('aedan'))owner='aedan';
+    if(!owner)return;
+    const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?{...item[2]}:{};
+    if(meta.owner!==owner){
+      meta.owner=owner;
+      item[2]=meta;
+      changed=true;
+    }
+  });
+  data._childInsuranceLifeOwnersMigratedV1=true;
+  return true;
+}
+function setPatrimoineOwner(owner){
+  if(!PATRIMOINE_OWNERS.some(o=>o.id===owner))return;
+  activePatrimoineOwner=owner;
+  resetAssetAccordions();
+  render();
+}
+function renderPatrimoineProfileTabs(){
+  const root=document.getElementById('patrimoineProfileTabs');
+  if(!root)return;
+  root.innerHTML=PATRIMOINE_OWNERS.map(o=>`<button class="patrimoine-profile-btn ${o.id===activePatrimoineOwner?'active':''}" onclick="setPatrimoineOwner('${o.id}')">${o.label}</button>`).join('');
+  const debtCard=document.querySelector('[data-asset-accordion="dettes"]');
+  if(debtCard)debtCard.style.display=activePatrimoineOwner==='couple'?'':'none';
+}
+
 const ASSET_CATEGORY_DEFINITIONS=[
   {key:'immobilier',label:'Immobilier',shortLabel:'Immobilier',icon:'🏠',color:'#8b949e'},
   {key:'assurancevie',label:'Assurance-vie',shortLabel:'AV',icon:'🛡️',color:'#58a6ff'},
@@ -2553,7 +2641,9 @@ function syncModalBudgetType(key,{resetCategory=false}={}){
 
 ensureBankingData();
 ensureHistoricalBudgetCategories();
-if(migrateBeautyBudgetCategories()){
+const initialBeautyMigrationChanged=migrateBeautyBudgetCategories();
+const initialChildAvMigrationChanged=migrateChildInsuranceLifeOwners();
+if(initialBeautyMigrationChanged || initialChildAvMigrationChanged){
   try{
     localStorage.setItem('finaryData',JSON.stringify(data));
     localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));
@@ -2597,6 +2687,7 @@ window.applyFirebaseState=function(remote){
   // La migration doit aussi être appliquée aux données réellement reçues de Firebase.
   // Si elle corrige quelque chose, on réécrit une seule fois l'état corrigé.
   const beautyMigrationChanged=migrateBeautyBudgetCategories();
+  const childAvMigrationChanged=migrateChildInsuranceLifeOwners();
 
   if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
   if(typeof remote.annotations==='string')annotations=remote.annotations;
@@ -2607,7 +2698,7 @@ window.applyFirebaseState=function(remote){
   saveLocalOnly();
   render();
 
-  if(beautyMigrationChanged && window.firebaseSave){
+  if((beautyMigrationChanged || childAvMigrationChanged) && window.firebaseSave){
     window.firebaseSave();
   }
 };
@@ -3602,11 +3693,20 @@ function resetCurrentMenus(){
 
 function switchTab(t){
   currentActiveTab=t;
+
+  // Chaque entrée dans Patrimoine repart sur Anaël et Laurène,
+  // avec toutes les catégories repliées.
+  if(t==='patrimoine'){
+    activePatrimoineOwner='couple';
+    resetAssetAccordions();
+  }
+
   document.querySelectorAll('.tab-content').forEach(e=>e.classList.toggle('active',e.id==='tab-'+t));
   document.querySelectorAll('.tab-btn').forEach(e=>{
     const target=e.getAttribute('onclick')||'';
     e.classList.toggle('active',target.includes(`'${t}'`));
   });
+  if(t==='patrimoine')render();
   if(t==='menus')renderMenus();
   if(t==='factures')renderInvoices();
   if(t==='vehicles')renderVehicles();
@@ -4670,7 +4770,8 @@ function getStockMeta(item){
     priceSourceUrl:raw.priceSourceUrl||'',
     priceSourceName:raw.priceSourceName||'',
     priceFetchStatus:raw.priceFetchStatus||'',
-    account:String(raw.account||'').toUpperCase()
+    account:String(raw.account||'').toUpperCase(),
+    owner:PATRIMOINE_OWNERS.some(o=>o.id===raw.owner)?raw.owner:'couple'
   };
 }
 
@@ -5148,7 +5249,8 @@ function stockAccountTabsHtml(){
 }
 
 function peaTaxBadgeHtml(){
-  const opening=String(data.peaOpeningDate||'').trim();
+  if(!data.peaOpeningDates||typeof data.peaOpeningDates!=='object')data.peaOpeningDates={couple:data.peaOpeningDate||''};
+  const opening=String(data.peaOpeningDates[activePatrimoineOwner]||'').trim();
   if(!opening){
     return `<span class="stock-performance neutral pea-tax-badge" onclick="event.stopPropagation();openPeaOpeningModal()" title="Renseigner la date d’ouverture du PEA">Avantage fiscal · date à renseigner</span>`;
   }
@@ -5173,7 +5275,8 @@ function peaTaxBadgeHtml(){
 
 function openPeaOpeningModal(){
   const input=document.getElementById('peaOpeningDateInput');
-  if(input)input.value=String(data.peaOpeningDate||'');
+  if(!data.peaOpeningDates||typeof data.peaOpeningDates!=='object')data.peaOpeningDates={couple:data.peaOpeningDate||''};
+  if(input)input.value=String(data.peaOpeningDates[activePatrimoineOwner]||'');
   const modal=document.getElementById('peaOpeningModal');
   if(modal)modal.classList.add('active');
 }
@@ -5186,7 +5289,8 @@ function closePeaOpeningModal(){
 function savePeaOpeningDate(){
   const input=document.getElementById('peaOpeningDateInput');
   if(!input || !input.value)return;
-  data.peaOpeningDate=input.value;
+  if(!data.peaOpeningDates||typeof data.peaOpeningDates!=='object')data.peaOpeningDates={couple:data.peaOpeningDate||''};
+  data.peaOpeningDates[activePatrimoineOwner]=input.value;
   closePeaOpeningModal();
   render();
   save();
@@ -5197,7 +5301,7 @@ document.getElementById('peaOpeningModal')?.addEventListener('click',function(e)
   if(e.target===this)closePeaOpeningModal();
 });
 function stockAccountSectionTitle(account){
-  const count=(data.bourse||[]).filter(item=>getStockAccount(item)===account).length;
+  const count=(data.bourse||[]).filter(item=>getItemOwner(item,'bourse')===activePatrimoineOwner && getStockAccount(item)===account).length;
   const taxBadge=account==='PEA'?peaTaxBadgeHtml():'';
   return `<div class="stock-envelope-heading ${account.toLowerCase()}">
     <div class="stock-envelope-title">${account}<span class="stock-envelope-subtitle"> · ${count} ligne${count>1?'s':''}</span>${taxBadge}</div>
@@ -5225,6 +5329,7 @@ function openStockEditModal(index=-1){
   document.getElementById('stockEditLabel').value=editing?(item[0]||''):'';
   document.getElementById('stockEditIsin').value=editing?(meta.isin||''):'';
   document.getElementById('stockEditAccount').value=editing?getStockAccount(item):'PEA';
+  document.getElementById('stockEditOwner').value=editing?getItemOwner(item,'bourse'):activePatrimoineOwner;
   document.getElementById('stockEditShares').value=editing?meta.shares:'';
   document.getElementById('stockEditPru').value=editing && meta.pruSet===true?meta.pru:'';
   document.getElementById('stockEditPrice').value=editing?meta.pricePerShare:'';
@@ -5242,6 +5347,7 @@ function submitStockEdit(){
   const label=String(document.getElementById('stockEditLabel')?.value||'').trim();
   const isin=String(document.getElementById('stockEditIsin')?.value||'').trim().toUpperCase();
   const account=document.getElementById('stockEditAccount')?.value==='CTO'?'CTO':'PEA';
+  const owner=document.getElementById('stockEditOwner')?.value||activePatrimoineOwner;
   const shares=stockModalNumber('stockEditShares',true);
   const pru=stockModalNumber('stockEditPru',true);
   const price=stockModalNumber('stockEditPrice',true);
@@ -5267,6 +5373,7 @@ function submitStockEdit(){
     ...previous,
     isin,
     account,
+    owner,
     shares,
     pru,
     pruSet:true,
@@ -5803,30 +5910,27 @@ function removeAssetCategory(key){
 }
 
 
-const DEFAULT_OPEN_ASSET_ACCORDIONS=[];
+// Etat des accordéons Patrimoine : uniquement pour la session courante.
+// Rien n'est conservé en localStorage ; chaque ouverture de Patrimoine repart repliée.
+let openAssetAccordions=new Set();
 
 function getOpenAssetAccordions(){
-  try{
-    const parsed=JSON.parse(localStorage.getItem('finaryOpenAssetAccordions')||'null');
-    if(Array.isArray(parsed))return parsed;
-  }catch{}
-  return [...DEFAULT_OPEN_ASSET_ACCORDIONS];
+  return [...openAssetAccordions];
+}
+
+function resetAssetAccordions(){
+  openAssetAccordions.clear();
+  applyAssetAccordionState();
 }
 
 function ensureBourseClosedByDefault(){
-  if(window._bourseAccordionInitialStateApplied)return;
-
-  const open=new Set(getOpenAssetAccordions());
-  open.delete('bourse');
-  localStorage.setItem('finaryOpenAssetAccordions',JSON.stringify([...open]));
-  window._bourseAccordionInitialStateApplied=true;
+  openAssetAccordions.delete('bourse');
 }
 
 function applyAssetAccordionState(){
-  const open=new Set(getOpenAssetAccordions());
   document.querySelectorAll('[data-asset-accordion]').forEach(card=>{
     const key=card.dataset.assetAccordion;
-    const isOpen=open.has(key);
+    const isOpen=openAssetAccordions.has(key);
     card.classList.toggle('open',isOpen);
     const header=card.querySelector('.asset-accordion-header');
     if(header)header.setAttribute('aria-expanded',isOpen?'true':'false');
@@ -5835,10 +5939,8 @@ function applyAssetAccordionState(){
 
 function toggleAssetAccordion(key,event){
   if(event?.target?.closest('button,input,select,a,label'))return;
-  const open=new Set(getOpenAssetAccordions());
-  if(open.has(key))open.delete(key);
-  else open.add(key);
-  localStorage.setItem('finaryOpenAssetAccordions',JSON.stringify([...open]));
+  if(openAssetAccordions.has(key))openAssetAccordions.delete(key);
+  else openAssetAccordions.add(key);
   applyAssetAccordionState();
 }
 
@@ -5892,6 +5994,7 @@ function render(){
   ensureV26Data();
   ensureAssetCategoryData();
   if(getActiveAssetCategoryKeys().includes('crypto'))syncOkxBtcToCryptoData();
+  renderPatrimoineProfileTabs();
   renderOptionalAssetCategorySections();
   renderChartSeriesControls();
 
@@ -5925,7 +6028,7 @@ function render(){
       ['PEA','CTO'].forEach(account=>{
         const rows=data.bourse
           .map((item,idx)=>({item,idx}))
-          .filter(({item})=>getStockAccount(item)===account)
+          .filter(({item})=>getItemOwner(item,'bourse')===activePatrimoineOwner && getStockAccount(item)===account)
           .sort((a,b)=>{
             const aIsin=String(getStockMeta(a.item).isin||'').toUpperCase();
             const bIsin=String(getStockMeta(b.item).isin||'').toUpperCase();
@@ -5954,7 +6057,9 @@ function render(){
       return;
     }
     if(key==='crypto'){
-      renderCryptoBtcRow(cont);
+      const ownedCrypto=(data.crypto||[]).some(item=>getItemOwner(item,'crypto')===activePatrimoineOwner);
+      if(ownedCrypto)renderCryptoBtcRow(cont);
+      else cont.innerHTML='<div class="stock-envelope-empty">Aucune ligne</div>';
       return;
     }
 
@@ -5962,6 +6067,7 @@ function render(){
     // les lignes cochées sont affichées en bas, sans modifier data.
     const displayItems=data[key]
       .map((item,idx)=>({item,idx,order:idx}))
+      .filter(({item})=>isBudget || getItemOwner(item,key)===activePatrimoineOwner)
       .sort((a,b)=>{
         if(!isBudget)return a.order-b.order;
 
@@ -6020,14 +6126,17 @@ function render(){
             placeholder="Libellé"
           >
 
-          <input
-            type="number"
-            value="${item[1]===0?'':item[1]}"
-            placeholder="0"
-            readonly
-            onclick="openPatrimoineAmountModal('${key}',${idx})"
-            title="Cliquer pour modifier le montant"
-          >
+          <div>
+            <input
+              type="number"
+              value="${item[1]===0?'':item[1]}"
+              placeholder="0"
+              readonly
+              onclick="openPatrimoineAmountModal('${key}',${idx})"
+              title="Cliquer pour modifier le montant"
+            >
+            <select class="patrimoine-owner-select" onclick="event.stopPropagation()" onchange="setItemOwner('${key}',${idx},this.value)" title="Propriétaire">${ownerOptionsHtml(getItemOwner(item,key))}</select>
+          </div>
 
           <button
             class="btn-del"
@@ -6086,7 +6195,7 @@ function addItem(k){
     openStockEditModal(-1);
     return;
   }else{
-    data[k].push(['',0]);
+    data[k].push(['',0,{owner:activePatrimoineOwner}]);
   }
   render();
   save();
@@ -6711,30 +6820,16 @@ function save(){
   if(window.firebaseSave)window.firebaseSave();
 }
 
-function calculateNet(){
+function calculateNet(owner=activePatrimoineOwner){
   const keys=getAllAssetKeys();
-
-  const assets=keys.reduce(
-    (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
-    0
-  );
-
-  const debts=(data.dettes||[]).reduce(
-    (s,i)=>s+(i[1]||0),
-    0
-  );
-
-  return{
-    assets,
-    debts,
-    net:assets-debts
-  };
+  const assets=keys.reduce((s,k)=>s+getOwnedItems(k,owner).reduce((a,i)=>a+(Number(i[1])||0),0),0);
+  const debts=owner==='couple'?(data.dettes||[]).reduce((s,i)=>s+(Number(i[1])||0),0):0;
+  return{assets,debts,net:assets-debts};
 }
 
-function calculateLiquidInvestments(){
+function calculateLiquidInvestments(owner=activePatrimoineOwner){
   return ['epargne',...ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').map(c=>c.key)].reduce(
-    (s,k)=>s+(data[k]||[]).reduce((a,i)=>a+(i[1]||0),0),
-    0
+    (s,k)=>s+getOwnedItems(k,owner).reduce((a,i)=>a+(Number(i[1])||0),0),0
   );
 }
 
@@ -6748,7 +6843,7 @@ function getPatrimoineReportModel(){
     {key:'dettes',label:'Emprunts'}
   ].map(c=>({
     ...c,
-    items:(data[c.key]||[]).map(i=>{
+    items:getOwnedItems(c.key).map(i=>{
       const base={label:String(i?.[0]||'Sans libellé'),amount:Number(i?.[1])||0};
       if(c.key==='dettes'){
         const meta=getLoanMeta(i);
@@ -6756,7 +6851,7 @@ function getPatrimoineReportModel(){
       }
       return base;
     }),
-    total:(data[c.key]||[]).reduce((sum,i)=>sum+(Number(i?.[1])||0),0)
+    total:getOwnedItems(c.key).reduce((sum,i)=>sum+(Number(i?.[1])||0),0)
   }));
 
   const savings=categories.find(c=>c.key==='epargne')?.total||0;
@@ -6856,7 +6951,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Rapport Patrimoine - ${esc(model.dateLabel)}</title>
+<title>Rapport Patrimoine - ${esc(getPatrimoineOwnerLabel())} - ${esc(model.dateLabel)}</title>
 <style>
   *{box-sizing:border-box}
   body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:12px;line-height:1.4}
@@ -7015,16 +7110,16 @@ function updateTotals(){
   document.getElementById('debts').textContent=euro(c.debts);
 
   document.getElementById('savings').textContent=euro(
-    (data.epargne||[]).reduce((a,i)=>a+(i[1]||0),0)
+    getOwnedItems('epargne').reduce((a,i)=>a+(Number(i[1])||0),0)
   );
 
   document.getElementById('investments').textContent=euro(
-    ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').reduce((sum,c)=>sum+(data[c.key]||[]).reduce((a,i)=>a+(i[1]||0),0),0)
+    ASSET_CATEGORY_DEFINITIONS.filter(c=>c.key!=='immobilier').reduce((sum,c)=>sum+getOwnedItems(c.key).reduce((a,i)=>a+(Number(i[1])||0),0),0)
   );
 
   ['epargne',...getActiveAssetCategoryKeys(),'dettes'].forEach(k=>{
     const e=document.getElementById(`total-${k}`);
-    if(e)e.textContent=euro((data[k]||[]).reduce((a,i)=>a+(i[1]||0),0));
+    if(e)e.textContent=euro(getOwnedItems(k).reduce((a,i)=>a+(Number(i[1])||0),0));
   });
 
   const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
@@ -7069,33 +7164,19 @@ function getLocalDateKey(date=new Date()){
 
 function recordPatrimoineSnapshot(){
   const today=getLocalDateKey();
-  const currentLiquid=calculateLiquidInvestments();
-  const currentFullNet=calculateNet().net;
-
-  const currentCategories={
-    epargne:(data.epargne||[]).reduce((s,i)=>s+(i[1]||0),0),
-    ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[
-      c.key,
-      (data[c.key]||[]).reduce((s,i)=>s+(i[1]||0),0)
-    ]))
-  };
-
-  const existing=patrimoineHistory.find(h=>h.date===today);
-
-  if(existing){
-    // "net" reste la série Total (hors immobilier) pour compatibilité.
-    existing.net=currentLiquid;
-    existing.fullNet=currentFullNet;
-    Object.assign(existing,currentCategories);
-  }else{
-    patrimoineHistory.push({
-      date:today,
-      net:currentLiquid,
-      fullNet:currentFullNet,
-      ...currentCategories
-    });
-    patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date));
-  }
+  PATRIMOINE_OWNERS.forEach(({id:owner})=>{
+    const currentLiquid=calculateLiquidInvestments(owner);
+    const currentFullNet=calculateNet(owner).net;
+    const currentCategories={
+      epargne:getOwnedItems('epargne',owner).reduce((s,i)=>s+(Number(i[1])||0),0),
+      ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,getOwnedItems(c.key,owner).reduce((s,i)=>s+(Number(i[1])||0),0)]))
+    };
+    let existing=patrimoineHistory.find(h=>h.date===today && (h.owner||'couple')===owner);
+    if(existing){existing.net=currentLiquid;existing.fullNet=currentFullNet;existing.owner=owner;Object.assign(existing,currentCategories);}
+    else patrimoineHistory.push({date:today,owner,net:currentLiquid,fullNet:currentFullNet,...currentCategories});
+  });
+  patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));
 }
 
 function updatePatrimoineMonthlyVariation(){
@@ -7113,6 +7194,7 @@ function updatePatrimoineMonthlyVariation(){
   const previousMonthSnapshots=(patrimoineHistory||[])
     .filter(h=>{
       if(!h || !h.date || !Number.isFinite(Number(h.fullNet)))return false;
+      if((h.owner||'couple')!==activePatrimoineOwner)return false;
 
       const d=new Date(`${h.date}T12:00:00`);
       return d.getFullYear()===previousYear && d.getMonth()===previousMonth;
@@ -9778,6 +9860,7 @@ function getFilteredChartPoints(){
   return (patrimoineHistory||[])
     .filter(h=>{
       if(!h || !h.date)return false;
+      if((h.owner||'couple')!==activePatrimoineOwner)return false;
 
       const value=Number(h[cfg.field]);
       if(!Number.isFinite(value))return false;
@@ -10070,7 +10153,7 @@ function renderAssetDistribution(){
 
   const items=cats
     .map(c=>{
-      const val=(data[c.key]||[]).reduce((sum,i)=>sum+(i[1]||0),0);
+      const val=getOwnedItems(c.key).reduce((sum,i)=>sum+(Number(i[1])||0),0);
       total+=val;
       return{...c,val};
     })
@@ -10167,8 +10250,15 @@ document.getElementById('annotationsModal').addEventListener('click',e=>{
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Démarrage natif : toujours Budget. Les anciens états mémorisés de Patrimoine
+  // sont supprimés pour garantir un démarrage propre après mise à jour.
+  localStorage.removeItem('finaryOpenAssetAccordions');
+  localStorage.removeItem('finaryPatrimoineOwner');
+  activePatrimoineOwner='couple';
+  openAssetAccordions.clear();
   applyHideAmountsState();
   render();
+  switchTab('budget');
 });
 
 
