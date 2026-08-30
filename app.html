@@ -5229,14 +5229,16 @@ function getStockPerformance(meta){
 }
 
 function stockPerformanceHtml(meta){
+  const pruSet=meta?.pruSet===true;
+  const current=Number(meta?.pricePerShare)||0;
+  if(!pruSet)return '<span class="stock-performance neutral">PRU non renseigné</span>';
+  if(current<=0)return '<span class="stock-performance neutral">Cours non disponible</span>';
   const perf=getStockPerformance(meta);
-  if(perf===null)return '<span class="stock-performance neutral">PRU non renseigné</span>';
   if(perf===Infinity)return '<span class="stock-performance positive"><span class="stock-performance-euro">***</span> · gain intégral</span>';
   const cls=perf>0?'positive':perf<0?'negative':'neutral';
   const sign=perf>0?'+':'';
   const shares=Number(meta?.shares)||0;
   const pru=Number(meta?.pru)||0;
-  const current=Number(meta?.pricePerShare)||0;
   const gain=shares*(current-pru);
   const gainSign=gain>0?'+':'';
   const gainText=`${gainSign}${euro(gain)}`;
