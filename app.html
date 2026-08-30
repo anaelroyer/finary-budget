@@ -471,6 +471,8 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .auth-field{display:flex;flex-direction:column;gap:6px}.auth-field label{font-size:11px;text-transform:uppercase;color:#8b949e;font-weight:700}.auth-field input{width:100%;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:9px;color:#fff;font-size:15px;outline:none}.auth-field input:focus{border-color:#58a6ff}
 .auth-message{min-height:18px;font-size:12px;color:#8b949e;line-height:1.4}.auth-message.error{color:#f85149}.auth-message.success{color:#3fb950}
 .auth-forgot{border:0;background:transparent;color:#58a6ff;font-size:12px;cursor:pointer;padding:0;text-align:center}
+.auth-switch{border:1px solid #30363d;background:#0d1117;color:#c9d1d9;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;padding:10px 12px;text-align:center}
+.auth-register-only{display:none}
 .beta-user-bar{display:none;align-items:center;justify-content:space-between;gap:8px;background:#161b22;border:1px solid #30363d;border-radius:10px;padding:7px 9px;font-size:11px;color:#8b949e}
 .beta-user-email{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.beta-user-email strong{color:#c9d1d9}
 .beta-logout{border:0;background:transparent;color:#f85149;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;padding:3px 4px}
@@ -1091,9 +1093,49 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .patrimoine-profile-btn.active{color:#fff;border-color:#58a6ff;background:rgba(88,166,255,.12)}
 .patrimoine-owner-select{width:100%;margin-top:5px;padding:4px 6px;border:1px solid #30363d;border-radius:7px;background:#0d1117;color:#8b949e;font-size:10px}
 .patrimoine-profile-title{font-size:12px;font-weight:800;color:#c9d1d9;margin:0 0 6px}
+
+/* V26.1.48 — Authentification Firebase personnelle + création du premier compte */
+#authOverlay{position:fixed;inset:0;z-index:30000;background:#0d1117;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.auth-card{width:min(100%,390px);background:#161b22;border:1px solid #30363d;border-radius:18px;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:14px}
+.auth-brand{text-align:center}.auth-brand h1{font-size:22px;color:#fff;margin:0 0 4px}.auth-brand p{font-size:12px;color:#8b949e;margin:0}
+.auth-field{display:flex;flex-direction:column;gap:6px}.auth-field label{font-size:11px;text-transform:uppercase;color:#8b949e;font-weight:700}.auth-field input{width:100%;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:9px;color:#fff;font-size:15px;outline:none}.auth-field input:focus{border-color:#58a6ff}
+.auth-message{min-height:18px;font-size:12px;color:#8b949e;line-height:1.4}.auth-message.error{color:#f85149}.auth-message.success{color:#3fb950}
+.auth-forgot{border:0;background:transparent;color:#58a6ff;font-size:12px;cursor:pointer;padding:0;text-align:center}
+.auth-switch{border:1px solid #30363d;background:#0d1117;color:#c9d1d9;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;padding:10px 12px;text-align:center}
+.auth-register-only{display:none}
+.personal-user-bar{display:none;align-items:center;gap:7px;min-width:0}
+.personal-user-email{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:10px}
+.personal-logout{border:1px solid #30363d;background:#161b22;color:#f85149;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;padding:5px 7px;white-space:nowrap}
+
 </style>
 </head>
 <body>
+<!-- AUTHENTIFICATION PERSONNELLE -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <h1>Budget & Patrimoine</h1>
+      <p>Connectez-vous à votre espace familial privé.</p>
+    </div>
+    <div class="auth-field">
+      <label>Adresse e-mail</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="Adresse e-mail">
+    </div>
+    <div class="auth-field">
+      <label>Mot de passe</label>
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mot de passe">
+    </div>
+    <div id="authConfirmField" class="auth-field auth-register-only">
+      <label>Confirmer le mot de passe</label>
+      <input id="authPasswordConfirm" type="password" autocomplete="new-password" placeholder="Confirmer le mot de passe">
+    </div>
+    <div id="authMessage" class="auth-message"></div>
+    <button id="authSubmitBtn" class="btn btn-primary" type="button" onclick="submitPersonalAuth()">Se connecter</button>
+    <button id="authModeSwitch" class="auth-switch" type="button" onclick="togglePersonalAuthMode()">Créer mon compte</button>
+    <button id="authForgotBtn" class="auth-forgot" type="button" onclick="resetPersonalPassword()">Mot de passe oublié ?</button>
+  </div>
+</div>
+
 
 
 <!-- ÉCRAN DE VERROUILLAGE -->
@@ -1667,6 +1709,10 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
   <div class="sync-bar">
     <div id="firebaseStatus" style="flex:1">Synchronisation…</div>
+    <div id="personalUserBar" class="personal-user-bar">
+      <span id="personalUserEmail" class="personal-user-email"></span>
+      <button type="button" class="personal-logout" onclick="personalLogout()">Déconnexion</button>
+    </div>
     <button type="button" class="settings-btn" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
   </div>
   <button class="btn btn-primary install-app-btn" type="button" onclick="installBetaApp()">📲 Installer l’application</button>
@@ -1897,7 +1943,10 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged,
+  sendPasswordResetEmail, setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // Configuration personnelle historique : conservée pour utiliser exactement
@@ -1921,7 +1970,8 @@ window.firebaseWriting=false;
 let firebaseSaveTimer=null,
     firebaseSaveInProgress=false,
     firebaseSavePending=false,
-    snapshotUnsubscribe=null;
+    snapshotUnsubscribe=null,
+    currentUser=null;
 
 function setFirebaseStatus(message,state=''){
   const el=document.getElementById('firebaseStatus');
@@ -1930,6 +1980,67 @@ function setFirebaseStatus(message,state=''){
   el.classList.remove('sync-ok','sync-pending','sync-offline');
   if(state)el.classList.add(state);
 }
+
+function setAuthMessage(message,type=''){
+  const el=document.getElementById('authMessage');
+  if(!el)return;
+  el.textContent=message||'';
+  el.className='auth-message'+(type?' '+type:'');
+}
+function authErrorMessage(error){
+  const code=error?.code||'';
+  const map={
+    'auth/invalid-email':'Adresse e-mail invalide.',
+    'auth/invalid-credential':'E-mail ou mot de passe incorrect.',
+    'auth/user-disabled':'Ce compte a été désactivé.',
+    'auth/too-many-requests':'Trop de tentatives. Réessayez un peu plus tard.',
+    'auth/network-request-failed':'Connexion réseau impossible.',
+    'auth/operation-not-allowed':'La connexion E-mail/Mot de passe doit être activée dans Firebase Authentication.',
+    'auth/email-already-in-use':'Un compte existe déjà avec cette adresse e-mail.',
+    'auth/weak-password':'Le mot de passe est trop faible (6 caractères minimum).'
+  };
+  return map[code]||error?.message||'Une erreur est survenue.';
+}
+window.personalAuthMode='login';
+window.togglePersonalAuthMode=function(){
+  window.personalAuthMode=window.personalAuthMode==='register'?'login':'register';
+  const register=window.personalAuthMode==='register';
+  const confirmField=document.getElementById('authConfirmField');
+  const submit=document.getElementById('authSubmitBtn');
+  const switchBtn=document.getElementById('authModeSwitch');
+  const forgot=document.getElementById('authForgotBtn');
+  const password=document.getElementById('authPassword');
+  if(confirmField)confirmField.style.display=register?'flex':'none';
+  if(submit)submit.textContent=register?'Créer mon compte':'Se connecter';
+  if(switchBtn)switchBtn.textContent=register?'J’ai déjà un compte':'Créer mon compte';
+  if(forgot)forgot.style.display=register?'none':'block';
+  if(password)password.autocomplete=register?'new-password':'current-password';
+  setAuthMessage(register?'Le premier compte créé retrouvera les données familiales déjà enregistrées.':'');
+};
+window.submitPersonalAuth=async function(){
+  const email=(document.getElementById('authEmail')?.value||'').trim();
+  const password=document.getElementById('authPassword')?.value||'';
+  const confirm=document.getElementById('authPasswordConfirm')?.value||'';
+  const register=window.personalAuthMode==='register';
+  if(!email||!password){setAuthMessage('Saisissez votre e-mail et votre mot de passe.','error');return;}
+  if(register && password!==confirm){setAuthMessage('Les deux mots de passe ne correspondent pas.','error');return;}
+  if(register && password.length<6){setAuthMessage('Le mot de passe doit contenir au moins 6 caractères.','error');return;}
+  const btn=document.getElementById('authSubmitBtn');
+  if(btn)btn.disabled=true;
+  setAuthMessage(register?'Création du compte…':'Connexion…');
+  try{
+    if(register)await createUserWithEmailAndPassword(auth,email,password);
+    else await signInWithEmailAndPassword(auth,email,password);
+  }catch(error){console.error(error);setAuthMessage(authErrorMessage(error),'error');}
+  finally{if(btn)btn.disabled=false;}
+};
+window.resetPersonalPassword=async function(){
+  const email=(document.getElementById('authEmail')?.value||'').trim();
+  if(!email){setAuthMessage('Saisissez d’abord votre adresse e-mail.','error');return;}
+  try{await sendPasswordResetEmail(auth,email);setAuthMessage('E-mail de réinitialisation envoyé.','success');}
+  catch(error){setAuthMessage(authErrorMessage(error),'error');}
+};
+window.personalLogout=async function(){try{await signOut(auth);}catch(error){console.error(error);}};
 
 function tradeRepublicSyncTimeLabel(value){
   if(!value)return '';
@@ -2031,7 +2142,7 @@ window.requestTradeRepublicSync=async function(){
 };
 
 window.firebaseSave=function(){
-  if(!window.firebaseReady)return;
+  if(!window.firebaseReady||!currentUser)return;
   clearTimeout(firebaseSaveTimer);
   firebaseSaveTimer=setTimeout(async()=>{
     if(firebaseSaveInProgress){
@@ -2082,46 +2193,51 @@ async function applyRemoteSnapshot(snapshot){
 }
 
 onAuthStateChanged(auth,async user=>{
-  if(!user)return;
+  const overlay=document.getElementById('authOverlay');
+  const bar=document.getElementById('personalUserBar');
+  const emailEl=document.getElementById('personalUserEmail');
+  if(!user){
+    currentUser=null;window.firebaseReady=false;
+    if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
+    if(bar)bar.style.display='none';
+    if(overlay)overlay.style.display='flex';
+    setFirebaseStatus('Non connecté','sync-offline');setAuthMessage('');
+    return;
+  }
+  currentUser=user;
+  if(emailEl)emailEl.textContent=user.email||'Compte connecté';
+  if(bar)bar.style.display='flex';
   setFirebaseStatus('Synchronisation…','sync-pending');
   try{
     const snap=await getDoc(sharedRef);
     window.firebaseReady=true;
     const existed=await applyRemoteSnapshot(snap);
-    if(!existed){
-      // Premier démarrage seulement : envoie l'état local déjà chargé.
-      window.firebaseSave();
-    }
+    if(!existed)window.firebaseSave();
     setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
-    if(snapshotUnsubscribe) snapshotUnsubscribe();
+    if(snapshotUnsubscribe)snapshotUnsubscribe();
     snapshotUnsubscribe=onSnapshot(sharedRef,snapshot=>{
       if(!snapshot.exists()||window.firebaseWriting)return;
       applyRemoteSnapshot(snapshot).catch(console.error);
     });
+    if(overlay)overlay.style.display='none';
   }catch(error){
-    console.error(error);
-    window.firebaseReady=false;
-    setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
+    console.error(error);window.firebaseReady=false;
+    setFirebaseStatus('⚠️ Connexion Firebase impossible','sync-offline');
+    setAuthMessage('Impossible d’ouvrir les données existantes : '+(error?.message||error),'error');
+    if(overlay)overlay.style.display='flex';
   }
 });
 
-
-window.addEventListener('offline',()=>{
-  setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
-});
+window.addEventListener('offline',()=>{setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');});
 window.addEventListener('online',()=>{
+  if(!currentUser)return;
   setFirebaseStatus('Connexion retrouvée — synchronisation…','sync-pending');
-  window.firebaseReady=true;
-  if(window.firebaseSave)window.firebaseSave();
+  window.firebaseReady=true;if(window.firebaseSave)window.firebaseSave();
 });
 
 (async function initFirebase(){
-  try{
-    await signInAnonymously(auth);
-  }catch(error){
-    console.error(error);
-    setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
-  }
+  try{await setPersistence(auth,browserLocalPersistence);}
+  catch(error){console.error(error);setAuthMessage('Erreur Firebase : '+(error?.message||error),'error');}
 })();
 </script>
 
@@ -10688,5 +10804,15 @@ if(window.visualViewport){
   </div>
 </div>
 
+
+<script>
+document.addEventListener('keydown',e=>{
+  const overlay=document.getElementById('authOverlay');
+  if(e.key==='Enter' && overlay && getComputedStyle(overlay).display!=='none'){
+    const active=document.activeElement?.id||'';
+    if(active==='authEmail'||active==='authPassword'||active==='authPasswordConfirm'){e.preventDefault();window.submitPersonalAuth?.();}
+  }
+});
+</script>
 </body>
 </html>
