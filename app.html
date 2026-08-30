@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- V26.1.27 : correction structurelle des écarts entre onglets Patrimoine -->
+<!-- V26.1.31 : statut Trade Republic visible à côté de chaque ISIN -->
 <title>Budget & Patrimoine</title>
 <meta name="theme-color" content="#0d1117">
 <meta name="application-name" content="Budget & Patrimoine">
@@ -969,6 +969,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   font-weight:800;
   line-height:1.2;
 }
+.stock-tr-sync-badge-pending{color:#8b949e;}
 
 </style>
 </head>
@@ -5271,13 +5272,24 @@ function stockAllocationInlineHtml(item,idx){
 
 
 function stockTradeRepublicSyncBadge(meta){
-  if(!meta?.tradeRepublicUpdatedAt)return '';
+  // Priorité au timestamp enregistré sur la ligne par le workflow TR.
+  // Compatibilité avec les lignes déjà existantes : si elles n'ont pas encore
+  // tradeRepublicUpdatedAt, on reprend la date de la dernière synchro globale réussie.
+  const globalState=window.tradeRepublicSyncRequestState||null;
+  const fallbackUpdatedAt=(globalState && globalState.status==='done')
+    ? (globalState.completedAt||globalState.updatedAt||'')
+    : '';
+  const syncUpdatedAt=meta?.tradeRepublicUpdatedAt||fallbackUpdatedAt;
+
+  if(!syncUpdatedAt){
+    return `<span class="stock-tr-sync-badge stock-tr-sync-badge-pending" title="Aucune synchronisation Trade Republic enregistrée pour cette ligne">• Non synchronisé</span>`;
+  }
 
   const now=new Date();
   const tomorrow=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
   const isLastDayOfMonth=tomorrow.getDate()===1;
 
-  const d=new Date(meta.tradeRepublicUpdatedAt);
+  const d=new Date(syncUpdatedAt);
   const syncedToday=!Number.isNaN(d.getTime())
     && d.getFullYear()===now.getFullYear()
     && d.getMonth()===now.getMonth()
