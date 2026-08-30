@@ -1091,7 +1091,6 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .patrimoine-profile-tabs::-webkit-scrollbar{display:none}
 .patrimoine-profile-btn{flex:0 0 auto;border:1px solid #30363d;background:#161b22;color:#8b949e;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
 .patrimoine-profile-btn.active{color:#fff;border-color:#58a6ff;background:rgba(88,166,255,.12)}
-.patrimoine-owner-select{width:100%;margin-top:5px;padding:4px 6px;border:1px solid #30363d;border-radius:7px;background:#0d1117;color:#8b949e;font-size:10px}
 .patrimoine-profile-title{font-size:12px;font-weight:800;color:#c9d1d9;margin:0 0 6px}
 
 /* V26.1.49 — Authentification Firebase : correction des anciennes sessions anonymes */
@@ -1334,15 +1333,6 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <select id="stockEditAccount">
           <option value="PEA">PEA</option>
           <option value="CTO">CTO</option>
-        </select>
-      </div>
-      <div class="full">
-        <label>Propriétaire</label>
-        <select id="stockEditOwner">
-          <option value="couple">Anaël et Laurène</option>
-          <option value="ewan">Ewan</option>
-          <option value="louane">Louane</option>
-          <option value="aedan">Aëdan</option>
         </select>
       </div>
       <div>
@@ -2291,17 +2281,6 @@ function getPatrimoineOwnerLabel(owner=activePatrimoineOwner){
 function getItemOwner(item,key=''){
   const meta=item&&typeof item[2]==='object'&&item[2]!==null?item[2]:{};
   return PATRIMOINE_OWNERS.some(o=>o.id===meta.owner)?meta.owner:'couple';
-}
-function setItemOwner(key,index,owner){
-  if(!Array.isArray(data[key])||!data[key][index])return;
-  const item=data[key][index];
-  const meta=item&&typeof item[2]==='object'&&item[2]!==null?{...item[2]}:{};
-  meta.owner=PATRIMOINE_OWNERS.some(o=>o.id===owner)?owner:'couple';
-  item[2]=meta;
-  render();save();
-}
-function ownerOptionsHtml(selected){
-  return PATRIMOINE_OWNERS.map(o=>`<option value="${o.id}" ${o.id===selected?'selected':''}>${o.label}</option>`).join('');
 }
 function getOwnedItems(key,owner=activePatrimoineOwner){
   return (data[key]||[]).filter(item=>getItemOwner(item,key)===owner);
@@ -5582,7 +5561,6 @@ function openStockEditModal(index=-1){
   document.getElementById('stockEditLabel').value=editing?(item[0]||''):'';
   document.getElementById('stockEditIsin').value=editing?(meta.isin||''):'';
   document.getElementById('stockEditAccount').value=editing?getStockAccount(item):'PEA';
-  document.getElementById('stockEditOwner').value=editing?getItemOwner(item,'bourse'):activePatrimoineOwner;
   document.getElementById('stockEditShares').value=editing?meta.shares:'';
   document.getElementById('stockEditPru').value=editing && meta.pruSet===true?meta.pru:'';
   document.getElementById('stockEditPrice').value=editing?meta.pricePerShare:'';
@@ -5600,7 +5578,7 @@ function submitStockEdit(){
   const label=String(document.getElementById('stockEditLabel')?.value||'').trim();
   const isin=String(document.getElementById('stockEditIsin')?.value||'').trim().toUpperCase();
   const account=document.getElementById('stockEditAccount')?.value==='CTO'?'CTO':'PEA';
-  const owner=document.getElementById('stockEditOwner')?.value||activePatrimoineOwner;
+  const owner=(activeStockEditIndex>=0 && Array.isArray(data.bourse) && data.bourse[activeStockEditIndex])?getItemOwner(data.bourse[activeStockEditIndex],'bourse'):activePatrimoineOwner;
   const shares=stockModalNumber('stockEditShares',true);
   const pru=stockModalNumber('stockEditPru',true);
   const price=stockModalNumber('stockEditPrice',true);
@@ -6397,7 +6375,6 @@ function render(){
               onclick="openPatrimoineAmountModal('${key}',${idx})"
               title="Cliquer pour modifier le montant"
             >
-            <select class="patrimoine-owner-select" onclick="event.stopPropagation()" onchange="setItemOwner('${key}',${idx},this.value)" title="Propriétaire">${ownerOptionsHtml(getItemOwner(item,key))}</select>
           </div>
 
           <button
