@@ -114,7 +114,7 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
   margin-top:9px;padding-top:8px;border-top:1px solid #21262d
 }
 .stock-compact-value{font-size:13px;color:#c9d1d9}
-.stock-compact-value strong{font-size:15px;color:#f0f6fc}
+.stock-compact-value strong{font-size:15px;color:#3fb950}
 .stock-compact-status{
   font-size:10px;color:#8b949e;text-align:right;line-height:1.25
 }
@@ -2274,7 +2274,7 @@ function migrateEwanTradeRepublicAssets(){
 
   let cashItem=data.bourse.find(item=>isTradeRepublicCashItem(item) && getItemOwner(item,'bourse')==='ewan');
   if(!cashItem){
-    cashItem=['Compte courant Trade Republic',cashValue,{owner:'ewan',account:'CASH',tradeRepublicCash:true}];
+    cashItem=['Portfolio Trade Republic',cashValue,{owner:'ewan',account:'CASH',tradeRepublicCash:true}];
     if(cashUpdatedAt)cashItem[2].tradeRepublicUpdatedAt=cashUpdatedAt;
     data.bourse.push(cashItem);
     changed=true;
@@ -2283,6 +2283,7 @@ function migrateEwanTradeRepublicAssets(){
     if(meta.account!=='CASH'){meta.account='CASH';changed=true;}
     meta.owner='ewan';
     meta.tradeRepublicCash=true;
+    if(cashItem[0]!=='Portfolio Trade Republic'){cashItem[0]='Portfolio Trade Republic';changed=true;}
     if(cashValue && !(Number(cashItem[1])||0)){cashItem[1]=cashValue;changed=true;}
     if(cashUpdatedAt && !meta.tradeRepublicUpdatedAt){meta.tradeRepublicUpdatedAt=cashUpdatedAt;changed=true;}
   }
@@ -5404,21 +5405,42 @@ function renderTradeRepublicCashSection(cont){
   const {item}=entry;
   const meta=item[2]&&typeof item[2]==='object'?item[2]:{};
   const updated=meta.tradeRepublicUpdatedAt?new Date(meta.tradeRepublicUpdatedAt):null;
-  const updatedText=updated && !Number.isNaN(updated.getTime())
-    ? `Synchronisé le ${updated.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`
-    : 'En attente de la première synchronisation';
+  const hasUpdated=updated && !Number.isNaN(updated.getTime());
+  const updatedText=hasUpdated
+    ? updated.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+    : 'Première synchronisation en attente';
+  const badge=hasUpdated
+    ? '<span class="stock-tr-sync-badge">✓ À jour</span>'
+    : '<span class="stock-tr-sync-badge stock-tr-sync-badge-pending">• Non synchronisé</span>';
+
   cont.insertAdjacentHTML('beforeend',`
-    <div class="stock-envelope-heading tr-cash">
-      <div class="stock-envelope-title">Compte courant Trade Republic<span class="stock-envelope-subtitle"> · liquidités</span></div>
-    </div>
-    <div class="stock-tr-cash-card">
-      <div>
-        <strong>Solde disponible</strong>
-        <div class="stock-tr-cash-status">${escapeHtml(updatedText)}</div>
+    <div class="stock-compact-card tr-cash-compact-card">
+      <div class="stock-compact-top">
+        <div class="stock-compact-title">
+          <strong>Portfolio Trade Republic</strong>
+          <div class="stock-compact-sub stock-compact-sub-sync"><span>Liquidités disponibles</span>${badge}</div>
+        </div>
+        <div class="tr-cash-logo" aria-hidden="true">TR</div>
       </div>
-      <strong class="stock-tr-cash-value">${euro(Number(item[1])||0)}</strong>
+
+      <div class="tr-cash-main">
+        <div class="stock-stat tr-cash-balance-stat">
+          <span class="stock-stat-label">Solde disponible</span>
+          <span class="stock-stat-value tr-cash-balance">${euro(Number(item[1])||0)}</span>
+        </div>
+        <div class="stock-stat">
+          <span class="stock-stat-label">Type</span>
+          <span class="stock-stat-value">Compte espèces</span>
+        </div>
+      </div>
+
+      <div class="stock-compact-bottom">
+        <span class="stock-compact-value">Valeur : <strong>${euro(Number(item[1])||0)}</strong></span>
+        <span class="stock-compact-status ${hasUpdated?'ok':''}">${hasUpdated?`Synchronisé le ${escapeHtml(updatedText)}`:'En attente de Trade Republic'}</span>
+      </div>
     </div>`);
 }
+
 
 let activeStockEditIndex=-1;
 
@@ -7933,15 +7955,16 @@ function buildHistoryMonthReportHtml(model=getHistoryMonthShareModel()){
 
 
 
-/* V26.1.42 — Compte courant Trade Republic séparé dans Bourse */
+/* V26.1.44 — Portfolio Trade Republic encadré dans Bourse */
 /* V26.1.43 — Emprunts rattachés à chaque profil Patrimoine */
-.stock-envelope-heading.tr-cash{border-left:3px solid #58a6ff;margin-top:2px;}
-.stock-tr-cash-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-1px 0 12px;padding:11px;border:1px solid #30363d;border-radius:9px;background:#0d1117;}
-.stock-tr-cash-card strong{font-size:12px;color:#f0f6fc;}
-.stock-tr-cash-status{margin-top:3px;font-size:10px;color:#8b949e;}
-.stock-tr-cash-value{font-size:16px!important;white-space:nowrap;}
-body.hide-amounts .stock-tr-cash-value{color:transparent!important;position:relative;}
-body.hide-amounts .stock-tr-cash-value::after{content:'•••• €';color:#8b949e;position:absolute;right:0;top:0;}
+.tr-cash-compact-card{border-color:rgba(88,166,255,.42);background:linear-gradient(145deg,#0d1117 0%,#101822 100%);box-shadow:inset 3px 0 0 rgba(88,166,255,.85);}
+.tr-cash-logo{flex:0 0 34px;width:34px;height:34px;border:1px solid rgba(88,166,255,.45);border-radius:9px;background:rgba(88,166,255,.10);color:#58a6ff;font-size:11px;font-weight:900;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;}
+.tr-cash-main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:7px;margin-top:10px;}
+.tr-cash-balance-stat{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.16);}
+.tr-cash-balance{font-size:17px;color:#58a6ff;}
+body.hide-amounts .tr-cash-balance,body.hide-amounts .tr-cash-compact-card .stock-compact-value strong{color:transparent!important;position:relative;}
+body.hide-amounts .tr-cash-balance::after,body.hide-amounts .tr-cash-compact-card .stock-compact-value strong::after{content:'•••• €';color:#8b949e;position:absolute;left:0;top:0;}
+@media(max-width:360px){.tr-cash-main{grid-template-columns:1fr;}}
 
 </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
 }
