@@ -938,6 +938,38 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   margin:0!important;
 }
 
+
+
+/* V26.1.28 — Statut Trade Republic visible sur chaque ligne synchronisée */
+.stock-compact-sub-sync{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.stock-tr-sync-badge{
+  display:inline-flex;
+  align-items:center;
+  color:#3fb950;
+  font-size:9px;
+  font-weight:800;
+  line-height:1.2;
+  white-space:nowrap;
+  text-transform:none;
+  letter-spacing:0;
+}
+.stock-tr-sync-badge-update{
+  border:0;
+  padding:0;
+  margin:0;
+  background:transparent;
+  color:#f85149;
+  font:inherit;
+  font-size:9px;
+  font-weight:800;
+  line-height:1.2;
+}
+
 </style>
 </head>
 <body>
@@ -1786,7 +1818,7 @@ window.updateTradeRepublicSyncUI=function(){
   if(status==='done'){
     const when=tradeRepublicSyncTimeLabel(state.completedAt);
     const count=Number(state.updatedPositions||0);
-    statusEl.textContent=`✓ Parts et PRU actualisés${when?` le ${when}`:''}${count?` · ${count} ligne${count>1?'s':''}`:''}.`;
+    statusEl.textContent=`✓ Synchronisation Trade Republic terminée${when?` · ${when}`:''}${count?` · ${count} ligne${count>1?'s':''} synchronisée${count>1?'s':''}`:''}.`;
     statusEl.className='tr-sync-status ok';
     return;
   }
@@ -5237,6 +5269,30 @@ function stockAllocationInlineHtml(item,idx){
   </div>`;
 }
 
+
+function stockTradeRepublicSyncBadge(meta){
+  if(!meta?.tradeRepublicUpdatedAt)return '';
+
+  const now=new Date();
+  const tomorrow=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+  const isLastDayOfMonth=tomorrow.getDate()===1;
+
+  const d=new Date(meta.tradeRepublicUpdatedAt);
+  const syncedToday=!Number.isNaN(d.getTime())
+    && d.getFullYear()===now.getFullYear()
+    && d.getMonth()===now.getMonth()
+    && d.getDate()===now.getDate();
+
+  if(isLastDayOfMonth && !syncedToday){
+    return `<span class="stock-tr-sync-badge stock-tr-sync-badge-update" title="Dernier jour du mois : actualiser les parts et le PRU avec le bouton Trade Republic en haut de la section">✕ Mettre à jour</span>`;
+  }
+
+  const title=Number.isNaN(d.getTime())
+    ? 'Synchronisé avec Trade Republic'
+    : `Synchronisé avec Trade Republic le ${d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
+  return `<span class="stock-tr-sync-badge" title="${escapeHtml(title)}">✓ À jour</span>`;
+}
+
 function renderStockRow(item,idx,cont){
   const meta=getStockMeta(item);
   if(meta.shares>0 || meta.pricePerShare>0)recalculateStockItem(item);
@@ -5254,7 +5310,7 @@ function renderStockRow(item,idx,cont){
     <div class="stock-compact-top">
       <div class="stock-compact-title">
         <strong>${escapeHtml(item[0]||'Ligne Bourse')}</strong>
-        <div class="stock-compact-sub">${escapeHtml(meta.isin||'ISIN non renseigné')}</div>
+        <div class="stock-compact-sub stock-compact-sub-sync"><span>${escapeHtml(meta.isin||'ISIN non renseigné')}</span>${stockTradeRepublicSyncBadge(meta)}</div>
         ${stockAllocationInlineHtml(item,idx)}
       </div>
       <div class="stock-compact-actions">
