@@ -87,6 +87,15 @@ jobs:
                   "min": 20,
                   "max": 60,
               },
+              "FR0011550193": {
+                  "primary_url": "https://www.quotrix.de/etf/FR0011550193/",
+                  "primary_source": "Quotrix · STOXX Europe 600",
+                  "primary_parser": "quotrix_last",
+                  "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0011550193-XPAR.html?lang=it",
+                  "fallback_source": "Borsa Italiana · Paris · ETZ",
+                  "min": 10,
+                  "max": 40,
+              },
           }
 
           HEADERS = {
@@ -300,7 +309,7 @@ jobs:
               payload["updatedAt"] = now
               path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-          print(f"\nRésultat : {successes}/3 cours récupérés.")
+          print(f"\nRésultat : {successes}/{len(INSTRUMENTS)} cours récupérés.")
           if failures:
               print("Échecs :")
               for failure in failures:
