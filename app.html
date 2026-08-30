@@ -1094,7 +1094,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .patrimoine-owner-select{width:100%;margin-top:5px;padding:4px 6px;border:1px solid #30363d;border-radius:7px;background:#0d1117;color:#8b949e;font-size:10px}
 .patrimoine-profile-title{font-size:12px;font-weight:800;color:#c9d1d9;margin:0 0 6px}
 
-/* V26.1.48 — Authentification Firebase personnelle + création du premier compte */
+/* V26.1.49 — Authentification Firebase : correction des anciennes sessions anonymes */
 #authOverlay{position:fixed;inset:0;z-index:30000;background:#0d1117;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .auth-card{width:min(100%,390px);background:#161b22;border:1px solid #30363d;border-radius:18px;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:14px}
 .auth-brand{text-align:center}.auth-brand h1{font-size:22px;color:#fff;margin:0 0 4px}.auth-brand p{font-size:12px;color:#8b949e;margin:0}
@@ -2196,15 +2196,33 @@ onAuthStateChanged(auth,async user=>{
   const overlay=document.getElementById('authOverlay');
   const bar=document.getElementById('personalUserBar');
   const emailEl=document.getElementById('personalUserEmail');
-  if(!user){
-    currentUser=null;window.firebaseReady=false;
+
+  // V26.1.49 : une ancienne session anonyme de l'application personnelle
+  // ne doit jamais contourner l'écran E-mail / Mot de passe.
+  if(user?.isAnonymous){
+    currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;
     if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
     if(bar)bar.style.display='none';
     if(overlay)overlay.style.display='flex';
-    setFirebaseStatus('Non connecté','sync-offline');setAuthMessage('');
+    const legacyLock=document.getElementById('patternLockOverlay');
+    if(legacyLock)legacyLock.style.display='none';
+    setFirebaseStatus('Connexion requise','sync-offline');
+    try{await signOut(auth);}catch(error){console.error(error);}
+    return;
+  }
+
+  if(!user){
+    currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;
+    if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
+    if(bar)bar.style.display='none';
+    if(overlay)overlay.style.display='flex';
+    const legacyLock=document.getElementById('patternLockOverlay');
+    if(legacyLock)legacyLock.style.display='none';
+    setFirebaseStatus('Non connecté','sync-offline');
     return;
   }
   currentUser=user;
+  window.personalFirebaseAuthenticated=true;
   if(emailEl)emailEl.textContent=user.email||'Compte connecté';
   if(bar)bar.style.display='flex';
   setFirebaseStatus('Synchronisation…','sync-pending');
@@ -2220,6 +2238,9 @@ onAuthStateChanged(auth,async user=>{
       applyRemoteSnapshot(snapshot).catch(console.error);
     });
     if(overlay)overlay.style.display='none';
+    // Le verrouillage local historique devient une seconde couche, uniquement
+    // après validation du vrai compte Firebase.
+    initPatternLock();
   }catch(error){
     console.error(error);window.firebaseReady=false;
     setFirebaseStatus('⚠️ Connexion Firebase impossible','sync-offline');
@@ -10593,9 +10614,11 @@ window.addEventListener('appinstalled',()=>{
 window.matchMedia('(display-mode: standalone)').addEventListener?.('change',updateBetaInstallButtons);
 window.addEventListener('DOMContentLoaded',updateBetaInstallButtons);
 
-// Verrouillage personnel historique : schéma sur mobile, mot de passe sur ordinateur.
+// Verrouillage personnel historique : les écouteurs sont préparés au chargement,
+// mais l'écran de verrouillage n'est affiché qu'après authentification Firebase.
 window.addEventListener('DOMContentLoaded',()=>{
-  initPatternLock();
+  const legacyLock=document.getElementById('patternLockOverlay');
+  if(legacyLock)legacyLock.style.display='none';
   setupPatternListeners();
 });
 
