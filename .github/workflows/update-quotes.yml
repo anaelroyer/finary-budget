@@ -88,9 +88,9 @@ jobs:
                   "max": 60,
               },
               "FR0011550193": {
-                  "primary_url": "https://www.quotrix.de/etf/FR0011550193/",
-                  "primary_source": "Quotrix · STOXX Europe 600",
-                  "primary_parser": "quotrix_last",
+                  "primary_url": "https://www.boursorama.com/bourse/trackers/cours/1rTETZ/",
+                  "primary_source": "Euronext Paris · ETZ via Boursorama",
+                  "primary_parser": "boursorama_last",
                   "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0011550193-XPAR.html?lang=it",
                   "fallback_source": "Borsa Italiana · Paris · ETZ",
                   "min": 10,
@@ -184,6 +184,20 @@ jobs:
                           return v, "Dernier cours"
               return None, None
 
+          def parse_boursorama_last(raw, low, high):
+              text = textify(raw)
+              patterns = [
+                  r"BNPP\s+Easy\s+Stoxx\s+Europe\s+600[^0-9]{0,100}([0-9]+(?:[.,][0-9]+)?)\s*EUR",
+                  r"FR0011550193[^0-9]{0,150}([0-9]+(?:[.,][0-9]+)?)\s*EUR",
+              ]
+              for pattern in patterns:
+                  m = re.search(pattern, text, flags=re.I)
+                  if m:
+                      v = number(m.group(1))
+                      if valid(v, low, high):
+                          return v, "Euronext Paris"
+              return None, None
+
           def parse_borsa(raw, low, high):
               text = textify(raw)
               m = re.search(
@@ -220,6 +234,8 @@ jobs:
                       price, mode = parse_stuttgart_bid(raw, cfg["min"], cfg["max"])
                   elif cfg["primary_parser"] == "ls_bid":
                       price, mode = parse_ls_bid(raw, cfg["min"], cfg["max"])
+                  elif cfg["primary_parser"] == "boursorama_last":
+                      price, mode = parse_boursorama_last(raw, cfg["min"], cfg["max"])
                   else:
                       price, mode = parse_quotrix_last(raw, cfg["min"], cfg["max"])
                   if price is not None:
