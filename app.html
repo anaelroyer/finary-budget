@@ -2238,9 +2238,11 @@ onAuthStateChanged(auth,async user=>{
       applyRemoteSnapshot(snapshot).catch(console.error);
     });
     if(overlay)overlay.style.display='none';
-    // Le verrouillage local historique devient une seconde couche, uniquement
-    // après validation du vrai compte Firebase.
-    initPatternLock();
+    // V26.1.50 : l'authentification Firebase est désormais l'unique verrou d'accès.
+    // L'ancien schéma / code local est conservé dans le fichier uniquement pour
+    // compatibilité avec les réglages historiques, mais il ne doit plus bloquer l'app.
+    const legacyLock=document.getElementById('patternLockOverlay');
+    if(legacyLock)legacyLock.style.display='none';
   }catch(error){
     console.error(error);window.firebaseReady=false;
     setFirebaseStatus('⚠️ Connexion Firebase impossible','sync-offline');
@@ -3995,6 +3997,10 @@ function isMobileDevice(){
 
 function initPatternLock(){
   const overlay = document.getElementById('patternLockOverlay');
+  if(window.personalFirebaseAuthenticated){
+    if(overlay)overlay.style.display='none';
+    return;
+  }
   const patternSec = document.getElementById('patternSection');
   const passSec = document.getElementById('passwordSection');
   const title = document.getElementById('patternTitle');
