@@ -2176,12 +2176,11 @@ function getPatrimoineOwnerLabel(owner=activePatrimoineOwner){
   return PATRIMOINE_OWNERS.find(o=>o.id===owner)?.label||'Anaël et Laurène';
 }
 function getItemOwner(item,key=''){
-  if(key==='dettes')return 'couple';
   const meta=item&&typeof item[2]==='object'&&item[2]!==null?item[2]:{};
   return PATRIMOINE_OWNERS.some(o=>o.id===meta.owner)?meta.owner:'couple';
 }
 function setItemOwner(key,index,owner){
-  if(key==='dettes'||!Array.isArray(data[key])||!data[key][index])return;
+  if(!Array.isArray(data[key])||!data[key][index])return;
   const item=data[key][index];
   const meta=item&&typeof item[2]==='object'&&item[2]!==null?{...item[2]}:{};
   meta.owner=PATRIMOINE_OWNERS.some(o=>o.id===owner)?owner:'couple';
@@ -2192,7 +2191,6 @@ function ownerOptionsHtml(selected){
   return PATRIMOINE_OWNERS.map(o=>`<option value="${o.id}" ${o.id===selected?'selected':''}>${o.label}</option>`).join('');
 }
 function getOwnedItems(key,owner=activePatrimoineOwner){
-  if(key==='dettes')return owner==='couple'?(data.dettes||[]):[];
   return (data[key]||[]).filter(item=>getItemOwner(item,key)===owner);
 }
 
@@ -2303,8 +2301,6 @@ function renderPatrimoineProfileTabs(){
   const root=document.getElementById('patrimoineProfileTabs');
   if(!root)return;
   root.innerHTML=PATRIMOINE_OWNERS.map(o=>`<button class="patrimoine-profile-btn ${o.id===activePatrimoineOwner?'active':''}" onclick="setPatrimoineOwner('${o.id}')">${o.label}</button>`).join('');
-  const debtCard=document.querySelector('[data-asset-accordion="dettes"]');
-  if(debtCard)debtCard.style.display=activePatrimoineOwner==='couple'?'':'none';
 }
 
 const ASSET_CATEGORY_DEFINITIONS=[
@@ -5951,14 +5947,18 @@ function submitLoanModal(){
   if(!Number.isFinite(current)||current<0){document.getElementById('loanCurrentAmount').focus();return;}
   if(!Number.isFinite(monthly)||monthly<0){document.getElementById('loanMonthlyPayment').focus();return;}
   if(!Number.isFinite(rate)||rate<0){document.getElementById('loanRate').focus();return;}
-  const newItem=[label,current,{initialAmount:initial,startDate,endDate,monthlyPayment:monthly,rate}];
+  const existing=activeLoanIndex>=0 && data.dettes && data.dettes[activeLoanIndex]?data.dettes[activeLoanIndex]:null;
+  const owner=existing?getItemOwner(existing,'dettes'):activePatrimoineOwner;
+  const newItem=[label,current,{initialAmount:initial,startDate,endDate,monthlyPayment:monthly,rate,owner}];
   if(!Array.isArray(data.dettes))data.dettes=[];
   if(activeLoanIndex>=0 && data.dettes[activeLoanIndex])data.dettes[activeLoanIndex]=newItem; else data.dettes.push(newItem);
   closeLoanModal();render();save();
 }
 function renderLoanCards(cont){
-  const items=Array.isArray(data.dettes)?data.dettes:[];
-  items.forEach((item,idx)=>{
+  const items=(Array.isArray(data.dettes)?data.dettes:[])
+    .map((item,idx)=>({item,idx}))
+    .filter(({item})=>getItemOwner(item,'dettes')===activePatrimoineOwner);
+  items.forEach(({item,idx})=>{
     const meta=getLoanMeta(item),current=Number(item[1])||0,progress=calculateLoanProgress(meta.initialAmount,current);
     const complete=meta.initialAmount>0||meta.startDate||meta.endDate||meta.monthlyPayment>0||meta.rate>0;
     const card=document.createElement('div');card.className='loan-card';
@@ -6944,7 +6944,7 @@ function save(){
 function calculateNet(owner=activePatrimoineOwner){
   const keys=getAllAssetKeys();
   const assets=keys.reduce((s,k)=>s+getOwnedItems(k,owner).reduce((a,i)=>a+(Number(i[1])||0),0),0);
-  const debts=owner==='couple'?(data.dettes||[]).reduce((s,i)=>s+(Number(i[1])||0),0):0;
+  const debts=getOwnedItems('dettes',owner).reduce((s,i)=>s+(Number(i[1])||0),0);
   return{assets,debts,net:assets-debts};
 }
 
@@ -7934,6 +7934,7 @@ function buildHistoryMonthReportHtml(model=getHistoryMonthShareModel()){
 
 
 /* V26.1.42 — Compte courant Trade Republic séparé dans Bourse */
+/* V26.1.43 — Emprunts rattachés à chaque profil Patrimoine */
 .stock-envelope-heading.tr-cash{border-left:3px solid #58a6ff;margin-top:2px;}
 .stock-tr-cash-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-1px 0 12px;padding:11px;border:1px solid #30363d;border-radius:9px;background:#0d1117;}
 .stock-tr-cash-card strong{font-size:12px;color:#f0f6fc;}
