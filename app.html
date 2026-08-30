@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- V26.1.54 : synchronisation Linxea + cartes Assurance-vie enfants -->
+<!-- V26.1.55 : Linxea — valorisation + performance + date des AV enfants -->
 <title>Budget & Patrimoine</title>
 <meta name="theme-color" content="#0d1117">
 <meta name="application-name" content="Budget & Patrimoine">
@@ -955,6 +955,13 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .child-av-amount-btn span{display:block;color:#8b949e;font-size:9px;margin-bottom:2px}
 .child-av-amount-btn strong{display:block;color:#3fb950;font-size:17px;font-weight:850;white-space:nowrap}
 .child-av-amount-btn:hover strong{color:#56d364}
+.child-av-performance{display:flex!important;flex-direction:column;align-items:flex-end;margin-top:6px;padding-top:6px;border-top:1px solid rgba(48,54,61,.68);line-height:1.15}
+.child-av-performance .child-av-performance-label{display:block;color:#8b949e;font-size:8px;margin:0 0 2px}
+.child-av-performance strong{display:block;font-size:12px;font-weight:850;white-space:nowrap}
+.child-av-performance.positive strong{color:#3fb950}
+.child-av-performance.negative strong{color:#f85149}
+.child-av-performance.neutral strong{color:#c9d1d9}
+.child-av-performance small{display:block;margin-top:2px;color:#8b949e;font-size:8px;font-weight:600;white-space:nowrap}
 .child-av-sync-line{grid-column:1/3;margin-top:1px;padding-top:8px;border-top:1px solid rgba(48,54,61,.75);color:#8b949e;font-size:9px;line-height:1.35}
 .child-av-sync-line.ok{color:#3fb950}
 .child-av-delete{align-self:center}
@@ -6329,8 +6336,25 @@ function renderChartSeriesControls(){
 function childInsuranceSyncStatusHtml(item){
   const meta=item?.[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
   const when=meta.linxeaUpdatedAt?(window.linxeaSyncTimeLabel?window.linxeaSyncTimeLabel(meta.linxeaUpdatedAt):''):'';
-  if(when)return `<div class="child-av-sync-line ok">✓ Valeur Linxea actualisée · ${escapeHtml(when)}</div>`;
+  if(when)return `<div class="child-av-sync-line ok">✓ Synchronisé avec Linxea · ${escapeHtml(when)}</div>`;
   return `<div class="child-av-sync-line">Valeur modifiable manuellement · synchronisation Linxea disponible</div>`;
+}
+
+function childInsurancePerformanceHtml(item){
+  const meta=item?.[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
+  const performance=Number(meta.linxeaPerformance);
+  const hasPerformance=Number.isFinite(performance);
+  const valuationDate=String(meta.linxeaValuationDate||'').trim();
+  if(!hasPerformance && !valuationDate)return '';
+  const state=!hasPerformance?'neutral':performance>0?'positive':performance<0?'negative':'neutral';
+  const perfText=hasPerformance
+    ? `${performance>0?'+':performance<0?'−':''}${euro(Math.abs(performance))}`
+    : '—';
+  return `<span class="child-av-performance ${state}">
+    <span class="child-av-performance-label">Performance</span>
+    <strong>${perfText}</strong>
+    ${valuationDate?`<small>au ${escapeHtml(valuationDate)}</small>`:''}
+  </span>`;
 }
 
 function renderChildInsuranceRow(item,idx,cont){
@@ -6358,6 +6382,7 @@ function renderChildInsuranceRow(item,idx,cont){
     <button class="child-av-amount-btn" type="button" onclick="openPatrimoineAmountModal('assurancevie',${idx})" title="Modifier la valeur">
       <span>Valeur du contrat</span>
       <strong>${euro(amount)}</strong>
+      ${childInsurancePerformanceHtml(item)}
     </button>
     <button class="btn-del child-av-delete" onclick="delPatrimoine('assurancevie',${idx})" title="Supprimer">×</button>
     ${childInsuranceSyncStatusHtml(item)}
