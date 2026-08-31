@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.03 : Sécurité — validation stricte des imports JSON avant toute écriture -->
 <!-- V26.2.02 : Sécurité — CSP compatible + SRI sur dépendances statiques CDN -->
 <!-- V26.2.01 : Sécurité — déconnexion avec purge des données financières locales -->
 <!-- V26.2.00 : Patrimoine — Participations / Sociétés, acquisitions datées et valorisation facultative -->
@@ -26,7 +27,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-AdoOlQmhhnRbpinl2OhysiWQpS9CHa+7ZN/CfnJVXR0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-H3bx2DAu8yJNh+YXs30y85si2KD3jxmBrAYE2grtTMk=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1981,7 +1982,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <div class="section-header"><h2>🗓️ Historique</h2></div>
       <input type="text" id="historySearchInput" placeholder="🔍 Rechercher (mois, libellé, montant)..." oninput="renderHistory()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;margin-top:4px">
       <div id="history-container"></div>
-      <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
+      <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
     <div class="app-footer">Budget & Patrimoine</div>
   </div>
@@ -11095,33 +11096,265 @@ function exportData(){
   URL.revokeObjectURL(url);
 }
 
-function importData(event){
-  const file=event.target.files[0];
-  if(!file)return;
+const IMPORT_JSON_MAX_BYTES=10*1024*1024;
+const IMPORT_JSON_MAX_DEPTH=40;
+const IMPORT_JSON_MAX_NODES=300000;
+const IMPORT_JSON_MAX_ARRAY_ITEMS=50000;
+const IMPORT_JSON_MAX_STRING_CHARS=2*1024*1024;
+const IMPORT_JSON_MAX_ANNOTATIONS_CHARS=1024*1024;
+const IMPORT_JSON_FORBIDDEN_KEYS=new Set(['__proto__','prototype','constructor']);
 
-  const reader=new FileReader();
+function isPlainImportObject(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  const proto=Object.getPrototypeOf(value);
+  return proto===Object.prototype||proto===null;
+}
 
-  reader.onload=function(e){
-    try{
-      const imported=JSON.parse(e.target.result);
+function validateImportTree(root){
+  let nodes=0;
 
-      if(imported.data)data=imported.data;
-      ensureBankingData();
-      if(imported.monthHistory)monthHistory=imported.monthHistory;
-      if(imported.patrimoineHistory)patrimoineHistory=imported.patrimoineHistory;
-      if(typeof imported.annotations==='string')annotations=imported.annotations;
-
-      save();
-      render();
-
-      alert("Importation réussie !");
-    }catch(err){
-      alert("Erreur lors de l'importation du fichier.");
-      console.error(err);
+  function walk(value,depth,path){
+    nodes++;
+    if(nodes>IMPORT_JSON_MAX_NODES){
+      throw new Error("Le fichier contient trop d'éléments.");
     }
+    if(depth>IMPORT_JSON_MAX_DEPTH){
+      throw new Error(`Structure trop profonde (${path}).`);
+    }
+
+    if(value===null||typeof value==='boolean')return;
+
+    if(typeof value==='number'){
+      if(!Number.isFinite(value))throw new Error(`Nombre invalide (${path}).`);
+      return;
+    }
+
+    if(typeof value==='string'){
+      if(value.length>IMPORT_JSON_MAX_STRING_CHARS){
+        throw new Error(`Texte anormalement volumineux (${path}).`);
+      }
+      return;
+    }
+
+    if(Array.isArray(value)){
+      if(value.length>IMPORT_JSON_MAX_ARRAY_ITEMS){
+        throw new Error(`Tableau anormalement volumineux (${path}).`);
+      }
+      value.forEach((item,index)=>walk(item,depth+1,`${path}[${index}]`));
+      return;
+    }
+
+    if(!isPlainImportObject(value)){
+      throw new Error(`Objet non valide (${path}).`);
+    }
+
+    for(const [key,item] of Object.entries(value)){
+      if(IMPORT_JSON_FORBIDDEN_KEYS.has(key)){
+        throw new Error(`Clé interdite détectée (${path}.${key}).`);
+      }
+      if(key.length>200){
+        throw new Error(`Nom de propriété anormalement long (${path}).`);
+      }
+      walk(item,depth+1,`${path}.${key}`);
+    }
+  }
+
+  walk(root,0,'racine');
+}
+
+function validateImportDataShape(candidate){
+  if(!isPlainImportObject(candidate)){
+    throw new Error("La section « data » doit être un objet.");
+  }
+
+  const template=createEmptyBetaData();
+  const recognized=Object.keys(template).filter(key=>Object.prototype.hasOwnProperty.call(candidate,key));
+  if(recognized.length<3){
+    throw new Error("Ce fichier ne ressemble pas à une sauvegarde Budget & Patrimoine.");
+  }
+
+  // Les propriétés connues doivent garder le même grand type que dans une sauvegarde normale.
+  for(const [key,defaultValue] of Object.entries(template)){
+    if(!Object.prototype.hasOwnProperty.call(candidate,key))continue;
+    const value=candidate[key];
+
+    if(Array.isArray(defaultValue)&&!Array.isArray(value)){
+      throw new Error(`La rubrique « ${key} » devrait être un tableau.`);
+    }
+    if(isPlainImportObject(defaultValue)&&!isPlainImportObject(value)){
+      throw new Error(`La rubrique « ${key} » devrait être un objet.`);
+    }
+  }
+
+  const rowArrays=[
+    'immobilier','epargne','assurancevie','scpi','bourse','crypto','per',
+    'crowdfunding','privateequity','participations','metaux','partssociales',
+    'collection','vehicules','autres','dettes',
+    'budgetRevenus','budgetFixes','budgetDepenses'
+  ];
+  rowArrays.forEach(key=>{
+    if(!Array.isArray(candidate[key]))return;
+    if(candidate[key].some(row=>!Array.isArray(row))){
+      throw new Error(`La rubrique « ${key} » contient une ligne incompatible.`);
+    }
+  });
+
+  const objectArrays=[
+    'bankAccounts','bankTransfers','factures','loyaltyCards',
+    'garageVehicles','vehicleMaintenance','archives'
+  ];
+  objectArrays.forEach(key=>{
+    if(!Array.isArray(candidate[key]))return;
+    if(candidate[key].some(item=>!isPlainImportObject(item))){
+      throw new Error(`La rubrique « ${key} » contient un élément incompatible.`);
+    }
+  });
+
+  if(Array.isArray(candidate.activeAssetCategories)
+     && candidate.activeAssetCategories.some(x=>typeof x!=='string')){
+    throw new Error("La liste des catégories d'actifs est invalide.");
+  }
+
+  if(Object.prototype.hasOwnProperty.call(candidate,'peaOpeningDates')
+     && !isPlainImportObject(candidate.peaOpeningDates)){
+    throw new Error("Les dates d'ouverture PEA sont invalides.");
+  }
+
+  if(Object.prototype.hasOwnProperty.call(candidate,'budgetCategoryLearning')
+     && !isPlainImportObject(candidate.budgetCategoryLearning)){
+    throw new Error("La mémoire des catégories budget est invalide.");
+  }
+}
+
+function prepareImportedBackup(imported){
+  if(!isPlainImportObject(imported)){
+    throw new Error("La racine du fichier JSON doit être un objet.");
+  }
+
+  validateImportTree(imported);
+
+  if(!Object.prototype.hasOwnProperty.call(imported,'data')){
+    throw new Error("La section « data » est absente.");
+  }
+  validateImportDataShape(imported.data);
+
+  const importedMonthHistory=Object.prototype.hasOwnProperty.call(imported,'monthHistory')
+    ? imported.monthHistory
+    : [];
+  const importedPatrimoineHistory=Object.prototype.hasOwnProperty.call(imported,'patrimoineHistory')
+    ? imported.patrimoineHistory
+    : [];
+  const importedAnnotations=Object.prototype.hasOwnProperty.call(imported,'annotations')
+    ? imported.annotations
+    : '';
+
+  if(!Array.isArray(importedMonthHistory)){
+    throw new Error("L'historique mensuel est invalide.");
+  }
+  if(importedMonthHistory.some(item=>!isPlainImportObject(item))){
+    throw new Error("L'historique mensuel contient une entrée incompatible.");
+  }
+
+  if(!Array.isArray(importedPatrimoineHistory)){
+    throw new Error("L'historique patrimoine est invalide.");
+  }
+  if(importedPatrimoineHistory.some(item=>!isPlainImportObject(item))){
+    throw new Error("L'historique patrimoine contient une entrée incompatible.");
+  }
+
+  if(typeof importedAnnotations!=='string'){
+    throw new Error("Les annotations sont invalides.");
+  }
+  if(importedAnnotations.length>IMPORT_JSON_MAX_ANNOTATIONS_CHARS){
+    throw new Error("Les annotations sont anormalement volumineuses.");
+  }
+
+  // Compatibilité avec les sauvegardes plus anciennes :
+  // les nouvelles rubriques absentes sont recréées avec leurs valeurs par défaut.
+  const normalizedData={
+    ...createEmptyBetaData(),
+    ...imported.data
   };
 
-  reader.readAsText(file);
+  return{
+    data:normalizedData,
+    monthHistory:importedMonthHistory,
+    patrimoineHistory:importedPatrimoineHistory,
+    annotations:importedAnnotations
+  };
+}
+
+async function importData(event){
+  const input=event?.target;
+  const file=input?.files?.[0];
+  if(!file)return;
+
+  try{
+    if(file.size<=0){
+      throw new Error("Le fichier est vide.");
+    }
+    if(file.size>IMPORT_JSON_MAX_BYTES){
+      throw new Error("Le fichier dépasse la taille maximale autorisée de 10 Mo.");
+    }
+    if(file.name && !/\.json$/i.test(file.name)){
+      throw new Error("Sélectionne un fichier de sauvegarde .json.");
+    }
+
+    const raw=await file.text();
+    if(!raw.trim()){
+      throw new Error("Le fichier est vide.");
+    }
+
+    let imported;
+    try{
+      imported=JSON.parse(raw);
+    }catch{
+      throw new Error("Le contenu n'est pas un JSON valide.");
+    }
+
+    // Aucune donnée de l'application n'a encore été modifiée à ce stade.
+    const prepared=prepareImportedBackup(imported);
+
+    const summary=[
+      `Fichier : ${file.name||'sauvegarde JSON'}`,
+      `Taille : ${(file.size/1024).toFixed(1)} Ko`,
+      `Historique mensuel : ${prepared.monthHistory.length} entrée${prepared.monthHistory.length>1?'s':''}`,
+      `Historique patrimoine : ${prepared.patrimoineHistory.length} entrée${prepared.patrimoineHistory.length>1?'s':''}`,
+      '',
+      "Cette opération remplacera les données actuelles puis les synchronisera avec Firebase.",
+      "Continuer ?"
+    ].join('\n');
+
+    if(!confirm(summary))return;
+
+    data=prepared.data;
+    monthHistory=prepared.monthHistory;
+    patrimoineHistory=prepared.patrimoineHistory;
+    annotations=prepared.annotations;
+
+    ensureBankingData();
+    ensureV26Data();
+    ensureHistoricalBudgetCategories();
+    migrateBeautyBudgetCategories();
+    migratePatrimoineProfileIdsV1();
+    ensureChildInsuranceLifeLabels();
+
+    window.data=data;
+    window.monthHistory=monthHistory;
+    window.patrimoineHistory=patrimoineHistory;
+    window.annotations=annotations;
+
+    save();
+    render();
+
+    alert("Importation réussie et vérifiée.");
+  }catch(err){
+    console.error("Import JSON refusé :",err);
+    alert(`Importation refusée : ${err?.message||"fichier incompatible"}`);
+  }finally{
+    // Permet de sélectionner à nouveau exactement le même fichier.
+    if(input)input.value='';
+  }
 }
 
 
