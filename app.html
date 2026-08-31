@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- V26.1.71 : Navigation principale réorganisée en grille 2×3 + balayage Fidélité inclus -->
+<!-- V26.1.70 : Fidélité — détection de format stricte, aucun fallback silencieux vers Code 128 -->
 <!-- V26.1.68 : rapport Patrimoine — lignes PEA avant CTO -->
 <!-- V26.1.67 : compteur fiscal assurance-vie Louane / Aëdan -->
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
@@ -30,8 +32,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e6edf3;line-height:1.5;padding:8px}
 .wrap{max-width:480px;margin:auto;display:flex;flex-direction:column;gap:16px}
-.nav-tabs{display:flex;gap:6px;background:#161b22;border:1px solid #30363d;padding:6px;border-radius:12px}
-.tab-btn{flex:1;background:transparent;border:0;color:#8b949e;font-size:12px;font-weight:600;padding:9px 5px;border-radius:8px;cursor:pointer;transition:all .2s;text-align:center;min-width:0}
+.nav-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:#161b22;border:1px solid #30363d;padding:6px;border-radius:12px}
+.nav-tabs::-webkit-scrollbar{display:none}
+.tab-btn{width:100%;min-width:0;background:transparent;border:0;color:#8b949e;font-size:12px;font-weight:600;padding:9px 5px;border-radius:8px;cursor:pointer;transition:all .2s;text-align:center;white-space:nowrap}
 .tab-btn:hover{color:#fff;background:#21262d}.tab-btn.active{background:#238636;color:#fff}
 .tab-content{display:none;flex-direction:column;gap:16px}.tab-content.active{display:flex}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.top h1{font-size:20px;font-weight:700;color:#fff}
@@ -554,6 +557,45 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .category-header-actions{display:flex;align-items:center;gap:6px;min-width:0}
 @media(max-width:360px){.asset-category-add-panel{grid-template-columns:minmax(0,1fr) 76px}.asset-category-add-panel .asset-category-add-btn{min-width:76px;padding-left:8px;padding-right:8px}}
 
+
+
+
+/* V26.1.69 — FIDÉLITÉ / WALLET FAMILIAL */
+.loyalty-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.loyalty-toolbar .invoice-search{flex:1;min-width:180px}
+.loyalty-toolbar .btn{flex:0 0 auto}
+.loyalty-list{display:flex;flex-direction:column;gap:9px}
+.loyalty-card{position:relative;border:1px solid #30363d;background:#161b22;border-radius:14px;padding:13px;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:11px;align-items:center;cursor:pointer;transition:background .15s,border-color .15s,transform .1s}
+.loyalty-card:hover{background:#1b2129;border-color:#484f58}
+.loyalty-card:active{transform:scale(.99)}
+.loyalty-brand-mark{width:46px;height:46px;border-radius:12px;background:#21262d;border:1px solid #30363d;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#e6edf3;text-transform:uppercase;letter-spacing:-.5px}
+.loyalty-main{min-width:0}
+.loyalty-name{font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loyalty-number{margin-top:3px;font-size:11px;color:#8b949e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.loyalty-type{margin-top:5px;display:inline-flex;padding:2px 6px;border-radius:999px;border:1px solid #30363d;background:#0d1117;color:#8b949e;font-size:9px;font-weight:800}
+.loyalty-actions{display:flex;align-items:center;gap:5px}
+.loyalty-icon-btn{width:34px;height:34px;border:1px solid #30363d;border-radius:9px;background:#0d1117;color:#c9d1d9;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;font-size:15px}
+.loyalty-icon-btn.favorite.active{color:#e3b341;border-color:rgba(227,179,65,.45);background:rgba(227,179,65,.08)}
+.loyalty-empty{color:#8b949e;text-align:center;padding:28px 10px;font-size:12px}
+.loyalty-count{color:#8b949e;font-size:11px;font-weight:700}
+.loyalty-display-modal{max-width:430px!important;background:#f6f8fa!important;color:#111!important;border-color:#d0d7de!important}
+.loyalty-display-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.loyalty-display-name{font-size:21px;font-weight:900;color:#111;line-height:1.15}
+.loyalty-display-type{margin-top:3px;color:#57606a;font-size:11px;font-weight:700}
+.loyalty-code-stage{background:#fff;border:1px solid #d0d7de;border-radius:14px;padding:20px 12px;min-height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.loyalty-code-stage svg{max-width:100%;height:auto}
+.loyalty-code-stage canvas{max-width:100%;height:auto!important}
+.loyalty-code-stage img{max-width:100%;height:auto}
+.loyalty-code-fallback{font-size:12px;color:#57606a;text-align:center;line-height:1.45}
+.loyalty-display-number{text-align:center;color:#111;font-size:17px;font-weight:850;letter-spacing:.7px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.loyalty-display-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.loyalty-scan-video{width:100%;background:#000;border-radius:12px;max-height:58vh;object-fit:cover}
+.loyalty-scan-status{font-size:12px;color:#8b949e;text-align:center;min-height:18px}
+.loyalty-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.loyalty-form-grid .full{grid-column:1/-1}
+.loyalty-favorite-label{display:flex;align-items:center;gap:8px;color:#c9d1d9;font-size:13px;font-weight:700}
+.loyalty-favorite-label input{width:19px;height:19px;accent-color:#e3b341}
+@media(max-width:420px){.loyalty-card{grid-template-columns:42px minmax(0,1fr) auto;padding:11px;gap:9px}.loyalty-brand-mark{width:42px;height:42px}.loyalty-form-grid{grid-template-columns:1fr}.loyalty-form-grid .full{grid-column:auto}.loyalty-display-actions{grid-template-columns:1fr}}
 
 /* =========================================================
    VÉHICULES / PLAN D'ENTRETIEN
@@ -1747,6 +1789,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <button class="tab-btn active" onclick="switchTab('budget')">📅 Budget</button>
     <button class="tab-btn" onclick="switchTab('patrimoine')">📊 Patrimoine</button>
     <button class="tab-btn" onclick="switchTab('factures')">🧾 Factures</button>
+    <button class="tab-btn" onclick="switchTab('loyalty')">💳 Fidélité</button>
     <button class="tab-btn" onclick="switchTab('vehicles')">🚗 Véhicules</button>
     <button class="tab-btn" onclick="switchTab('menus')">🍽️ Menus</button>
   </div>
@@ -1954,6 +1997,26 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <button class="btn btn-secondary" onclick="exportInvoicesCSV()">⬇️ Exporter CSV</button>
         <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
       </div>
+    </div>
+    <div class="app-footer">Application crée par ROYER Anaël</div>
+  </div>
+
+
+
+  <div id="tab-loyalty" class="tab-content">
+    <div class="top" style="justify-content:space-between;gap:8px;align-items:center">
+      <div>
+        <div style="font-weight:800;color:#fff;font-size:17px">💳 Fidélité</div>
+        <div class="loyalty-count" id="loyaltyCount">0 carte</div>
+      </div>
+      <button class="btn btn-primary" type="button" onclick="openLoyaltyCardModal()" style="padding:7px 10px;font-size:11px">＋ Ajouter</button>
+    </div>
+
+    <div class="card">
+      <div class="loyalty-toolbar">
+        <input class="invoice-search" id="loyaltySearchInput" type="text" placeholder="🔍 Rechercher une enseigne ou un numéro..." oninput="renderLoyaltyCards()">
+      </div>
+      <div id="loyaltyCards" class="loyalty-list"></div>
     </div>
     <div class="app-footer">Application crée par ROYER Anaël</div>
   </div>
@@ -2383,6 +2446,7 @@ function createEmptyBetaData(){
     ],
     bankTransfers:[],
     factures:[],
+    loyaltyCards:[],
     garageVehicles:[],
     vehicleMaintenance:[],
     menus:{cycleStart:'',weeks:{},dishStats:{},lastArchivedCycle:'',shopping:{}},
@@ -4035,6 +4099,7 @@ function switchTab(t){
   if(t==='patrimoine')render();
   if(t==='menus')renderMenus();
   if(t==='factures')renderInvoices();
+  if(t==='loyalty')renderLoyaltyCards();
   if(t==='vehicles')renderVehicles();
 }
 
@@ -4050,7 +4115,7 @@ document.addEventListener('touchend',e=>{
       dx=x-touchStartX,
       dy=y-touchStartY;
   if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
-    const tabs=['budget','patrimoine','factures','vehicles','menus'];
+    const tabs=['budget','patrimoine','factures','loyalty','vehicles','menus'];
     const idx=tabs.indexOf(currentActiveTab);
     if(dx<0&&idx<tabs.length-1)switchTab(tabs[idx+1]);
     else if(dx>0&&idx>0)switchTab(tabs[idx-1]);
@@ -6621,6 +6686,7 @@ function saveLocalOnly(){
    V26 — paramètres, archivage, récurrence, allocation
    =========================== */
 function ensureV26Data(){
+  if(!Array.isArray(data.loyaltyCards))data.loyaltyCards=[];
   if(!Array.isArray(data.archives))data.archives=[];
   if(!Array.isArray(data.recurringBudgetIgnored))data.recurringBudgetIgnored=[];
   if(!data.shoppingAisleLearning || typeof data.shoppingAisleLearning!=='object' || Array.isArray(data.shoppingAisleLearning))data.shoppingAisleLearning={};
@@ -11221,6 +11287,72 @@ if(window.visualViewport){
   </div>
 </div>
 
+
+
+<div class="modal-overlay" id="loyaltyCardModal" onclick="if(event.target===this)closeLoyaltyCardModal()">
+  <div class="modal" style="max-width:430px;max-height:92vh;overflow-y:auto">
+    <h3 id="loyaltyCardModalTitle">Ajouter une carte de fidélité</h3>
+    <div class="loyalty-form-grid">
+      <div class="modal-field full">
+        <label>Enseigne</label>
+        <input id="loyaltyNameInput" type="text" placeholder="Ex. Carrefour, Decathlon, IKEA..." autocomplete="off">
+      </div>
+      <div class="modal-field full">
+        <label>Numéro / contenu du code</label>
+        <input id="loyaltyCodeInput" type="text" placeholder="Numéro de la carte" autocomplete="off" inputmode="text">
+      </div>
+      <div class="modal-field">
+        <label>Type de code</label>
+        <select id="loyaltyFormatInput" class="invoice-select">
+          <option value="">Détection auto / choisir</option>
+          <option value="CODE128">Code 128</option>
+          <option value="EAN13">EAN-13</option>
+          <option value="EAN8">EAN-8</option>
+          <option value="CODE39">Code 39</option>
+          <option value="ITF14">ITF-14</option>
+          <option value="QR">QR Code</option>
+        </select>
+      </div>
+      <div class="modal-field" style="justify-content:flex-end">
+        <button class="btn btn-secondary" type="button" onclick="startLoyaltyScanner()">📷 Scanner le code</button>
+      </div>
+      <label class="loyalty-favorite-label full"><input id="loyaltyFavoriteInput" type="checkbox"> ⭐ Mettre en favori</label>
+    </div>
+    <div id="loyaltyFormMessage" class="auth-message"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" type="button" onclick="closeLoyaltyCardModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" type="button" onclick="saveLoyaltyCard()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="loyaltyDisplayModal" onclick="if(event.target===this)closeLoyaltyDisplayModal()">
+  <div class="modal loyalty-display-modal">
+    <div class="loyalty-display-head">
+      <div>
+        <div id="loyaltyDisplayName" class="loyalty-display-name">Carte</div>
+        <div id="loyaltyDisplayType" class="loyalty-display-type"></div>
+      </div>
+      <button class="loyalty-icon-btn" type="button" onclick="closeLoyaltyDisplayModal()" aria-label="Fermer">✕</button>
+    </div>
+    <div id="loyaltyCodeStage" class="loyalty-code-stage"></div>
+    <div id="loyaltyDisplayNumber" class="loyalty-display-number"></div>
+    <div class="loyalty-display-actions">
+      <button class="btn btn-secondary" type="button" onclick="editDisplayedLoyaltyCard()">✎ Modifier</button>
+      <button class="btn btn-secondary" type="button" onclick="deleteDisplayedLoyaltyCard()" style="color:#cf222e">🗑️ Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="loyaltyScanModal" onclick="if(event.target===this)stopLoyaltyScanner()">
+  <div class="modal" style="max-width:440px">
+    <h3>📷 Scanner la carte</h3>
+    <video id="loyaltyScanVideo" class="loyalty-scan-video" playsinline muted></video>
+    <div id="loyaltyScanStatus" class="loyalty-scan-status">Place le code-barres ou QR code face à la caméra.</div>
+    <button class="btn btn-secondary" type="button" onclick="stopLoyaltyScanner()">Fermer</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettingsModal()">
   <div class="modal" style="max-width:470px;max-height:92vh;overflow-y:auto">
     <h3>⚙️ Paramètres</h3>
@@ -11277,6 +11409,293 @@ if(window.visualViewport){
   </div>
 </div>
 
+\n<script>
+/* V26.1.69 — Wallet Fidélité */
+let activeLoyaltyEditId='';
+let displayedLoyaltyId='';
+let loyaltyScanStream=null;
+let loyaltyScanTimer=null;
+let loyaltyBarcodeDetector=null;
+
+function loyaltyEnsureData(){
+  if(!Array.isArray(data.loyaltyCards))data.loyaltyCards=[];
+}
+
+function loyaltyKnownFormat(value){
+  return ['CODE128','EAN13','EAN8','CODE39','ITF14','QR'].includes(String(value||'').toUpperCase());
+}
+
+function loyaltyNormalizeFormat(value){
+  const f=String(value||'CODE128').toUpperCase();
+  return loyaltyKnownFormat(f)?f:'CODE128';
+}
+
+function loyaltyFormatLabel(format){
+  return ({CODE128:'Code 128',EAN13:'EAN-13',EAN8:'EAN-8',CODE39:'Code 39',ITF14:'ITF-14',QR:'QR Code'})[loyaltyNormalizeFormat(format)]||'Code 128';
+}
+
+function loyaltyInitials(name){
+  const words=String(name||'Carte').trim().split(/\\s+/).filter(Boolean);
+  if(!words.length)return 'C';
+  return (words.length===1?words[0].slice(0,2):words[0][0]+words[1][0]).toUpperCase();
+}
+
+function loyaltyEscape(v){ return escapeHtml(String(v??'')); }
+
+function loyaltyMaskedNumber(code){
+  const value=String(code||'');
+  if(value.length<=8)return value;
+  return value.slice(0,4)+' ···· '+value.slice(-4);
+}
+
+function renderLoyaltyCards(){
+  loyaltyEnsureData();
+  const root=document.getElementById('loyaltyCards');
+  if(!root)return;
+  const q=String(document.getElementById('loyaltySearchInput')?.value||'').trim().toLocaleLowerCase('fr');
+  const cards=data.loyaltyCards
+    .filter(c=>!q || String(c.name||'').toLocaleLowerCase('fr').includes(q) || String(c.code||'').toLocaleLowerCase('fr').includes(q))
+    .slice()
+    .sort((a,b)=>(Number(Boolean(b.favorite))-Number(Boolean(a.favorite))) || String(a.name||'').localeCompare(String(b.name||''),'fr',{sensitivity:'base'}));
+
+  const count=document.getElementById('loyaltyCount');
+  if(count)count.textContent=`${data.loyaltyCards.length} carte${data.loyaltyCards.length>1?'s':''}`;
+
+  if(!cards.length){
+    root.innerHTML=`<div class="loyalty-empty">${data.loyaltyCards.length?'Aucune carte ne correspond à la recherche.':'Aucune carte de fidélité enregistrée.<br><br>Ajoute ta première carte pour l’avoir toujours sous la main.'}</div>`;
+    return;
+  }
+
+  root.innerHTML=cards.map(card=>`
+    <div class="loyalty-card" role="button" tabindex="0" onclick="openLoyaltyDisplay('${loyaltyEscape(card.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLoyaltyDisplay('${loyaltyEscape(card.id)}')}">
+      <div class="loyalty-brand-mark">${loyaltyEscape(loyaltyInitials(card.name))}</div>
+      <div class="loyalty-main">
+        <div class="loyalty-name">${loyaltyEscape(card.name||'Carte')}</div>
+        <div class="loyalty-number">${loyaltyEscape(loyaltyMaskedNumber(card.code))}</div>
+        <span class="loyalty-type">${loyaltyEscape(loyaltyFormatLabel(card.format))}</span>
+      </div>
+      <div class="loyalty-actions">
+        <button class="loyalty-icon-btn favorite ${card.favorite?'active':''}" type="button" title="${card.favorite?'Retirer des favoris':'Mettre en favori'}" aria-label="${card.favorite?'Retirer des favoris':'Mettre en favori'}" onclick="event.stopPropagation();toggleLoyaltyFavorite('${loyaltyEscape(card.id)}')">★</button>
+        <button class="loyalty-icon-btn" type="button" title="Modifier" aria-label="Modifier" onclick="event.stopPropagation();openLoyaltyCardModal('${loyaltyEscape(card.id)}')">✎</button>
+      </div>
+    </div>`).join('');
+}
+
+function setLoyaltyFormMessage(text='',type=''){
+  const el=document.getElementById('loyaltyFormMessage');
+  if(!el)return;
+  el.textContent=text;
+  el.className='auth-message'+(type?' '+type:'');
+}
+
+function openLoyaltyCardModal(id=''){
+  loyaltyEnsureData();
+  activeLoyaltyEditId=String(id||'');
+  const card=data.loyaltyCards.find(c=>String(c.id)===activeLoyaltyEditId);
+  document.getElementById('loyaltyCardModalTitle').textContent=card?'Modifier la carte de fidélité':'Ajouter une carte de fidélité';
+  document.getElementById('loyaltyNameInput').value=card?.name||'';
+  document.getElementById('loyaltyCodeInput').value=card?.code||'';
+  document.getElementById('loyaltyFormatInput').value=card?loyaltyNormalizeFormat(card.format||'CODE128'):'';
+  document.getElementById('loyaltyFavoriteInput').checked=Boolean(card?.favorite);
+  setLoyaltyFormMessage('');
+  document.getElementById('loyaltyCardModal').classList.add('active');
+  setTimeout(()=>document.getElementById('loyaltyNameInput')?.focus(),100);
+}
+
+function closeLoyaltyCardModal(){
+  document.getElementById('loyaltyCardModal')?.classList.remove('active');
+  activeLoyaltyEditId='';
+  setLoyaltyFormMessage('');
+}
+
+function loyaltyValidate(code,format){
+  const value=String(code||'').trim();
+  if(!value)return 'Renseigne le numéro ou le contenu du code.';
+  if(format==='EAN13' && !/^\\d{13}$/.test(value))return 'Un EAN-13 doit contenir exactement 13 chiffres.';
+  if(format==='EAN8' && !/^\\d{8}$/.test(value))return 'Un EAN-8 doit contenir exactement 8 chiffres.';
+  if(format==='ITF14' && !/^\\d{14}$/.test(value))return 'Un ITF-14 doit contenir exactement 14 chiffres.';
+  if(format==='CODE39' && !/^[0-9A-Z .$/+%-]+$/i.test(value))return 'Ce contenu n’est pas compatible avec le format Code 39.';
+  return '';
+}
+
+function saveLoyaltyCard(){
+  loyaltyEnsureData();
+  const name=String(document.getElementById('loyaltyNameInput')?.value||'').trim();
+  const code=String(document.getElementById('loyaltyCodeInput')?.value||'').trim();
+  const format=String(document.getElementById('loyaltyFormatInput')?.value||'').toUpperCase();
+  const favorite=Boolean(document.getElementById('loyaltyFavoriteInput')?.checked);
+  if(!name){setLoyaltyFormMessage('Renseigne le nom de l’enseigne.','error');return;}
+  if(!loyaltyKnownFormat(format)){setLoyaltyFormMessage('Choisis le type de code. Le scanner le sélectionne automatiquement lorsqu’il le reconnaît.','error');return;}
+  const validation=loyaltyValidate(code,format);
+  if(validation){setLoyaltyFormMessage(validation,'error');return;}
+
+  if(activeLoyaltyEditId){
+    const card=data.loyaltyCards.find(c=>String(c.id)===activeLoyaltyEditId);
+    if(card){Object.assign(card,{name,code,format,favorite,updatedAt:new Date().toISOString()});}
+  }else{
+    data.loyaltyCards.push({id:makeLocalId('loyalty'),name,code,format,favorite,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  }
+  save();
+  closeLoyaltyCardModal();
+  renderLoyaltyCards();
+}
+
+function toggleLoyaltyFavorite(id){
+  loyaltyEnsureData();
+  const card=data.loyaltyCards.find(c=>String(c.id)===String(id));
+  if(!card)return;
+  card.favorite=!card.favorite;
+  card.updatedAt=new Date().toISOString();
+  save();
+  renderLoyaltyCards();
+}
+
+function openLoyaltyDisplay(id){
+  loyaltyEnsureData();
+  const card=data.loyaltyCards.find(c=>String(c.id)===String(id));
+  if(!card)return;
+  displayedLoyaltyId=String(card.id);
+  document.getElementById('loyaltyDisplayName').textContent=card.name||'Carte';
+  document.getElementById('loyaltyDisplayType').textContent=loyaltyFormatLabel(card.format);
+  document.getElementById('loyaltyDisplayNumber').textContent=card.code||'';
+  document.getElementById('loyaltyDisplayModal').classList.add('active');
+  renderLoyaltyCode(card);
+}
+
+function closeLoyaltyDisplayModal(){
+  document.getElementById('loyaltyDisplayModal')?.classList.remove('active');
+  displayedLoyaltyId='';
+  const stage=document.getElementById('loyaltyCodeStage');
+  if(stage)stage.innerHTML='';
+}
+
+function renderLoyaltyCode(card){
+  const stage=document.getElementById('loyaltyCodeStage');
+  if(!stage)return;
+  stage.innerHTML='';
+  const format=loyaltyNormalizeFormat(card?.format);
+  const code=String(card?.code||'');
+  try{
+    if(format==='QR'){
+      if(typeof QRCode!=='function')throw new Error('Bibliothèque QR indisponible');
+      const box=document.createElement('div');
+      stage.appendChild(box);
+      new QRCode(box,{text:code,width:220,height:220,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+      return;
+    }
+    if(typeof JsBarcode!=='function')throw new Error('Bibliothèque code-barres indisponible');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    stage.appendChild(svg);
+    JsBarcode(svg,code,{format,displayValue:false,margin:0,height:95,width:format==='CODE128'&&code.length>20?1.35:1.7,lineColor:'#000000',background:'#ffffff'});
+  }catch(err){
+    console.error(err);
+    stage.innerHTML='<div class="loyalty-code-fallback">Le code graphique ne peut pas être affiché pour le moment.<br>Le numéro reste disponible ci-dessous.</div>';
+  }
+}
+
+function editDisplayedLoyaltyCard(){
+  const id=displayedLoyaltyId;
+  closeLoyaltyDisplayModal();
+  if(id)openLoyaltyCardModal(id);
+}
+
+function deleteDisplayedLoyaltyCard(){
+  loyaltyEnsureData();
+  const id=displayedLoyaltyId;
+  const card=data.loyaltyCards.find(c=>String(c.id)===id);
+  if(!card)return;
+  if(!confirm(`Supprimer la carte ${card.name||''} ?`))return;
+  data.loyaltyCards=data.loyaltyCards.filter(c=>String(c.id)!==id);
+  save();
+  closeLoyaltyDisplayModal();
+  renderLoyaltyCards();
+}
+
+function loyaltyDetectedFormat(format='',rawValue=''){
+  const f=String(format||'').toLowerCase();
+  const value=String(rawValue||'').trim();
+  if(f==='qr_code')return 'QR';
+  if(f==='ean_13')return 'EAN13';
+  if(f==='ean_8')return 'EAN8';
+  if(f==='code_128')return 'CODE128';
+  if(f==='code_39')return 'CODE39';
+  // BarcodeDetector renvoie « itf » pour toute la famille ITF ;
+  // l'application ne sait générer que l'ITF-14, donc on ne l'affirme que pour 14 chiffres.
+  if(f==='itf' && /^\d{14}$/.test(value))return 'ITF14';
+  return '';
+}
+
+async function startLoyaltyScanner(){
+  const status=document.getElementById('loyaltyScanStatus');
+  if(!('BarcodeDetector' in window)){
+    alert('Le scan automatique n’est pas disponible sur ce navigateur. Tu peux saisir le numéro manuellement.');
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia){
+    alert('La caméra n’est pas accessible depuis ce navigateur.');
+    return;
+  }
+  try{
+    let supported=[];
+    if(typeof BarcodeDetector.getSupportedFormats==='function'){
+      try{supported=await BarcodeDetector.getSupportedFormats();}catch(_e){supported=[];}
+    }
+    const wanted=['qr_code','ean_13','ean_8','code_128','code_39','itf'];
+    const formats=supported.length?wanted.filter(f=>supported.includes(f)):wanted;
+    loyaltyBarcodeDetector=new BarcodeDetector(formats.length?{formats}:undefined);
+    loyaltyScanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    const video=document.getElementById('loyaltyScanVideo');
+    video.srcObject=loyaltyScanStream;
+    await video.play();
+    document.getElementById('loyaltyScanModal').classList.add('active');
+    if(status)status.textContent='Place le code-barres ou QR code face à la caméra.';
+    loyaltyScanTick();
+  }catch(err){
+    console.error(err);
+    stopLoyaltyScanner();
+    alert('Impossible d’ouvrir la caméra. Vérifie l’autorisation caméra du navigateur.');
+  }
+}
+
+async function loyaltyScanTick(){
+  if(!loyaltyScanStream || !loyaltyBarcodeDetector)return;
+  const video=document.getElementById('loyaltyScanVideo');
+  try{
+    if(video?.readyState>=2){
+      const results=await loyaltyBarcodeDetector.detect(video);
+      const found=results?.find(r=>String(r.rawValue||'').trim());
+      if(found){
+        const value=String(found.rawValue||'').trim();
+        document.getElementById('loyaltyCodeInput').value=value;
+        const format=loyaltyDetectedFormat(found.format,value);
+        document.getElementById('loyaltyFormatInput').value=format;
+        stopLoyaltyScanner();
+        if(format){
+          setLoyaltyFormMessage(`Code détecté · ${loyaltyFormatLabel(format)}`,'success');
+        }else{
+          setLoyaltyFormMessage('Code lu, mais format non reconnu. Choisis le type de code manuellement avant d’enregistrer.','error');
+        }
+        return;
+      }
+    }
+  }catch(err){
+    console.debug('Scan fidélité',err);
+  }
+  loyaltyScanTimer=setTimeout(loyaltyScanTick,350);
+}
+
+function stopLoyaltyScanner(){
+  if(loyaltyScanTimer){clearTimeout(loyaltyScanTimer);loyaltyScanTimer=null;}
+  if(loyaltyScanStream){loyaltyScanStream.getTracks().forEach(t=>t.stop());loyaltyScanStream=null;}
+  const video=document.getElementById('loyaltyScanVideo');
+  if(video){video.pause();video.srcObject=null;}
+  loyaltyBarcodeDetector=null;
+  document.getElementById('loyaltyScanModal')?.classList.remove('active');
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
 document.addEventListener('keydown',e=>{
