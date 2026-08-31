@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V26.1.94 : Sécurité — suppression de l’ancien verrou local historique -->
+<!-- V26.1.95 : Confidentialité — suppression du nom de l’auteur dans les pieds de page -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
@@ -1879,7 +1879,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <div id="history-container"></div>
       <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Budget & Patrimoine</div>
   </div>
 
   <div id="tab-patrimoine" class="tab-content">
@@ -1984,7 +1984,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <button class="btn-add" onclick="addItem('dettes')">+ Ajouter</button>
       </div>
     </div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Budget & Patrimoine</div>
   </div>
 
   
@@ -2029,7 +2029,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
       </div>
     </div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Budget & Patrimoine</div>
   </div>
 
 
@@ -2052,7 +2052,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       </div>
       <div id="loyaltyCards" class="loyalty-list"></div>
     </div>
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Budget & Patrimoine</div>
   </div>
 
   <div id="tab-vehicles" class="tab-content">
@@ -2078,7 +2078,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       </div>
     </div>
 
-    <div class="app-footer">Application crée par ROYER Anaël</div>
+    <div class="app-footer">Budget & Patrimoine</div>
   </div>
 
 </div>
@@ -7325,7 +7325,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
   ${historyBlock}
   ${details}
 
-  <div class="footer">Rapport généré par Budget & Patrimoine · Application créée par ROYER Anaël</div>
+  <div class="footer">Rapport généré par Budget & Patrimoine</div>
 </main>
 </body>
 </html>`;
@@ -7422,7 +7422,7 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
     });
   });
 
-  lines.push('','Rapport généré par Budget & Patrimoine','Application créée par ROYER Anaël');
+  lines.push('','Rapport généré par Budget & Patrimoine');
   return lines.join('\n');
 }
 
@@ -8293,7 +8293,7 @@ body.hide-amounts .tr-cash-balance,body.hide-amounts .tr-cash-compact-card .stoc
 body.hide-amounts .tr-cash-balance::after,body.hide-amounts .tr-cash-compact-card .stock-compact-value strong::after{content:'•••• €';color:#8b949e;position:absolute;left:0;top:0;}
 @media(max-width:360px){.tr-cash-main{grid-template-columns:1fr;}}
 
-</style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Application crée par ROYER Anaël</div></body></html>`;
+</style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Budget & Patrimoine</div></body></html>`;
 }
 
 function buildHistoryMonthReportText(model=getHistoryMonthShareModel()){
@@ -8314,7 +8314,7 @@ function buildHistoryMonthReportText(model=getHistoryMonthShareModel()){
   lines.push('','VIREMENTS INTERNES');
   if(!model.transfersDetails.length)lines.push('Aucun élément');
   else model.transfersDetails.forEach(t=>lines.push(`• ${t.label||'Virement interne'} : ${euro(t.amount||0)} — ${getHistoricalTransferAccountName(t,'from')} → ${getHistoricalTransferAccountName(t,'to')}`));
-  lines.push('','Application crée par ROYER Anaël');
+  lines.push('','Budget & Patrimoine');
   return lines.join('\n');
 }
 
