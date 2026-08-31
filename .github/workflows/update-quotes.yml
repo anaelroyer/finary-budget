@@ -1,12 +1,12 @@
-name: Mise à jour des cours — horaire en semaine
+name: Mise à jour des cours — 08h à 22h en semaine
 
 on:
   workflow_dispatch:
   schedule:
-    # Relevé toutes les heures, du lundi au vendredi.
-    # GitHub Actions interprète le cron en UTC ; un contrôle Europe/Paris
-    # ci-dessous empêche aussi tout relevé tombant réellement un week-end en France.
-    - cron: "17 * * * 1-5"
+    # Relevé toutes les heures entre 08h17 et 22h17 heure de Paris,
+    # du lundi au vendredi. Le cron couvre les plages UTC été + hiver ;
+    # le contrôle Europe/Paris ci-dessous filtre exactement 08h–22h.
+    - cron: "17 6-21 * * 1-5"
     # Dernier relevé quotidien à 22 h 45 heure de Paris, du lundi au vendredi :
     # 20:45 UTC en heure d'été, 21:45 UTC en heure d'hiver.
     # Les deux sont planifiés ; un contrôle Europe/Paris n'en laisse passer qu'un.
@@ -43,9 +43,14 @@ jobs:
             exit 0
           fi
 
-          # Le cron horaire passe directement les jours ouvrés.
-          if [ "${{ github.event.schedule }}" = "17 * * * 1-5" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
+          # Le cron horaire n'est autorisé qu'entre 08h et 22h heure de Paris.
+          if [ "${{ github.event.schedule }}" = "17 6-21 * * 1-5" ]; then
+            if [ "$PARIS_HOUR" -ge 8 ] && [ "$PARIS_HOUR" -le 22 ]; then
+              echo "run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              echo "Exécution ignorée : hors plage 08h–22h à Paris."
+            fi
             exit 0
           fi
 
