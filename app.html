@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
 <!-- V26.1.62 : Linxea Avenir 2 + verrouillage données Trade Republic automatisées + nettoyage Bourse -->
 <!-- V26.1.61 : logo Trade Republic en tuile carrée -->
 <!-- V26.1.60 : logo Trade Republic remplacé -->
@@ -8246,7 +8247,7 @@ function selectGarageVehicle(id){
 }
 
 function setVehicleAlertDetailFilter(status){
-  if(status!=='overdue'&&status!=='soon')return;
+  if(!['overdue','soon','ok'].includes(status))return;
   vehicleAlertDetailFilter=vehicleAlertDetailFilter===status?'':status;
   renderVehicles();
 }
@@ -9035,12 +9036,17 @@ function getScheduleStatus(v,sc){
   const dueKm=Number(sc.dueMileage)||0;
   const km=dueKm>0?dueKm-currentKm:null;
 
-  // En retard uniquement lorsque l'échéance est réellement dépassée.
-  // Le jour exact / kilométrage exact de l'échéance reste donc en « Bientôt ».
-  const overdue=(days!==null&&days<0)||(km!==null&&km<0);
+  // Entretien « X mois OU Y km » : c'est toujours le PREMIER des deux termes
+  // qui commande l'échéance. Pour le kilométrage, on projette la date de passage
+  // au kilométrage cible à partir du rythme réel du véhicule lorsqu'il est connu.
+  const estimatedMileageDate=km!==null&&km>0?estimateVehicleMileageDueDate(v,dueKm):'';
+  const estimatedMileageDue=parseLocalDate(estimatedMileageDate);
 
-  // Pour un entretien périodique, « Bientôt » débute dans le dernier huitième
-  // de la périodicité enregistrée : ex. 12 mois => ~1,5 mois, 15 000 km => 1 875 km.
+  const dateOverdue=days!==null&&days<0;
+  const mileageOverdue=km!==null&&km<0;
+  const dateDueNow=days===0;
+  const mileageDueNow=km===0;
+
   let soonDaysThreshold=null;
   if(days!==null){
     const last=parseLocalDate(sc.lastDate);
@@ -9048,8 +9054,6 @@ function getScheduleStatus(v,sc){
       const periodDays=Math.max(1,Math.ceil((due-last)/86400000));
       soonDaysThreshold=Math.ceil(periodDays/8);
     }else if(sc.source==='technical'||sc.legacy){
-      // Le contrôle technique et les anciennes échéances n'ont pas encore
-      // de périodicité enregistrée : on conserve le seuil historique de 60 jours.
       soonDaysThreshold=60;
     }
   }
@@ -9063,26 +9067,82 @@ function getScheduleStatus(v,sc){
     }
   }
 
-  const soon=!overdue&&(
-    (days!==null&&soonDaysThreshold!==null&&days<=soonDaysThreshold)||
-    (km!==null&&soonKmThreshold!==null&&km<=soonKmThreshold)
-  );
+  const dateSoon=days!==null&&soonDaysThreshold!==null&&days>=0&&days<=soonDaysThreshold;
+  const mileageSoon=km!==null&&soonKmThreshold!==null&&km>=0&&km<=soonKmThreshold;
 
-  return {status:overdue?'overdue':soon?'soon':'ok',days,km,soonDaysThreshold,soonKmThreshold};
+  let primaryTerm='';
+  let primaryDueDate='';
+
+  if(dateOverdue||mileageOverdue){
+    if(dateOverdue&&mileageOverdue)primaryTerm='both';
+    else primaryTerm=dateOverdue?'date':'mileage';
+  }else if(due&&estimatedMileageDue){
+    if(due<=estimatedMileageDue){
+      primaryTerm='date';
+      primaryDueDate=sc.dueDate||'';
+    }else{
+      primaryTerm='mileage';
+      primaryDueDate=estimatedMileageDate;
+    }
+  }else if(due&&km!==null){
+    // Sans historique kilométrique suffisant pour projeter une date, on choisit
+    // le terme déjà le plus proche de son seuil « à prévoir » ; sinon la date.
+    if(mileageSoon&&!dateSoon)primaryTerm='mileage';
+    else primaryTerm='date';
+    primaryDueDate=primaryTerm==='date'?(sc.dueDate||''):'';
+  }else if(due){
+    primaryTerm='date';
+    primaryDueDate=sc.dueDate||'';
+  }else if(km!==null){
+    primaryTerm='mileage';
+    primaryDueDate=estimatedMileageDate;
+  }
+
+  let status='ok';
+  if(dateOverdue||mileageOverdue){
+    status='overdue';
+  }else if(primaryTerm==='date'){
+    status=(dateDueNow||dateSoon)?'soon':'ok';
+  }else if(primaryTerm==='mileage'){
+    status=(mileageDueNow||mileageSoon)?'soon':'ok';
+  }else{
+    // Fallback conservateur si aucun terme prioritaire n'a pu être déterminé.
+    status=(dateDueNow||mileageDueNow||dateSoon||mileageSoon)?'soon':'ok';
+  }
+
+  return {
+    status,days,km,soonDaysThreshold,soonKmThreshold,
+    dateOverdue,mileageOverdue,dateDueNow,mileageDueNow,
+    dateSoon,mileageSoon,primaryTerm,primaryDueDate,estimatedMileageDate
+  };
 }
 
 function scheduleMeta(v,sc,status){
   const parts=[];
   if(sc.dueDate){
     if(status.days<0)parts.push(`date dépassée de ${Math.abs(status.days)} j`);
-    else if(status.days===0)parts.push('échéance aujourd’hui');
+    else if(status.days===0)parts.push('échéance date aujourd’hui');
     else parts.push(`${status.days} j restants`);
   }
   if(Number(sc.dueMileage)>0){
-    if(status.km<0)parts.push(`dépassé de ${Math.abs(status.km).toLocaleString('fr-FR')} km`);
+    if(status.km<0)parts.push(`kilométrage dépassé de ${Math.abs(status.km).toLocaleString('fr-FR')} km`);
+    else if(status.km===0)parts.push('kilométrage atteint');
     else parts.push(`${status.km.toLocaleString('fr-FR')} km restants`);
   }
   return parts.join(' · ');
+}
+
+function schedulePriorityMeta(sc,status){
+  if(status.primaryTerm==='both')return '⏱ Date et kilométrage dépassés';
+  if(status.primaryTerm==='date'){
+    if(status.status==='overdue')return '⏱ Terme déclencheur : date';
+    return '⏱ Première échéance prévue : date';
+  }
+  if(status.primaryTerm==='mileage'){
+    if(status.status==='overdue')return '⏱ Terme déclencheur : kilométrage';
+    return '⏱ Première échéance prévue : kilométrage';
+  }
+  return '';
 }
 
 function maintenanceLastMeta(sc){
@@ -9139,7 +9199,7 @@ function renderVehicles(){
     empty.style.display='block';
     content.style.display='none';
     vehicleAlertDetailFilter='';
-    alerts.innerHTML='<div class="vehicle-alert-summary"><button type="button" class="vehicle-alert-stat overdue" disabled><strong>0</strong><span>En retard</span></button><button type="button" class="vehicle-alert-stat soon" disabled><strong>0</strong><span>À prévoir</span></button><div class="vehicle-alert-stat ok"><strong>0</strong><span>À jour</span></div></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
+    alerts.innerHTML='<div class="vehicle-alert-summary"><button type="button" class="vehicle-alert-stat overdue" disabled><strong>0</strong><span>En retard</span></button><button type="button" class="vehicle-alert-stat soon" disabled><strong>0</strong><span>À prévoir</span></button><button type="button" class="vehicle-alert-stat ok" disabled><strong>0</strong><span>À jour</span></button></div><div class="vehicle-empty">Ajoutez un véhicule puis configurez son plan d’entretien.</div>';
     return;
   }
 
@@ -9155,7 +9215,8 @@ function renderVehicles(){
   alertRows.sort((a,b)=>{
     const statusDiff=priority[a.st.status]-priority[b.st.status];
     if(statusDiff)return statusDiff;
-    const ad=a.sc.dueDate||'9999-12-31',bd=b.sc.dueDate||'9999-12-31';
+    const ad=a.st.primaryDueDate||a.sc.dueDate||'9999-12-31';
+    const bd=b.st.primaryDueDate||b.sc.dueDate||'9999-12-31';
     if(ad!==bd)return ad.localeCompare(bd);
     const ak=Number(a.sc.dueMileage)||Number.MAX_SAFE_INTEGER,bk=Number(b.sc.dueMileage)||Number.MAX_SAFE_INTEGER;
     return ak-bk;
@@ -9165,10 +9226,11 @@ function renderVehicles(){
   const detailRows=vehicleAlertDetailFilter?alertRows.filter(x=>x.st.status===vehicleAlertDetailFilter):[];
   const overdueActive=vehicleAlertDetailFilter==='overdue';
   const soonActive=vehicleAlertDetailFilter==='soon';
+  const okActive=vehicleAlertDetailFilter==='ok';
   const summaryHtml=`<div class="vehicle-alert-summary">
     <button type="button" class="vehicle-alert-stat overdue ${counts.overdue?'has-alert':''} ${overdueActive?'active':''}" onclick="setVehicleAlertDetailFilter('overdue')" ${counts.overdue?'':'disabled'} aria-pressed="${overdueActive}"><strong>${counts.overdue}</strong><span>En retard</span></button>
     <button type="button" class="vehicle-alert-stat soon ${counts.soon?'has-alert':''} ${soonActive?'active':''}" onclick="setVehicleAlertDetailFilter('soon')" ${counts.soon?'':'disabled'} aria-pressed="${soonActive}"><strong>${counts.soon}</strong><span>À prévoir</span></button>
-    <div class="vehicle-alert-stat ok"><strong>${counts.ok}</strong><span>À jour</span></div>
+    <button type="button" class="vehicle-alert-stat ok ${okActive?'active':''}" onclick="setVehicleAlertDetailFilter('ok')" ${counts.ok?'':'disabled'} aria-pressed="${okActive}"><strong>${counts.ok}</strong><span>À jour</span></button>
   </div>`;
 
   const renderAlertRow=({vehicle,sc,st})=>{
@@ -9178,21 +9240,30 @@ function renderVehicles(){
     const dueParts=[];
     if(sc.dueDate)dueParts.push(`Échéance : ${formatDateFR(sc.dueDate)}`);
     if(Number(sc.dueMileage)>0)dueParts.push(`${Number(sc.dueMileage).toLocaleString('fr-FR')} km`);
-    const estimatedMileageDate=Number(sc.dueMileage)>0?estimateVehicleMileageDueDate(vehicle,sc.dueMileage):'';
-    const estimate=estimatedMileageDate?`<br>📅 Au rythme actuel : vers ${escapeHtml(formatMonthYearFR(estimatedMileageDate))}`:'';
+    // La projection kilométrique n'est affichée que si le kilométrage est réellement
+    // le PREMIER terme attendu. On évite ainsi une date future trompeuse lorsqu'une
+    // échéance calendaire est déjà dépassée ou arrive avant.
+    const estimate=st.primaryTerm==='mileage'&&st.estimatedMileageDate&&st.km>0
+      ?`<br>🚗 Au rythme actuel : vers ${escapeHtml(formatMonthYearFR(st.estimatedMileageDate))}`:'';
+    const priorityMeta=schedulePriorityMeta(sc,st);
     const legacy=sc.legacy?'<br><span class="maintenance-plan-legacy">Ancienne échéance à convertir dans le plan d’entretien.</span>':'';
     const performedAction=sc.source==='maintenance-plan'&&!sc.legacy?`<button class="btn btn-primary" onclick="openPerformedMaintenanceFromAlert('${vehicle.id}','${sc.planId}')">✓ Effectué</button>`:'';
-    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${st.status==='overdue'?'🔴':'🟠'} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️</button></div></div></div>`;
+    const statusIcon=st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢';
+    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${statusIcon} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${priorityMeta?`<br>${escapeHtml(priorityMeta)}`:''}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️</button></div></div></div>`;
   };
 
   let detailsHtml='';
   if(vehicleAlertDetailFilter&&detailRows.length){
-    const label=vehicleAlertDetailFilter==='overdue'?'Entretiens en retard':'Entretiens à prévoir';
+    const label=vehicleAlertDetailFilter==='overdue'
+      ?'Entretiens en retard'
+      :vehicleAlertDetailFilter==='soon'
+        ?'Entretiens à prévoir'
+        :'Entretiens à jour';
     detailsHtml=`<div class="vehicle-alert-list-title"><span>${label} · ${detailRows.length}</span><button type="button" onclick="closeVehicleAlertDetails()">Fermer ×</button></div><div class="vehicle-alert-list">${detailRows.map(renderAlertRow).join('')}</div>`;
-  }else if(counts.overdue||counts.soon){
-    detailsHtml='<div class="vehicle-empty" style="padding:8px 4px 2px">Touchez « En retard » ou « À prévoir » pour afficher la liste correspondante.</div>';
+  }else if(counts.overdue||counts.soon||counts.ok){
+    detailsHtml='<div class="vehicle-empty" style="padding:8px 4px 2px">Touchez « En retard », « À prévoir » ou « À jour » pour afficher les échéances correspondantes.</div>';
   }else{
-    detailsHtml='<div class="vehicle-empty">✅ Aucune échéance à prévoir ou dépassée. Tout est à jour.</div>';
+    detailsHtml='<div class="vehicle-empty">Aucune échéance d’entretien configurée.</div>';
   }
   alerts.innerHTML=summaryHtml+detailsHtml;
 
