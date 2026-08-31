@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V26.1.97 : Sécurité — durcissement XSS, arguments JS dynamiques sûrs et URLs externes validées -->
+<!-- V26.1.98 : Sécurité — durcissement XSS, arguments JS dynamiques sûrs et URLs externes validées -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
@@ -3719,7 +3719,7 @@ function getMealDishLabel(cycleKey,mealKey){
 function openMenuRecipe(cycleKey,mealKey){
   const label=getMealDishLabel(cycleKey,mealKey);
   const rawUrl=getMenuRecipeUrl(label);
-  const url=/^https?:\/\//i.test(String(rawUrl||'').trim()) ? normalizeRecipeUrl(rawUrl) : '';
+  const url=normalizeRecipeUrl(rawUrl);
   if(!url){
     editMenuRecipe(cycleKey,mealKey);
     return;
