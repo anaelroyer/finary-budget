@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.1.73 : Fidélité — scan stabilisé (2 lectures), rejet des lectures vides/parasites, nettoyage robuste tous formats -->
 <!-- V26.1.72 : Fidélité — nettoyage global des codes scannés + validations corrigées + Détection auto par défaut -->
 <!-- V26.1.71 : Navigation principale réorganisée en grille 2×3 + balayage Fidélité inclus -->
 <!-- V26.1.70 : Fidélité — détection de format stricte, aucun fallback silencieux vers Code 128 -->
@@ -11411,12 +11412,14 @@ if(window.visualViewport){
 </div>
 
 \n<script>
-/* V26.1.69 — Wallet Fidélité */
+/* V26.1.73 — Wallet Fidélité : scan stabilisé */
 let activeLoyaltyEditId='';
 let displayedLoyaltyId='';
 let loyaltyScanStream=null;
 let loyaltyScanTimer=null;
 let loyaltyBarcodeDetector=null;
+let loyaltyScanCandidateKey='';
+let loyaltyScanCandidateCount=0;
 
 function loyaltyEnsureData(){
   if(!Array.isArray(data.loyaltyCards))data.loyaltyCards=[];
@@ -11513,28 +11516,35 @@ function closeLoyaltyCardModal(){
   setLoyaltyFormMessage('');
 }
 
-function loyaltyCleanCode(code,format=''){
+function loyaltyBaseCleanCode(code){
   let value=String(code??'');
-  // Uniformise les caractères Unicode puis retire uniquement les caractères invisibles
-  // qui peuvent être ajoutés par la caméra ou un copier-coller.
   try{value=value.normalize('NFKC');}catch(_e){}
-  value=value.replace(/[\u200B-\u200D\u2060\uFEFF]/g,'').replace(/[\r\n]+/g,'').trim();
+  // Certains lecteurs Chrome renvoient ponctuellement des caractères de contrôle
+  // (GS/FNC, caractères invisibles, etc.) sans contenu réellement exploitable.
+  // Ils ne doivent jamais être pris pour un numéro de carte valide.
+  value=value
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,'')
+    .trim();
+  return value;
+}
 
-  // Les formats numériques ne peuvent contenir aucun espace : on les retire avant
-  // détection, validation et enregistrement. Les espaces restent autorisés pour
-  // Code 39 / Code 128 / QR lorsqu'ils font réellement partie du contenu.
+function loyaltyCleanCode(code,format=''){
+  let value=loyaltyBaseCleanCode(code);
   const f=String(format||'').toUpperCase();
-  if(['EAN13','EAN8','ITF14'].includes(f))value=value.replace(/\s+/g,'');
+  // EAN et ITF sont strictement numériques : on conserve uniquement les chiffres.
+  if(['EAN13','EAN8','ITF14'].includes(f))value=value.replace(/[^0-9]/g,'');
   return value;
 }
 
 function loyaltyValidate(code,format){
-  const value=loyaltyCleanCode(code,format);
+  const f=String(format||'').toUpperCase();
+  const value=loyaltyCleanCode(code,f);
   if(!value)return 'Renseigne le numéro ou le contenu du code.';
-  if(format==='EAN13' && !/^\d{13}$/.test(value))return 'Un EAN-13 doit contenir exactement 13 chiffres.';
-  if(format==='EAN8' && !/^\d{8}$/.test(value))return 'Un EAN-8 doit contenir exactement 8 chiffres.';
-  if(format==='ITF14' && !/^\d{14}$/.test(value))return 'Un ITF-14 doit contenir exactement 14 chiffres.';
-  if(format==='CODE39' && !/^[0-9A-Z .$/+%-]+$/i.test(value))return 'Ce contenu n’est pas compatible avec le format Code 39.';
+  if(f==='EAN13' && !/^\d{13}$/.test(value))return 'Un EAN-13 doit contenir exactement 13 chiffres.';
+  if(f==='EAN8' && !/^\d{8}$/.test(value))return 'Un EAN-8 doit contenir exactement 8 chiffres.';
+  if(f==='ITF14' && !/^\d{14}$/.test(value))return 'Un ITF-14 doit contenir exactement 14 chiffres.';
+  if(f==='CODE39' && !/^[0-9A-Z .$/+%-]+$/i.test(value))return 'Ce contenu n’est pas compatible avec le format Code 39.';
+  // Code 128 et QR : tout contenu visible/non vide est accepté.
   return '';
 }
 
@@ -11651,6 +11661,8 @@ function loyaltyDetectedFormat(format='',rawValue=''){
 
 async function startLoyaltyScanner(){
   const status=document.getElementById('loyaltyScanStatus');
+  loyaltyScanCandidateKey='';
+  loyaltyScanCandidateCount=0;
   if(!('BarcodeDetector' in window)){
     alert('Le scan automatique n’est pas disponible sur ce navigateur. Tu peux saisir le numéro manuellement.');
     return;
@@ -11684,39 +11696,68 @@ async function startLoyaltyScanner(){
 async function loyaltyScanTick(){
   if(!loyaltyScanStream || !loyaltyBarcodeDetector)return;
   const video=document.getElementById('loyaltyScanVideo');
+  const status=document.getElementById('loyaltyScanStatus');
   try{
     if(video?.readyState>=2){
       const results=await loyaltyBarcodeDetector.detect(video);
-      const found=results?.find(r=>String(r.rawValue||'').trim());
-      if(found){
-        const rawValue=String(found.rawValue||'');
-        const format=loyaltyDetectedFormat(found.format,rawValue);
+      const candidates=(Array.isArray(results)?results:[]).map(result=>{
+        const rawValue=String(result?.rawValue??'');
+        const format=loyaltyDetectedFormat(result?.format,rawValue);
         const value=loyaltyCleanCode(rawValue,format);
-        document.getElementById('loyaltyCodeInput').value=value;
-        document.getElementById('loyaltyFormatInput').value=format;
-        stopLoyaltyScanner();
-        if(format){
-          const validation=loyaltyValidate(value,format);
-          if(validation){
-            document.getElementById('loyaltyFormatInput').value='';
-            setLoyaltyFormMessage(`Code lu (${loyaltyFormatLabel(format)}), mais contenu incohérent : ${validation} Choisis le type manuellement si nécessaire.`,'error');
-          }else{
-            setLoyaltyFormMessage(`Code détecté · ${loyaltyFormatLabel(format)}`,'success');
-          }
-        }else{
-          setLoyaltyFormMessage('Code lu, mais format non reconnu. Choisis le type de code manuellement avant d’enregistrer.','error');
+        return {result,rawValue,format,value};
+      }).filter(candidate=>candidate.value.length>0);
+
+      const found=candidates[0];
+      if(found){
+        // Une lecture unique peut être un faux positif, surtout avec Code 128 sur Android.
+        // On confirme donc le même contenu sur deux images successives.
+        const candidateKey=`${found.format||String(found.result?.format||'')}|${found.value}`;
+        if(candidateKey===loyaltyScanCandidateKey)loyaltyScanCandidateCount+=1;
+        else{
+          loyaltyScanCandidateKey=candidateKey;
+          loyaltyScanCandidateCount=1;
         }
-        return;
+
+        if(loyaltyScanCandidateCount<2){
+          if(status)status.textContent='Code repéré… garde la carte immobile un instant pour confirmer la lecture.';
+        }else{
+          const format=found.format;
+          const value=found.value;
+          const codeInput=document.getElementById('loyaltyCodeInput');
+          const formatInput=document.getElementById('loyaltyFormatInput');
+          if(codeInput)codeInput.value=value;
+          if(formatInput)formatInput.value=format;
+          stopLoyaltyScanner();
+
+          if(format){
+            const validation=loyaltyValidate(value,format);
+            if(validation){
+              if(formatInput)formatInput.value='';
+              setLoyaltyFormMessage(`Code lu (${loyaltyFormatLabel(format)}), mais contenu incohérent : ${validation} Choisis le type manuellement si nécessaire.`,'error');
+            }else{
+              setLoyaltyFormMessage(`Code détecté · ${loyaltyFormatLabel(format)} · ${value.length} caractère${value.length>1?'s':''}`,'success');
+            }
+          }else{
+            setLoyaltyFormMessage('Code lu, mais format non reconnu. Le contenu a bien été récupéré ; choisis seulement le type de code avant d’enregistrer.','error');
+          }
+          return;
+        }
+      }else{
+        loyaltyScanCandidateKey='';
+        loyaltyScanCandidateCount=0;
+        if(status)status.textContent='Place le code-barres ou QR code face à la caméra.';
       }
     }
   }catch(err){
     console.debug('Scan fidélité',err);
   }
-  loyaltyScanTimer=setTimeout(loyaltyScanTick,350);
+  loyaltyScanTimer=setTimeout(loyaltyScanTick,300);
 }
 
 function stopLoyaltyScanner(){
   if(loyaltyScanTimer){clearTimeout(loyaltyScanTimer);loyaltyScanTimer=null;}
+  loyaltyScanCandidateKey='';
+  loyaltyScanCandidateCount=0;
   if(loyaltyScanStream){loyaltyScanStream.getTracks().forEach(t=>t.stop());loyaltyScanStream=null;}
   const video=document.getElementById('loyaltyScanVideo');
   if(video){video.pause();video.srcObject=null;}
