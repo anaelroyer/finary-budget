@@ -1,8 +1,11 @@
 <!DOCTYPE html>
+<!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
+<!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
 <!-- V26.1.62 : Linxea Avenir 2 + verrouillage données Trade Republic automatisées + nettoyage Bourse -->
 <!-- V26.1.61 : logo Trade Republic en tuile carrée -->
@@ -1807,6 +1810,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <div class="top" style="justify-content:space-between;gap:8px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="printPatrimoineReport()" style="padding:6px 8px;font-size:11px">🖨️ Imprimer</button>
+        <button class="btn btn-secondary" onclick="savePatrimoineReportPdf()" style="padding:6px 8px;font-size:11px">📄 Enregistrer en PDF</button>
         <button class="btn btn-secondary" onclick="sharePatrimoineReport()" style="padding:6px 8px;font-size:11px">↗️ Partager</button>
       </div>
       <button class="btn btn-secondary toggleAmountsBtn" onclick="toggleHideAmounts()" style="padding:6px 8px;font-size:11px">👁️ Affiché</button>
@@ -7162,45 +7166,143 @@ function calculateLiquidInvestments(owner=activePatrimoineOwner){
 
 /* RAPPORT PATRIMOINE : IMPRESSION / PARTAGE */
 function getPatrimoineReportModel(){
-  const totals=calculateNet();
-  const categories=[
+  const owner=activePatrimoineOwner;
+  const ownerLabel=getPatrimoineOwnerLabel(owner);
+  const totals=calculateNet(owner);
+  const now=new Date();
+  const rawCategories=[
     {key:'epargne',label:'Épargne'},
     ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].label})),
     {key:'dettes',label:'Emprunts'}
-  ].map(c=>({
-    ...c,
-    items:getOwnedItems(c.key).map(i=>{
+  ];
+
+  const categories=rawCategories.map(c=>{
+    const owned=getOwnedItems(c.key,owner);
+    const total=owned.reduce((sum,i)=>sum+(Number(i?.[1])||0),0);
+    const items=owned.map(i=>{
       const base={label:String(i?.[0]||'Sans libellé'),amount:Number(i?.[1])||0};
+      const rawMeta=i&&typeof i[2]==='object'&&i[2]!==null&&!Array.isArray(i[2])?i[2]:{};
+
       if(c.key==='dettes'){
         const meta=getLoanMeta(i);
         return {...base,loanMeta:meta,progress:calculateLoanProgress(meta.initialAmount,base.amount)};
       }
-      return base;
-    }),
-    total:getOwnedItems(c.key).reduce((sum,i)=>sum+(Number(i?.[1])||0),0)
-  }));
+
+      if(c.key==='bourse'){
+        const stock=getStockMeta(i);
+        const isCash=isTradeRepublicCashItem(i);
+        const invested=stock.pruSet===true?Math.max(0,stock.shares)*Math.max(0,stock.pru):null;
+        const gain=invested===null?null:base.amount-invested;
+        const performance=(stock.pruSet===true&&stock.pru>0&&stock.pricePerShare>0)?((stock.pricePerShare-stock.pru)/stock.pru)*100:null;
+        return {
+          ...base,
+          kind:isCash?'tradeRepublicCash':'stock',
+          stockMeta:stock,
+          invested,
+          gain,
+          performance,
+          tradeRepublicUpdatedAt:String(rawMeta.tradeRepublicUpdatedAt||stock.priceUpdatedAt||'')
+        };
+      }
+
+      if(c.key==='crypto'){
+        const quantity=Math.max(0,Number(rawMeta.quantity)||0);
+        const priceEur=Math.max(0,Number(rawMeta.priceEur)||0);
+        const pru=Math.max(0,Number(rawMeta.pru)||0);
+        const pruSet=rawMeta.pruSet===true||(rawMeta.pru!==undefined&&rawMeta.pru!==null&&rawMeta.pru!=='');
+        const invested=pruSet?quantity*pru:null;
+        const gain=invested===null?null:base.amount-invested;
+        const performance=(pruSet&&pru>0&&priceEur>0)?((priceEur-pru)/pru)*100:null;
+        return {
+          ...base,
+          kind:'crypto',
+          cryptoMeta:{quantity,priceEur,pru,pruSet,updatedAt:String(rawMeta.updatedAt||''),source:String(rawMeta.source||'OKX')},
+          invested,
+          gain,
+          performance
+        };
+      }
+
+      if(c.key==='assurancevie'){
+        const perfRaw=rawMeta.linxeaPerformance;
+        const performance=(perfRaw!==undefined&&perfRaw!==null&&perfRaw!==''&&Number.isFinite(Number(perfRaw)))?Number(perfRaw):null;
+        return {
+          ...base,
+          kind:'insurance',
+          insuranceMeta:{
+            provider:String(rawMeta.provider||''),
+            insurer:String(rawMeta.insurer||''),
+            performance,
+            valuationDate:String(rawMeta.linxeaValuationDate||''),
+            updatedAt:String(rawMeta.linxeaUpdatedAt||'')
+          }
+        };
+      }
+
+      return {...base,kind:'generic',meta:rawMeta};
+    });
+
+    return {
+      ...c,
+      items,
+      total,
+      count:items.length,
+      weight:c.key==='dettes'?(totals.assets>0?(total/totals.assets)*100:0):(totals.assets>0?(total/totals.assets)*100:0)
+    };
+  });
 
   const savings=categories.find(c=>c.key==='epargne')?.total||0;
-  const investments=getActiveInvestmentCategoryKeys().reduce((sum,key)=>sum+(categories.find(c=>c.key===key)?.total||0),0);
+  const investmentKeys=getActiveInvestmentCategoryKeys();
+  const investments=investmentKeys.reduce((sum,key)=>sum+(categories.find(c=>c.key===key)?.total||0),0);
   const variation=document.getElementById('patrimoine-variation-value')?.textContent?.trim()||'—';
-  const now=new Date();
 
-  const liquidKeys=new Set(['epargne',...getActiveInvestmentCategoryKeys()]);
-  const liquidCategories=categories.filter(c=>liquidKeys.has(c.key) && c.total>0);
+  const liquidKeys=new Set(['epargne',...investmentKeys]);
+  const liquidCategories=categories.filter(c=>liquidKeys.has(c.key)&&c.total>0);
   const liquidTotal=liquidCategories.reduce((s,c)=>s+c.total,0);
+  const debtRatio=totals.assets>0?(totals.debts/totals.assets)*100:0;
+  const netRatio=totals.assets>0?(totals.net/totals.assets)*100:0;
+
+  const monthlyMap=new Map();
+  (patrimoineHistory||[])
+    .filter(h=>h&&h.date&&(h.owner||'couple')===owner&&Number.isFinite(Number(h.fullNet)))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date))
+    .forEach(h=>{
+      const d=new Date(`${h.date}T12:00:00`);
+      if(Number.isNaN(d.getTime()))return;
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      monthlyMap.set(key,{...h,_date:d});
+    });
+
+  const monthlyHistory=[...monthlyMap.values()].slice(-12).map((h,index,arr)=>{
+    const prev=index>0?Number(arr[index-1].fullNet):null;
+    const current=Number(h.fullNet)||0;
+    return {
+      date:h._date,
+      label:h._date.toLocaleDateString('fr-FR',{month:'short',year:'numeric'}),
+      net:current,
+      liquid:Number(h.net)||0,
+      variation:prev!==null?current-prev:null
+    };
+  });
 
   return{
+    owner,
+    ownerLabel,
     dateLabel:now.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}),
+    generatedAt:now.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
     fileDate:getLocalDateKey(now),
     gross:totals.assets,
     net:totals.net,
     debts:totals.debts,
     savings,
     investments,
+    liquidTotal,
+    debtRatio,
+    netRatio,
     variation,
     categories,
     liquidCategories,
-    liquidTotal,
+    monthlyHistory,
     chartHtml:document.getElementById('chart-wrapper')?.innerHTML||'',
     chartPeriod:document.getElementById('chart-period-caption')?.textContent?.trim()||'',
     chartPerformance:document.getElementById('chart-performance-value')?.textContent?.trim()||'—',
@@ -7210,47 +7312,103 @@ function getPatrimoineReportModel(){
 
 function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
   const esc=v=>escapeHtml(v);
+  const fmtPct=(n,digits=1)=>`${Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:digits,maximumFractionDigits:digits})} %`;
+  const fmtDateTime=value=>{
+    if(!value)return '—';
+    const d=new Date(value);
+    return Number.isNaN(d.getTime())?String(value):d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  };
+  const signedEuro=value=>{
+    if(value===null||value===undefined||!Number.isFinite(Number(value)))return '—';
+    const n=Number(value);
+    return `${n>0?'+':n<0?'−':''}${euro(Math.abs(n))}`;
+  };
+  const signedPct=value=>{
+    if(value===null||value===undefined||!Number.isFinite(Number(value)))return '—';
+    const n=Number(value);
+    return `${n>0?'+':''}${n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} %`;
+  };
 
   const categorySummary=model.categories.map(c=>`
     <tr>
-      <td>${esc(c.label)}</td>
+      <td><strong>${esc(c.label)}</strong><span class="row-sub">${c.count} ligne${c.count>1?'s':''}</span></td>
+      <td class="num">${c.key==='dettes'?'—':fmtPct(c.weight)}</td>
       <td class="num ${c.key==='dettes'?'debt':''}">${euro(c.total)}</td>
     </tr>
   `).join('');
+
+  const genericRows=(c)=>c.items.length
+    ? c.items.map(i=>{
+        const categoryWeight=c.total>0?(i.amount/c.total)*100:0;
+        const grossWeight=model.gross>0?(i.amount/model.gross)*100:0;
+        return `<tr><td><strong>${esc(i.label)}</strong></td><td class="num">${fmtPct(categoryWeight)}</td><td class="num">${fmtPct(grossWeight)}</td><td class="num">${euro(i.amount)}</td></tr>`;
+      }).join('')
+    : `<tr><td colspan="4" class="empty">Aucune ligne</td></tr>`;
 
   const details=model.categories.map(c=>{
     if(c.key==='dettes'){
       const loanCards=c.items.length ? c.items.map(i=>{
         const meta=i.loanMeta||{};
         const progress=Number(i.progress)||0;
+        const repaid=Math.max(0,(Number(meta.initialAmount)||0)-i.amount);
         const hasDetails=Number(meta.initialAmount)>0||meta.startDate||meta.endDate||Number(meta.monthlyPayment)>0||Number(meta.rate)>0;
-        return `<div class="loan-report-card">
-          <div class="loan-report-head"><div><strong>${esc(i.label)}</strong><div class="loan-report-sub">${Number(meta.initialAmount)>0?euro(meta.initialAmount)+' empruntés':'Montant initial non renseigné'}</div></div><div class="loan-report-current">${euro(i.amount)}<span>restant dû</span></div></div>
-          ${hasDetails?`<div class="loan-report-progress-line"><span>Avancement du remboursement</span><strong>${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</strong></div><div class="loan-report-progress"><div style="width:${Math.max(0,Math.min(100,progress))}%"></div></div>
-          <div class="loan-report-grid"><div><span>Capital emprunté</span><strong>${Number(meta.initialAmount)>0?euro(meta.initialAmount):'—'}</strong></div><div><span>Capital restant</span><strong>${euro(i.amount)}</strong></div><div><span>Taux</span><strong>${Number(meta.rate)>0?Number(meta.rate).toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div><span>Mensualité</span><strong>${Number(meta.monthlyPayment)>0?euro(meta.monthlyPayment):'—'}</strong></div><div><span>Date de début</span><strong>${esc(formatLoanDate(meta.startDate))}</strong></div><div><span>Date de fin</span><strong>${esc(formatLoanDate(meta.endDate))}</strong></div></div>`:`<div class="empty" style="padding:10px">Détails de l’emprunt non renseignés</div>`}
+        return `<div class="detail-card loan-report-card">
+          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">${Number(meta.initialAmount)>0?euro(meta.initialAmount)+' empruntés':'Montant initial non renseigné'}</div></div><div class="detail-value debt">${euro(i.amount)}<span>restant dû</span></div></div>
+          ${hasDetails?`<div class="loan-report-progress-line"><span>Avancement du remboursement</span><strong>${fmtPct(progress)}</strong></div><div class="loan-report-progress"><div style="width:${Math.max(0,Math.min(100,progress))}%"></div></div>
+          <div class="metric-grid"><div><span>Capital emprunté</span><strong>${Number(meta.initialAmount)>0?euro(meta.initialAmount):'—'}</strong></div><div><span>Capital remboursé</span><strong>${Number(meta.initialAmount)>0?euro(repaid):'—'}</strong></div><div><span>Capital restant</span><strong>${euro(i.amount)}</strong></div><div><span>Taux</span><strong>${Number(meta.rate)>0?Number(meta.rate).toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div><span>Mensualité</span><strong>${Number(meta.monthlyPayment)>0?euro(meta.monthlyPayment):'—'}</strong></div><div><span>Fin prévue</span><strong>${esc(formatLoanDate(meta.endDate))}</strong></div></div>`:`<div class="empty padded">Détails de l’emprunt non renseignés</div>`}
         </div>`;
-      }).join('') : `<div class="empty" style="padding:10px">Aucun emprunt</div>`;
-      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="loan-report-list">${loanCards}</div></section>`;
+      }).join('') : `<div class="empty padded">Aucun emprunt</div>`;
+      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="detail-list">${loanCards}</div></section>`;
     }
 
-    const rows=c.items.length
-      ? c.items.map(i=>`<tr><td>${esc(i.label)}</td><td class="num">${euro(i.amount)}</td></tr>`).join('')
-      : `<tr><td colspan="2" class="empty">Aucune ligne</td></tr>`;
+    if(c.key==='bourse'){
+      const cards=c.items.length?c.items.map(i=>{
+        if(i.kind==='tradeRepublicCash'){
+          return `<div class="detail-card"><div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">Trade Republic · Compte espèces</div></div><div class="detail-value">${euro(i.amount)}</div></div><div class="sync-line">Dernière synchronisation : ${esc(fmtDateTime(i.tradeRepublicUpdatedAt))}</div></div>`;
+        }
+        const m=i.stockMeta||{};
+        return `<div class="detail-card">
+          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">${esc(m.account||'—')} · ${esc(m.isin||'ISIN non renseigné')}</div></div><div class="detail-value">${euro(i.amount)}</div></div>
+          <div class="metric-grid"><div><span>Parts</span><strong>${Number(m.shares||0).toLocaleString('fr-FR',{maximumFractionDigits:6})}</strong></div><div><span>Cours</span><strong>${m.pricePerShare>0?euro(m.pricePerShare):'—'}</strong></div><div><span>PRU</span><strong>${m.pruSet?euro(m.pru):'—'}</strong></div><div><span>Capital investi</span><strong>${i.invested===null?'—':euro(i.invested)}</strong></div><div><span>Gain / perte</span><strong class="${Number(i.gain)>0?'positive':Number(i.gain)<0?'negative':''}">${signedEuro(i.gain)}</strong></div><div><span>Performance</span><strong class="${Number(i.performance)>0?'positive':Number(i.performance)<0?'negative':''}">${signedPct(i.performance)}</strong></div></div>
+          <div class="sync-line">Dernière synchronisation : ${esc(fmtDateTime(i.tradeRepublicUpdatedAt))}</div>
+        </div>`;
+      }).join(''):`<div class="empty padded">Aucune ligne Bourse</div>`;
+      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="detail-list">${cards}</div></section>`;
+    }
 
-    return `
-      <section class="detail-section">
-        <div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div>
-        <table class="detail-table"><tbody>${rows}</tbody></table>
-      </section>
-    `;
+    if(c.key==='crypto'){
+      const cards=c.items.length?c.items.map(i=>{
+        const m=i.cryptoMeta||{};
+        return `<div class="detail-card">
+          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">${esc(m.source||'OKX')} · Simple Earn</div></div><div class="detail-value">${euro(i.amount)}</div></div>
+          <div class="metric-grid"><div><span>Quantité</span><strong>${Number(m.quantity||0).toLocaleString('fr-FR',{maximumFractionDigits:8})} BTC</strong></div><div><span>Cours BTC/EUR</span><strong>${m.priceEur>0?euro(m.priceEur):'—'}</strong></div><div><span>PRU</span><strong>${m.pruSet?euro(m.pru):'—'}</strong></div><div><span>Capital investi</span><strong>${i.invested===null?'—':euro(i.invested)}</strong></div><div><span>Gain / perte</span><strong class="${Number(i.gain)>0?'positive':Number(i.gain)<0?'negative':''}">${signedEuro(i.gain)}</strong></div><div><span>Performance</span><strong class="${Number(i.performance)>0?'positive':Number(i.performance)<0?'negative':''}">${signedPct(i.performance)}</strong></div></div>
+          <div class="sync-line">Dernière synchronisation : ${esc(fmtDateTime(m.updatedAt))}</div>
+        </div>`;
+      }).join(''):`<div class="empty padded">Aucune ligne Crypto</div>`;
+      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="detail-list">${cards}</div></section>`;
+    }
+
+    if(c.key==='assurancevie'){
+      const cards=c.items.length?c.items.map(i=>{
+        const m=i.insuranceMeta||{};
+        const provider=[m.provider,m.insurer].filter(Boolean).join(' · ')||'Assurance-vie';
+        return `<div class="detail-card">
+          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">${esc(provider)}</div></div><div class="detail-value">${euro(i.amount)}</div></div>
+          <div class="metric-grid compact"><div><span>Performance</span><strong class="${Number(m.performance)>0?'positive':Number(m.performance)<0?'negative':''}">${signedEuro(m.performance)}</strong></div><div><span>Date de valorisation</span><strong>${esc(m.valuationDate||'—')}</strong></div><div><span>Dernière synchro</span><strong>${esc(fmtDateTime(m.updatedAt))}</strong></div></div>
+        </div>`;
+      }).join(''):`<div class="empty padded">Aucune assurance-vie</div>`;
+      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="detail-list">${cards}</div></section>`;
+    }
+
+    return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><table class="detail-table"><thead><tr><th>Support / actif</th><th class="num">% catégorie</th><th class="num">% actifs</th><th class="num">Valeur</th></tr></thead><tbody>${genericRows(c)}</tbody></table></section>`;
   }).join('');
 
   const liquidSummary=model.liquidCategories.length
     ? model.liquidCategories.map(c=>{
         const pct=model.liquidTotal>0?(c.total/model.liquidTotal)*100:0;
-        return `<tr><td>${esc(c.label)}</td><td class="num">${pct.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</td><td class="num">${euro(c.total)}</td></tr>`;
+        return `<tr><td>${esc(c.label)}</td><td class="num">${fmtPct(pct)}</td><td class="num">${euro(c.total)}</td></tr>`;
       }).join('')
-    : `<tr><td colspan="3" class="empty">Aucun actif hors immobilier</td></tr>`;
+    : `<tr><td colspan="3" class="empty">Aucun actif financier hors immobilier</td></tr>`;
 
   const pieColors={epargne:'#3fb950',...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c.color]))};
   let pieCursor=0;
@@ -7260,89 +7418,101 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
     pieCursor+=pct;
     return `${pieColors[c.key]||'#777'} ${start}% ${pieCursor}%`;
   });
-  const pieHtml=model.liquidTotal>0
-    ? `<div class="report-pie" style="background:conic-gradient(${pieStops.join(',')})"></div>`
-    : '';
+  const pieHtml=model.liquidTotal>0?`<div class="report-pie" style="background:conic-gradient(${pieStops.join(',')})"></div>`:'';
 
   const chartBlock=model.chartHtml
-    ? `<section class="chart-section">
-         <div class="section-title"><span>Évolution — ${esc(model.chartSeriesLabel)}</span><strong>${esc(model.chartPerformance)}</strong></div>
-         <div class="chart-caption">${esc(model.chartPeriod)}</div>
-         <div class="report-chart">${model.chartHtml}</div>
-       </section>`
+    ? `<section class="chart-section"><div class="section-title"><span>Évolution — ${esc(model.chartSeriesLabel)}</span><strong>${esc(model.chartPerformance)}</strong></div><div class="chart-caption">${esc(model.chartPeriod)}</div><div class="report-chart">${model.chartHtml}</div></section>`
     : '';
+
+  const historyRows=model.monthlyHistory.length
+    ? model.monthlyHistory.map(h=>`<tr><td>${esc(h.label)}</td><td class="num">${euro(h.net)}</td><td class="num">${euro(h.liquid)}</td><td class="num ${Number(h.variation)>0?'positive':Number(h.variation)<0?'negative':''}">${h.variation===null?'—':signedEuro(h.variation)}</td></tr>`).join('')
+    : '';
+  const historyBlock=historyRows?`<section class="detail-section"><div class="section-title"><span>Historique mensuel récent</span><strong>${model.monthlyHistory.length} mois</strong></div><table class="detail-table"><thead><tr><th>Mois</th><th class="num">Patrimoine net</th><th class="num">Actifs financiers</th><th class="num">Variation</th></tr></thead><tbody>${historyRows}</tbody></table></section>`:'';
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Rapport Patrimoine - ${esc(getPatrimoineOwnerLabel())} - ${esc(model.dateLabel)}</title>
+<title>Rapport Patrimoine - ${esc(model.ownerLabel)} - ${esc(model.dateLabel)}</title>
 <style>
   *{box-sizing:border-box}
-  body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:12px;line-height:1.4}
-  .report{max-width:820px;margin:0 auto;padding:28px}
-  .report-header{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px;display:flex;justify-content:space-between;gap:18px;align-items:flex-end}
-  h1{font-size:25px;margin:0;letter-spacing:-.3px}.date{font-size:12px;color:#555;text-align:right}
-  .summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
-  .summary-card{border:1px solid #bbb;border-radius:9px;padding:11px 13px}.summary-card .label{font-size:10px;text-transform:uppercase;color:#666;font-weight:700;letter-spacing:.4px}.summary-card .value{font-size:21px;font-weight:800;margin-top:3px}.summary-card .sub{font-size:10px;color:#666;margin-top:3px}
-  .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-bottom:18px}
-  .panel{border:1px solid #bbb;border-radius:9px;overflow:hidden}.panel-title{font-size:12px;font-weight:800;padding:9px 11px;background:#f2f2f2;border-bottom:1px solid #bbb}.distribution-wrap{display:flex;align-items:center;gap:12px;padding:10px}.distribution-wrap table{flex:1}.report-pie{width:92px;height:92px;border-radius:50%;flex:0 0 auto}
-  table{width:100%;border-collapse:collapse}td,th{padding:7px 9px;border-bottom:1px solid #ddd;text-align:left}tr:last-child td{border-bottom:0}.num{text-align:right;font-weight:700;white-space:nowrap}.debt{color:#9b1c1c}.empty{color:#777;font-style:italic;text-align:center}
-  .detail-section,.chart-section{break-inside:avoid;margin:0 0 14px;border:1px solid #bbb;border-radius:9px;overflow:hidden}.section-title{background:#f2f2f2;padding:9px 11px;display:flex;justify-content:space-between;gap:12px;font-size:12px}.detail-table td{padding:6px 11px}
-  .loan-report-list{padding:10px;display:flex;flex-direction:column;gap:10px}.loan-report-card{border:1px solid #ccc;border-radius:8px;padding:10px;break-inside:avoid}.loan-report-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.loan-report-head>div:first-child{min-width:0}.loan-report-head strong{font-size:13px}.loan-report-sub{font-size:10px;color:#666;margin-top:2px}.loan-report-current{text-align:right;font-size:15px;font-weight:800;white-space:nowrap}.loan-report-current span{display:block;font-size:9px;color:#666;font-weight:700;text-transform:uppercase}.loan-report-progress-line{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:10px;color:#555}.loan-report-progress{height:8px;border:1px solid #bbb;background:#eee;border-radius:999px;overflow:hidden;margin-top:4px}.loan-report-progress>div{height:100%;background:#444}.loan-report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}.loan-report-grid>div{border:1px solid #ddd;border-radius:6px;padding:7px}.loan-report-grid span{display:block;font-size:9px;color:#666;text-transform:uppercase;font-weight:700}.loan-report-grid strong{display:block;font-size:11px;margin-top:2px}
-  .chart-caption{font-size:10px;color:#666;padding:7px 11px 0;text-align:right}.report-chart{padding:6px 10px 10px;overflow:hidden}.report-chart .chart-tooltip{display:none!important}.report-chart svg{width:100%;height:210px;display:block}.report-chart .chart-line{fill:none;stroke:#222;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.report-chart .chart-area{fill:#ddd;opacity:.45}.report-chart .chart-grid-line{stroke:#ccc;stroke-width:1}.report-chart .chart-axis-label,.report-chart .chart-last-label{fill:#555;font-size:9px}.report-chart .chart-point,.report-chart .chart-point-last{fill:#222}.report-chart .chart-cursor-line{display:none}
-  .footer{text-align:center;color:#555;font-size:10px;margin-top:20px;padding-top:10px;border-top:1px solid #ddd}
-  @media(max-width:640px){.report{padding:18px}.two-cols{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}}
-  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.report{max-width:none;padding:10mm}.detail-section,.chart-section,.panel{break-inside:avoid}@page{size:A4;margin:8mm}}
+  body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:11px;line-height:1.4}
+  .report{max-width:900px;margin:0 auto;padding:26px}
+  .report-header{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;gap:18px;align-items:flex-end}
+  h1{font-size:24px;margin:0;letter-spacing:-.3px}.profile{font-size:13px;font-weight:700;margin-top:3px}.date{font-size:10px;color:#555;text-align:right;line-height:1.5}
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.summary-card{border:1px solid #bbb;border-radius:8px;padding:10px 11px;min-width:0}.summary-card .label{font-size:9px;text-transform:uppercase;color:#666;font-weight:800;letter-spacing:.35px}.summary-card .value{font-size:19px;font-weight:800;margin-top:2px;white-space:nowrap}.summary-card .sub{font-size:9px;color:#666;margin-top:2px}.summary-card.net{border-width:2px}
+  .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-bottom:14px}.panel{border:1px solid #bbb;border-radius:8px;overflow:hidden}.panel-title{font-size:11px;font-weight:800;padding:8px 10px;background:#f2f2f2;border-bottom:1px solid #bbb}.distribution-wrap{display:flex;align-items:center;gap:10px;padding:9px}.distribution-wrap table{flex:1}.report-pie{width:82px;height:82px;border-radius:50%;flex:0 0 auto}
+  table{width:100%;border-collapse:collapse}td,th{padding:6px 8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.25px}tr:last-child td{border-bottom:0}.num{text-align:right;font-weight:700;white-space:nowrap}.row-sub{display:block;color:#777;font-size:9px;font-weight:400;margin-top:1px}.debt,.negative{color:#9b1c1c!important}.positive{color:#176b2c!important}.empty{color:#777;font-style:italic;text-align:center}.padded{padding:12px}
+  .detail-section,.chart-section{break-inside:avoid;margin:0 0 12px;border:1px solid #bbb;border-radius:8px;overflow:hidden}.section-title{background:#f2f2f2;padding:8px 10px;display:flex;justify-content:space-between;gap:12px;font-size:11px;font-weight:800}.detail-table td{padding:6px 10px}
+  .detail-list{padding:9px;display:flex;flex-direction:column;gap:8px}.detail-card{border:1px solid #ccc;border-radius:7px;padding:9px;break-inside:avoid}.detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.detail-head>div:first-child{min-width:0}.detail-head strong{font-size:12px}.detail-sub{font-size:9px;color:#666;margin-top:2px}.detail-value{text-align:right;font-size:14px;font-weight:800;white-space:nowrap}.detail-value span{display:block;font-size:8px;color:#666;font-weight:700;text-transform:uppercase}.metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:8px}.metric-grid.compact{grid-template-columns:repeat(3,minmax(0,1fr))}.metric-grid>div{border:1px solid #ddd;border-radius:5px;padding:6px;min-width:0}.metric-grid span{display:block;font-size:8px;color:#666;text-transform:uppercase;font-weight:700}.metric-grid strong{display:block;font-size:10px;margin-top:2px;overflow-wrap:anywhere}.sync-line{margin-top:7px;color:#666;font-size:8.5px}
+  .loan-report-progress-line{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:9px;color:#555}.loan-report-progress{height:7px;border:1px solid #bbb;background:#eee;border-radius:999px;overflow:hidden;margin-top:3px}.loan-report-progress>div{height:100%;background:#444}
+  .chart-caption{font-size:9px;color:#666;padding:6px 10px 0;text-align:right}.report-chart{padding:5px 9px 9px;overflow:hidden}.report-chart .chart-tooltip{display:none!important}.report-chart svg{width:100%;height:195px;display:block}.report-chart .chart-line{fill:none;stroke:#222;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.report-chart .chart-area{fill:#ddd;opacity:.45}.report-chart .chart-grid-line{stroke:#ccc;stroke-width:1}.report-chart .chart-axis-label,.report-chart .chart-last-label{fill:#555;font-size:9px}.report-chart .chart-point,.report-chart .chart-point-last{fill:#222}.report-chart .chart-cursor-line{display:none}
+  .footer{text-align:center;color:#555;font-size:9px;margin-top:18px;padding-top:9px;border-top:1px solid #ddd}
+  @media(max-width:640px){.report{padding:16px}.two-cols{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}.metric-grid,.metric-grid.compact{grid-template-columns:1fr 1fr}}
+  @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.report{max-width:none;padding:8mm}.detail-section,.chart-section,.panel,.detail-card{break-inside:avoid}@page{size:A4;margin:7mm}}
 </style>
 </head>
 <body>
 <main class="report">
-  <header class="report-header"><div><h1>Rapport Patrimoine</h1><div style="color:#555;margin-top:3px">Situation patrimoniale du foyer</div></div><div class="date">${esc(model.dateLabel)}</div></header>
+  <header class="report-header"><div><h1>Rapport Patrimoine</h1><div class="profile">${esc(model.ownerLabel)}</div></div><div class="date">Situation au ${esc(model.dateLabel)}<br>Généré le ${esc(model.generatedAt)}</div></header>
 
   <div class="summary-grid">
-    <div class="summary-card"><div class="label">Patrimoine brut</div><div class="value">${euro(model.gross)}</div></div>
-    <div class="summary-card"><div class="label">Patrimoine net</div><div class="value">${euro(model.net)}</div><div class="sub">Variation depuis le mois précédent : ${esc(model.variation)}</div></div>
+    <div class="summary-card"><div class="label">Patrimoine brut</div><div class="value">${euro(model.gross)}</div><div class="sub">Total des actifs</div></div>
+    <div class="summary-card"><div class="label">Emprunts</div><div class="value debt">${euro(model.debts)}</div><div class="sub">${fmtPct(model.debtRatio)} des actifs bruts</div></div>
+    <div class="summary-card net"><div class="label">Patrimoine net</div><div class="value">${euro(model.net)}</div><div class="sub">${fmtPct(model.netRatio)} du patrimoine brut</div></div>
     <div class="summary-card"><div class="label">Épargne</div><div class="value">${euro(model.savings)}</div></div>
-    <div class="summary-card"><div class="label">Investissements Bourse + Crypto</div><div class="value">${euro(model.investments)}</div><div class="sub">Emprunts : ${euro(model.debts)}</div></div>
+    <div class="summary-card"><div class="label">Actifs financiers hors immobilier</div><div class="value">${euro(model.liquidTotal)}</div></div>
+    <div class="summary-card"><div class="label">Variation mensuelle</div><div class="value" style="font-size:15px">${esc(model.variation)}</div><div class="sub">Depuis le mois précédent</div></div>
   </div>
 
   <div class="two-cols">
-    <div class="panel"><div class="panel-title">Synthèse par catégorie</div><table><tbody>${categorySummary}</tbody></table></div>
-    <div class="panel"><div class="panel-title">Répartition des actifs hors immobilier</div><div class="distribution-wrap">${pieHtml}<table><tbody>${liquidSummary}</tbody></table></div></div>
+    <div class="panel"><div class="panel-title">Synthèse par catégorie</div><table><thead><tr><th>Catégorie</th><th class="num">Poids</th><th class="num">Montant</th></tr></thead><tbody>${categorySummary}</tbody></table></div>
+    <div class="panel"><div class="panel-title">Répartition des actifs financiers</div><div class="distribution-wrap">${pieHtml}<table><tbody>${liquidSummary}</tbody></table></div></div>
   </div>
 
   ${chartBlock}
+  ${historyBlock}
   ${details}
 
-  <div class="footer">Application crée par ROYER Anaël</div>
+  <div class="footer">Rapport généré par Budget & Patrimoine · Application créée par ROYER Anaël</div>
 </main>
-
-
 </body>
 </html>`;
 }
 
 function buildPatrimoineReportText(model=getPatrimoineReportModel()){
   const lines=[
-    `RAPPORT PATRIMOINE — ${model.dateLabel}`,
+    `RAPPORT PATRIMOINE — ${model.ownerLabel}`,
+    `Situation au ${model.dateLabel}`,
     '',
     `Patrimoine brut : ${euro(model.gross)}`,
+    `Emprunts : ${euro(model.debts)} (${model.debtRatio.toLocaleString('fr-FR',{maximumFractionDigits:1})} % des actifs)`,
     `Patrimoine net : ${euro(model.net)}`,
     `Variation depuis le mois précédent : ${model.variation}`,
     `Épargne : ${euro(model.savings)}`,
-    `Investissements Bourse + Crypto : ${euro(model.investments)}`,
-    `Emprunts : ${euro(model.debts)}`,
+    `Actifs financiers hors immobilier : ${euro(model.liquidTotal)}`,
     '',
     'SYNTHÈSE PAR CATÉGORIE'
   ];
 
-  model.categories.forEach(c=>lines.push(`${c.label} : ${euro(c.total)}`));
+  model.categories.forEach(c=>{
+    const weight=c.key==='dettes'?'':` · ${(Number(c.weight)||0).toLocaleString('fr-FR',{maximumFractionDigits:1})} % des actifs`;
+    lines.push(`${c.label} : ${euro(c.total)}${weight} · ${c.count} ligne${c.count>1?'s':''}`);
+  });
+
+  if(model.monthlyHistory.length){
+    lines.push('','HISTORIQUE MENSUEL RÉCENT');
+    model.monthlyHistory.forEach(h=>{
+      const variation=h.variation===null?'—':`${h.variation>0?'+':''}${euro(h.variation)}`;
+      lines.push(`${h.label} · Net ${euro(h.net)} · Actifs financiers ${euro(h.liquid)} · Variation ${variation}`);
+    });
+  }
 
   model.categories.forEach(c=>{
     lines.push('',c.label.toUpperCase());
     if(!c.items.length){lines.push('Aucune ligne');return;}
+
     if(c.key==='dettes'){
       c.items.forEach(i=>{
         const meta=i.loanMeta||{};
@@ -7350,16 +7520,59 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
         lines.push(`• ${i.label}`);
         lines.push(`  Capital emprunté : ${Number(meta.initialAmount)>0?euro(meta.initialAmount):'—'}`);
         lines.push(`  Capital restant dû : ${euro(i.amount)}`);
+        lines.push(`  Capital remboursé : ${Number(meta.initialAmount)>0?euro(Math.max(0,Number(meta.initialAmount)-i.amount)):'—'}`);
         lines.push(`  Taux : ${Number(meta.rate)>0?Number(meta.rate).toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}`);
         lines.push(`  Mensualité : ${Number(meta.monthlyPayment)>0?euro(meta.monthlyPayment):'—'}`);
         lines.push(`  Date de début : ${formatLoanDate(meta.startDate)}`);
         lines.push(`  Date de fin : ${formatLoanDate(meta.endDate)}`);
-        lines.push(`  Avancement du remboursement : ${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %`);
+        lines.push(`  Avancement : ${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %`);
       });
-    }else c.items.forEach(i=>lines.push(`• ${i.label} : ${euro(i.amount)}`));
+      return;
+    }
+
+    if(c.key==='bourse'){
+      c.items.forEach(i=>{
+        if(i.kind==='tradeRepublicCash'){
+          lines.push(`• ${i.label} : ${euro(i.amount)} · Compte espèces Trade Republic`);
+          return;
+        }
+        const m=i.stockMeta||{};
+        lines.push(`• ${i.label} : ${euro(i.amount)}`);
+        lines.push(`  ${m.account||'—'} · ISIN ${m.isin||'—'}`);
+        lines.push(`  Parts : ${Number(m.shares||0).toLocaleString('fr-FR',{maximumFractionDigits:6})} · Cours : ${m.pricePerShare>0?euro(m.pricePerShare):'—'} · PRU : ${m.pruSet?euro(m.pru):'—'}`);
+        if(i.invested!==null)lines.push(`  Capital investi : ${euro(i.invested)} · Gain/perte : ${i.gain>0?'+':''}${euro(i.gain)} · Performance : ${i.performance===null?'—':`${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`}`);
+      });
+      return;
+    }
+
+    if(c.key==='crypto'){
+      c.items.forEach(i=>{
+        const m=i.cryptoMeta||{};
+        lines.push(`• ${i.label} : ${euro(i.amount)}`);
+        lines.push(`  Quantité : ${Number(m.quantity||0).toLocaleString('fr-FR',{maximumFractionDigits:8})} BTC · Cours : ${m.priceEur>0?euro(m.priceEur):'—'}`);
+        if(m.pruSet)lines.push(`  PRU : ${euro(m.pru)} · Capital investi : ${euro(i.invested||0)} · Gain/perte : ${i.gain>0?'+':''}${euro(i.gain||0)} · Performance : ${i.performance===null?'—':`${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`}`);
+      });
+      return;
+    }
+
+    if(c.key==='assurancevie'){
+      c.items.forEach(i=>{
+        const m=i.insuranceMeta||{};
+        lines.push(`• ${i.label} : ${euro(i.amount)}`);
+        if(m.provider||m.insurer)lines.push(`  ${[m.provider,m.insurer].filter(Boolean).join(' · ')}`);
+        if(m.performance!==null)lines.push(`  Performance : ${m.performance>0?'+':''}${euro(m.performance)}`);
+        if(m.valuationDate)lines.push(`  Valorisation au ${m.valuationDate}`);
+      });
+      return;
+    }
+
+    c.items.forEach(i=>{
+      const pct=c.total>0?(i.amount/c.total)*100:0;
+      lines.push(`• ${i.label} : ${euro(i.amount)} · ${pct.toLocaleString('fr-FR',{maximumFractionDigits:1})} % de la catégorie`);
+    });
   });
 
-  lines.push('','Application crée par ROYER Anaël');
+  lines.push('','Rapport généré par Budget & Patrimoine','Application créée par ROYER Anaël');
   return lines.join('\n');
 }
 
@@ -7379,19 +7592,100 @@ function printPatrimoineReport(){
   setTimeout(()=>w.print(),300);
 }
 
+let patrimoinePdfLibraryPromise=null;
+
+function ensurePatrimoinePdfLibrary(){
+  if(window.html2pdf)return Promise.resolve(window.html2pdf);
+  if(patrimoinePdfLibraryPromise)return patrimoinePdfLibraryPromise;
+
+  patrimoinePdfLibraryPromise=new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[data-patrimoine-pdf-lib="1"]');
+    if(existing){
+      existing.addEventListener('load',()=>window.html2pdf?resolve(window.html2pdf):reject(new Error('html2pdf indisponible')),{once:true});
+      existing.addEventListener('error',()=>reject(new Error('chargement html2pdf impossible')),{once:true});
+      return;
+    }
+
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.async=true;
+    script.dataset.patrimoinePdfLib='1';
+    script.onload=()=>window.html2pdf?resolve(window.html2pdf):reject(new Error('html2pdf indisponible'));
+    script.onerror=()=>reject(new Error('chargement html2pdf impossible'));
+    document.head.appendChild(script);
+  }).catch(err=>{
+    patrimoinePdfLibraryPromise=null;
+    throw err;
+  });
+
+  return patrimoinePdfLibraryPromise;
+}
+
+async function savePatrimoineReportPdf(){
+  const model=getPatrimoineReportModel();
+  const reportHtml=buildPatrimoineReportHtml(model);
+  const safeOwner=normalizeText(model.ownerLabel).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'profil';
+  const fileName=`patrimoine_${safeOwner}_${model.fileDate}.pdf`;
+
+  let iframe=null;
+  try{
+    const html2pdf=await ensurePatrimoinePdfLibrary();
+
+    iframe=document.createElement('iframe');
+    iframe.setAttribute('aria-hidden','true');
+    iframe.tabIndex=-1;
+    iframe.style.position='fixed';
+    iframe.style.left='-12000px';
+    iframe.style.top='0';
+    iframe.style.width='820px';
+    iframe.style.height='1120px';
+    iframe.style.border='0';
+    iframe.style.opacity='0.01';
+    iframe.style.pointerEvents='none';
+    document.body.appendChild(iframe);
+
+    await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error('préparation du rapport trop longue')),5000);
+      iframe.onload=()=>{clearTimeout(timer);resolve();};
+      iframe.srcdoc=reportHtml;
+    });
+
+    const report=iframe.contentDocument?.querySelector('.report');
+    if(!report)throw new Error('rapport PDF introuvable');
+
+    await html2pdf()
+      .set({
+        margin:[6,6,6,6],
+        filename:fileName,
+        image:{type:'jpeg',quality:0.98},
+        html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+        pagebreak:{mode:['css','legacy'],avoid:['.summary-card','.panel','.detail-section','.loan-report-card','.investment-report-card','.chart-section']}
+      })
+      .from(report)
+      .save();
+  }catch(err){
+    console.error(err);
+    alert("Le PDF n'a pas pu être généré automatiquement. Utilise « Imprimer » puis « Enregistrer au format PDF » dans le navigateur.");
+  }finally{
+    if(iframe)iframe.remove();
+  }
+}
+
 async function sharePatrimoineReport(){
   const model=getPatrimoineReportModel();
   const reportHtml=buildPatrimoineReportHtml(model);
   const reportText=buildPatrimoineReportText(model);
-  const fileName=`patrimoine_${model.fileDate}.html`;
+  const safeOwner=normalizeText(model.ownerLabel).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'profil';
+  const fileName=`patrimoine_${safeOwner}_${model.fileDate}.html`;
 
   try{
     const file=new File([reportHtml],fileName,{type:'text/html'});
 
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({
-        title:`Rapport Patrimoine — ${model.dateLabel}`,
-        text:'Rapport Patrimoine',
+        title:`Rapport Patrimoine — ${model.ownerLabel} — ${model.dateLabel}`,
+        text:`Rapport Patrimoine — ${model.ownerLabel}`,
         files:[file]
       });
       return;
@@ -7399,7 +7693,7 @@ async function sharePatrimoineReport(){
 
     if(navigator.share){
       await navigator.share({
-        title:`Rapport Patrimoine — ${model.dateLabel}`,
+        title:`Rapport Patrimoine — ${model.ownerLabel} — ${model.dateLabel}`,
         text:reportText
       });
       return;
@@ -9261,7 +9555,7 @@ function renderVehicles(){
         :'Entretiens à jour';
     detailsHtml=`<div class="vehicle-alert-list-title"><span>${label} · ${detailRows.length}</span><button type="button" onclick="closeVehicleAlertDetails()">Fermer ×</button></div><div class="vehicle-alert-list">${detailRows.map(renderAlertRow).join('')}</div>`;
   }else if(counts.overdue||counts.soon||counts.ok){
-    detailsHtml='<div class="vehicle-empty" style="padding:8px 4px 2px">Touchez « En retard », « À prévoir » ou « À jour » pour afficher les échéances correspondantes.</div>';
+    detailsHtml='';
   }else{
     detailsHtml='<div class="vehicle-empty">Aucune échéance d’entretien configurée.</div>';
   }
