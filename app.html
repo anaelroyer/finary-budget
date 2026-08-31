@@ -1285,7 +1285,8 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .participation-card{padding:14px;border:1px solid #30363d;border-radius:12px;background:#0d1117;margin-bottom:9px;display:flex;flex-direction:column;gap:11px}
 .participation-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .participation-title{font-size:14px;font-weight:800;color:#fff;line-height:1.35}
-.participation-sub{font-size:12px;color:#c9d1d9;margin-top:4px}
+.participation-sub{font-size:13px;color:#3fb950;font-weight:800;margin-top:5px;line-height:1.45}
+.participation-sub strong{color:inherit;font-weight:900}
 .participation-value{text-align:right;white-space:nowrap}
 .participation-value span{display:block;font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.04em}
 .participation-value strong{display:block;font-size:17px;color:#e6edf3;margin-top:2px}
@@ -6372,7 +6373,7 @@ function renderParticipationRows(cont){
         </div>
         <div class="participation-value">
           <span>Valeur</span>
-          <strong class="${meta.valuationKnown?'':'unvalued'}">${meta.valuationKnown?euro(Number(item[1])||0):'Non valorisée'}</strong>
+          <strong class="${meta.valuationKnown?'':'unvalued'}">${meta.valuationKnown?euro(Number(item[1])||0):'Non valorisé'}</strong>
         </div>
       </div>
 
