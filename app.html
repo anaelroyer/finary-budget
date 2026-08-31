@@ -2186,6 +2186,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app-check.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -2202,7 +2203,12 @@ const firebaseConfig={
   appId:"1:9218166802:web:2df9abb231684f8c9ec8cb"
 };
 
-const firebaseApp=initializeApp(firebaseConfig),
+const firebaseApp=initializeApp(firebaseConfig);
+const firebaseAppCheck=initializeAppCheck(firebaseApp,{
+  provider:new ReCaptchaEnterpriseProvider('6LeH7aEtAAAAAP3fZLxadgp44Nrzy3bIzd9fLIkn'),
+  isTokenAutoRefreshEnabled:true
+});
+const 
       auth=getAuth(firebaseApp),
       db=getFirestore(firebaseApp),
       sharedRef=doc(db,"budget_shared","main_account");

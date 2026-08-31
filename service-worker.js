@@ -1,6 +1,6 @@
 /* Budget & Patrimoine — Service Worker — Security v3
    Cache renforcé des ressources statiques et bibliothèques externes. */
-const CACHE_NAME = 'budget-patrimoine-security-v3-20260831';
+const CACHE_NAME = 'budget-patrimoine-appcheck-v4-20260831';
 
 const APP_SHELL = [
   './app.html',
@@ -19,7 +19,8 @@ const EXTERNAL_PRECACHE = [
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js',
   'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js'
+  'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js',
+  'https://www.gstatic.com/firebasejs/12.1.0/firebase-app-check.js'
 ];
 
 function isCacheableExternal(url) {
