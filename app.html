@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
 <!-- V26.1.90 : fiabilisation globale — plans véhicule, échéances km, logos Fidélité, nettoyage CSS -->
@@ -5588,8 +5589,70 @@ function shouldAutoRefreshStock(meta){
   if(!meta?.isin)return false;
   if(!meta.priceUpdatedAt)return true;
   const t=new Date(meta.priceUpdatedAt).getTime();
-  return !Number.isFinite(t)||(Date.now()-t)>6*60*60*1000;
+  return !Number.isFinite(t)||(Date.now()-t)>60*60*1000;
 }
+
+
+const STOCK_AUTO_REFRESH_INTERVAL_MS=60*60*1000;
+let STOCK_AUTO_REFRESH_LAST_RUN=0;
+let STOCK_AUTO_REFRESH_TIMER=null;
+
+function isStockMarketWeekday(date=new Date()){
+  const day=date.getDay();
+  return day>=1 && day<=5;
+}
+
+async function refreshAllStockPricesHourly({force=false}={}){
+  if(!isStockMarketWeekday())return;
+
+  const indices=(Array.isArray(data.bourse)?data.bourse:[])
+    .map((item,index)=>({item,index}))
+    .filter(({item})=>!isTradeRepublicCashItem(item) && Boolean(String(getStockMeta(item).isin||'').trim()))
+    .map(({index})=>index);
+
+  if(!indices.length)return;
+
+  const now=Date.now();
+  if(!force && STOCK_AUTO_REFRESH_LAST_RUN && (now-STOCK_AUTO_REFRESH_LAST_RUN)<STOCK_AUTO_REFRESH_INTERVAL_MS){
+    return;
+  }
+
+  STOCK_AUTO_REFRESH_LAST_RUN=now;
+
+  try{
+    // Une seule lecture réseau de quotes.json pour toutes les lignes.
+    await loadStockQuotes(true);
+
+    // Puis chaque ligne utilise ce cache fraîchement chargé.
+    for(const index of indices){
+      await refreshStockPrice(index,{silent:true,force:false});
+    }
+  }catch(err){
+    console.warn('Actualisation horaire des cours indisponible :',err);
+  }
+}
+
+function startStockHourlyAutoRefresh(){
+  if(STOCK_AUTO_REFRESH_TIMER)clearInterval(STOCK_AUTO_REFRESH_TIMER);
+
+  // Le rendu initial lit déjà quotes.json.
+  STOCK_AUTO_REFRESH_LAST_RUN=Date.now();
+
+  STOCK_AUTO_REFRESH_TIMER=setInterval(()=>{
+    refreshAllStockPricesHourly({force:false});
+  },STOCK_AUTO_REFRESH_INTERVAL_MS);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  startStockHourlyAutoRefresh();
+});
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden || !isStockMarketWeekday())return;
+  if(!STOCK_AUTO_REFRESH_LAST_RUN || (Date.now()-STOCK_AUTO_REFRESH_LAST_RUN)>=STOCK_AUTO_REFRESH_INTERVAL_MS){
+    refreshAllStockPricesHourly({force:true});
+  }
+});
 
 
 function getStockPerformance(meta){
