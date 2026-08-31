@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- V26.1.83 : montant des bons / avoirs -->
+<!-- V26.1.82 : type des bons — Réduction ou Crédit cagnotte -->
+<!-- V26.1.81 : Bons & avoirs repliables, tri par validité et actions directes -->
+<!-- V26.1.80 : Fidélité — bons & avoirs par carte, date de validité et purge automatique -->
 <!-- V26.1.73 : Fidélité — scan stabilisé (2 lectures), rejet des lectures vides/parasites, nettoyage robuste tous formats -->
 <!-- V26.1.72 : Fidélité — nettoyage global des codes scannés + validations corrigées + Détection auto par défaut -->
 <!-- V26.1.71 : Navigation principale réorganisée en grille 2×3 + balayage Fidélité inclus -->
@@ -590,7 +594,7 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .loyalty-icon-btn.favorite.active{color:#e3b341;border-color:rgba(227,179,65,.45);background:rgba(227,179,65,.08)}
 .loyalty-empty{color:#8b949e;text-align:center;padding:28px 10px;font-size:12px}
 .loyalty-count{color:#8b949e;font-size:11px;font-weight:700}
-.loyalty-display-modal{max-width:430px!important;background:#f6f8fa!important;color:#111!important;border-color:#d0d7de!important}
+.loyalty-display-modal{max-width:430px!important;max-height:92vh;overflow-y:auto;background:#f6f8fa!important;color:#111!important;border-color:#d0d7de!important}
 .loyalty-display-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .loyalty-display-name{font-size:21px;font-weight:900;color:#111;line-height:1.15}
 .loyalty-display-type{margin-top:3px;color:#57606a;font-size:11px;font-weight:700}
@@ -601,6 +605,40 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .loyalty-code-fallback{font-size:12px;color:#57606a;text-align:center;line-height:1.45}
 .loyalty-display-number{text-align:center;color:#111;font-size:17px;font-weight:850;letter-spacing:.7px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .loyalty-display-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.loyalty-benefits{border-top:1px solid #d0d7de;padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.loyalty-benefits-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+.loyalty-benefits-toggle{appearance:none;border:0;background:transparent;padding:4px 2px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;min-width:0;cursor:pointer;color:inherit;font-family:inherit}
+.loyalty-benefits-title{font-size:15px;font-weight:900;color:#111}
+.loyalty-benefits-count{font-size:11px;font-weight:800;color:#57606a}
+.loyalty-benefits-chevron{font-size:18px;line-height:1;color:#57606a;transition:transform .18s ease;flex:0 0 auto}
+.loyalty-benefits-toggle[aria-expanded="true"] .loyalty-benefits-chevron{transform:rotate(180deg)}
+.loyalty-benefits-panel[hidden]{display:none!important}
+.loyalty-benefits-list{display:flex;flex-direction:column;gap:8px}
+.loyalty-benefit-empty{font-size:12px;color:#57606a;background:#fff;border:1px dashed #d0d7de;border-radius:10px;padding:12px;text-align:center}
+.loyalty-benefit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid #d0d7de;border-radius:12px;padding:7px 8px;width:100%}
+.loyalty-benefit-main{appearance:none;border:0;background:transparent;padding:3px;text-align:left;min-width:0;cursor:pointer;font-family:inherit;color:inherit}
+.loyalty-benefit-main:active{transform:scale(.995)}
+.loyalty-benefit-label{display:block;font-size:13px;font-weight:850;color:#111;overflow-wrap:anywhere}
+.loyalty-benefit-label-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.loyalty-benefit-kind{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:850;line-height:1.35;border:1px solid #d0d7de;background:#f6f8fa;color:#57606a;white-space:nowrap}
+.loyalty-benefit-kind.kitty{background:#fff8c5;border-color:#d4a72c;color:#7d4e00}
+.loyalty-benefit-kind.discount{background:#dafbe1;border-color:#4ac26b;color:#116329}
+.loyalty-benefit-amount{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:900;line-height:1.35;border:1px solid #d0d7de;background:#f6f8fa;color:#111;white-space:nowrap}
+.loyalty-benefit-display-kind{display:inline-flex;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:850;border:1px solid #d0d7de;background:#fff;color:#57606a}
+.loyalty-benefit-display-kind.kitty{background:#fff8c5;border-color:#d4a72c;color:#7d4e00}
+.loyalty-benefit-display-kind.discount{background:#dafbe1;border-color:#4ac26b;color:#116329}
+.loyalty-benefit-display-amount{margin-top:7px;font-size:22px;font-weight:950;color:#111;letter-spacing:-.3px}
+.loyalty-benefit-meta{display:block;margin-top:3px;font-size:10px;font-weight:700;color:#57606a}
+.loyalty-benefit-meta.soon{color:#9a6700}
+.loyalty-benefit-actions{display:flex;align-items:center;gap:5px}
+.loyalty-benefit-action{width:34px;height:34px;border:1px solid #d0d7de;border-radius:9px;background:#f6f8fa;color:#57606a;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;font-size:14px}
+.loyalty-benefit-action.delete{color:#cf222e}
+.loyalty-benefit-display-modal{max-width:430px!important;background:#f6f8fa!important;color:#111!important;border-color:#d0d7de!important}
+.loyalty-benefit-display-validity{font-size:12px;font-weight:800;color:#57606a}
+.loyalty-benefit-display-validity.soon{color:#9a6700}
+.loyalty-benefit-display-validity.expired{color:#cf222e}
+.loyalty-benefit-form-note{font-size:11px;color:#8b949e;line-height:1.45}
 .loyalty-scan-video{width:100%;background:#000;border-radius:12px;max-height:58vh;object-fit:cover}
 .loyalty-scan-status{font-size:12px;color:#8b949e;text-align:center;min-height:18px}
 .loyalty-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -11355,6 +11393,21 @@ if(window.visualViewport){
     </div>
     <div id="loyaltyCodeStage" class="loyalty-code-stage"></div>
     <div id="loyaltyDisplayNumber" class="loyalty-display-number"></div>
+    <div class="loyalty-benefits">
+      <div class="loyalty-benefits-head">
+        <button id="loyaltyBenefitsToggle" class="loyalty-benefits-toggle" type="button" aria-expanded="false" onclick="toggleLoyaltyBenefits()">
+          <span>
+            <span class="loyalty-benefits-title">🎟️ Bons & avoirs</span>
+            <span id="loyaltyBenefitsCount" class="loyalty-benefits-count">0 élément</span>
+          </span>
+          <span class="loyalty-benefits-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <button class="btn btn-primary" type="button" onclick="openLoyaltyBenefitModal()" style="padding:7px 10px;font-size:11px">+ Ajouter</button>
+      </div>
+      <div id="loyaltyBenefitsPanel" class="loyalty-benefits-panel" hidden>
+        <div id="loyaltyBenefitsList" class="loyalty-benefits-list"></div>
+      </div>
+    </div>
     <div class="loyalty-display-actions">
       <button class="btn btn-secondary" type="button" onclick="editDisplayedLoyaltyCard()">✎ Modifier</button>
       <button class="btn btn-secondary" type="button" onclick="deleteDisplayedLoyaltyCard()" style="color:#cf222e">🗑️ Supprimer</button>
@@ -11362,9 +11415,82 @@ if(window.visualViewport){
   </div>
 </div>
 
+
+<div class="modal-overlay" id="loyaltyBenefitModal" onclick="if(event.target===this)closeLoyaltyBenefitModal()">
+  <div class="modal" style="max-width:430px;max-height:92vh;overflow-y:auto">
+    <h3 id="loyaltyBenefitModalTitle">Ajouter un bon / avoir</h3>
+    <div class="loyalty-form-grid">
+      <div class="modal-field full">
+        <label>Libellé</label>
+        <input id="loyaltyBenefitLabelInput" type="text" placeholder="Ex. Bon de 10 €, Avoir retour..." autocomplete="off">
+      </div>
+      <div class="modal-field full">
+        <label>Type d’avantage</label>
+        <select id="loyaltyBenefitKindInput" class="invoice-select">
+          <option value="discount" selected>🏷️ Réduction</option>
+          <option value="kitty">💰 Crédit cagnotte</option>
+        </select>
+      </div>
+      <div class="modal-field full">
+        <label>Montant (€)</label>
+        <input id="loyaltyBenefitAmountInput" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex. 10,00">
+      </div>
+      <div class="modal-field full">
+        <label>Date de validité</label>
+        <input id="loyaltyBenefitValidUntilInput" type="date">
+      </div>
+      <div class="modal-field full">
+        <label>Numéro / contenu du code</label>
+        <input id="loyaltyBenefitCodeInput" type="text" placeholder="Numéro du bon ou de l’avoir" autocomplete="off" inputmode="text">
+      </div>
+      <div class="modal-field">
+        <label>Type de code</label>
+        <select id="loyaltyBenefitFormatInput" class="invoice-select">
+          <option value="" selected>Détection auto / choisir</option>
+          <option value="CODE128">Code 128</option>
+          <option value="EAN13">EAN-13</option>
+          <option value="EAN8">EAN-8</option>
+          <option value="CODE39">Code 39</option>
+          <option value="ITF14">ITF-14</option>
+          <option value="QR">QR Code</option>
+        </select>
+      </div>
+      <div class="modal-field" style="justify-content:flex-end">
+        <button class="btn btn-secondary" type="button" onclick="startLoyaltyScanner('benefit')">📷 Scanner le code</button>
+      </div>
+    </div>
+    <div class="loyalty-benefit-form-note">Le bon reste valable toute la journée indiquée. Il sera supprimé automatiquement à partir du lendemain.</div>
+    <div id="loyaltyBenefitFormMessage" class="auth-message"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" type="button" onclick="closeLoyaltyBenefitModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" type="button" onclick="saveLoyaltyBenefit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="loyaltyBenefitDisplayModal" onclick="if(event.target===this)closeLoyaltyBenefitDisplayModal()">
+  <div class="modal loyalty-benefit-display-modal">
+    <div class="loyalty-display-head">
+      <div>
+        <div id="loyaltyBenefitDisplayLabel" class="loyalty-display-name">Bon / avoir</div>
+        <div id="loyaltyBenefitDisplayKind" class="loyalty-benefit-display-kind discount">Réduction</div>
+        <div id="loyaltyBenefitDisplayAmount" class="loyalty-benefit-display-amount"></div>
+        <div id="loyaltyBenefitDisplayValidity" class="loyalty-benefit-display-validity"></div>
+      </div>
+      <button class="loyalty-icon-btn" type="button" onclick="closeLoyaltyBenefitDisplayModal()" aria-label="Fermer">✕</button>
+    </div>
+    <div id="loyaltyBenefitCodeStage" class="loyalty-code-stage"></div>
+    <div id="loyaltyBenefitDisplayNumber" class="loyalty-display-number"></div>
+    <div class="loyalty-display-actions">
+      <button class="btn btn-secondary" type="button" onclick="editDisplayedLoyaltyBenefit()">✎ Modifier</button>
+      <button class="btn btn-secondary" type="button" onclick="deleteDisplayedLoyaltyBenefit()" style="color:#cf222e">🗑️ Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="loyaltyScanModal" onclick="if(event.target===this)stopLoyaltyScanner()">
   <div class="modal" style="max-width:440px">
-    <h3>📷 Scanner la carte</h3>
+    <h3 id="loyaltyScanTitle">📷 Scanner la carte</h3>
     <video id="loyaltyScanVideo" class="loyalty-scan-video" playsinline muted></video>
     <div id="loyaltyScanStatus" class="loyalty-scan-status">Place le code-barres ou QR code face à la caméra.</div>
     <button class="btn btn-secondary" type="button" onclick="stopLoyaltyScanner()">Fermer</button>
@@ -11436,9 +11562,22 @@ let loyaltyScanTimer=null;
 let loyaltyBarcodeDetector=null;
 let loyaltyScanCandidateKey='';
 let loyaltyScanCandidateCount=0;
+let loyaltyScanTarget='card';
+let activeLoyaltyBenefitEditId='';
+let displayedLoyaltyBenefitId='';
+let loyaltyBenefitsExpanded=false;
 
 function loyaltyEnsureData(){
   if(!Array.isArray(data.loyaltyCards))data.loyaltyCards=[];
+  data.loyaltyCards.forEach(card=>{
+    if(!card || typeof card!=='object')return;
+    if(!Array.isArray(card.benefits))card.benefits=[];
+    card.benefits.forEach(benefit=>{
+      if(!benefit || typeof benefit!=='object')return;
+      if(!['discount','kitty'].includes(String(benefit.kind||'').toLowerCase()))benefit.kind='discount';
+      if(benefit.amount!==undefined && benefit.amount!==null && benefit.amount!=='')benefit.amount=loyaltyBenefitAmount(benefit.amount);
+    });
+  });
 }
 
 function loyaltyKnownFormat(value){
@@ -11575,6 +11714,260 @@ function renderLoyaltyBrandMark(elementId,name=''){
   }
 }
 
+
+function loyaltyBenefitKind(value='discount'){
+  return String(value||'').toLowerCase()==='kitty'?'kitty':'discount';
+}
+
+function loyaltyBenefitKindLabel(value='discount'){
+  return loyaltyBenefitKind(value)==='kitty'?'Crédit cagnotte':'Réduction';
+}
+
+function loyaltyBenefitKindIcon(value='discount'){
+  return loyaltyBenefitKind(value)==='kitty'?'💰':'🏷️';
+}
+
+function loyaltyBenefitAmount(value){
+  const normalized=typeof value==='string' ? value.replace(',','.') : value;
+  const n=Number(normalized);
+  return Number.isFinite(n) && n>0 ? Math.round(n*100)/100 : 0;
+}
+
+function loyaltyBenefitAmountLabel(value){
+  const amount=loyaltyBenefitAmount(value);
+  return amount>0 ? euro(amount) : '';
+}
+
+function loyaltyTodayKey(){
+  const d=new Date();
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function loyaltyValidDateKey(value=''){
+  const raw=String(value||'').slice(0,10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw)?raw:'';
+}
+
+function loyaltyFormatCalendarDate(value=''){
+  const key=loyaltyValidDateKey(value);
+  if(!key)return 'Date non renseignée';
+  const [y,m,d]=key.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function loyaltyDaysUntil(value=''){
+  const key=loyaltyValidDateKey(value);
+  if(!key)return null;
+  const [y,m,d]=key.split('-').map(Number);
+  const now=new Date();
+  const today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+  const target=Date.UTC(y,m-1,d);
+  return Math.round((target-today)/86400000);
+}
+
+function loyaltyPurgeExpiredBenefits(persist=true){
+  loyaltyEnsureData();
+  const today=loyaltyTodayKey();
+  let removed=0;
+  data.loyaltyCards.forEach(card=>{
+    const before=card.benefits.length;
+    card.benefits=card.benefits.filter(benefit=>{
+      const until=loyaltyValidDateKey(benefit?.validUntil);
+      return !until || until>=today;
+    });
+    removed+=before-card.benefits.length;
+  });
+  if(removed && persist){
+    save();
+    if(displayedLoyaltyId)renderLoyaltyBenefits();
+  }
+  return removed;
+}
+
+function setLoyaltyBenefitFormMessage(text='',type=''){
+  const el=document.getElementById('loyaltyBenefitFormMessage');
+  if(!el)return;
+  el.textContent=text;
+  el.className='auth-message'+(type?' '+type:'');
+}
+
+function getDisplayedLoyaltyCard(){
+  loyaltyEnsureData();
+  return data.loyaltyCards.find(card=>String(card.id)===String(displayedLoyaltyId))||null;
+}
+
+function getLoyaltyBenefit(card,id){
+  if(!card || !Array.isArray(card.benefits))return null;
+  return card.benefits.find(benefit=>String(benefit.id)===String(id))||null;
+}
+
+function updateLoyaltyBenefitsPanel(){
+  const toggle=document.getElementById('loyaltyBenefitsToggle');
+  const panel=document.getElementById('loyaltyBenefitsPanel');
+  if(toggle)toggle.setAttribute('aria-expanded',loyaltyBenefitsExpanded?'true':'false');
+  if(panel)panel.hidden=!loyaltyBenefitsExpanded;
+}
+
+function toggleLoyaltyBenefits(force){
+  loyaltyBenefitsExpanded=typeof force==='boolean' ? force : !loyaltyBenefitsExpanded;
+  updateLoyaltyBenefitsPanel();
+}
+
+function renderLoyaltyBenefits(){
+  const card=getDisplayedLoyaltyCard();
+  const root=document.getElementById('loyaltyBenefitsList');
+  const count=document.getElementById('loyaltyBenefitsCount');
+  if(!root||!count)return;
+  updateLoyaltyBenefitsPanel();
+  if(!card){root.innerHTML='';count.textContent='0 élément';return;}
+  const benefits=card.benefits.slice().sort((a,b)=>String(a.validUntil||'9999-12-31').localeCompare(String(b.validUntil||'9999-12-31')) || String(a.label||'').localeCompare(String(b.label||''),'fr',{sensitivity:'base'}));
+  count.textContent=`${benefits.length} élément${benefits.length>1?'s':''}`;
+  if(!benefits.length){
+    root.innerHTML='<div class="loyalty-benefit-empty">Aucun bon de réduction ou avoir en cours.</div>';
+    return;
+  }
+  root.innerHTML=benefits.map(benefit=>{
+    const days=loyaltyDaysUntil(benefit.validUntil);
+    const soon=days!==null && days<=7;
+    let suffix='';
+    if(days===0)suffix=' · expire aujourd’hui';
+    else if(days===1)suffix=' · expire demain';
+    else if(days!==null && days>1 && days<=7)suffix=` · ${days} jours restants`;
+    const id=loyaltyEscape(benefit.id);
+    return `<div class="loyalty-benefit-row">
+      <button class="loyalty-benefit-main" type="button" onclick="openLoyaltyBenefitDisplay('${id}')">
+        <span class="loyalty-benefit-label-line">
+          <span class="loyalty-benefit-label">${loyaltyEscape(benefit.label||'Bon / avoir')}</span>
+          <span class="loyalty-benefit-kind ${loyaltyBenefitKind(benefit.kind)}">${loyaltyBenefitKindIcon(benefit.kind)} ${loyaltyEscape(loyaltyBenefitKindLabel(benefit.kind))}</span>
+          ${loyaltyBenefitAmount(benefit.amount)>0?`<span class="loyalty-benefit-amount">${loyaltyEscape(loyaltyBenefitAmountLabel(benefit.amount))}</span>`:''}
+        </span>
+        <span class="loyalty-benefit-meta${soon?' soon':''}">Valable jusqu’au ${loyaltyEscape(loyaltyFormatCalendarDate(benefit.validUntil))}${loyaltyEscape(suffix)}</span>
+      </button>
+      <div class="loyalty-benefit-actions">
+        <button class="loyalty-benefit-action" type="button" title="Modifier" aria-label="Modifier ${loyaltyEscape(benefit.label||'le bon')}" onclick="openLoyaltyBenefitModal('${id}')">✎</button>
+        <button class="loyalty-benefit-action delete" type="button" title="Supprimer" aria-label="Supprimer ${loyaltyEscape(benefit.label||'le bon')}" onclick="deleteLoyaltyBenefit('${id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openLoyaltyBenefitModal(id=''){
+  const card=getDisplayedLoyaltyCard();
+  if(!card)return;
+  loyaltyBenefitsExpanded=true;
+  updateLoyaltyBenefitsPanel();
+  activeLoyaltyBenefitEditId=String(id||'');
+  const benefit=getLoyaltyBenefit(card,activeLoyaltyBenefitEditId);
+  document.getElementById('loyaltyBenefitModalTitle').textContent=benefit?'Modifier le bon / avoir':'Ajouter un bon / avoir';
+  document.getElementById('loyaltyBenefitLabelInput').value=benefit?.label||'';
+  document.getElementById('loyaltyBenefitKindInput').value=loyaltyBenefitKind(benefit?.kind||'discount');
+  document.getElementById('loyaltyBenefitAmountInput').value=loyaltyBenefitAmount(benefit?.amount)||'';
+  document.getElementById('loyaltyBenefitValidUntilInput').value=loyaltyValidDateKey(benefit?.validUntil)||'';
+  document.getElementById('loyaltyBenefitCodeInput').value=benefit?.code||'';
+  const formatInput=document.getElementById('loyaltyBenefitFormatInput');
+  if(formatInput){
+    if(benefit)formatInput.value=loyaltyNormalizeFormat(benefit.format||'CODE128');
+    else{formatInput.selectedIndex=0;formatInput.value='';}
+  }
+  setLoyaltyBenefitFormMessage('');
+  document.getElementById('loyaltyBenefitModal').classList.add('active');
+  setTimeout(()=>document.getElementById('loyaltyBenefitLabelInput')?.focus(),100);
+}
+
+function closeLoyaltyBenefitModal(){
+  document.getElementById('loyaltyBenefitModal')?.classList.remove('active');
+  activeLoyaltyBenefitEditId='';
+  setLoyaltyBenefitFormMessage('');
+}
+
+function saveLoyaltyBenefit(){
+  const card=getDisplayedLoyaltyCard();
+  if(!card)return;
+  const label=String(document.getElementById('loyaltyBenefitLabelInput')?.value||'').trim();
+  const kind=loyaltyBenefitKind(document.getElementById('loyaltyBenefitKindInput')?.value||'discount');
+  const amount=loyaltyBenefitAmount(document.getElementById('loyaltyBenefitAmountInput')?.value||'');
+  const validUntil=loyaltyValidDateKey(document.getElementById('loyaltyBenefitValidUntilInput')?.value||'');
+  const format=String(document.getElementById('loyaltyBenefitFormatInput')?.value||'').toUpperCase();
+  const code=loyaltyCleanCode(document.getElementById('loyaltyBenefitCodeInput')?.value||'',format);
+  if(!label){setLoyaltyBenefitFormMessage('Renseigne un libellé clair.','error');return;}
+  if(!(amount>0)){setLoyaltyBenefitFormMessage('Renseigne le montant du bon / avoir.','error');return;}
+  if(!validUntil){setLoyaltyBenefitFormMessage('Renseigne la date de validité.','error');return;}
+  if(validUntil<loyaltyTodayKey()){setLoyaltyBenefitFormMessage('Cette date est déjà dépassée.','error');return;}
+  if(!loyaltyKnownFormat(format)){setLoyaltyBenefitFormMessage('Choisis le type de code. Le scanner le sélectionne automatiquement lorsqu’il le reconnaît.','error');return;}
+  const validation=loyaltyValidate(code,format);
+  if(validation){setLoyaltyBenefitFormMessage(validation,'error');return;}
+  if(activeLoyaltyBenefitEditId){
+    const benefit=getLoyaltyBenefit(card,activeLoyaltyBenefitEditId);
+    if(benefit)Object.assign(benefit,{label,kind,amount,validUntil,code,format,updatedAt:new Date().toISOString()});
+  }else{
+    card.benefits.push({id:makeLocalId('benefit'),label,kind,amount,validUntil,code,format,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  }
+  card.updatedAt=new Date().toISOString();
+  save();
+  closeLoyaltyBenefitModal();
+  renderLoyaltyBenefits();
+}
+
+function openLoyaltyBenefitDisplay(id){
+  const card=getDisplayedLoyaltyCard();
+  const benefit=getLoyaltyBenefit(card,id);
+  if(!benefit)return;
+  displayedLoyaltyBenefitId=String(benefit.id);
+  document.getElementById('loyaltyBenefitDisplayLabel').textContent=benefit.label||'Bon / avoir';
+  const kind=loyaltyBenefitKind(benefit.kind);
+  const kindEl=document.getElementById('loyaltyBenefitDisplayKind');
+  if(kindEl){
+    kindEl.className='loyalty-benefit-display-kind '+kind;
+    kindEl.textContent=`${loyaltyBenefitKindIcon(kind)} ${loyaltyBenefitKindLabel(kind)}`;
+  }
+  const amountEl=document.getElementById('loyaltyBenefitDisplayAmount');
+  if(amountEl){
+    const amountText=loyaltyBenefitAmountLabel(benefit.amount);
+    amountEl.textContent=amountText ? amountText : 'Montant non renseigné';
+  }
+  const days=loyaltyDaysUntil(benefit.validUntil);
+  const validity=document.getElementById('loyaltyBenefitDisplayValidity');
+  if(validity){
+    validity.className='loyalty-benefit-display-validity'+(days!==null&&days<=7?' soon':'');
+    validity.textContent=`Valable jusqu’au ${loyaltyFormatCalendarDate(benefit.validUntil)}${days===0?' · expire aujourd’hui':days===1?' · expire demain':''}`;
+  }
+  document.getElementById('loyaltyBenefitDisplayNumber').textContent=benefit.code||'';
+  document.getElementById('loyaltyBenefitDisplayModal').classList.add('active');
+  renderLoyaltyCodeInto('loyaltyBenefitCodeStage',benefit);
+}
+
+function closeLoyaltyBenefitDisplayModal(){
+  document.getElementById('loyaltyBenefitDisplayModal')?.classList.remove('active');
+  displayedLoyaltyBenefitId='';
+  const stage=document.getElementById('loyaltyBenefitCodeStage');
+  if(stage)stage.innerHTML='';
+}
+
+function editDisplayedLoyaltyBenefit(){
+  const id=displayedLoyaltyBenefitId;
+  closeLoyaltyBenefitDisplayModal();
+  if(id)openLoyaltyBenefitModal(id);
+}
+
+function deleteLoyaltyBenefit(id){
+  const card=getDisplayedLoyaltyCard();
+  const benefit=getLoyaltyBenefit(card,id);
+  if(!card||!benefit)return;
+  if(!confirm(`Supprimer « ${benefit.label||'Bon / avoir'} » ?`))return;
+  card.benefits=card.benefits.filter(item=>String(item.id)!==String(benefit.id));
+  card.updatedAt=new Date().toISOString();
+  save();
+  if(String(displayedLoyaltyBenefitId)===String(benefit.id))closeLoyaltyBenefitDisplayModal();
+  renderLoyaltyBenefits();
+}
+
+function deleteDisplayedLoyaltyBenefit(){
+  if(displayedLoyaltyBenefitId)deleteLoyaltyBenefit(displayedLoyaltyBenefitId);
+}
+
 function clearLoyaltySearch(){
   const input=document.getElementById('loyaltySearchInput');
   if(input)input.value='';
@@ -11584,6 +11977,7 @@ function clearLoyaltySearch(){
 
 function renderLoyaltyCards(){
   loyaltyEnsureData();
+  loyaltyPurgeExpiredBenefits(true);
   const root=document.getElementById('loyaltyCards');
   if(!root)return;
   const q=String(document.getElementById('loyaltySearchInput')?.value||'').trim().toLocaleLowerCase('fr');
@@ -11714,20 +12108,26 @@ function toggleLoyaltyFavorite(id){
 
 function openLoyaltyDisplay(id){
   loyaltyEnsureData();
+  loyaltyPurgeExpiredBenefits(true);
   const card=data.loyaltyCards.find(c=>String(c.id)===String(id));
   if(!card)return;
   displayedLoyaltyId=String(card.id);
+  loyaltyBenefitsExpanded=false;
+  updateLoyaltyBenefitsPanel();
   renderLoyaltyBrandMark('loyaltyDisplayBrandMark',card.name||'Carte');
   document.getElementById('loyaltyDisplayName').textContent=card.name||'Carte';
   document.getElementById('loyaltyDisplayType').textContent=loyaltyFormatLabel(card.format);
   document.getElementById('loyaltyDisplayNumber').textContent=card.code||'';
   document.getElementById('loyaltyDisplayModal').classList.add('active');
   renderLoyaltyCode(card);
+  renderLoyaltyBenefits();
 }
 
 function closeLoyaltyDisplayModal(){
   document.getElementById('loyaltyDisplayModal')?.classList.remove('active');
   displayedLoyaltyId='';
+  loyaltyBenefitsExpanded=false;
+  updateLoyaltyBenefitsPanel();
   const stage=document.getElementById('loyaltyCodeStage');
   if(stage)stage.innerHTML='';
   const mark=document.getElementById('loyaltyDisplayBrandMark');
@@ -11739,12 +12139,12 @@ function closeLoyaltyDisplayModal(){
   }
 }
 
-function renderLoyaltyCode(card){
-  const stage=document.getElementById('loyaltyCodeStage');
+function renderLoyaltyCodeInto(stageId,item){
+  const stage=document.getElementById(stageId);
   if(!stage)return;
   stage.innerHTML='';
-  const format=loyaltyNormalizeFormat(card?.format);
-  const code=String(card?.code||'');
+  const format=loyaltyNormalizeFormat(item?.format);
+  const code=String(item?.code||'');
   try{
     if(format==='QR'){
       if(typeof QRCode!=='function')throw new Error('Bibliothèque QR indisponible');
@@ -11761,6 +12161,10 @@ function renderLoyaltyCode(card){
     console.error(err);
     stage.innerHTML='<div class="loyalty-code-fallback">Le code graphique ne peut pas être affiché pour le moment.<br>Le numéro reste disponible ci-dessous.</div>';
   }
+}
+
+function renderLoyaltyCode(card){
+  renderLoyaltyCodeInto('loyaltyCodeStage',card);
 }
 
 function editDisplayedLoyaltyCard(){
@@ -11797,8 +12201,11 @@ function loyaltyDetectedFormat(format='',rawValue=''){
   return '';
 }
 
-async function startLoyaltyScanner(){
+async function startLoyaltyScanner(target='card'){
   const status=document.getElementById('loyaltyScanStatus');
+  loyaltyScanTarget=target==='benefit'?'benefit':'card';
+  const scanTitle=document.getElementById('loyaltyScanTitle');
+  if(scanTitle)scanTitle.textContent=loyaltyScanTarget==='benefit'?'📷 Scanner le bon / avoir':'📷 Scanner la carte';
   loyaltyScanCandidateKey='';
   loyaltyScanCandidateCount=0;
   if(!('BarcodeDetector' in window)){
@@ -11861,8 +12268,10 @@ async function loyaltyScanTick(){
         }else{
           const format=found.format;
           const value=found.value;
-          const codeInput=document.getElementById('loyaltyCodeInput');
-          const formatInput=document.getElementById('loyaltyFormatInput');
+          const targetIsBenefit=loyaltyScanTarget==='benefit';
+          const codeInput=document.getElementById(targetIsBenefit?'loyaltyBenefitCodeInput':'loyaltyCodeInput');
+          const formatInput=document.getElementById(targetIsBenefit?'loyaltyBenefitFormatInput':'loyaltyFormatInput');
+          const message=(text,type)=>targetIsBenefit?setLoyaltyBenefitFormMessage(text,type):setLoyaltyFormMessage(text,type);
           if(codeInput)codeInput.value=value;
           if(formatInput)formatInput.value=format;
           stopLoyaltyScanner();
@@ -11871,12 +12280,12 @@ async function loyaltyScanTick(){
             const validation=loyaltyValidate(value,format);
             if(validation){
               if(formatInput)formatInput.value='';
-              setLoyaltyFormMessage(`Code lu (${loyaltyFormatLabel(format)}), mais contenu incohérent : ${validation} Choisis le type manuellement si nécessaire.`,'error');
+              message(`Code lu (${loyaltyFormatLabel(format)}), mais contenu incohérent : ${validation} Choisis le type manuellement si nécessaire.`,'error');
             }else{
-              setLoyaltyFormMessage(`Code détecté · ${loyaltyFormatLabel(format)} · ${value.length} caractère${value.length>1?'s':''}`,'success');
+              message(`Code détecté · ${loyaltyFormatLabel(format)} · ${value.length} caractère${value.length>1?'s':''}`,'success');
             }
           }else{
-            setLoyaltyFormMessage('Code lu, mais format non reconnu. Le contenu a bien été récupéré ; choisis seulement le type de code avant d’enregistrer.','error');
+            message('Code lu, mais format non reconnu. Le contenu a bien été récupéré ; choisis seulement le type de code avant d’enregistrer.','error');
           }
           return;
         }
@@ -11900,8 +12309,21 @@ function stopLoyaltyScanner(){
   const video=document.getElementById('loyaltyScanVideo');
   if(video){video.pause();video.srcObject=null;}
   loyaltyBarcodeDetector=null;
+  loyaltyScanTarget='card';
   document.getElementById('loyaltyScanModal')?.classList.remove('active');
 }
+
+// Purge des bons/avoirs expirés au démarrage, au retour dans l'application
+// et périodiquement si l'application reste ouverte au changement de date.
+window.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{try{loyaltyPurgeExpiredBenefits(true);}catch(_e){}},2500);
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    try{loyaltyPurgeExpiredBenefits(true);}catch(_e){}
+  }
+});
+setInterval(()=>{try{loyaltyPurgeExpiredBenefits(true);}catch(_e){}},300000);
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
