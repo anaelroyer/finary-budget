@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V26.1.95 : Confidentialité — suppression du nom de l’auteur dans les pieds de page -->
+<!-- V26.1.96 : Confidentialité — profils Patrimoine anonymisés dans le code, libellés privés stockés dans Firebase -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
@@ -18,7 +18,7 @@
 <!-- V26.1.71 : Navigation principale réorganisée en grille 2×3 + balayage Fidélité inclus -->
 <!-- V26.1.70 : Fidélité — détection de format stricte, aucun fallback silencieux vers Code 128 -->
 <!-- V26.1.68 : rapport Patrimoine — lignes PEA avant CTO -->
-<!-- V26.1.67 : compteur fiscal assurance-vie Louane / Aëdan -->
+<!-- V26.1.67 : compteur fiscal assurance-vie des profils enfants -->
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
@@ -2175,9 +2175,10 @@ window.updateTradeRepublicSyncUI=function(){
   const statusEl=document.getElementById('tradeRepublicSyncStatus');
   if(!btn||!statusEl)return;
 
-  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)?activePatrimoineOwner:'couple';
+  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)?activePatrimoineOwner:'household';
   const state=window.tradeRepublicSyncRequestState||null;
-  const stateOwner=String(state?.owner||'couple');
+  const rawStateOwner=String(state?.owner||'household');
+  const stateOwner=data?.profileLegacyMap?.[rawStateOwner]||rawStateOwner;
   const ownerState=state && stateOwner===owner ? state : null;
   const status=String(ownerState?.status||'').toLowerCase();
   btn.disabled=status==='pending'||status==='processing';
@@ -2225,8 +2226,8 @@ window.requestTradeRepublicSync=async function(){
     return;
   }
 
-  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)?activePatrimoineOwner:'couple';
-  if(!['couple','ewan'].includes(owner)){
+  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)?activePatrimoineOwner:'household';
+  if(!isTradeRepublicOwner(owner)){
     alert('Aucun compte Trade Republic n’est configuré pour ce profil.');
     return;
   }
@@ -2476,6 +2477,7 @@ function createEmptyBetaData(){
     vehicleMaintenance:[],
     menus:{cycleStart:'',weeks:{},dishStats:{},lastArchivedCycle:'',shopping:{}},
     allocationTargets:{},
+    profileLabels:{},
     archives:[],
     recurringBudgetIgnored:[],
     shoppingAisleLearning:{}
@@ -2483,139 +2485,195 @@ function createEmptyBetaData(){
 }
 
 const PATRIMOINE_OWNERS=[
-  {id:'couple',label:'Anaël et Laurène'},
-  {id:'ewan',label:'Ewan'},
-  {id:'louane',label:'Louane'},
-  {id:'aedan',label:'Aëdan'}
+  {id:'household',defaultLabel:'Foyer'},
+  {id:'profile1',defaultLabel:'Profil 1'},
+  {id:'profile2',defaultLabel:'Profil 2'},
+  {id:'profile3',defaultLabel:'Profil 3'}
 ];
-let activePatrimoineOwner='couple';
+const PATRIMOINE_OWNER_IDS=PATRIMOINE_OWNERS.map(o=>o.id);
+let activePatrimoineOwner='household';
 
+function ensurePatrimoineProfileLabels(){
+  if(!data||typeof data!=='object')return;
+  if(!data.profileLabels||typeof data.profileLabels!=='object'||Array.isArray(data.profileLabels))data.profileLabels={};
+  PATRIMOINE_OWNERS.forEach(o=>{
+    const current=String(data.profileLabels[o.id]||'').trim();
+    if(!current)data.profileLabels[o.id]=o.defaultLabel;
+  });
+}
 function getPatrimoineOwnerLabel(owner=activePatrimoineOwner){
-  return PATRIMOINE_OWNERS.find(o=>o.id===owner)?.label||'Anaël et Laurène';
+  const def=PATRIMOINE_OWNERS.find(o=>o.id===owner)||PATRIMOINE_OWNERS[0];
+  const stored=String(data?.profileLabels?.[def.id]||'').trim();
+  return stored||def.defaultLabel;
 }
 function getItemOwner(item,key=''){
   const meta=item&&typeof item[2]==='object'&&item[2]!==null?item[2]:{};
-  return PATRIMOINE_OWNERS.some(o=>o.id===meta.owner)?meta.owner:'couple';
+  return PATRIMOINE_OWNER_IDS.includes(meta.owner)?meta.owner:'household';
 }
 function getOwnedItems(key,owner=activePatrimoineOwner){
   return (data[key]||[]).filter(item=>getItemOwner(item,key)===owner);
 }
-
-// Migration unique : les assurances-vie déjà nommées Louane / Aëdan
-// sont rattachées automatiquement à leur espace personnel.
-function migrateChildInsuranceLifeOwners(){
-  if(!data || data._childInsuranceLifeOwnersMigratedV1===true)return false;
-  let changed=false;
-  (data.assurancevie||[]).forEach(item=>{
-    if(!Array.isArray(item))return;
-    const label=String(item[0]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-    let owner='';
-    if(label.includes('louane'))owner='louane';
-    else if(label.includes('aedan'))owner='aedan';
-    if(!owner)return;
-    const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?{...item[2]}:{};
-    if(meta.owner!==owner){
-      meta.owner=owner;
-      item[2]=meta;
-      changed=true;
-    }
-  });
-  data._childInsuranceLifeOwnersMigratedV1=true;
-  return true;
+function isTradeRepublicOwner(owner){
+  return owner==='household'||owner==='profile1';
 }
-
-// V26.1.62 — correction du nom commercial des contrats enfants.
-// Le rattachement à Louane / Aëdan repose uniquement sur meta.owner :
-// la synchronisation Linxea actualise donc les valeurs sans jamais dépendre du titre.
-function migrateChildInsuranceLifeLabels(){
-  if(!data || data._childInsuranceLifeLabelsMigratedV3===true)return false;
-  let changed=false;
-  (data.assurancevie||[]).forEach(item=>{
-    if(!Array.isArray(item))return;
-    const owner=getItemOwner(item,'assurancevie');
-    if(!['louane','aedan'].includes(owner))return;
-    if(String(item[0]||'')!=='Linxea Avenir 2'){
-      item[0]='Linxea Avenir 2';
-      changed=true;
-    }
-  });
-  data._childInsuranceLifeLabelsMigratedV3=true;
-  return changed;
+function isLinxeaProfile(owner){
+  return owner==='profile2'||owner==='profile3';
 }
-
-// Migration Trade Republic d'Ewan.
-// Le compte courant TR appartient désormais à la rubrique Bourse, séparé du PEA/CTO.
 function isTradeRepublicCashItem(item){
   if(!Array.isArray(item))return false;
   const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
   return meta.tradeRepublicCash===true;
 }
+function renamePatrimoineProfiles(){
+  ensurePatrimoineProfileLabels();
+  const next={...data.profileLabels};
+  for(const o of PATRIMOINE_OWNERS){
+    const current=getPatrimoineOwnerLabel(o.id);
+    const value=prompt(`Nom affiché pour ${o.defaultLabel} :`,current);
+    if(value===null)return;
+    const clean=String(value).trim();
+    if(clean)next[o.id]=clean;
+  }
+  data.profileLabels=next;
+  render();
+  save();
+}
 
-function migrateEwanTradeRepublicAssets(){
-  if(!data)return false;
-  if(!Array.isArray(data.bourse))data.bourse=[];
-  if(!Array.isArray(data.epargne))data.epargne=[];
+function inferLegacyProfileIdMap(){
+  const neutral=new Set(PATRIMOINE_OWNER_IDS);
+  const seen=[];
+  const counts=new Map();
+  const addOwner=value=>{
+    const id=String(value||'').trim();
+    if(!id||neutral.has(id))return;
+    if(!seen.includes(id))seen.push(id);
+    counts.set(id,(counts.get(id)||0)+1);
+  };
+  const assetKeys=['immobilier','epargne','assurancevie','scpi','bourse','crypto','per','crowdfunding','privateequity','metaux','partssociales','collection','vehicules','autres','dettes'];
+  assetKeys.forEach(key=>(data?.[key]||[]).forEach(item=>{
+    if(!Array.isArray(item))return;
+    const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
+    addOwner(meta.owner);
+  }));
+  Object.keys(data?.peaOpeningDates||{}).forEach(addOwner);
+  (patrimoineHistory||[]).forEach(h=>addOwner(h?.owner));
+
+  const ownerOf=item=>{
+    if(!Array.isArray(item))return '';
+    const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
+    const id=String(meta.owner||'').trim();
+    return id&&!neutral.has(id)?id:'';
+  };
+
+  let household='';
+  let profile1='';
+  for(const item of (data?.bourse||[])){
+    const id=ownerOf(item); if(!id)continue;
+    const meta=item[2]||{};
+    const account=String(meta.account||'').toUpperCase();
+    const isin=String(meta.isin||'').toUpperCase();
+    if(!household && (account==='CTO'||isin==='IE00B4ND3602'))household=id;
+    if(!profile1 && (meta.tradeRepublicCash===true||isin==='FR0011550193'))profile1=id;
+  }
+
+  const child=[];
+  for(const item of (data?.assurancevie||[])){
+    const id=ownerOf(item);
+    if(id && id!==household && id!==profile1 && !child.includes(id))child.push(id);
+  }
+
+  if(!household){
+    const candidates=seen.filter(id=>id!==profile1&&!child.includes(id));
+    candidates.sort((a,b)=>(counts.get(b)||0)-(counts.get(a)||0));
+    household=candidates[0]||'';
+  }
+
+  const used=new Set([household,profile1,...child].filter(Boolean));
+  const remaining=seen.filter(id=>!used.has(id));
+  if(!profile1)profile1=remaining.shift()||'';
+  while(child.length<2 && remaining.length)child.push(remaining.shift());
+
+  const map={};
+  if(household)map[household]='household';
+  if(profile1)map[profile1]='profile1';
+  if(child[0])map[child[0]]='profile2';
+  if(child[1])map[child[1]]='profile3';
+  return map;
+}
+
+function migratePatrimoineProfileIdsV1(){
+  if(!data||typeof data!=='object')return false;
   let changed=false;
+  let map=(data.profileLegacyMap&&typeof data.profileLegacyMap==='object'&&!Array.isArray(data.profileLegacyMap))
+    ? {...data.profileLegacyMap}
+    : inferLegacyProfileIdMap();
 
-  const wanted=[
-    {isin:'IE0002XZSHO1',label:'iShares MSCI World Swap PEA'},
-    {isin:'FR0013412020',label:'Amundi PEA Emergent'},
-    {isin:'FR0011550193',label:'BNP Paribas Easy STOXX Europe 600'}
-  ];
+  Object.keys(map).forEach(k=>{
+    if(!PATRIMOINE_OWNER_IDS.includes(map[k]))delete map[k];
+  });
+  if(Object.keys(map).length && (!data.profileLegacyMap||JSON.stringify(data.profileLegacyMap)!==JSON.stringify(map))){
+    data.profileLegacyMap={...map};
+    changed=true;
+  }
 
-  wanted.forEach(({isin,label})=>{
-    const exists=data.bourse.some(item=>{
-      if(!Array.isArray(item))return false;
-      const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
-      return (meta.owner||'couple')==='ewan'
-        && !meta.tradeRepublicCash
-        && String(meta.account||'PEA').toUpperCase()==='PEA'
-        && String(meta.isin||'').toUpperCase()===isin;
+  const walk=node=>{
+    if(!node||typeof node!=='object')return;
+    if(Array.isArray(node)){
+      node.forEach(walk);
+      return;
+    }
+    for(const [key,value] of Object.entries(node)){
+      if(key==='profileLegacyMap')continue;
+      if(key==='owner' && typeof value==='string' && map[value]){
+        node[key]=map[value];
+        changed=true;
+      }else{
+        walk(value);
+      }
+    }
+  };
+  walk(data);
+
+  if(data.peaOpeningDates&&typeof data.peaOpeningDates==='object'&&!Array.isArray(data.peaOpeningDates)){
+    const next={};
+    for(const [key,value] of Object.entries(data.peaOpeningDates)){
+      next[map[key]||key]=value;
+    }
+    if(JSON.stringify(next)!==JSON.stringify(data.peaOpeningDates)){
+      data.peaOpeningDates=next;
+      changed=true;
+    }
+  }
+
+  if(Array.isArray(patrimoineHistory)){
+    patrimoineHistory.forEach(h=>{
+      if(h&&typeof h==='object'&&typeof h.owner==='string'&&map[h.owner]){
+        h.owner=map[h.owner];
+        changed=true;
+      }
     });
-    if(!exists){
-      data.bourse.push([label,0,{
-        owner:'ewan',
-        account:'PEA',
-        isin,
-        shares:0,
-        pru:0,
-        pruSet:false,
-        pricePerShare:0
-      }]);
+  }
+
+  if(data._neutralProfileIdsMigratedV1!==true){
+    data._neutralProfileIdsMigratedV1=true;
+    changed=true;
+  }
+  ensurePatrimoineProfileLabels();
+  return changed;
+}
+
+function ensureChildInsuranceLifeLabels(){
+  if(!data)return false;
+  let changed=false;
+  (data.assurancevie||[]).forEach(item=>{
+    if(!Array.isArray(item))return;
+    const owner=getItemOwner(item,'assurancevie');
+    if(!isLinxeaProfile(owner))return;
+    if(String(item[0]||'')!=='Linxea Avenir 2'){
+      item[0]='Linxea Avenir 2';
       changed=true;
     }
   });
-
-  // Récupère l'éventuel ancien compte courant placé dans Épargne.
-  let cashValue=0;
-  let cashUpdatedAt='';
-  data.epargne=data.epargne.filter(item=>{
-    if(!isTradeRepublicCashItem(item) || getItemOwner(item,'epargne')!=='ewan')return true;
-    cashValue=Number(item[1])||cashValue;
-    const meta=item[2]||{};
-    cashUpdatedAt=meta.tradeRepublicUpdatedAt||cashUpdatedAt;
-    changed=true;
-    return false;
-  });
-
-  let cashItem=data.bourse.find(item=>isTradeRepublicCashItem(item) && getItemOwner(item,'bourse')==='ewan');
-  if(!cashItem){
-    cashItem=['Portfolio Trade Republic',cashValue,{owner:'ewan',account:'CASH',tradeRepublicCash:true}];
-    if(cashUpdatedAt)cashItem[2].tradeRepublicUpdatedAt=cashUpdatedAt;
-    data.bourse.push(cashItem);
-    changed=true;
-  }else{
-    const meta=cashItem[2]&&typeof cashItem[2]==='object'?cashItem[2]:(cashItem[2]={});
-    if(meta.account!=='CASH'){meta.account='CASH';changed=true;}
-    meta.owner='ewan';
-    meta.tradeRepublicCash=true;
-    if(cashItem[0]!=='Portfolio Trade Republic'){cashItem[0]='Portfolio Trade Republic';changed=true;}
-    if(cashValue && !(Number(cashItem[1])||0)){cashItem[1]=cashValue;changed=true;}
-    if(cashUpdatedAt && !meta.tradeRepublicUpdatedAt){meta.tradeRepublicUpdatedAt=cashUpdatedAt;changed=true;}
-  }
-
-  data._ewanTradeRepublicAssetsMigratedV1=true;
-  data._ewanTradeRepublicCashInBourseV2=true;
   return changed;
 }
 function setPatrimoineOwner(owner){
@@ -2627,7 +2685,7 @@ function setPatrimoineOwner(owner){
 function renderPatrimoineProfileTabs(){
   const root=document.getElementById('patrimoineProfileTabs');
   if(!root)return;
-  root.innerHTML=PATRIMOINE_OWNERS.map(o=>`<button class="patrimoine-profile-btn ${o.id===activePatrimoineOwner?'active':''}" onclick="setPatrimoineOwner('${o.id}')">${o.label}</button>`).join('');
+  root.innerHTML=PATRIMOINE_OWNERS.map(o=>`<button class="patrimoine-profile-btn ${o.id===activePatrimoineOwner?'active':''}" onclick="setPatrimoineOwner('${o.id}')">${escapeHtml(getPatrimoineOwnerLabel(o.id))}</button>`).join('')+`<button class="patrimoine-profile-btn" type="button" onclick="renamePatrimoineProfiles()" title="Renommer les profils" aria-label="Renommer les profils">✎</button>`;
 }
 
 const ASSET_CATEGORY_DEFINITIONS=[
@@ -2869,7 +2927,7 @@ const BUDGET_KEYWORDS={
   logement:['edf','engie','enedis','gaz tarif','eau du ponant','veolia','suez eau','saur','eau potable','electricite','gaz','chauffage','fioul','granules','pellets','loyer','charges copro','copropriete'],
   maison:['leroy merlin','castorama','brico depot','bricodepot','bricomarche','mr bricolage','weldom','ikea','maisons du monde','maison du monde','conforama','but ','but.fr','jysk','action','gifi','b&m','centrakor','la foir fouille','foir fouille','manomano','brico cash','lapeyre','point p','chausson materiaux','gedimat','saint maclou','4 murs','alinea','zodio','habitat','homebox'],
   transport:['totalenergies','total access','total ','esso','shell','avia','bp ','dyneff','eni ','agip','station service','carburant','essence','gazole','diesel','sans plomb','sp95','sp98','e10','e85','adblue','norauto','feu vert','midas','speedy','carter cash','road y','euromaster','first stop','allopneus','1001 pneus','vroomly','autodoc','oscaro','mister auto','parking','indigo','effia','vinci autoroutes','ulys','bip&go','peage','sncf','ouigo','blablacar','ratp','bibus','tan nantes','ter bretagne','uber','bolt'],
-  enfants:['ecole','college','lycee','cantine','scolarite','fournitures scolaires','papeterie','auto ecole','auto-ecole','permis ewan','permis','pension scolaire','internat','garderie','creche','centre loisirs','centre de loisirs','activite enfant'],
+  enfants:['ecole','college','lycee','cantine','scolarite','fournitures scolaires','papeterie','auto ecole','auto-ecole','permis enfant','permis','pension scolaire','internat','garderie','creche','centre loisirs','centre de loisirs','activite enfant'],
   sante:['pharmacie','parapharmacie','doctolib','medecin','dentiste','orthodont','kine','osteopathe','opticien','krys','afflelou','optical center','generale d optique','grandoptical','mutuelle','securite sociale','cpam','ameli'],
   beaute:['sephora','marionnaud','nocibe','yves rocher','coiffeur','barbier','epilation','body minute','institut beaute','beaute','salon coiffure'],
   restaurants:['mcdonald','mcdo','burger king','kfc','subway','dominos','domino s','pizza hut','buffalo grill','courtepaille','flunch','quick','sushi shop','del arte','bistro regent','hippopotamus','restaurant','brasserie','creperie','pizzeria','uber eats','ubereats','deliveroo','just eat','bar ','cafe ','starbucks','columbus cafe'],
@@ -3053,10 +3111,9 @@ function syncModalBudgetType(key,{resetCategory=false}={}){
 ensureBankingData();
 ensureHistoricalBudgetCategories();
 const initialBeautyMigrationChanged=migrateBeautyBudgetCategories();
-const initialChildAvMigrationChanged=migrateChildInsuranceLifeOwners();
-const initialChildAvLabelMigrationChanged=migrateChildInsuranceLifeLabels();
-const initialEwanTrMigrationChanged=migrateEwanTradeRepublicAssets();
-if(initialBeautyMigrationChanged || initialChildAvMigrationChanged || initialChildAvLabelMigrationChanged || initialEwanTrMigrationChanged){
+const initialProfileMigrationChanged=migratePatrimoineProfileIdsV1();
+const initialChildAvLabelMigrationChanged=ensureChildInsuranceLifeLabels();
+if(initialBeautyMigrationChanged || initialProfileMigrationChanged || initialChildAvLabelMigrationChanged){
   try{
     localStorage.setItem('finaryData',JSON.stringify(data));
     localStorage.setItem('finaryHistory',JSON.stringify(monthHistory));
@@ -3097,14 +3154,14 @@ window.applyFirebaseState=function(remote){
   if(remote.monthHistory)monthHistory=remote.monthHistory;
   ensureHistoricalBudgetCategories();
 
-  // La migration doit aussi être appliquée aux données réellement reçues de Firebase.
-  // Si elle corrige quelque chose, on réécrit une seule fois l'état corrigé.
-  const beautyMigrationChanged=migrateBeautyBudgetCategories();
-  const childAvMigrationChanged=migrateChildInsuranceLifeOwners();
-  const childAvLabelMigrationChanged=migrateChildInsuranceLifeLabels();
-  const ewanTrMigrationChanged=migrateEwanTradeRepublicAssets();
-
   if(remote.patrimoineHistory)patrimoineHistory=remote.patrimoineHistory;
+
+  // Les anciens identifiants personnels sont convertis en identifiants neutres.
+  // Les libellés saisis ensuite restent uniquement dans les données Firebase.
+  const beautyMigrationChanged=migrateBeautyBudgetCategories();
+  const profileMigrationChanged=migratePatrimoineProfileIdsV1();
+  const childAvLabelMigrationChanged=ensureChildInsuranceLifeLabels();
+
   if(typeof remote.annotations==='string')annotations=remote.annotations;
   window.data=data;
   window.monthHistory=monthHistory;
@@ -3113,7 +3170,7 @@ window.applyFirebaseState=function(remote){
   saveLocalOnly();
   render();
 
-  if((beautyMigrationChanged || childAvMigrationChanged || childAvLabelMigrationChanged || ewanTrMigrationChanged) && window.firebaseSave){
+  if((beautyMigrationChanged || profileMigrationChanged || childAvLabelMigrationChanged) && window.firebaseSave){
     window.firebaseSave();
   }
 };
@@ -4109,10 +4166,10 @@ function resetCurrentMenus(){
 function switchTab(t){
   currentActiveTab=t;
 
-  // Chaque entrée dans Patrimoine repart sur Anaël et Laurène,
+  // Chaque entrée dans Patrimoine repart sur le profil principal,
   // avec toutes les catégories repliées.
   if(t==='patrimoine'){
-    activePatrimoineOwner='couple';
+    activePatrimoineOwner='household';
     resetAssetAccordions();
   }
 
@@ -4823,7 +4880,7 @@ function getStockMeta(item){
     priceSourceName:raw.priceSourceName||'',
     priceFetchStatus:raw.priceFetchStatus||'',
     account:String(raw.account||'').toUpperCase(),
-    owner:PATRIMOINE_OWNERS.some(o=>o.id===raw.owner)?raw.owner:'couple'
+    owner:PATRIMOINE_OWNERS.some(o=>o.id===raw.owner)?raw.owner:'household'
   };
 }
 
@@ -5624,8 +5681,8 @@ function stockTradeRepublicSyncBadge(meta){
   // Compatibilité avec les lignes déjà existantes : si elles n'ont pas encore
   // tradeRepublicUpdatedAt, on reprend la date de la dernière synchro globale réussie.
   const globalState=window.tradeRepublicSyncRequestState||null;
-  const lineOwner=String(meta?.owner||'couple');
-  const globalOwner=String(globalState?.owner||'couple');
+  const lineOwner=String(meta?.owner||'household');
+  const globalOwner=String(globalState?.owner||'household');
   const fallbackUpdatedAt=(globalState && globalState.status==='done' && globalOwner===lineOwner)
     ? (globalState.completedAt||globalState.updatedAt||'')
     : '';
@@ -6020,18 +6077,18 @@ function renderOptionalAssetCategorySections(){
   host.innerHTML=getActiveAssetCategoryKeys().map(key=>{
     const c=ASSET_CATEGORY_MAP[key];
     return `<div class="card asset-accordion-card" data-asset-accordion="${c.key}">
-      <div class="section-header asset-accordion-header ${c.key==='bourse'?'bourse-accordion-header':''} ${c.key==='assurancevie' && ['louane','aedan'].includes(activePatrimoineOwner)?'linxea-accordion-header':''}" role="button" tabindex="0" aria-expanded="false" onclick="toggleAssetAccordion('${c.key}',event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAssetAccordion('${c.key}',event)}">
+      <div class="section-header asset-accordion-header ${c.key==='bourse'?'bourse-accordion-header':''} ${c.key==='assurancevie' && isLinxeaProfile(activePatrimoineOwner)?'linxea-accordion-header':''}" role="button" tabindex="0" aria-expanded="false" onclick="toggleAssetAccordion('${c.key}',event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAssetAccordion('${c.key}',event)}">
         <h2>${c.icon} ${escapeHtml(c.label)}</h2>
-        ${c.key==='bourse' && ['couple','ewan'].includes(activePatrimoineOwner)?`<button id="tradeRepublicSyncBtn" class="tr-sync-btn-red" type="button" onclick="event.stopPropagation();requestTradeRepublicSync()" title="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}" aria-label="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}">↻ Trade Republic</button>`:''}
-        ${c.key==='assurancevie' && ['louane','aedan'].includes(activePatrimoineOwner)?`<button id="linxeaSyncBtn" class="linxea-sync-btn" type="button" onclick="event.stopPropagation();requestLinxeaSync()" title="Actualiser les contrats Linxea de Louane et Aëdan" aria-label="Actualiser les contrats Linxea de Louane et Aëdan">↻ Linxea</button>`:''}
+        ${c.key==='bourse' && isTradeRepublicOwner(activePatrimoineOwner)?`<button id="tradeRepublicSyncBtn" class="tr-sync-btn-red" type="button" onclick="event.stopPropagation();requestTradeRepublicSync()" title="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}" aria-label="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}">↻ Trade Republic</button>`:''}
+        ${c.key==='assurancevie' && isLinxeaProfile(activePatrimoineOwner)?`<button id="linxeaSyncBtn" class="linxea-sync-btn" type="button" onclick="event.stopPropagation();requestLinxeaSync()" title="Actualiser les contrats Linxea" aria-label="Actualiser les contrats Linxea">↻ Linxea</button>`:''}
         <div class="category-header-actions">
           <span class="section-total" id="total-${c.key}">0 €</span>
           <span class="asset-accordion-chevron" aria-hidden="true">⌄</span>
         </div>
       </div>
       <div class="asset-accordion-content">
-        ${c.key==='bourse' && ['couple','ewan'].includes(activePatrimoineOwner)?`<div id="tradeRepublicSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
-        ${c.key==='assurancevie' && ['louane','aedan'].includes(activePatrimoineOwner)?`<div id="linxeaSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
+        ${c.key==='bourse' && isTradeRepublicOwner(activePatrimoineOwner)?`<div id="tradeRepublicSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
+        ${c.key==='assurancevie' && isLinxeaProfile(activePatrimoineOwner)?`<div id="linxeaSyncStatus" class="tr-sync-status tr-sync-status-compact"></div>`:''}
         <div class="rows-container" data-key="${c.key}"></div>
         ${c.key==='crypto'?'':`<button class="btn-add" onclick="addItem('${c.key}')">+ Ajouter</button>`}
       </div>
@@ -6086,7 +6143,7 @@ function childInsurancePerformanceHtml(item){
 
 function childInsuranceTaxBadgeHtml(item){
   const owner=getItemOwner(item,'assurancevie');
-  if(!['louane','aedan'].includes(owner))return '';
+  if(!isLinxeaProfile(owner))return '';
 
   // Les deux contrats Linxea Avenir 2 ont été ouverts le 19/02/2026.
   // Le seuil fiscal des 8 ans est donc atteint le 19/02/2034.
@@ -6173,7 +6230,7 @@ function render(){
       const stockOrder={
         'IE0002XZSHO1':0, // MSCI World
         'FR0013412020':1, // Emerging Market / PAEEM
-        'FR0011550193':2, // STOXX Europe 600 (Ewan)
+        'FR0011550193':2, // STOXX Europe 600
         'IE00B4ND3602':3  // Gold
       };
 
@@ -6210,7 +6267,7 @@ function render(){
 
       return;
     }
-    if(key==='assurancevie' && ['louane','aedan'].includes(activePatrimoineOwner)){
+    if(key==='assurancevie' && isLinxeaProfile(activePatrimoineOwner)){
       const owned=(data.assurancevie||[])
         .map((item,idx)=>({item,idx}))
         .filter(({item})=>getItemOwner(item,'assurancevie')===activePatrimoineOwner);
@@ -7114,7 +7171,7 @@ function getPatrimoineReportModel(){
 
   const monthlyMap=new Map();
   (patrimoineHistory||[])
-    .filter(h=>h&&h.date&&(h.owner||'couple')===owner&&Number.isFinite(Number(h.fullNet)))
+    .filter(h=>h&&h.date&&(h.owner||'household')===owner&&Number.isFinite(Number(h.fullNet)))
     .sort((a,b)=>new Date(a.date)-new Date(b.date))
     .forEach(h=>{
       const d=new Date(`${h.date}T12:00:00`);
@@ -7641,7 +7698,7 @@ function recordPatrimoineSnapshot(){
       epargne:getOwnedItems('epargne',owner).reduce((s,i)=>s+(Number(i[1])||0),0),
       ...Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,getOwnedItems(c.key,owner).reduce((s,i)=>s+(Number(i[1])||0),0)]))
     };
-    let existing=patrimoineHistory.find(h=>h.date===today && (h.owner||'couple')===owner);
+    let existing=patrimoineHistory.find(h=>h.date===today && (h.owner||'household')===owner);
     if(existing){existing.net=currentLiquid;existing.fullNet=currentFullNet;existing.owner=owner;Object.assign(existing,currentCategories);}
     else patrimoineHistory.push({date:today,owner,net:currentLiquid,fullNet:currentFullNet,...currentCategories});
   });
@@ -7664,7 +7721,7 @@ function updatePatrimoineMonthlyVariation(){
   const previousMonthSnapshots=(patrimoineHistory||[])
     .filter(h=>{
       if(!h || !h.date || !Number.isFinite(Number(h.fullNet)))return false;
-      if((h.owner||'couple')!==activePatrimoineOwner)return false;
+      if((h.owner||'household')!==activePatrimoineOwner)return false;
 
       const d=new Date(`${h.date}T12:00:00`);
       return d.getFullYear()===previousYear && d.getMonth()===previousMonth;
@@ -7760,7 +7817,7 @@ function closeMonth(){
   message+=`Après clôture :\n`;
   message+=`• Dépenses : les lignes cochées sont archivées puis supprimées ; seules les lignes non cochées sont reconduites et restent décochées.\n`;
   message+=`• Frais fixes : toutes les lignes sont conservées et décochées.\n`;
-  message+=`• Entrées : seules « Negatif/Positif », « Salaire Anaël », « Salaire Laurène », « Allocations familliales » et « Papa AV Enfants » sont conservées et décochées.\n`;
+  message+=`• Entrées : les lignes de salaire et les autres revenus récurrents prévus sont conservés et décochés.\n`;
   message+=`• Virements : les occasionnels sont supprimés et les permanents reconduits.`;
 
   if(!confirm(message))return;
@@ -7808,14 +7865,15 @@ function closeMonth(){
   // Comparaison insensible aux accents et à la casse.
   const revenusAConserver=new Set([
     'negatif/positif',
-    'salaire anael',
-    'salaire laurene',
     'allocations familliales',
     'papa av enfants'
   ]);
 
   data.budgetRevenus=revenusCourants
-    .filter(item=>revenusAConserver.has(normalizeText(item[0]).trim()))
+    .filter(item=>{
+      const label=normalizeText(item[0]).trim();
+      return revenusAConserver.has(label)||label.startsWith('salaire ');
+    })
     .map(item=>{
       const next=[...item];
       next[2]=false;
@@ -10509,7 +10567,7 @@ function getFilteredChartPoints(){
   return (patrimoineHistory||[])
     .filter(h=>{
       if(!h || !h.date)return false;
-      if((h.owner||'couple')!==activePatrimoineOwner)return false;
+      if((h.owner||'household')!==activePatrimoineOwner)return false;
 
       const value=Number(h[cfg.field]);
       if(!Number.isFinite(value))return false;
@@ -10903,7 +10961,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // sont supprimés pour garantir un démarrage propre après mise à jour.
   localStorage.removeItem('finaryOpenAssetAccordions');
   localStorage.removeItem('finaryPatrimoineOwner');
-  activePatrimoineOwner='couple';
+  activePatrimoineOwner='household';
   openAssetAccordions.clear();
   applyHideAmountsState();
   render();
