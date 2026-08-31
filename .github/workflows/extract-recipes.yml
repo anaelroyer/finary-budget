@@ -1,3 +1,4 @@
+# SECURITY_SSRF_V1 — validation réseau stricte des URL de recettes
 name: Extraire les ingrédients des recettes
 
 on:
@@ -28,10 +29,15 @@ jobs:
           python3 - <<'PY'
           import hashlib
           import html
+          import http.client
+          import ipaddress
           import json
           import os
           import re
+          import socket
+          import ssl
           import urllib.error
+          import urllib.parse
           import urllib.request
           from datetime import datetime, timezone, timedelta
           from html.parser import HTMLParser
@@ -64,20 +70,241 @@ jobs:
                   detail=e.read().decode("utf-8", errors="ignore")
                   raise RuntimeError(f"HTTP {e.code} sur {url}: {detail[:500]}") from e
 
+          # Protection SSRF des URL de recettes.
+          # Les URL sont fournies par les données de l'application et doivent pouvoir
+          # pointer vers des sites de recettes variés : on n'utilise donc pas une liste
+          # fermée de domaines, mais on impose une destination HTTP(S) publique.
+          RECIPE_ALLOWED_SCHEMES={"http","https"}
+          RECIPE_MAX_REDIRECTS=5
+          RECIPE_MAX_HTML_BYTES=4*1024*1024
+          RECIPE_TIMEOUT_SECONDS=15
+          RECIPE_HOST_RE=re.compile(
+              r"^(?=.{1,253}\.?$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?$",
+              re.I,
+          )
+
+          def public_recipe_target(url):
+              url=str(url or "").strip()
+              if not url or len(url)>2048:
+                  raise RuntimeError("URL de recette invalide")
+              if any(ord(ch)<32 or ord(ch)==127 for ch in url):
+                  raise RuntimeError("URL de recette contenant des caractères interdits")
+
+              try:
+                  parts=urllib.parse.urlsplit(url)
+              except Exception as exc:
+                  raise RuntimeError("URL de recette impossible à analyser") from exc
+
+              scheme=(parts.scheme or "").lower()
+              if scheme not in RECIPE_ALLOWED_SCHEMES:
+                  raise RuntimeError("Seules les URL http:// et https:// sont autorisées")
+              if parts.username is not None or parts.password is not None:
+                  raise RuntimeError("Les identifiants intégrés dans une URL sont interdits")
+              if not parts.hostname:
+                  raise RuntimeError("Nom de domaine absent")
+
+              try:
+                  host=parts.hostname.rstrip(".").encode("idna").decode("ascii").lower()
+              except Exception as exc:
+                  raise RuntimeError("Nom de domaine invalide") from exc
+
+              # On refuse les IP saisies directement : une recette normale utilise
+              # un nom de domaine, et cela élimine plusieurs formes d'URL ambiguës.
+              try:
+                  ipaddress.ip_address(host)
+                  raise RuntimeError("Les URL de recette utilisant directement une adresse IP sont interdites")
+              except ValueError:
+                  pass
+
+              if (
+                  host=="localhost"
+                  or host.endswith(".localhost")
+                  or host.endswith(".local")
+                  or host.endswith(".internal")
+                  or host.endswith(".home.arpa")
+                  or not RECIPE_HOST_RE.fullmatch(host)
+              ):
+                  raise RuntimeError("Nom de domaine non public ou invalide")
+
+              try:
+                  port=parts.port
+              except ValueError as exc:
+                  raise RuntimeError("Port invalide dans l'URL") from exc
+
+              default_port=443 if scheme=="https" else 80
+              if port is not None and port!=default_port:
+                  raise RuntimeError("Seuls les ports web standards 80 et 443 sont autorisés")
+              port=port or default_port
+
+              try:
+                  infos=socket.getaddrinfo(host,port,type=socket.SOCK_STREAM)
+              except socket.gaierror as exc:
+                  raise RuntimeError("Nom de domaine de la recette introuvable") from exc
+
+              addresses=[]
+              for info in infos:
+                  addr=info[4][0]
+                  try:
+                      ip=ipaddress.ip_address(addr)
+                  except ValueError:
+                      continue
+                  # is_global exclut notamment loopback, privé, link-local,
+                  # multicast, non spécifié et plages réservées/spéciales.
+                  if not ip.is_global:
+                      raise RuntimeError(
+                          f"Destination réseau non publique interdite ({ip.compressed})"
+                      )
+                  if ip.compressed not in addresses:
+                      addresses.append(ip.compressed)
+
+              if not addresses:
+                  raise RuntimeError("Aucune adresse IP publique disponible pour ce domaine")
+
+              # IPv4 d'abord pour une meilleure compatibilité des runners,
+              # tout en conservant IPv6 si nécessaire.
+              addresses.sort(key=lambda x: 1 if ":" in x else 0)
+              return url,parts,host,port,addresses
+
+          class PinnedHTTPConnection(http.client.HTTPConnection):
+              def __init__(self,host,port,connect_ip,timeout):
+                  super().__init__(host,port=port,timeout=timeout)
+                  self._connect_ip=connect_ip
+              def connect(self):
+                  self.sock=socket.create_connection(
+                      (self._connect_ip,self.port),
+                      self.timeout,
+                      self.source_address,
+                  )
+
+          class PinnedHTTPSConnection(http.client.HTTPSConnection):
+              def __init__(self,host,port,connect_ip,timeout):
+                  super().__init__(
+                      host,
+                      port=port,
+                      timeout=timeout,
+                      context=ssl.create_default_context(),
+                  )
+                  self._connect_ip=connect_ip
+              def connect(self):
+                  sock=socket.create_connection(
+                      (self._connect_ip,self.port),
+                      self.timeout,
+                      self.source_address,
+                  )
+                  # Le certificat reste vérifié contre le vrai nom de domaine,
+                  # bien que la connexion TCP soit épinglée sur l'IP déjà validée.
+                  self.sock=self._context.wrap_socket(sock,server_hostname=self.host)
+
           def fetch_html(url):
-              req=urllib.request.Request(
-                  url,
+              current=str(url or "").strip()
+
+              for redirect_count in range(RECIPE_MAX_REDIRECTS+1):
+                  current,parts,host,port,addresses=public_recipe_target(current)
+
+                  path=urllib.parse.quote(
+                      parts.path or "/",
+                      safe="/%:@!$&'()*+,;=-._~",
+                  )
+                  if parts.query:
+                      query=urllib.parse.quote(
+                          parts.query,
+                          safe="=&?/:;+,%@!$'()*-._~",
+                      )
+                      path+="?"+query
+
                   headers={
+                      "Host":host,
                       "User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1",
                       "Accept":"text/html,application/xhtml+xml",
                       "Accept-Language":"fr-FR,fr;q=0.9,en;q=0.7",
                       "Accept-Encoding":"identity",
+                      "Connection":"close",
                   }
-              )
-              with urllib.request.urlopen(req,timeout=30) as r:
-                  raw=r.read()
-                  enc=r.headers.get_content_charset() or "utf-8"
-                  return raw.decode(enc,errors="replace")
+
+                  last_error=None
+                  redirected=False
+
+                  for connect_ip in addresses:
+                      conn=None
+                      try:
+                          if parts.scheme.lower()=="https":
+                              conn=PinnedHTTPSConnection(
+                                  host,port,connect_ip,RECIPE_TIMEOUT_SECONDS
+                              )
+                          else:
+                              conn=PinnedHTTPConnection(
+                                  host,port,connect_ip,RECIPE_TIMEOUT_SECONDS
+                              )
+
+                          conn.request("GET",path,headers=headers)
+                          response=conn.getresponse()
+                          status=int(response.status)
+
+                          if status in (301,302,303,307,308):
+                              location=response.getheader("Location")
+                              response.read(4096)
+                              if not location:
+                                  raise RuntimeError("Redirection sans destination")
+                              if redirect_count>=RECIPE_MAX_REDIRECTS:
+                                  raise RuntimeError("Trop de redirections HTTP")
+                              current=urllib.parse.urljoin(current,location)
+                              # La nouvelle destination sera entièrement revalidée,
+                              # y compris DNS/IP/port/protocole.
+                              redirected=True
+                              break
+
+                          if status<200 or status>=300:
+                              response.read(4096)
+                              raise RuntimeError(f"HTTP {status} lors de la lecture de la recette")
+
+                          content_length=response.getheader("Content-Length")
+                          if content_length:
+                              try:
+                                  if int(content_length)>RECIPE_MAX_HTML_BYTES:
+                                      raise RuntimeError("Page de recette trop volumineuse")
+                              except ValueError:
+                                  pass
+
+                          raw=response.read(RECIPE_MAX_HTML_BYTES+1)
+                          if len(raw)>RECIPE_MAX_HTML_BYTES:
+                              raise RuntimeError("Page de recette trop volumineuse")
+
+                          content_type=(response.getheader("Content-Type") or "").lower()
+                          if content_type and not (
+                              "text/html" in content_type
+                              or "application/xhtml+xml" in content_type
+                              or "text/plain" in content_type
+                          ):
+                              raise RuntimeError("Le lien ne renvoie pas une page HTML")
+
+                          enc=response.headers.get_content_charset() or "utf-8"
+                          return raw.decode(enc,errors="replace")
+
+                      except (
+                          OSError,
+                          ssl.SSLError,
+                          http.client.HTTPException,
+                          RuntimeError,
+                      ) as exc:
+                          last_error=exc
+                          # Une erreur de sécurité ne doit pas être contournée
+                          # en essayant une autre IP du même domaine.
+                          if isinstance(exc,RuntimeError):
+                              raise
+                      finally:
+                          if conn is not None:
+                              try:
+                                  conn.close()
+                              except Exception:
+                                  pass
+
+                  if redirected:
+                      continue
+                  if last_error is not None:
+                      raise RuntimeError(f"Impossible de joindre le site de recette : {last_error}")
+                  raise RuntimeError("Impossible de joindre le site de recette")
+
+              raise RuntimeError("Trop de redirections HTTP")
 
           class JsonLdParser(HTMLParser):
               def __init__(self):
