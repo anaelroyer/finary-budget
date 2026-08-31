@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.01 : Sécurité — déconnexion avec purge des données financières locales -->
 <!-- V26.2.00 : Patrimoine — Participations / Sociétés, acquisitions datées et valorisation facultative -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
@@ -2359,7 +2360,42 @@ window.resetPersonalPassword=async function(){
   try{await sendPasswordResetEmail(auth,email);setAuthMessage('E-mail de réinitialisation envoyé.','success');}
   catch(error){setAuthMessage(authErrorMessage(error),'error');}
 };
-window.personalLogout=async function(){try{await signOut(auth);}catch(error){console.error(error);}};
+function clearPersonalSensitiveLocalData(){
+  // Données financières/personnelles mises en cache pour le fonctionnement hors ligne.
+  // Les préférences purement visuelles (masquage des montants, plage du graphique, etc.)
+  // sont volontairement conservées.
+  [
+    'finaryData',
+    'finaryHistory',
+    'finaryPatrimoineHistory',
+    'finaryAnnotations'
+  ].forEach(key=>{
+    try{localStorage.removeItem(key);}catch(error){console.warn('Nettoyage local impossible pour',key,error);}
+  });
+}
+
+window.personalLogout=async function(){
+  const btn=document.querySelector('.personal-logout');
+  if(btn)btn.disabled=true;
+
+  try{
+    // Déconnecte d'abord Firebase afin de ne jamais effacer le cache local
+    // si la déconnexion elle-même échoue.
+    await signOut(auth);
+
+    // Supprime ensuite les données financières conservées sur cet appareil.
+    clearPersonalSensitiveLocalData();
+
+    // Recharge l'application : l'écran de connexion repart alors sans aucune
+    // donnée patrimoniale/budget/historique/note issue du cache local.
+    window.location.reload();
+  }catch(error){
+    console.error(error);
+    if(btn)btn.disabled=false;
+    setFirebaseStatus('⚠️ Déconnexion impossible','sync-offline');
+    alert('Impossible de se déconnecter. Les données locales ont été conservées.');
+  }
+};
 
 function tradeRepublicSyncTimeLabel(value){
   if(!value)return '';
