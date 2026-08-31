@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V26.1.96 : Confidentialité — profils Patrimoine anonymisés dans le code, libellés privés stockés dans Firebase -->
+<!-- V26.1.97 : Sécurité — durcissement XSS, arguments JS dynamiques sûrs et URLs externes validées -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
@@ -3398,7 +3398,7 @@ function menuDishPickerHtml(inputId){
   return `<div class="menu-dish-picker" id="${inputId}_picker">` +
     items.map(item=>{
       const count=Number(item.count)||0;
-      return `<button type="button" class="menu-dish-option" onclick="chooseMenuDish('${inputId}',${JSON.stringify(item.label).replace(/"/g,'&quot;')})">
+      return `<button type="button" class="menu-dish-option" onclick="chooseMenuDish(${htmlJsString(inputId)},${htmlJsString(item.label)})">
         <span>${escapeHtml(item.label)}</span>
         ${count>0?`<span class="menu-dish-count">${count}×</span>`:''}
       </button>`;
@@ -3550,7 +3550,7 @@ function menuIngredientsHtml(label){
   const effective=getEffectiveMenuIngredients(clean);
   if(effective.ingredients.length){
     return `<button type="button" class="menu-ingredients-btn"
-      onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})">
+      onclick="openMenuIngredients(${htmlJsString(clean)})">
       🧺 Ingrédients (${effective.ingredients.length})
     </button>`;
   }
@@ -3559,7 +3559,7 @@ function menuIngredientsHtml(label){
   const url=getMenuRecipeUrl(clean);
   if(url && rec && rec.status==='error'){
     return `<button type="button" class="menu-ingredients-btn"
-      onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})"
+      onclick="openMenuIngredients(${htmlJsString(clean)})"
       title="${escapeHtml(String(rec.error||''))}">
       🧺 Saisir les ingrédients
     </button>`;
@@ -3567,13 +3567,13 @@ function menuIngredientsHtml(label){
 
   if(url && !rec){
     return `<button type="button" class="menu-ingredients-btn"
-      onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})">
+      onclick="openMenuIngredients(${htmlJsString(clean)})">
       🧺 Ingrédients
     </button>`;
   }
 
   return `<button type="button" class="menu-ingredients-btn"
-    onclick="openMenuIngredients(${JSON.stringify(clean).replace(/"/g,'&quot;')})">
+    onclick="openMenuIngredients(${htmlJsString(clean)})">
     🧺 Ingrédients
   </button>`;
 }
@@ -3718,12 +3718,13 @@ function getMealDishLabel(cycleKey,mealKey){
 }
 function openMenuRecipe(cycleKey,mealKey){
   const label=getMealDishLabel(cycleKey,mealKey);
-  const url=getMenuRecipeUrl(label);
+  const rawUrl=getMenuRecipeUrl(label);
+  const url=/^https?:\/\//i.test(String(rawUrl||'').trim()) ? normalizeRecipeUrl(rawUrl) : '';
   if(!url){
     editMenuRecipe(cycleKey,mealKey);
     return;
   }
-  window.open(url,'_blank','noopener');
+  window.open(url,'_blank','noopener,noreferrer');
 }
 let menuRecipeEditing={cycleKey:'',mealKey:''};
 
@@ -6392,8 +6393,17 @@ function escapeHtml(v){
   return String(v)
     .replace(/&/g,'&amp;')
     .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;');
+}
+
+// Chaîne JavaScript sûre lorsqu'un argument dynamique doit encore être placé
+// dans un gestionnaire HTML inline. JSON.stringify protège la syntaxe JS et
+// escapeHtml empêche le navigateur de réinterpréter des entités HTML fournies
+// par les données (ex. &quot;) comme des délimiteurs de chaîne.
+function htmlJsString(v){
+  return escapeHtml(JSON.stringify(String(v??'')));
 }
 
 function update(k,i,p,v){
@@ -6553,8 +6563,8 @@ function renderSettingsArchives(){
       <div><div style="font-size:12px;font-weight:700">${escapeHtml(a.label)}</div>
       <div class="muted" style="text-transform:none">${escapeHtml(a.type)} · ${new Date(a.archivedAt).toLocaleDateString('fr-FR')}</div></div>
       <div style="display:flex;gap:5px">
-        <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px" onclick="restoreArchivedItem('${a.id}')">Restaurer</button>
-        <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px;color:#f85149" onclick="deleteArchivedItem('${a.id}')">×</button>
+        <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px" onclick="restoreArchivedItem(${htmlJsString(a.id)})">Restaurer</button>
+        <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px;color:#f85149" onclick="deleteArchivedItem(${htmlJsString(a.id)})">×</button>
       </div>
     </div>
   `).join('');
@@ -6689,7 +6699,7 @@ function renderIgnoredRecurringSettings(){
         <div style="font-size:12px;font-weight:700">${escapeHtml(label)}</div>
         <div class="muted" style="text-transform:none">Ne sera plus proposée</div>
       </div>
-      <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px" onclick="restoreIgnoredRecurringBudget('${escapeHtml(key)}')">Réactiver</button>
+      <button class="btn btn-secondary" style="padding:5px 7px;font-size:10px" onclick="restoreIgnoredRecurringBudget(${htmlJsString(key)})">Réactiver</button>
     </div>`;
   }).join('');
 }
@@ -8645,17 +8655,17 @@ function renderVehiclePlanModalEditor(){
     const relevance=raw.builtin===false?{recommended:true,label:'Personnalisé',className:''}:getMaintenanceRelevance(p.type,powertrain);
     return `<div class="maintenance-plan-row ${enabled?'':'is-disabled'}">
       <div class="maintenance-plan-row-head">
-        <label class="maintenance-plan-toggle"><input type="checkbox" ${enabled?'checked':''} onchange="toggleVehiclePlanItem('${p.id}',this.checked)"><strong>${escapeHtml(p.type||'Entretien')}</strong></label>
+        <label class="maintenance-plan-toggle"><input type="checkbox" ${enabled?'checked':''} onchange="toggleVehiclePlanItem(${htmlJsString(p.id)},this.checked)"><strong>${escapeHtml(p.type||'Entretien')}</strong></label>
         <span class="maintenance-relevance-badge ${relevance.className}">${escapeHtml(relevance.label)}</span>
       </div>
       ${enabled?`<div class="vehicle-grid">
-        <div class="modal-field"><label>Date du dernier entretien</label><input type="date" value="${escapeHtml(p.lastDate)}" onchange="updateVehiclePlanModalDraft('${p.id}','lastDate',this.value,true)"></div>
-        <div class="modal-field"><label>Kilométrage du dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehiclePlanModalDraft('${p.id}','lastMileage',this.value,true)"></div>
-        <div class="modal-field"><label>Périodicité durée (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehiclePlanModalDraft('${p.id}','intervalMonths',this.value,true)"></div>
-        <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehiclePlanModalDraft('${p.id}','intervalKm',this.value,true)"></div>
-        <div class="modal-field vehicle-plan-note"><label>Note <span style="color:#8b949e;font-weight:600">(facultatif)</span></label><textarea maxlength="500" placeholder="Ex : filtre à air Mann C 35 154 · huile 5W-30 VW 504.00/507.00" oninput="updateVehiclePlanModalDraft('${p.id}','notes',this.value,false)">${escapeHtml(p.notes||'')}</textarea></div>
+        <div class="modal-field"><label>Date du dernier entretien</label><input type="date" value="${escapeHtml(p.lastDate)}" onchange="updateVehiclePlanModalDraft(${htmlJsString(p.id)},'lastDate',this.value,true)"></div>
+        <div class="modal-field"><label>Kilométrage du dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehiclePlanModalDraft(${htmlJsString(p.id)},'lastMileage',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité durée (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehiclePlanModalDraft(${htmlJsString(p.id)},'intervalMonths',this.value,true)"></div>
+        <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehiclePlanModalDraft(${htmlJsString(p.id)},'intervalKm',this.value,true)"></div>
+        <div class="modal-field vehicle-plan-note"><label>Note <span style="color:#8b949e;font-weight:600">(facultatif)</span></label><textarea maxlength="500" placeholder="Ex : filtre à air Mann C 35 154 · huile 5W-30 VW 504.00/507.00" oninput="updateVehiclePlanModalDraft(${htmlJsString(p.id)},'notes',this.value,false)">${escapeHtml(p.notes||'')}</textarea></div>
       </div>
-      <div class="maintenance-plan-preview" id="vehicle-plan-preview-${p.id}">${maintenancePlanPreviewHtml(p)}</div>`:''}
+      <div class="maintenance-plan-preview" id="vehicle-plan-preview-${escapeHtml(p.id)}">${maintenancePlanPreviewHtml(p)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -9152,7 +9162,7 @@ function renderVehicleMaintenanceHistoryModal(){
   host.innerHTML=groups.length?groups.map(group=>`<div class="maintenance-history-group">
     <div class="maintenance-history-head">
       <div><div class="maintenance-history-date">${escapeHtml(formatDateFR(group.date))}<span class="maintenance-history-count">${group.titles.length} entretien${group.titles.length>1?'s':''}</span></div><div class="maintenance-history-meta">${group.mileage?`${group.mileage.toLocaleString('fr-FR')} km`:'Kilométrage non renseigné'}${group.amount>0?` · ${euro(group.amount)}`:''}</div></div>
-      <div class="maintenance-history-actions"><button class="btn btn-secondary maintenance-history-action" onclick="openVehicleMaintenanceHistoryEditModal('${escapeHtml(group.date)}',${group.mileage})" title="Modifier l'intervention" aria-label="Modifier l'intervention">✏️</button><button class="btn btn-secondary maintenance-history-action" style="color:#f85149" onclick="deleteVehicleMaintenanceHistoryGroup('${escapeHtml(group.date)}',${group.mileage})" title="Supprimer l'intervention" aria-label="Supprimer l'intervention">🗑️</button></div>
+      <div class="maintenance-history-actions"><button class="btn btn-secondary maintenance-history-action" onclick="openVehicleMaintenanceHistoryEditModal(${htmlJsString(group.date)},${group.mileage})" title="Modifier l'intervention" aria-label="Modifier l'intervention">✏️</button><button class="btn btn-secondary maintenance-history-action" style="color:#f85149" onclick="deleteVehicleMaintenanceHistoryGroup(${htmlJsString(group.date)},${group.mileage})" title="Supprimer l'intervention" aria-label="Supprimer l'intervention">🗑️</button></div>
     </div>
     <div class="maintenance-history-label">Entretiens réalisés</div>
     <div class="maintenance-history-types">${group.titles.map(type=>`<span class="maintenance-history-chip">${escapeHtml(type)}</span>`).join('')}</div>
@@ -9485,7 +9495,7 @@ function renderVehicles(){
 
   const v=getCurrentGarageVehicle();if(!v)return;
   empty.style.display='none';content.style.display='block';
-  tabs.innerHTML=data.garageVehicles.map(x=>`<button class="vehicle-tab ${x.id===v.id?'active':''}" onclick="selectGarageVehicle('${x.id}')">${escapeHtml(getGarageVehicleLabel(x.id))}</button>`).join('');
+  tabs.innerHTML=data.garageVehicles.map(x=>`<button class="vehicle-tab ${x.id===v.id?'active':''}" onclick="selectGarageVehicle(${htmlJsString(x.id)})">${escapeHtml(getGarageVehicleLabel(x.id))}</button>`).join('');
 
   const alertRows=[];
   data.garageVehicles.forEach(vehicle=>{
@@ -9546,9 +9556,9 @@ function renderVehicles(){
       ?`<br>🚗 Au rythme actuel : vers ${escapeHtml(formatMonthYearFR(st.estimatedMileageDate))}`:'';
     const priorityMeta=schedulePriorityMeta(sc,st);
     const legacy=sc.legacy?'<br><span class="maintenance-plan-legacy">Ancienne échéance à convertir dans le plan d’entretien.</span>':'';
-    const performedAction=sc.source==='maintenance-plan'&&!sc.legacy?`<button class="btn btn-primary" onclick="openPerformedMaintenanceFromAlert('${vehicle.id}','${sc.planId}')">✓ Effectué</button>`:'';
+    const performedAction=sc.source==='maintenance-plan'&&!sc.legacy?`<button class="btn btn-primary" onclick="openPerformedMaintenanceFromAlert(${htmlJsString(vehicle.id)},${htmlJsString(sc.planId)})">✓ Effectué</button>`:'';
     const statusIcon=st.status==='overdue'?'🔴':st.status==='soon'?'🟠':'🟢';
-    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${statusIcon} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${priorityMeta?`<br>${escapeHtml(priorityMeta)}`:''}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal('${vehicle.id}')">✏️</button></div></div></div>`;
+    return `<div class="vehicle-alert ${st.status}"><div class="vehicle-entry-head"><div><div class="vehicle-alert-vehicle">🚗 ${escapeHtml(vehicleLabel)}${registration}</div><div class="vehicle-alert-title">${statusIcon} ${escapeHtml(sc.title)}</div><div class="vehicle-alert-meta">${dueParts.join(' · ')}<br>${escapeHtml(scheduleMeta(vehicle,sc,st))}${priorityMeta?`<br>${escapeHtml(priorityMeta)}`:''}${estimate}${last?`<br>${escapeHtml(last)}`:''}${sc.notes?`<br>${escapeHtml(sc.notes)}`:''}${legacy}</div></div><div class="vehicle-entry-actions">${performedAction}<button class="btn btn-secondary" onclick="openVehicleModal(${htmlJsString(vehicle.id)})">✏️</button></div></div></div>`;
   };
 
   let detailsHtml='';
@@ -9580,11 +9590,11 @@ function renderVehicles(){
     <div class="grid" style="margin-top:12px"><div class="stat"><span>Entretiens suivis</span><strong>${maintenanceCount}</strong></div><div class="stat"><span>À prévoir</span><strong style="color:${warningCount?'#d29922':'#3fb950'}">${warningCount}</strong></div><div class="stat"><span>Factures liées</span><strong>${linkedInvoices.length}</strong></div><div class="stat"><span>Contrôle technique</span><strong style="font-size:12px">${v.technicalInspectionDate?formatDateFR(v.technicalInspectionDate):'—'}</strong></div></div>
     <div class="vehicle-cost-strip"><div class="vehicle-cost-mini"><span>Dépenses 12 mois</span><strong class="invoice-amount">${euro(expenses.last12m)}</strong></div><div class="vehicle-cost-mini"><span>Dépenses enregistrées</span><strong class="invoice-amount">${euro(expenses.total)}</strong></div><div class="vehicle-cost-mini"><span>Coût/km suivi</span><strong class="invoice-amount">${expenses.costPerKm!==null?expenses.costPerKm.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €/km':'—'}</strong></div></div>
     ${getVehicleCostBreakdown(v).length?`<div style="margin-top:10px"><div class="muted">Répartition des coûts sur 12 mois</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${getVehicleCostBreakdown(v).map(([cat,amount])=>`<span class="invoice-chip">${escapeHtml(cat)} · ${euro(amount)}</span>`).join('')}</div></div>`:''}
-    <div class="vehicle-actions"><button id="assistantTargetPerformedMaintenance" class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button id="assistantTargetMileage" class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><button id="assistantTargetMaintenanceHistory" class="btn btn-secondary" onclick="openVehicleMaintenanceHistoryModal()">📜 Historique</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal('${v.id}')" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle('${v.id}')" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
+    <div class="vehicle-actions"><button id="assistantTargetPerformedMaintenance" class="btn btn-primary vehicle-maintenance-main" onclick="openPerformedMaintenanceModal()">🔧 Ajouter un entretien</button><div class="vehicle-secondary-actions"><button id="assistantTargetMileage" class="btn btn-secondary" onclick="openVehicleMileageModal()">🧭 Modifier le kilométrage</button><button id="assistantTargetMaintenanceHistory" class="btn btn-secondary" onclick="openVehicleMaintenanceHistoryModal()">📜 Historique</button><div class="vehicle-icon-actions"><button class="btn btn-secondary vehicle-icon-btn" onclick="openVehicleModal(${htmlJsString(v.id)})" title="Modifier le véhicule" aria-label="Modifier le véhicule">✏️</button><button class="btn btn-secondary vehicle-icon-btn" style="color:#f85149" onclick="deleteGarageVehicle(${htmlJsString(v.id)})" title="Supprimer le véhicule" aria-label="Supprimer le véhicule">🗑️</button></div></div></div>`;
 
   const ihost=document.getElementById('vehicle-invoices');
   const sortedInvoices=linkedInvoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  ihost.innerHTML=sortedInvoices.length?sortedInvoices.map(inv=>`<div class="vehicle-entry"><div class="vehicle-entry-head"><div><div class="vehicle-entry-title">${escapeHtml(inv.description||'Facture')}</div><div class="vehicle-entry-meta">${formatDateFR(inv.date)}${inv.seller?` · ${escapeHtml(inv.seller)}`:''}</div></div><div class="vehicle-entry-amount invoice-amount">${euro(Number(inv.amount)||0)}</div></div><div class="vehicle-entry-actions">${inv.photoUrl?`<button class="btn btn-secondary" onclick="openInvoicePhoto(${data.factures.indexOf(inv)})">📄 Voir</button>`:''}<button class="btn btn-secondary" onclick="openInvoiceById('${inv.id}')">✏️ Ouvrir</button><button class="btn btn-secondary" onclick="unlinkInvoiceFromVehicle('${inv.id}')">🔗 Dissocier</button></div></div>`).join(''):'<div class="vehicle-empty">Aucune facture associée à ce véhicule.</div>';
+  ihost.innerHTML=sortedInvoices.length?sortedInvoices.map(inv=>`<div class="vehicle-entry"><div class="vehicle-entry-head"><div><div class="vehicle-entry-title">${escapeHtml(inv.description||'Facture')}</div><div class="vehicle-entry-meta">${formatDateFR(inv.date)}${inv.seller?` · ${escapeHtml(inv.seller)}`:''}</div></div><div class="vehicle-entry-amount invoice-amount">${euro(Number(inv.amount)||0)}</div></div><div class="vehicle-entry-actions">${inv.photoUrl?`<button class="btn btn-secondary" onclick="openInvoicePhoto(${data.factures.indexOf(inv)})">📄 Voir</button>`:''}<button class="btn btn-secondary" onclick="openInvoiceById(${htmlJsString(inv.id)})">✏️ Ouvrir</button><button class="btn btn-secondary" onclick="unlinkInvoiceFromVehicle(${htmlJsString(inv.id)})">🔗 Dissocier</button></div></div>`).join(''):'<div class="vehicle-empty">Aucune facture associée à ce véhicule.</div>';
 }
 
 /* =========================================================
@@ -9597,6 +9607,20 @@ let invoicePhotoUploading=false;
 
 const CLOUDINARY_CLOUD_NAME='smwbj5za';
 const CLOUDINARY_UPLOAD_PRESET='factures_budget';
+
+function getSafeInvoicePhotoUrl(value){
+  try{
+    const url=new URL(String(value||'').trim());
+    if(url.protocol!=='https:')return '';
+    if(url.hostname.toLowerCase()!=='res.cloudinary.com')return '';
+    const firstPathPart=url.pathname.split('/').filter(Boolean)[0]||'';
+    if(firstPathPart!==CLOUDINARY_CLOUD_NAME)return '';
+    return url.href;
+  }catch(_e){
+    return '';
+  }
+}
+
 let invoiceCropper=null;
 let invoiceOriginalPhotoFile=null;
 let invoiceCropObjectUrl='';
@@ -10058,12 +10082,12 @@ function viewCurrentInvoicePhoto(){
     alert("Aucun justificatif n'est enregistré.");
     return;
   }
-  try{
-    const url=new URL(invoicePendingPhotoUrl);
-    window.open(url.href,'_blank','noopener,noreferrer');
-  }catch(e){
-    alert("L'adresse de la photo enregistrée n'est pas valide.");
+  const safeUrl=getSafeInvoicePhotoUrl(invoicePendingPhotoUrl);
+  if(!safeUrl){
+    alert("L'adresse du justificatif n'est pas autorisée.");
+    return;
   }
+  window.open(safeUrl,'_blank','noopener,noreferrer');
 }
 
 function submitInvoice(){
@@ -10201,7 +10225,9 @@ async function downloadInvoicePhoto(index){
   }
 
   try{
-    const response=await fetch(invoice.photoUrl);
+    const safeUrl=getSafeInvoicePhotoUrl(invoice.photoUrl);
+    if(!safeUrl)throw new Error("Adresse du justificatif non autorisée");
+    const response=await fetch(safeUrl);
 
     if(!response.ok){
       throw new Error("Téléchargement impossible");
@@ -10250,12 +10276,12 @@ function openInvoicePhoto(index){
     alert("Aucun lien de facture n'est enregistré pour cet achat.");
     return;
   }
-  try{
-    const url=new URL(invoice.photoUrl,window.location.href);
-    window.open(url.href,'_blank','noopener,noreferrer');
-  }catch(e){
-    alert("Le lien de la facture n'est pas valide.");
+  const safeUrl=getSafeInvoicePhotoUrl(invoice.photoUrl);
+  if(!safeUrl){
+    alert("Le lien de la facture n'est pas autorisé.");
+    return;
   }
+  window.open(safeUrl,'_blank','noopener,noreferrer');
 }
 
 function renderWarrantyWatch(){
@@ -11675,9 +11701,9 @@ function renderLoyaltyBenefits(){
     if(days===0)suffix=' · expire aujourd’hui';
     else if(days===1)suffix=' · expire demain';
     else if(days!==null && days>1 && days<=7)suffix=` · ${days} jours restants`;
-    const id=loyaltyEscape(benefit.id);
+    const idArg=htmlJsString(benefit.id);
     return `<div class="loyalty-benefit-row">
-      <button class="loyalty-benefit-main" type="button" onclick="openLoyaltyBenefitDisplay('${id}')">
+      <button class="loyalty-benefit-main" type="button" onclick="openLoyaltyBenefitDisplay(${idArg})">
         <span class="loyalty-benefit-label-line">
           <span class="loyalty-benefit-label">${loyaltyEscape(benefit.label||'Bon / avoir')}</span>
           <span class="loyalty-benefit-kind ${loyaltyBenefitKind(benefit.kind)}">${loyaltyBenefitKindIcon(benefit.kind)} ${loyaltyEscape(loyaltyBenefitKindLabel(benefit.kind))}</span>
@@ -11686,8 +11712,8 @@ function renderLoyaltyBenefits(){
         <span class="loyalty-benefit-meta${soon?' soon':''}">Valable jusqu’au ${loyaltyEscape(loyaltyFormatCalendarDate(benefit.validUntil))}${loyaltyEscape(suffix)}</span>
       </button>
       <div class="loyalty-benefit-actions">
-        <button class="loyalty-benefit-action" type="button" title="Modifier" aria-label="Modifier ${loyaltyEscape(benefit.label||'le bon')}" onclick="openLoyaltyBenefitModal('${id}')">✎</button>
-        <button class="loyalty-benefit-action delete" type="button" title="Supprimer" aria-label="Supprimer ${loyaltyEscape(benefit.label||'le bon')}" onclick="deleteLoyaltyBenefit('${id}')">🗑️</button>
+        <button class="loyalty-benefit-action" type="button" title="Modifier" aria-label="Modifier ${loyaltyEscape(benefit.label||'le bon')}" onclick="openLoyaltyBenefitModal(${idArg})">✎</button>
+        <button class="loyalty-benefit-action delete" type="button" title="Supprimer" aria-label="Supprimer ${loyaltyEscape(benefit.label||'le bon')}" onclick="deleteLoyaltyBenefit(${idArg})">🗑️</button>
       </div>
     </div>`;
   }).join('');
@@ -11834,7 +11860,7 @@ function renderLoyaltyCards(){
   }
 
   root.innerHTML=cards.map(card=>`
-    <div class="loyalty-card${loyaltyResolveBrandKey(card.name)==='carrefour'?' brand-carrefour':''}" role="button" tabindex="0" onclick="openLoyaltyDisplay('${loyaltyEscape(card.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLoyaltyDisplay('${loyaltyEscape(card.id)}')}">
+    <div class="loyalty-card${loyaltyResolveBrandKey(card.name)==='carrefour'?' brand-carrefour':''}" role="button" tabindex="0" onclick="openLoyaltyDisplay(${htmlJsString(card.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLoyaltyDisplay(${htmlJsString(card.id)})}">
       ${loyaltyBrandMarkHtml(card.name)}
       <div class="loyalty-main">
         <div class="loyalty-name">${loyaltyEscape(card.name||'Carte')}</div>
@@ -11842,8 +11868,8 @@ function renderLoyaltyCards(){
         <span class="loyalty-type">${loyaltyEscape(loyaltyFormatLabel(card.format))}</span>
       </div>
       <div class="loyalty-actions">
-        <button class="loyalty-icon-btn favorite ${card.favorite?'active':''}" type="button" title="${card.favorite?'Retirer des favoris':'Mettre en favori'}" aria-label="${card.favorite?'Retirer des favoris':'Mettre en favori'}" onclick="event.stopPropagation();toggleLoyaltyFavorite('${loyaltyEscape(card.id)}')">★</button>
-        <button class="loyalty-icon-btn" type="button" title="Modifier" aria-label="Modifier" onclick="event.stopPropagation();openLoyaltyCardModal('${loyaltyEscape(card.id)}')">✎</button>
+        <button class="loyalty-icon-btn favorite ${card.favorite?'active':''}" type="button" title="${card.favorite?'Retirer des favoris':'Mettre en favori'}" aria-label="${card.favorite?'Retirer des favoris':'Mettre en favori'}" onclick="event.stopPropagation();toggleLoyaltyFavorite(${htmlJsString(card.id)})">★</button>
+        <button class="loyalty-icon-btn" type="button" title="Modifier" aria-label="Modifier" onclick="event.stopPropagation();openLoyaltyCardModal(${htmlJsString(card.id)})">✎</button>
       </div>
     </div>`).join('');
 }
