@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V26.1.93 : Bourse — actualisation horaire limitée à 08h–22h en semaine -->
+<!-- V26.1.94 : Sécurité — suppression de l’ancien verrou local historique -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
@@ -320,15 +320,6 @@ svg.patrimoine-chart{width:100%;height:190px;overflow:visible;touch-action:none;
 .modal h3{font-size:16px;font-weight:600;color:#fff}.modal-field{display:flex;flex-direction:column;gap:6px}.modal-field label{font-size:12px;color:#8b949e;font-weight:600;text-transform:uppercase}.modal-field input{width:100%;padding:10px 12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#fff;font-size:15px;outline:none}.modal-buttons{display:flex;gap:8px;margin-top:4px}
 
 #firebaseStatus{align-self:center;width:max-content;max-width:100%;padding:5px 10px;border-radius:999px;font-size:11px;opacity:.85;background:rgba(0,0,0,.65);color:white;pointer-events:none;margin:-6px auto 0}
-/* Schéma minimaliste, épuré, points et traits affinés */
-#patternLockOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
-#patternLockOverlay h2{font-size:16px;color:#8b949e;text-align:center;font-weight:400}
-#patternLockOverlay p{font-size:13px;color:#8b949e;text-align:center;max-width:300px;display:none}
-.pattern-container{position:relative;width:340px;height:340px;background:transparent;border:none;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:24px;touch-action:none}
-.pattern-dot{width:10px;height:10px;background:#8b949e;border-radius:50%;margin:auto;cursor:pointer;transition:background .2s,transform .2s}
-.pattern-dot.active{background:#58a6ff;transform:scale(1.4)}
-.pattern-dot.error{background:#f85149}
-#patternSvg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 /* Mode masquage par étoiles (***) généralisé */
 body.hide-amounts .total,body.hide-amounts .budget-summary-total,body.hide-amounts .section-total,body.hide-amounts .stat strong,body.hide-amounts .history-view-amount,body.hide-amounts .history-table td:nth-child(2),body.hide-amounts #asset-distribution-legend strong,body.hide-amounts #patrimoine-variation-value,body.hide-amounts #chart-performance-value{visibility:hidden;position:relative}
 body.hide-amounts .total::after,body.hide-amounts .budget-summary-total::after,body.hide-amounts .section-total::after,body.hide-amounts .stat strong::after,body.hide-amounts .history-view-amount::after,body.hide-amounts .history-table td:nth-child(2)::after,body.hide-amounts #asset-distribution-legend strong::after,body.hide-amounts #patrimoine-variation-value::after,body.hide-amounts #chart-performance-value::after{content:"***";visibility:visible;position:absolute;left:0;top:0;color:inherit}
@@ -1314,29 +1305,6 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 </div>
 
 
-
-<!-- ÉCRAN DE VERROUILLAGE -->
-<div id="patternLockOverlay" style="display:none;">
-  <h2 id="patternTitle">Dessinez un schéma de déverrouillage :</h2>
-  <p id="patternSubtitle">Dessinez votre schéma pour accéder à l'application.</p>
-
-  <div id="patternSection" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-    <div class="pattern-container" id="patternContainer">
-      <svg id="patternSvg"><path id="patternPath" d="" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div class="pattern-dot" data-id="0"></div><div class="pattern-dot" data-id="1"></div><div class="pattern-dot" data-id="2"></div>
-      <div class="pattern-dot" data-id="3"></div><div class="pattern-dot" data-id="4"></div><div class="pattern-dot" data-id="5"></div>
-      <div class="pattern-dot" data-id="6"></div><div class="pattern-dot" data-id="7"></div><div class="pattern-dot" data-id="8"></div>
-    </div>
-    <button class="btn btn-secondary" id="patternResetBtn" style="display:none;width:280px;" onclick="resetPatternSetup()">Recommencer</button>
-    <button class="btn btn-secondary" id="togglePasswordModeBtn" style="width:280px;background:transparent;border:0;color:#58a6ff;font-size:13px;" onclick="togglePasswordMode()">🔑 Entrer par mot de passe</button>
-  </div>
-
-  <div id="passwordSection" style="display:none;flex-direction:column;gap:12px;width:280px;align-items:center;">
-    <input type="password" id="fallbackPasswordInput" placeholder="••••" style="width:100%;padding:14px;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#fff;text-align:center;font-size:18px;letter-spacing:4px;outline:none;" inputmode="numeric">
-    <button class="btn btn-primary" onclick="checkFallbackPassword()" style="width:100%;">Valider</button>
-    <button class="btn btn-secondary" onclick="togglePasswordMode()" style="width:100%;background:transparent;border:0;color:#58a6ff;">🎨 Revenir au schéma</button>
-  </div>
-</div>
 
 <!-- MODAL AJOUT / MODIFICATION BUDGET -->
 <div class="modal-overlay" id="genericModal">
@@ -2423,8 +2391,6 @@ onAuthStateChanged(auth,async user=>{
     if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
     if(bar)bar.style.display='none';
     if(overlay)overlay.style.display='flex';
-    const legacyLock=document.getElementById('patternLockOverlay');
-    if(legacyLock)legacyLock.style.display='none';
     setFirebaseStatus('Connexion requise','sync-offline');
     try{await signOut(auth);}catch(error){console.error(error);}
     return;
@@ -2435,8 +2401,6 @@ onAuthStateChanged(auth,async user=>{
     if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
     if(bar)bar.style.display='none';
     if(overlay)overlay.style.display='flex';
-    const legacyLock=document.getElementById('patternLockOverlay');
-    if(legacyLock)legacyLock.style.display='none';
     setFirebaseStatus('Non connecté','sync-offline');
     return;
   }
@@ -2457,11 +2421,6 @@ onAuthStateChanged(auth,async user=>{
       applyRemoteSnapshot(snapshot).catch(console.error);
     });
     if(overlay)overlay.style.display='none';
-    // V26.1.50 : l'authentification Firebase est désormais l'unique verrou d'accès.
-    // L'ancien schéma / code local est conservé dans le fichier uniquement pour
-    // compatibilité avec les réglages historiques, mais il ne doit plus bloquer l'app.
-    const legacyLock=document.getElementById('patternLockOverlay');
-    if(legacyLock)legacyLock.style.display='none';
   }catch(error){
     console.error(error);window.firebaseReady=false;
     setFirebaseStatus('⚠️ Connexion Firebase impossible','sync-offline');
@@ -4206,374 +4165,6 @@ function applyHideAmountsState(){
     btns.forEach(b=>b.textContent='👁️ Affiché');
   }
 }
-
-/* LOGIQUE DU SCHÉMA DE VERROUILLAGE */
-let storedPattern = localStorage.getItem('finaryPattern') || '';
-let patternState = storedPattern ? 'unlock' : 'setup_1';
-let setupFirstPattern = '';
-let currentPatternSequence = [];
-let isDrawing = false;
-
-function isMobileDevice(){
-  // Détection moderne quand elle est disponible
-  if(navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean'){
-    return navigator.userAgentData.mobile;
-  }
-
-  // Compatibilité avec les navigateurs qui n'exposent pas userAgentData
-  return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
-  );
-}
-
-function initPatternLock(){
-  const overlay = document.getElementById('patternLockOverlay');
-  if(window.personalFirebaseAuthenticated){
-    if(overlay)overlay.style.display='none';
-    return;
-  }
-  const patternSec = document.getElementById('patternSection');
-  const passSec = document.getElementById('passwordSection');
-  const title = document.getElementById('patternTitle');
-  const subtitle = document.getElementById('patternSubtitle');
-  const toggleBtn = document.getElementById('togglePasswordModeBtn');
-  const resetBtn = document.getElementById('patternResetBtn');
-
-  const mobile = isMobileDevice();
-
-  // =====================================================
-  // ORDINATEUR : MOT DE PASSE UNIQUEMENT
-  // =====================================================
-  if(!mobile){
-    overlay.style.display = 'flex';
-
-    patternSec.style.display = 'none';
-    passSec.style.display = 'flex';
-
-    title.textContent = 'Entrez votre mot de passe :';
-
-    if(subtitle){
-      subtitle.style.display = 'none';
-    }
-
-    if(toggleBtn){
-      toggleBtn.style.display = 'none';
-    }
-
-    if(resetBtn){
-      resetBtn.style.display = 'none';
-    }
-
-    setTimeout(()=>{
-      const input = document.getElementById('fallbackPasswordInput');
-
-      if(input){
-        input.value = '';
-        input.focus();
-      }
-    },100);
-
-    return;
-  }
-
-  // =====================================================
-  // SMARTPHONE / TABLETTE : SCHÉMA + MOT DE PASSE
-  // =====================================================
-  patternSec.style.display = 'flex';
-  passSec.style.display = 'none';
-
-  if(subtitle){
-    subtitle.style.display = '';
-  }
-
-  if(!storedPattern && patternState === 'unlock'){
-    patternState = 'setup_1';
-  }
-
-  if(!storedPattern && patternState === 'setup_1'){
-    title.textContent = 'Dessinez un schéma de déverrouillage :';
-
-    if(subtitle){
-      subtitle.textContent = 'Dessinez un schéma de sécurité (minimum 4 points).';
-    }
-
-    if(resetBtn){
-      resetBtn.style.display = 'none';
-    }
-
-    if(toggleBtn){
-      toggleBtn.style.display = 'none';
-    }
-
-    overlay.style.display = 'flex';
-
-  }else if(storedPattern){
-    title.textContent = 'Dessinez un schéma de déverrouillage :';
-
-    if(subtitle){
-      subtitle.textContent = 'Dessinez votre schéma ou utilisez le mot de passe.';
-    }
-
-    if(resetBtn){
-      resetBtn.style.display = 'none';
-    }
-
-    if(toggleBtn){
-      toggleBtn.style.display = 'block';
-    }
-
-    overlay.style.display = 'flex';
-
-  }else{
-    overlay.style.display = 'none';
-  }
-}
-
-function togglePasswordMode(){
-  // Sur ordinateur, l'accès reste exclusivement par mot de passe
-  if(!isMobileDevice()){
-    const patternSec = document.getElementById('patternSection');
-    const passSec = document.getElementById('passwordSection');
-    const title = document.getElementById('patternTitle');
-    const toggleBtn = document.getElementById('togglePasswordModeBtn');
-
-    patternSec.style.display = 'none';
-    passSec.style.display = 'flex';
-    title.textContent = 'Entrez votre mot de passe :';
-
-    if(toggleBtn){
-      toggleBtn.style.display = 'none';
-    }
-
-    setTimeout(()=>{
-      const input=document.getElementById('fallbackPasswordInput');
-      if(input)input.focus();
-    },50);
-
-    return;
-  }
-
-  const patternSec = document.getElementById('patternSection');
-  const passSec = document.getElementById('passwordSection');
-  const title = document.getElementById('patternTitle');
-
-  if(patternSec.style.display === 'none'){
-    patternSec.style.display = 'flex';
-    passSec.style.display = 'none';
-    title.textContent = 'Dessinez un schéma de déverrouillage :';
-  }else{
-    patternSec.style.display = 'none';
-    passSec.style.display = 'flex';
-    title.textContent = 'Entrez votre mot de passe :';
-    setTimeout(()=>document.getElementById('fallbackPasswordInput').focus(),50);
-  }
-}
-
-document.getElementById('fallbackPasswordInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    e.preventDefault();
-    checkFallbackPassword();
-  }
-});
-
-function checkFallbackPassword(){
-  const input = document.getElementById('fallbackPasswordInput');
-  if(input.value === '1987'){
-    document.getElementById('patternLockOverlay').style.display = 'none';
-    input.value = '';
-  }else{
-    alert('Mot de passe incorrect');
-    input.value = '';
-    input.focus();
-  }
-}
-
-function setupPatternListeners(){
-  const container = document.getElementById('patternContainer');
-
-  const getDotFromPoint = (x, y) => {
-    const dots = container.querySelectorAll('.pattern-dot');
-    for(let dot of dots){
-      const rect = dot.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dist = Math.hypot(cx - x, cy - y);
-      if(dist < 45) return dot;
-    }
-    return null;
-  };
-
-  const startDraw = (e) => {
-    isDrawing = true;
-    currentPatternSequence = [];
-    container.querySelectorAll('.pattern-dot').forEach(d => {
-      d.classList.remove('active', 'error');
-    });
-    document.getElementById('patternPath').setAttribute('d', '');
-
-    const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-    const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-    const dot = getDotFromPoint(clientX, clientY);
-    if(dot) addDotToPattern(dot);
-  };
-
-  const moveDraw = (e) => {
-    if(!isDrawing) return;
-    const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-    const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-    const dot = getDotFromPoint(clientX, clientY);
-    if(dot) addDotToPattern(dot);
-    updateSvgLine(clientX, clientY);
-  };
-
-  const endDraw = () => {
-    if(!isDrawing) return;
-    isDrawing = false;
-    updateSvgLine();
-    if(currentPatternSequence.length > 0) evaluatePattern();
-  };
-
-  container.addEventListener('mousedown', startDraw);
-  container.addEventListener('mousemove', moveDraw);
-  window.addEventListener('mouseup', endDraw);
-  container.addEventListener('touchstart', startDraw, {passive:true});
-  container.addEventListener('touchmove', moveDraw, {passive:true});
-  window.addEventListener('touchend', endDraw);
-}
-
-function addDotToPattern(dot){
-  const id = dot.getAttribute('data-id');
-  if(!currentPatternSequence.includes(id)){
-    currentPatternSequence.push(id);
-    dot.classList.add('active');
-    updateSvgLine();
-  }
-}
-
-function getDotCoords(dotId){
-  const containerRect = document.getElementById('patternContainer').getBoundingClientRect();
-  const dot = document.querySelector(`.pattern-dot[data-id="${dotId}"]`);
-  const r = dot.getBoundingClientRect();
-  return {
-    x: r.left + r.width / 2 - containerRect.left,
-    y: r.top + r.height / 2 - containerRect.top
-  };
-}
-
-function updateSvgLine(currentX, currentY){
-  if(currentPatternSequence.length === 0){
-    document.getElementById('patternPath').setAttribute('d', '');
-    return;
-  }
-
-  let d = '';
-  for(let i = 0; i < currentPatternSequence.length; i++){
-    const coords = getDotCoords(currentPatternSequence[i]);
-    if(i === 0) d += `M ${coords.x} ${coords.y}`;
-    else d += ` L ${coords.x} ${coords.y}`;
-  }
-
-  if(currentX !== undefined && currentY !== undefined && isDrawing){
-    const containerRect = document.getElementById('patternContainer').getBoundingClientRect();
-    const endX = currentX - containerRect.left;
-    const endY = currentY - containerRect.top;
-    d += ` L ${endX} ${endY}`;
-  }
-
-  document.getElementById('patternPath').setAttribute('d', d);
-}
-
-function evaluatePattern(){
-  const seqStr = currentPatternSequence.join(',');
-  const title = document.getElementById('patternTitle');
-
-  if(patternState === 'setup_1'){
-    if(currentPatternSequence.length < 4){
-      title.textContent = '❌ Trop court ! Minimum 4 points.';
-      markError();
-      return;
-    }
-
-    setupFirstPattern = seqStr;
-    patternState = 'setup_2';
-    title.textContent = 'Dessinez à nouveau pour confirmer :';
-    document.getElementById('patternResetBtn').style.display = 'block';
-    currentPatternSequence = [];
-    document.getElementById('patternPath').setAttribute('d', '');
-    document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active'));
-
-  }else if(patternState === 'setup_2'){
-    if(seqStr === setupFirstPattern){
-      storedPattern = seqStr;
-      localStorage.setItem('finaryPattern', storedPattern);
-      title.textContent = '✅ Schéma enregistré !';
-
-      setTimeout(() => {
-        document.getElementById('patternLockOverlay').style.display = 'none';
-        patternState = 'unlock';
-        document.getElementById('togglePasswordModeBtn').style.display = 'block';
-      }, 500);
-    }else{
-      title.textContent = '❌ Erreur, recommencez :';
-      markError();
-      patternState = 'setup_1';
-      setupFirstPattern = '';
-      document.getElementById('patternResetBtn').style.display = 'none';
-    }
-
-  }else if(patternState === 'unlock'){
-    if(seqStr === storedPattern){
-      title.textContent = '✅ Déverrouillé';
-      setTimeout(() => {
-        document.getElementById('patternLockOverlay').style.display = 'none';
-      }, 300);
-    }else{
-      title.textContent = '❌ Schéma incorrect :';
-      markError();
-    }
-  }
-}
-
-function markError(){
-  document.querySelectorAll('.pattern-dot.active').forEach(d => {
-    d.classList.remove('active');
-    d.classList.add('error');
-  });
-
-  setTimeout(() => {
-    document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('error'));
-    currentPatternSequence = [];
-    document.getElementById('patternPath').setAttribute('d', '');
-    document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
-  }, 800);
-}
-
-function resetPatternSetup(){
-  patternState = 'setup_1';
-  setupFirstPattern = '';
-  currentPatternSequence = [];
-  document.getElementById('patternPath').setAttribute('d', '');
-  document.getElementById('patternTitle').textContent = 'Dessinez un schéma de déverrouillage :';
-  document.getElementById('patternResetBtn').style.display = 'none';
-  document.querySelectorAll('.pattern-dot').forEach(d => d.classList.remove('active', 'error'));
-}
-
-function triggerChangePattern(){
-  closeAnnotationsModal();
-  storedPattern = '';
-  localStorage.removeItem('finaryPattern');
-  patternState = 'setup_1';
-  initPatternLock();
-}
-
-function disablePatternLock(){
-  if(!confirm("Voulez-vous vraiment désactiver le verrouillage par schéma ?")) return;
-  storedPattern = '';
-  localStorage.removeItem('finaryPattern');
-  closeAnnotationsModal();
-  alert("Verrouillage désactivé.");
-}
-
 
 /* =========================================================
    COMPTES BANCAIRES & VIREMENTS INTERNES
@@ -11377,14 +10968,6 @@ window.addEventListener('appinstalled',()=>{
 
 window.matchMedia('(display-mode: standalone)').addEventListener?.('change',updateBetaInstallButtons);
 window.addEventListener('DOMContentLoaded',updateBetaInstallButtons);
-
-// Verrouillage personnel historique : les écouteurs sont préparés au chargement,
-// mais l'écran de verrouillage n'est affiché qu'après authentification Firebase.
-window.addEventListener('DOMContentLoaded',()=>{
-  const legacyLock=document.getElementById('patternLockOverlay');
-  if(legacyLock)legacyLock.style.display='none';
-  setupPatternListeners();
-});
 
 /* PWA : enregistrement du Service Worker */
 if ('serviceWorker' in navigator) {
