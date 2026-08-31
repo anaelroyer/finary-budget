@@ -2187,10 +2187,9 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-  sendPasswordResetEmail, setPersistence, browserLocalPersistence
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, writeBatch, Bytes } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // Configuration personnelle historique : conservée pour utiliser exactement
 // le même espace Firebase et les mêmes données qu'avant la mise à niveau.
@@ -2207,6 +2206,98 @@ const firebaseApp=initializeApp(firebaseConfig),
       auth=getAuth(firebaseApp),
       db=getFirestore(firebaseApp),
       sharedRef=doc(db,"budget_shared","main_account");
+
+/* PRIVATE_INVOICE_STORAGE_V1
+   Justificatifs privés stockés dans Firestore, protégés par les Security Rules. */
+const PRIVATE_INVOICE_MAX_BYTES=5*1024*1024;
+const PRIVATE_INVOICE_CHUNK_BYTES=640*1024;
+const PRIVATE_INVOICE_PREFIX='firestore://budget_files/';
+
+function privateInvoiceFileId(ref){
+  const value=String(ref||'');
+  if(!value.startsWith(PRIVATE_INVOICE_PREFIX))return '';
+  const id=value.slice(PRIVATE_INVOICE_PREFIX.length);
+  return /^[A-Za-z0-9_-]{8,160}$/.test(id)?id:'';
+}
+
+window.isPrivateInvoiceRef=function(ref){
+  return !!privateInvoiceFileId(ref);
+};
+
+window.savePrivateInvoiceFile=async function(blob,originalName='facture'){
+  if(!(blob instanceof Blob))throw new Error('Fichier invalide.');
+  const user=auth.currentUser;
+  if(!user)throw new Error('Connexion Firebase requise.');
+  if(blob.size<=0)throw new Error('Le fichier est vide.');
+  if(blob.size>PRIVATE_INVOICE_MAX_BYTES)throw new Error('Fichier trop volumineux (maximum 5 Mo).');
+
+  const randomPart=(window.crypto&&typeof window.crypto.randomUUID==='function')
+    ? window.crypto.randomUUID().replace(/-/g,'')
+    : Math.random().toString(36).slice(2)+Date.now().toString(36);
+  const fileId=`inv_${Date.now().toString(36)}_${randomPart}`;
+  const raw=new Uint8Array(await blob.arrayBuffer());
+  const chunkCount=Math.ceil(raw.length/PRIVATE_INVOICE_CHUNK_BYTES);
+  const batch=writeBatch(db);
+
+  batch.set(doc(db,'budget_files',fileId),{
+    ownerUid:user.uid,
+    name:String(originalName||'facture').slice(0,180),
+    contentType:String(blob.type||'application/octet-stream').slice(0,120),
+    size:blob.size,
+    chunkCount,
+    createdAt:new Date().toISOString()
+  });
+
+  for(let i=0;i<chunkCount;i++){
+    const start=i*PRIVATE_INVOICE_CHUNK_BYTES;
+    const end=Math.min(start+PRIVATE_INVOICE_CHUNK_BYTES,raw.length);
+    const chunk=raw.slice(start,end);
+    batch.set(doc(db,'budget_files',fileId,'chunks',String(i).padStart(4,'0')),{data:Bytes.fromUint8Array(chunk)});
+  }
+
+  await batch.commit();
+  return PRIVATE_INVOICE_PREFIX+fileId;
+};
+
+window.loadPrivateInvoiceFile=async function(ref){
+  const fileId=privateInvoiceFileId(ref);
+  if(!fileId)throw new Error('Référence de justificatif invalide.');
+  if(!auth.currentUser)throw new Error('Connexion Firebase requise.');
+
+  const metaSnap=await getDoc(doc(db,'budget_files',fileId));
+  if(!metaSnap.exists())throw new Error('Justificatif introuvable.');
+  const meta=metaSnap.data()||{};
+  const chunkCount=Number(meta.chunkCount)||0;
+  if(chunkCount<1||chunkCount>20)throw new Error('Justificatif incomplet ou invalide.');
+
+  const chunkSnaps=await Promise.all(Array.from({length:chunkCount},(_,i)=>getDoc(doc(db,'budget_files',fileId,'chunks',String(i).padStart(4,'0')))));
+  const parts=chunkSnaps.map((snap,i)=>{
+    if(!snap.exists())throw new Error(`Morceau ${i+1}/${chunkCount} manquant.`);
+    const value=snap.data()?.data;
+    if(!value||typeof value.toUint8Array!=='function')throw new Error('Morceau de fichier invalide.');
+    return value.toUint8Array();
+  });
+  const blob=new Blob(parts,{type:String(meta.contentType||'application/octet-stream')});
+  if(Number(meta.size)>0 && blob.size!==Number(meta.size))throw new Error('Le justificatif est incomplet.');
+  return blob;
+};
+
+window.deletePrivateInvoiceFile=async function(ref){
+  const fileId=privateInvoiceFileId(ref);
+  if(!fileId)return false;
+  if(!auth.currentUser)throw new Error('Connexion Firebase requise.');
+  const metaRef=doc(db,'budget_files',fileId);
+  const metaSnap=await getDoc(metaRef);
+  if(!metaSnap.exists())return true;
+  const chunkCount=Math.max(0,Math.min(20,Number(metaSnap.data()?.chunkCount)||0));
+  const batch=writeBatch(db);
+  for(let i=0;i<chunkCount;i++)batch.delete(doc(db,'budget_files',fileId,'chunks',String(i).padStart(4,'0')));
+  batch.delete(metaRef);
+  await batch.commit();
+  return true;
+};
+
+
 
 window.firebaseReady=false;
 window.firebaseWriting=false;
@@ -10119,9 +10210,9 @@ let invoiceFilter='all';
 let invoiceEditIndex=-1;
 let invoicePendingPhotoUrl='';
 let invoicePhotoUploading=false;
+let invoiceOriginalStoredPhotoUrl='';
+const invoiceTemporaryPrivateRefs=new Set();
 
-const CLOUDINARY_CLOUD_NAME='smwbj5za';
-const CLOUDINARY_UPLOAD_PRESET='factures_budget';
 
 function getSafeInvoicePhotoUrl(value){
   try{
@@ -10129,7 +10220,6 @@ function getSafeInvoicePhotoUrl(value){
     if(url.protocol!=='https:')return '';
     if(url.hostname.toLowerCase()!=='res.cloudinary.com')return '';
     const firstPathPart=url.pathname.split('/').filter(Boolean)[0]||'';
-    if(firstPathPart!==CLOUDINARY_CLOUD_NAME)return '';
     return url.href;
   }catch(_e){
     return '';
@@ -10263,6 +10353,8 @@ function openInvoiceModal(index=-1){
   toggleInvoiceWarrantyField();
 
   invoicePendingPhotoUrl=invoice?.photoUrl||'';
+  invoiceOriginalStoredPhotoUrl=invoicePendingPhotoUrl;
+  invoiceTemporaryPrivateRefs.clear();
   invoicePhotoUploading=false;
 
   const fileInput=document.getElementById('invoicePhotoFile');
@@ -10305,13 +10397,24 @@ function openInvoiceModal(index=-1){
 
 }
 
+function cleanupInvoiceTemporaryPrivateRefs(exceptRef=''){
+  const refs=[...invoiceTemporaryPrivateRefs];
+  invoiceTemporaryPrivateRefs.clear();
+  refs.forEach(ref=>{
+    if(ref===exceptRef)return;
+    if(window.isPrivateInvoiceRef?.(ref))window.deletePrivateInvoiceFile?.(ref).catch(error=>console.error('Nettoyage justificatif temporaire :',error));
+  });
+}
+
 function closeInvoiceModal(){
   if(invoicePhotoUploading){
-    if(!confirm("Une photo est encore en cours d'envoi. Fermer quand même ?"))return;
+    if(!confirm("Un justificatif est encore en cours d'enregistrement. Fermer quand même ?"))return;
   }
+  cleanupInvoiceTemporaryPrivateRefs();
   document.getElementById('invoiceModal').classList.remove('active');
   invoiceEditIndex=-1;
   invoicePendingPhotoUrl='';
+  invoiceOriginalStoredPhotoUrl='';
   invoicePhotoUploading=false;
 }
 
@@ -10349,90 +10452,61 @@ function handleInvoicePhotoSelected(event){
 async function handleInvoiceDigitalFileSelected(event){
   const file=event.target.files?.[0];
   if(!file)return;
-
-  const allowed=[
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'image/webp'
-  ];
-
+  const allowed=['application/pdf','image/jpeg','image/png','image/webp'];
   if(!allowed.includes(file.type)){
     setInvoiceUploadStatus('❌ Format non pris en charge. Utilise PDF, JPG, PNG ou WEBP.','error');
     event.target.value='';
     return;
   }
-
-  if(file.size>15*1024*1024){
-    setInvoiceUploadStatus('❌ Fichier trop volumineux (maximum 15 Mo).','error');
+  const maxBytes=file.type==='application/pdf'?5*1024*1024:10*1024*1024;
+  if(file.size>maxBytes){
+    setInvoiceUploadStatus(`❌ Fichier trop volumineux (maximum ${file.type==='application/pdf'?5:10} Mo).`,'error');
     event.target.value='';
     return;
   }
-
-  // Les images peuvent être recadrées comme une photo prise avec l'appareil.
   if(file.type.startsWith('image/')){
     invoiceOriginalPhotoFile=file;
     openInvoiceCrop(file);
     event.target.value='';
     return;
   }
-
-  // Un PDF est envoyé directement, sans recadrage.
   await uploadInvoiceDigitalDocument(file);
   event.target.value='';
 }
 
-async function uploadInvoiceDigitalDocument(file){
+async function storeInvoiceBlobPrivately(blob,fileName,loadingMessage,successMessage){
   invoicePhotoUploading=true;
   const submitBtn=document.getElementById('invoiceSubmitBtn');
   if(submitBtn)submitBtn.disabled=true;
-
-  setInvoiceUploadStatus('⏳ Envoi du PDF en cours…','loading');
-
+  setInvoiceUploadStatus(loadingMessage,'loading');
   try{
-    const formData=new FormData();
-    formData.append('file',file);
-    formData.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
-
-    // "raw" permet de conserver le PDF comme document téléchargeable.
-    const response=await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
-      {
-        method:'POST',
-        body:formData
-      }
-    );
-
-    const result=await response.json();
-
-    if(!response.ok||!result.secure_url){
-      throw new Error(result?.error?.message||"Échec de l'envoi");
+    if(typeof window.savePrivateInvoiceFile!=='function')throw new Error('Stockage privé Firebase indisponible. Recharge l’application.');
+    const newRef=await window.savePrivateInvoiceFile(blob,fileName);
+    const previousRef=invoicePendingPhotoUrl;
+    invoicePendingPhotoUrl=newRef;
+    invoiceTemporaryPrivateRefs.add(newRef);
+    if(previousRef && previousRef!==newRef && invoiceTemporaryPrivateRefs.has(previousRef)){
+      invoiceTemporaryPrivateRefs.delete(previousRef);
+      window.deletePrivateInvoiceFile?.(previousRef).catch(error=>console.error('Nettoyage ancien justificatif temporaire :',error));
     }
-
-    invoicePendingPhotoUrl=result.secure_url;
-
-    setInvoiceUploadStatus('✅ PDF envoyé et enregistré.','success');
-
+    setInvoiceUploadStatus(successMessage,'success');
     const takeBtn=document.getElementById('invoiceTakePhotoBtn');
-    if(takeBtn){
-      takeBtn.childNodes[0].textContent='🔄 Remplacer par une photo ';
-    }
-
+    if(takeBtn)takeBtn.childNodes[0].textContent='🔄 Remplacer par une photo ';
     const importBtn=document.getElementById('invoiceImportFileBtn');
-    if(importBtn){
-      importBtn.childNodes[0].textContent='🔄 Remplacer par un fichier ';
-    }
-
+    if(importBtn)importBtn.childNodes[0].textContent='🔄 Remplacer par un fichier ';
     const viewBtn=document.getElementById('invoiceViewCurrentPhotoBtn');
     if(viewBtn)viewBtn.style.display='inline-flex';
-
   }catch(error){
     console.error(error);
-    setInvoiceUploadStatus(`❌ Impossible d'envoyer le PDF : ${error.message||'erreur inconnue'}`,'error');
+    setInvoiceUploadStatus(`❌ Impossible d'enregistrer le justificatif : ${error.message||'erreur inconnue'}`,'error');
   }finally{
     invoicePhotoUploading=false;
     if(submitBtn)submitBtn.disabled=false;
   }
+}
+
+async function uploadInvoiceDigitalDocument(file){
+  await storeInvoiceBlobPrivately(file,file.name||'facture.pdf','⏳ Enregistrement sécurisé du PDF…','✅ PDF enregistré dans votre espace Firebase privé.');
 }
 
 function openInvoiceCrop(file){
@@ -10550,59 +10624,37 @@ async function validateInvoiceCrop(){
 }
 
 async function uploadInvoicePhotoBlob(blob){
-  invoicePhotoUploading=true;
-  const submitBtn=document.getElementById('invoiceSubmitBtn');
-  if(submitBtn)submitBtn.disabled=true;
-
-  setInvoiceUploadStatus('⏳ Envoi de la photo recadrée en cours…','loading');
-
-  try{
-    const formData=new FormData();
-    formData.append('file',blob,'facture.jpg');
-    formData.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
-
-    const response=await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-      {method:'POST',body:formData}
-    );
-
-    const result=await response.json();
-
-    if(!response.ok||!result.secure_url){
-      throw new Error(result?.error?.message||"Échec de l'envoi");
-    }
-
-    invoicePendingPhotoUrl=result.secure_url;
-    setInvoiceUploadStatus('✅ Photo recadrée, envoyée et enregistrée.','success');
-
-    const takeBtn=document.getElementById('invoiceTakePhotoBtn');
-    if(takeBtn){
-      takeBtn.childNodes[0].textContent='🔄 Remplacer la photo ';
-    }
-
-    const viewBtn=document.getElementById('invoiceViewCurrentPhotoBtn');
-    if(viewBtn)viewBtn.style.display='inline-flex';
-
-  }catch(error){
-    console.error(error);
-    setInvoiceUploadStatus(`❌ Impossible d'envoyer la photo : ${error.message||'erreur inconnue'}`,'error');
-  }finally{
-    invoicePhotoUploading=false;
-    if(submitBtn)submitBtn.disabled=false;
-  }
+  await storeInvoiceBlobPrivately(blob,'facture.jpg','⏳ Enregistrement sécurisé de la photo recadrée…','✅ Photo enregistrée dans votre espace Firebase privé.');
 }
 
-function viewCurrentInvoicePhoto(){
-  if(!invoicePendingPhotoUrl){
-    alert("Aucun justificatif n'est enregistré.");
-    return;
+async function openInvoiceBlobInNewTab(blob){
+  const objectUrl=URL.createObjectURL(blob);
+
+  // Avec "noopener,noreferrer", window.open() peut renvoyer null même si
+  // l'onglet a réellement été ouvert. Ne pas interpréter cette valeur
+  // comme un blocage du navigateur.
+  window.open(objectUrl,'_blank','noopener,noreferrer');
+
+  // L'URL Blob reste disponible assez longtemps pour que le nouvel onglet la charge.
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+}
+
+async function viewCurrentInvoicePhoto(){
+  if(!invoicePendingPhotoUrl){alert("Aucun justificatif n'est enregistré.");return;}
+  try{
+    if(window.isPrivateInvoiceRef?.(invoicePendingPhotoUrl)){
+      setInvoiceUploadStatus('⏳ Ouverture du justificatif privé…','loading');
+      const blob=await window.loadPrivateInvoiceFile(invoicePendingPhotoUrl);
+      await openInvoiceBlobInNewTab(blob);
+      setInvoiceUploadStatus('✅ Justificatif privé enregistré.','success');
+      return;
+    }
+    const url=new URL(invoicePendingPhotoUrl);
+    window.open(url.href,'_blank','noopener,noreferrer');
+  }catch(error){
+    console.error(error);
+    setInvoiceUploadStatus(`❌ Impossible d'ouvrir le justificatif : ${error.message||'erreur inconnue'}`,'error');
   }
-  const safeUrl=getSafeInvoicePhotoUrl(invoicePendingPhotoUrl);
-  if(!safeUrl){
-    alert("L'adresse du justificatif n'est pas autorisée.");
-    return;
-  }
-  window.open(safeUrl,'_blank','noopener,noreferrer');
 }
 
 function submitInvoice(){
@@ -10711,11 +10763,22 @@ function submitInvoice(){
     if(m.invoiceId===invoice.id && !vehicleId)m.invoiceId='';
   });
 
+  const previousStoredPhotoUrl=invoiceOriginalStoredPhotoUrl;
+  const committedPhotoUrl=photoUrl;
+
   document.getElementById('invoiceModal').classList.remove('active');
   invoiceEditIndex=-1;
   invoicePendingPhotoUrl='';
+  invoiceOriginalStoredPhotoUrl='';
   invoicePhotoUploading=false;
   save();
+
+  invoiceTemporaryPrivateRefs.delete(committedPhotoUrl);
+  cleanupInvoiceTemporaryPrivateRefs(committedPhotoUrl);
+  if(previousStoredPhotoUrl && previousStoredPhotoUrl!==committedPhotoUrl && window.isPrivateInvoiceRef?.(previousStoredPhotoUrl)){
+    window.deletePrivateInvoiceFile?.(previousStoredPhotoUrl).catch(error=>console.error('Suppression ancien justificatif :',error));
+  }
+
   renderInvoices();
 }
 
@@ -10733,70 +10796,45 @@ function deleteInvoice(index){
 
 async function downloadInvoicePhoto(index){
   const invoice=data.factures?.[index];
-
-  if(!invoice?.photoUrl){
-    alert("Aucune facture n'est enregistrée pour cet achat.");
-    return;
-  }
-
+  if(!invoice?.photoUrl){alert("Aucune facture n'est enregistrée pour cet achat.");return;}
   try{
-    const safeUrl=getSafeInvoicePhotoUrl(invoice.photoUrl);
-    if(!safeUrl)throw new Error("Adresse du justificatif non autorisée");
-    const response=await fetch(safeUrl);
-
-    if(!response.ok){
-      throw new Error("Téléchargement impossible");
+    let blob;
+    if(window.isPrivateInvoiceRef?.(invoice.photoUrl))blob=await window.loadPrivateInvoiceFile(invoice.photoUrl);
+    else{
+      const response=await fetch(invoice.photoUrl);
+      if(!response.ok)throw new Error('Téléchargement impossible');
+      blob=await response.blob();
     }
-
-    const blob=await response.blob();
     const objectUrl=URL.createObjectURL(blob);
-
-    const safeDescription=(invoice.description||'facture')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-zA-Z0-9_-]+/g,'_')
-      .replace(/^_+|_+$/g,'')
-      .toLowerCase() || 'facture';
-
+    const safeDescription=(invoice.description||'facture').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase()||'facture';
     const safeDate=(invoice.date||'').replace(/[^0-9-]/g,'');
-    const extension=blob.type==='application/pdf'
-      ? 'pdf'
-      : blob.type==='image/png'
-        ? 'png'
-        : blob.type==='image/webp'
-          ? 'webp'
-          : 'jpg';
-
+    const extension=blob.type==='application/pdf'?'pdf':blob.type==='image/png'?'png':blob.type==='image/webp'?'webp':'jpg';
     const a=document.createElement('a');
     a.href=objectUrl;
     a.download=`facture_${safeDescription}${safeDate?'_'+safeDate:''}.${extension}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
+    document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
-
   }catch(error){
     console.error(error);
-
-    if(confirm("Le téléchargement direct a échoué. Voulez-vous ouvrir la facture pour pouvoir l'enregistrer depuis votre navigateur ?")){
-      openInvoicePhoto(index);
-    }
+    if(confirm("Le téléchargement direct a échoué. Voulez-vous ouvrir la facture ?"))openInvoicePhoto(index);
   }
 }
 
-function openInvoicePhoto(index){
+async function openInvoicePhoto(index){
   const invoice=data.factures?.[index];
-  if(!invoice?.photoUrl){
-    alert("Aucun lien de facture n'est enregistré pour cet achat.");
-    return;
+  if(!invoice?.photoUrl){alert("Aucun justificatif n'est enregistré pour cet achat.");return;}
+  try{
+    if(window.isPrivateInvoiceRef?.(invoice.photoUrl)){
+      const blob=await window.loadPrivateInvoiceFile(invoice.photoUrl);
+      await openInvoiceBlobInNewTab(blob);
+      return;
+    }
+    const url=new URL(invoice.photoUrl,window.location.href);
+    window.open(url.href,'_blank','noopener,noreferrer');
+  }catch(error){
+    console.error(error);
+    alert(`Impossible d'ouvrir la facture : ${error.message||'erreur inconnue'}`);
   }
-  const safeUrl=getSafeInvoicePhotoUrl(invoice.photoUrl);
-  if(!safeUrl){
-    alert("Le lien de la facture n'est pas autorisé.");
-    return;
-  }
-  window.open(safeUrl,'_blank','noopener,noreferrer');
 }
 
 function renderWarrantyWatch(){
