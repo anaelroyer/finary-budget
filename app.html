@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.1.72 : Fidélité — nettoyage global des codes scannés + validations corrigées + Détection auto par défaut -->
 <!-- V26.1.71 : Navigation principale réorganisée en grille 2×3 + balayage Fidélité inclus -->
 <!-- V26.1.70 : Fidélité — détection de format stricte, aucun fallback silencieux vers Code 128 -->
 <!-- V26.1.68 : rapport Patrimoine — lignes PEA avant CTO -->
@@ -11304,7 +11305,7 @@ if(window.visualViewport){
       <div class="modal-field">
         <label>Type de code</label>
         <select id="loyaltyFormatInput" class="invoice-select">
-          <option value="">Détection auto / choisir</option>
+          <option value="" selected>Détection auto / choisir</option>
           <option value="CODE128">Code 128</option>
           <option value="EAN13">EAN-13</option>
           <option value="EAN8">EAN-8</option>
@@ -11495,7 +11496,11 @@ function openLoyaltyCardModal(id=''){
   document.getElementById('loyaltyCardModalTitle').textContent=card?'Modifier la carte de fidélité':'Ajouter une carte de fidélité';
   document.getElementById('loyaltyNameInput').value=card?.name||'';
   document.getElementById('loyaltyCodeInput').value=card?.code||'';
-  document.getElementById('loyaltyFormatInput').value=card?loyaltyNormalizeFormat(card.format||'CODE128'):'';
+  const formatInput=document.getElementById('loyaltyFormatInput');
+  if(formatInput){
+    if(card)formatInput.value=loyaltyNormalizeFormat(card.format||'CODE128');
+    else{formatInput.selectedIndex=0;formatInput.value='';}
+  }
   document.getElementById('loyaltyFavoriteInput').checked=Boolean(card?.favorite);
   setLoyaltyFormMessage('');
   document.getElementById('loyaltyCardModal').classList.add('active');
@@ -11508,12 +11513,27 @@ function closeLoyaltyCardModal(){
   setLoyaltyFormMessage('');
 }
 
+function loyaltyCleanCode(code,format=''){
+  let value=String(code??'');
+  // Uniformise les caractères Unicode puis retire uniquement les caractères invisibles
+  // qui peuvent être ajoutés par la caméra ou un copier-coller.
+  try{value=value.normalize('NFKC');}catch(_e){}
+  value=value.replace(/[\u200B-\u200D\u2060\uFEFF]/g,'').replace(/[\r\n]+/g,'').trim();
+
+  // Les formats numériques ne peuvent contenir aucun espace : on les retire avant
+  // détection, validation et enregistrement. Les espaces restent autorisés pour
+  // Code 39 / Code 128 / QR lorsqu'ils font réellement partie du contenu.
+  const f=String(format||'').toUpperCase();
+  if(['EAN13','EAN8','ITF14'].includes(f))value=value.replace(/\s+/g,'');
+  return value;
+}
+
 function loyaltyValidate(code,format){
-  const value=String(code||'').trim();
+  const value=loyaltyCleanCode(code,format);
   if(!value)return 'Renseigne le numéro ou le contenu du code.';
-  if(format==='EAN13' && !/^\\d{13}$/.test(value))return 'Un EAN-13 doit contenir exactement 13 chiffres.';
-  if(format==='EAN8' && !/^\\d{8}$/.test(value))return 'Un EAN-8 doit contenir exactement 8 chiffres.';
-  if(format==='ITF14' && !/^\\d{14}$/.test(value))return 'Un ITF-14 doit contenir exactement 14 chiffres.';
+  if(format==='EAN13' && !/^\d{13}$/.test(value))return 'Un EAN-13 doit contenir exactement 13 chiffres.';
+  if(format==='EAN8' && !/^\d{8}$/.test(value))return 'Un EAN-8 doit contenir exactement 8 chiffres.';
+  if(format==='ITF14' && !/^\d{14}$/.test(value))return 'Un ITF-14 doit contenir exactement 14 chiffres.';
   if(format==='CODE39' && !/^[0-9A-Z .$/+%-]+$/i.test(value))return 'Ce contenu n’est pas compatible avec le format Code 39.';
   return '';
 }
@@ -11521,13 +11541,15 @@ function loyaltyValidate(code,format){
 function saveLoyaltyCard(){
   loyaltyEnsureData();
   const name=String(document.getElementById('loyaltyNameInput')?.value||'').trim();
-  const code=String(document.getElementById('loyaltyCodeInput')?.value||'').trim();
   const format=String(document.getElementById('loyaltyFormatInput')?.value||'').toUpperCase();
+  const code=loyaltyCleanCode(document.getElementById('loyaltyCodeInput')?.value||'',format);
   const favorite=Boolean(document.getElementById('loyaltyFavoriteInput')?.checked);
   if(!name){setLoyaltyFormMessage('Renseigne le nom de l’enseigne.','error');return;}
   if(!loyaltyKnownFormat(format)){setLoyaltyFormMessage('Choisis le type de code. Le scanner le sélectionne automatiquement lorsqu’il le reconnaît.','error');return;}
   const validation=loyaltyValidate(code,format);
   if(validation){setLoyaltyFormMessage(validation,'error');return;}
+  const codeInput=document.getElementById('loyaltyCodeInput');
+  if(codeInput)codeInput.value=code;
 
   if(activeLoyaltyEditId){
     const card=data.loyaltyCards.find(c=>String(c.id)===activeLoyaltyEditId);
@@ -11613,7 +11635,6 @@ function deleteDisplayedLoyaltyCard(){
 
 function loyaltyDetectedFormat(format='',rawValue=''){
   const f=String(format||'').toLowerCase();
-  const value=String(rawValue||'').trim();
   if(f==='qr_code')return 'QR';
   if(f==='ean_13')return 'EAN13';
   if(f==='ean_8')return 'EAN8';
@@ -11621,7 +11642,10 @@ function loyaltyDetectedFormat(format='',rawValue=''){
   if(f==='code_39')return 'CODE39';
   // BarcodeDetector renvoie « itf » pour toute la famille ITF ;
   // l'application ne sait générer que l'ITF-14, donc on ne l'affirme que pour 14 chiffres.
-  if(f==='itf' && /^\d{14}$/.test(value))return 'ITF14';
+  if(f==='itf'){
+    const value=loyaltyCleanCode(rawValue,'ITF14');
+    if(/^\d{14}$/.test(value))return 'ITF14';
+  }
   return '';
 }
 
@@ -11665,13 +11689,20 @@ async function loyaltyScanTick(){
       const results=await loyaltyBarcodeDetector.detect(video);
       const found=results?.find(r=>String(r.rawValue||'').trim());
       if(found){
-        const value=String(found.rawValue||'').trim();
+        const rawValue=String(found.rawValue||'');
+        const format=loyaltyDetectedFormat(found.format,rawValue);
+        const value=loyaltyCleanCode(rawValue,format);
         document.getElementById('loyaltyCodeInput').value=value;
-        const format=loyaltyDetectedFormat(found.format,value);
         document.getElementById('loyaltyFormatInput').value=format;
         stopLoyaltyScanner();
         if(format){
-          setLoyaltyFormMessage(`Code détecté · ${loyaltyFormatLabel(format)}`,'success');
+          const validation=loyaltyValidate(value,format);
+          if(validation){
+            document.getElementById('loyaltyFormatInput').value='';
+            setLoyaltyFormMessage(`Code lu (${loyaltyFormatLabel(format)}), mais contenu incohérent : ${validation} Choisis le type manuellement si nécessaire.`,'error');
+          }else{
+            setLoyaltyFormMessage(`Code détecté · ${loyaltyFormatLabel(format)}`,'success');
+          }
         }else{
           setLoyaltyFormMessage('Code lu, mais format non reconnu. Choisis le type de code manuellement avant d’enregistrer.','error');
         }
