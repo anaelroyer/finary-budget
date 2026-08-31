@@ -1,10 +1,10 @@
-/* Budget & Patrimoine — Service Worker v26.1.91
+/* Budget & Patrimoine — Service Worker — Security v3
    Cache renforcé des ressources statiques et bibliothèques externes. */
-const CACHE_NAME = 'budget-patrimoine-v26-1-91';
+const CACHE_NAME = 'budget-patrimoine-security-v3-20260831';
 
 const APP_SHELL = [
   './app.html',
-  './firebase-config.js',
+
   './manifest.webmanifest',
   './icons/icon-180.png',
   './icons/icon-192.png',
@@ -16,7 +16,7 @@ const EXTERNAL_PRECACHE = [
   'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js',
   'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css',
   'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js',
   'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js',
   'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js'

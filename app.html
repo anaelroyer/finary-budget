@@ -8125,7 +8125,7 @@ function ensurePatrimoinePdfLibrary(){
     }
 
     const script=document.createElement('script');
-    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js';
     script.async=true;
     script.dataset.patrimoinePdfLib='1';
     script.onload=()=>window.html2pdf?resolve(window.html2pdf):reject(new Error('html2pdf indisponible'));
