@@ -15,6 +15,7 @@ jobs:
     steps:
       - name: Lire les recettes et synchroniser les ingrédients
         env:
+          FIREBASE_WORKFLOW_API_KEY: ${{ secrets.FIREBASE_WORKFLOW_API_KEY }}
           FIREBASE_SYNC_EMAIL: ${{ secrets.FIREBASE_SYNC_EMAIL }}
           FIREBASE_SYNC_PASSWORD: ${{ secrets.FIREBASE_SYNC_PASSWORD }}
         run: |
@@ -29,7 +30,9 @@ jobs:
           from datetime import datetime, timezone, timedelta
           from html.parser import HTMLParser
 
-          FIREBASE_API_KEY = "AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0"
+          FIREBASE_API_KEY = os.environ.get("FIREBASE_WORKFLOW_API_KEY", "").strip()
+          if not FIREBASE_API_KEY:
+              raise RuntimeError("Secret FIREBASE_WORKFLOW_API_KEY manquant")
           FIREBASE_PROJECT = "finances-royer"
           FIRESTORE_DOC = "budget_shared/main_account"
 
