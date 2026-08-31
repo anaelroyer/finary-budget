@@ -3,7 +3,7 @@ name: Extraire les ingrédients des recettes
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/15 * * * *"
 
 permissions:
   contents: read
@@ -11,6 +11,7 @@ permissions:
 jobs:
   extract-recipes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Lire les recettes et synchroniser les ingrédients
         env:
@@ -25,7 +26,7 @@ jobs:
           import re
           import urllib.error
           import urllib.request
-          from datetime import datetime, timezone
+          from datetime import datetime, timezone, timedelta
           from html.parser import HTMLParser
 
           FIREBASE_API_KEY = "AIzaSyCpNPAcez4fJghuPPQfrs1oxsIq5cmZOu0"
@@ -260,6 +261,18 @@ jobs:
                   out[key]=cached
                   print(f"CACHE {label or url}: {len(cached.get('ingredients') or [])} ingrédients")
                   continue
+
+              # Une URL en erreur n'est retentée qu'après 6 h pour éviter de marteler
+              # un site indisponible ou une page qui ne fournit pas de Recipe/JSON-LD.
+              if isinstance(cached,dict) and cached.get("url")==url and cached.get("status")=="error":
+                  try:
+                      fetched=datetime.fromisoformat(str(cached.get("fetchedAt") or "").replace("Z","+00:00"))
+                      if datetime.now(timezone.utc)-fetched < timedelta(hours=6):
+                          out[key]=cached
+                          print(f"ATTENTE {label or url}: nouvel essai après 6 h")
+                          continue
+                  except Exception:
+                      pass
 
               try:
                   rec=extract_recipe(url)
