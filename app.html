@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.05 : Factures — suppression des exports CSV/JSON non chiffrés -->
 <!-- V26.2.04 : Sécurité — sauvegardes chiffrées AES-256-GCM par mot de passe -->
 <!-- V26.2.03 : Sécurité — validation stricte des imports JSON avant toute écriture -->
 <!-- V26.2.02 : Sécurité — CSP compatible + SRI sur dépendances statiques CDN -->
@@ -28,7 +29,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-6KVDH4kYC1PWI58qij2NidPq7LW766hYDHSmbhM6QXs=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-PHotAzP02qa811SZM/ZQXQ3PhTeXe18SZ3UcLR09Sw0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2130,10 +2131,6 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
         <button class="chart-filter" data-invoice-filter="none" onclick="setInvoiceFilter('none')">Sans garantie</button>
       </div>
       <div id="invoices-container" style="display:flex;flex-direction:column;gap:10px"></div>
-      <div class="invoice-export-row" style="margin-top:10px">
-        <button class="btn btn-secondary" onclick="exportInvoicesCSV()">⬇️ Exporter CSV</button>
-        <button class="btn btn-secondary" onclick="exportInvoicesJSON()">⬇️ Exporter JSON</button>
-      </div>
     </div>
     <div class="app-footer">Budget & Patrimoine</div>
   </div>
@@ -10919,67 +10916,6 @@ function renderWarrantyWatch(){
   `).join('');
 }
 
-
-function downloadTextFile(content,filename,type){
-  const blob=new Blob([content],{type});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),500);
-}
-
-function exportInvoicesJSON(){
-  const payload={
-    exportedAt:new Date().toISOString(),
-    factures:data.factures||[]
-  };
-  downloadTextFile(
-    JSON.stringify(payload,null,2),
-    `factures_${dateToLocalISO(new Date())}.json`,
-    'application/json'
-  );
-}
-
-function exportInvoicesCSV(){
-  const rows=[[
-    'Description','Date','Montant','Vendeur','Référence',
-    'Catégorie','Type de justificatif','Véhicule','Garantie applicable',
-    'Durée garantie (mois)','Fin de garantie','URL facture'
-  ]];
-
-  (data.factures||[]).forEach(invoice=>{
-    const w=getWarrantyInfo(invoice);
-    rows.push([
-      invoice.description||'',
-      invoice.date||'',
-      Number(invoice.amount||0),
-      invoice.seller||'',
-      invoice.reference||'',
-      invoice.category||'Autre',
-      invoice.receiptType||'Facture',
-      getGarageVehicleLabel(invoice.vehicleId)||'',
-      invoice.warrantyApplicable===false?'Non':'Oui',
-      Number(invoice.warrantyMonths||0),
-      w.endDate?dateToLocalISO(w.endDate):'',
-      invoice.photoUrl||''
-    ]);
-  });
-
-  const csv=rows.map(row=>row.map(v=>{
-    const s=String(v??'').replace(/"/g,'""');
-    return `"${s}"`;
-  }).join(';')).join('\n');
-
-  downloadTextFile(
-    '\ufeff'+csv,
-    `factures_${dateToLocalISO(new Date())}.csv`,
-    'text/csv;charset=utf-8'
-  );
-}
 
 function renderInvoices(){
   const c=document.getElementById('invoices-container');
