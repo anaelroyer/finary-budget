@@ -13,11 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Lire les recettes et synchroniser les ingrédients
+        env:
+          FIREBASE_SYNC_EMAIL: ${{ secrets.FIREBASE_SYNC_EMAIL }}
+          FIREBASE_SYNC_PASSWORD: ${{ secrets.FIREBASE_SYNC_PASSWORD }}
         run: |
           python3 - <<'PY'
           import hashlib
           import html
           import json
+          import os
           import re
           import urllib.error
           import urllib.request
@@ -194,9 +198,18 @@ jobs:
               if isinstance(value,dict):return {"mapValue":{"fields":{str(k):python_to_fs(v) for k,v in value.items()}}}
               return {"stringValue":str(value)}
 
+          firebase_email=os.environ.get("FIREBASE_SYNC_EMAIL", "").strip()
+          firebase_password=os.environ.get("FIREBASE_SYNC_PASSWORD", "")
+          if not firebase_email or not firebase_password:
+              raise RuntimeError("Secrets FIREBASE_SYNC_EMAIL / FIREBASE_SYNC_PASSWORD manquants")
+
           auth=request_json(
-              "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key="+FIREBASE_API_KEY,
-              data={"returnSecureToken":True},
+              "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="+FIREBASE_API_KEY,
+              data={
+                  "email":firebase_email,
+                  "password":firebase_password,
+                  "returnSecureToken":True,
+              },
           )
           token=auth["idToken"]
           fs_headers={"Authorization":"Bearer "+token}
