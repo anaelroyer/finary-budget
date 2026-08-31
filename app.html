@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.1.89 : Véhicules — note libre par entretien dans le plan -->
 <!-- V26.1.88 : Véhicules — tri futur par premier terme réel date OU kilométrage estimé -->
 <!-- V26.1.87 : Véhicules — tri futur par échéance affichée (date réelle, sinon km restants) -->
 <!-- V26.1.86 : tri futur véhicule corrigé sans conversion km artificielle -->
@@ -699,6 +700,9 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vehicle-entry-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.vehicle-entry-actions .btn{font-size:10px;padding:6px 8px}
 .vehicle-empty{color:#8b949e;text-align:center;padding:20px 8px;font-size:12px}
 .vehicle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vehicle-grid .vehicle-plan-note{grid-column:1/-1}
+.vehicle-plan-note textarea{width:100%;min-height:72px;resize:vertical;padding:10px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-family:inherit;font-size:13px;line-height:1.45;outline:none}
+.vehicle-plan-note textarea:focus{border-color:#58a6ff}
 .vehicle-section-note{font-size:11px;color:#8b949e;line-height:1.5;margin-top:3px}
 .vehicle-link-badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:700;background:#21262d;color:#c9d1d9;border:1px solid #30363d}
 .vehicle-maintenance-plan-block{margin-top:16px;padding-top:14px;border-top:1px solid #30363d}
@@ -8862,6 +8866,7 @@ function renderVehicleMaintenancePlanSummary(){
     if(last.length)lines.push(`Dernier : ${last.join(' · ')}`);
     if(period.length)lines.push(`Périodicité : ${period.join(' / ')}`);
     if(next.length)lines.push(`Prochaine échéance : ${next.join(' ou ')}`);
+    if(item.notes)lines.push(`Note : ${item.notes}`);
     if(item.legacy&&!(item.intervalMonths>0||item.intervalKm>0))lines.push('Ancienne échéance conservée à convertir.');
     return `<div class="vehicle-plan-summary-item"><div class="vehicle-plan-summary-item-title">${escapeHtml(item.type||'Entretien')}</div><div class="vehicle-plan-summary-item-meta">${lines.map(escapeHtml).join('<br>')||'Configuration à compléter.'}</div></div>`;
   }).join('');
@@ -8902,6 +8907,7 @@ function renderVehiclePlanModalEditor(){
         <div class="modal-field"><label>Kilométrage du dernier entretien</label><input type="number" inputmode="numeric" min="0" value="${p.lastMileage===''?'':p.lastMileage}" placeholder="Ex : 82000" onchange="updateVehiclePlanModalDraft('${p.id}','lastMileage',this.value,true)"></div>
         <div class="modal-field"><label>Périodicité durée (mois)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalMonths||''}" placeholder="Ex : 12" onchange="updateVehiclePlanModalDraft('${p.id}','intervalMonths',this.value,true)"></div>
         <div class="modal-field"><label>Périodicité kilométrique (km)</label><input type="number" inputmode="numeric" min="0" value="${p.intervalKm||''}" placeholder="Ex : 15000" onchange="updateVehiclePlanModalDraft('${p.id}','intervalKm',this.value,true)"></div>
+        <div class="modal-field vehicle-plan-note"><label>Note <span style="color:#8b949e;font-weight:600">(facultatif)</span></label><textarea maxlength="500" placeholder="Ex : filtre à air Mann C 35 154 · huile 5W-30 VW 504.00/507.00" oninput="updateVehiclePlanModalDraft('${p.id}','notes',this.value,false)">${escapeHtml(p.notes||'')}</textarea></div>
       </div>
       <div class="maintenance-plan-preview" id="vehicle-plan-preview-${p.id}">${maintenancePlanPreviewHtml(p)}</div>`:''}
     </div>`;
