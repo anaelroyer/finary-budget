@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- V26.1.62 : Linxea Avenir 2 + verrouillage données Trade Republic automatisées + nettoyage Bourse -->
 <!-- V26.1.61 : logo Trade Republic en tuile carrée -->
 <!-- V26.1.60 : logo Trade Republic remplacé -->
 <!-- V26.1.59 : logos Trade Republic et OKX intégrés -->
-<!-- V26.1.58 : Assurance-vie enfants — contrats renommés Linxea Spirit 2, titre indépendant de la synchronisation -->
+<!-- V26.1.58 : Assurance-vie enfants — migration historique du libellé, titre indépendant de la synchronisation -->
 <!-- V26.1.57 : Assurance-vie — logo Linxea intégré directement dans les cartes enfants -->
 <!-- V26.1.56 : Bourse — suppression des boutons Actualiser le cours et Ajouter des parts -->
 <!-- V26.1.55 : Linxea — valorisation + performance + date des AV enfants -->
@@ -56,14 +57,8 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-field input{width:100%;min-width:0;padding:8px 9px;background:#0d1117;border:1px solid #30363d;border-radius:7px;color:#fff;font-size:13px;outline:none}
 .stock-price-inline{display:flex;align-items:center;gap:6px}
 .stock-price-inline input{flex:1;min-width:0}
-.stock-refresh-icon{flex:0 0 34px;width:34px;height:34px;padding:0;border:1px solid #30363d;border-radius:7px;background:#161b22;color:#8b949e;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.stock-refresh-icon:hover{color:#58a6ff;border-color:#58a6ff}
-.stock-refresh-icon:active{transform:scale(.96)}
 .stock-share-inline{display:flex;align-items:center;gap:6px}
 .stock-share-inline input{flex:1;min-width:0}
-.stock-add-icon{flex:0 0 34px;width:34px;height:34px;padding:0;border:1px solid #238636;border-radius:7px;background:rgba(35,134,54,.12);color:#3fb950;font-size:20px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.stock-add-icon:hover{background:rgba(35,134,54,.22);border-color:#3fb950}
-.stock-add-icon:active{transform:scale(.96)}
 .stock-performance-head{grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;min-height:20px;margin-bottom:-2px}
 .stock-performance{font-size:11px;font-weight:800;padding:3px 7px;border-radius:999px;border:1px solid #30363d;background:#0d1117;color:#8b949e}
 .stock-performance.positive{color:#3fb950;border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.08)}
@@ -71,9 +66,11 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .stock-performance.neutral{color:#8b949e}
 .pea-tax-badge{margin-left:7px;cursor:pointer;vertical-align:middle;white-space:nowrap;transition:border-color .15s ease,background .15s ease,color .15s ease}
 .pea-tax-badge:hover{border-color:#58a6ff;color:#58a6ff}
-#stockPurchaseModal .modal{max-width:380px}
 
 #stockEditModal .modal{max-width:420px}
+.stock-managed-note{display:none;padding:8px 10px;border:1px solid rgba(63,185,80,.30);border-radius:8px;background:rgba(35,134,54,.09);color:#3fb950;font-size:11px;font-weight:700;line-height:1.4}
+.stock-managed-note.visible{display:block}
+.stock-edit-grid input:disabled,.stock-edit-grid select:disabled{opacity:.72;cursor:not-allowed;color:#8b949e;background:#161b22}
 .stock-compact-card,.crypto-compact-card{
   display:block;
   padding:12px;
@@ -862,28 +859,6 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   position:relative;
   padding-bottom:30px;
 }
-.stock-parts-add-btn{
-  position:absolute;
-  right:6px;
-  bottom:6px;
-  width:23px;
-  height:23px;
-  border:1px solid #238636;
-  border-radius:7px;
-  background:#161b22;
-  color:#3fb950;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:0;
-  font-size:16px;
-  font-weight:700;
-  line-height:1;
-  cursor:pointer;
-}
-.stock-parts-add-btn:hover{
-  background:#21262d;
-}
 
 
 
@@ -1413,6 +1388,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 <div class="modal-overlay" id="stockEditModal">
   <div class="modal">
     <h3 id="stockEditTitle">Ajouter une ligne Bourse</h3>
+    <div id="stockEditManagedNote" class="stock-managed-note">🔒 Parts, PRU, cours, ISIN et enveloppe sont gérés automatiquement par Trade Republic.</div>
     <div class="stock-edit-grid">
       <div class="full">
         <label>Libellé</label>
@@ -1445,26 +1421,6 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <div class="modal-actions">
       <button class="btn-secondary" type="button" onclick="closeStockEditModal()">Annuler</button>
       <button class="btn-primary" type="button" onclick="submitStockEdit()">Valider</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="stockPurchaseModal">
-  <div class="modal">
-    <h3>Ajouter un achat</h3>
-    <div class="stock-purchase-preview" id="stockPurchaseCurrent"></div>
-    <div class="modal-field">
-      <label>Nombre de parts achetées</label>
-      <input type="number" id="stockPurchaseShares" placeholder="0" min="0" step="any" inputmode="decimal" oninput="updateStockPurchasePreview()">
-    </div>
-    <div class="modal-field">
-      <label>Prix d'achat unitaire (€)</label>
-      <input type="number" id="stockPurchasePrice" placeholder="0,00" min="0" step="any" inputmode="decimal" oninput="updateStockPurchasePreview()">
-    </div>
-    <div class="stock-purchase-preview" id="stockPurchasePreview"></div>
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeStockPurchaseModal()">Annuler</button>
-      <button class="btn btn-primary" style="flex:1" onclick="submitStockPurchase()">Ajouter</button>
     </div>
   </div>
 </div>
@@ -2469,23 +2425,22 @@ function migrateChildInsuranceLifeOwners(){
   return true;
 }
 
-// V26.1.58 — nom commercial des contrats enfants.
+// V26.1.62 — correction du nom commercial des contrats enfants.
 // Le rattachement à Louane / Aëdan repose uniquement sur meta.owner :
-// la synchronisation Linxea peut donc actualiser les valeurs sans jamais utiliser
-// ni modifier le titre affiché du contrat.
+// la synchronisation Linxea actualise donc les valeurs sans jamais dépendre du titre.
 function migrateChildInsuranceLifeLabels(){
-  if(!data || data._childInsuranceLifeLabelsMigratedV2===true)return false;
+  if(!data || data._childInsuranceLifeLabelsMigratedV3===true)return false;
   let changed=false;
   (data.assurancevie||[]).forEach(item=>{
     if(!Array.isArray(item))return;
     const owner=getItemOwner(item,'assurancevie');
     if(!['louane','aedan'].includes(owner))return;
-    if(String(item[0]||'')!=='Linxea Spirit 2'){
-      item[0]='Linxea Spirit 2';
+    if(String(item[0]||'')!=='Linxea Avenir 2'){
+      item[0]='Linxea Avenir 2';
       changed=true;
     }
   });
-  data._childInsuranceLifeLabelsMigratedV2=true;
+  data._childInsuranceLifeLabelsMigratedV3=true;
   return changed;
 }
 
@@ -5724,6 +5679,19 @@ function renderTradeRepublicCashSection(cont){
 }
 
 
+const TRADE_REPUBLIC_MANAGED_ISINS=new Set([
+  'IE0002XZSHO1', // MSCI World
+  'FR0013412020', // PAEEM
+  'IE00B4ND3602', // Or
+  'FR0011550193'  // STOXX Europe 600
+]);
+
+function isTradeRepublicManagedItem(item){
+  if(!Array.isArray(item) || isTradeRepublicCashItem(item))return false;
+  const meta=getStockMeta(item);
+  return TRADE_REPUBLIC_MANAGED_ISINS.has(String(meta.isin||'').trim().toUpperCase());
+}
+
 let activeStockEditIndex=-1;
 
 function stockModalNumber(id,allowZero=true){
@@ -5740,14 +5708,21 @@ function openStockEditModal(index=-1){
   const editing=index>=0 && Array.isArray(data.bourse) && data.bourse[index];
   const item=editing?data.bourse[index]:null;
   const meta=editing?getStockMeta(item):null;
+  const managed=!!(editing && isTradeRepublicManagedItem(item));
 
-  document.getElementById('stockEditTitle').textContent=editing?'Modifier la ligne Bourse':'Ajouter une ligne Bourse';
+  document.getElementById('stockEditTitle').textContent=!editing?'Ajouter une ligne Bourse':managed?'Modifier le libellé':'Modifier la ligne Bourse';
   document.getElementById('stockEditLabel').value=editing?(item[0]||''):'';
   document.getElementById('stockEditIsin').value=editing?(meta.isin||''):'';
   document.getElementById('stockEditAccount').value=editing?getStockAccount(item):'PEA';
   document.getElementById('stockEditShares').value=editing?meta.shares:'';
   document.getElementById('stockEditPru').value=editing && meta.pruSet===true?meta.pru:'';
   document.getElementById('stockEditPrice').value=editing?meta.pricePerShare:'';
+
+  ['stockEditIsin','stockEditAccount','stockEditShares','stockEditPru','stockEditPrice'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.disabled=managed;
+  });
+  document.getElementById('stockEditManagedNote')?.classList.toggle('visible',managed);
 
   document.getElementById('stockEditModal').classList.add('active');
   setTimeout(()=>document.getElementById('stockEditLabel')?.focus(),100);
@@ -5760,22 +5735,34 @@ function closeStockEditModal(){
 
 function submitStockEdit(){
   const label=String(document.getElementById('stockEditLabel')?.value||'').trim();
+  if(!label){alert('Renseigne le libellé.');return;}
+
+  const editing=activeStockEditIndex>=0 && Array.isArray(data.bourse) && data.bourse[activeStockEditIndex];
+  const managed=!!(editing && isTradeRepublicManagedItem(data.bourse[activeStockEditIndex]));
+
+  if(managed){
+    const item=data.bourse[activeStockEditIndex];
+    item[0]=label;
+    save();
+    closeStockEditModal();
+    render();
+    return;
+  }
+
   const isin=String(document.getElementById('stockEditIsin')?.value||'').trim().toUpperCase();
   const account=document.getElementById('stockEditAccount')?.value==='CTO'?'CTO':'PEA';
-  const owner=(activeStockEditIndex>=0 && Array.isArray(data.bourse) && data.bourse[activeStockEditIndex])?getItemOwner(data.bourse[activeStockEditIndex],'bourse'):activePatrimoineOwner;
+  const owner=editing?getItemOwner(data.bourse[activeStockEditIndex],'bourse'):activePatrimoineOwner;
   const shares=stockModalNumber('stockEditShares',true);
   const pru=stockModalNumber('stockEditPru',true);
   const price=stockModalNumber('stockEditPrice',true);
-
-  if(!label || !isin || shares===null || pru===null || price===null){
-    alert('Renseigne le libellé, l’ISIN, le nombre de parts, le PRU et le prix par part.');
+  if(!isin || shares===null || pru===null || price===null){
+    alert('Renseigne l’ISIN, le nombre de parts, le PRU et le prix par part.');
     return;
   }
 
   let item;
-  if(activeStockEditIndex>=0 && Array.isArray(data.bourse) && data.bourse[activeStockEditIndex]){
-    item=data.bourse[activeStockEditIndex];
-  }else{
+  if(editing)item=data.bourse[activeStockEditIndex];
+  else{
     if(!Array.isArray(data.bourse))data.bourse=[];
     item=['',0,{}];
     data.bourse.push(item);
@@ -5784,174 +5771,13 @@ function submitStockEdit(){
 
   const previous=getStockMeta(item);
   item[0]=label;
-  item[2]={
-    ...previous,
-    isin,
-    account,
-    owner,
-    shares,
-    pru,
-    pruSet:true,
-    pricePerShare:price
-  };
+  item[2]={...previous,isin,account,owner,shares,pru,pruSet:true,pricePerShare:price};
   recalculateStockItem(item);
   save();
   const index=activeStockEditIndex;
   closeStockEditModal();
   render();
-
-  // Après création/modification, on tente silencieusement le cours automatique.
   if(isin)setTimeout(()=>refreshStockPrice(index,{silent:true,force:false}),0);
-}
-
-let activeStockPurchaseIndex=-1;
-
-function openStockPurchaseModal(index){
-  if(!Array.isArray(data.bourse)||!data.bourse[index])return;
-  activeStockPurchaseIndex=index;
-  const item=data.bourse[index];
-  const meta=getStockMeta(item);
-
-  if(meta.shares>0 && meta.pruSet!==true){
-    alert('Renseigne d’abord le PRU actuel de cette ligne. Il peut être égal à 0 €.');
-    activeStockPurchaseIndex=-1;
-    openStockEditModal(index);
-    return;
-  }
-
-  document.getElementById('stockPurchaseShares').value='';
-  document.getElementById('stockPurchasePrice').value='';
-  document.getElementById('stockPurchaseCurrent').innerHTML=
-    `<strong>${escapeHtml(item[0]||'Ligne Bourse')}</strong><br>`+
-    `${meta.shares.toLocaleString('fr-FR',{maximumFractionDigits:6})} part(s)`+
-    (meta.pruSet===true?` · PRU ${euro(meta.pru)}`:' · aucun PRU');
-  updateStockPurchasePreview();
-  document.getElementById('stockPurchaseModal').classList.add('active');
-  setTimeout(()=>document.getElementById('stockPurchaseShares')?.focus(),100);
-}
-
-function closeStockPurchaseModal(){
-  document.getElementById('stockPurchaseModal').classList.remove('active');
-  activeStockPurchaseIndex=-1;
-}
-
-function readStockPurchaseNumber(id){
-  const raw=String(document.getElementById(id)?.value||'').replace(',','.');
-  const n=Number(raw);
-  return Number.isFinite(n)&&n>0?n:0;
-}
-
-function calculateStockPurchaseResult(index,newShares,buyPrice){
-  const item=Array.isArray(data.bourse)?data.bourse[index]:null;
-  if(!item)return null;
-  const meta=getStockMeta(item);
-  const oldShares=Math.max(0,Number(meta.shares)||0);
-  const oldPru=Math.max(0,Number(meta.pru)||0);
-  const added=Math.max(0,Number(newShares)||0);
-  const price=Math.max(0,Number(buyPrice)||0);
-  const totalShares=oldShares+added;
-  const newPru=totalShares>0?((oldShares*oldPru)+(added*price))/totalShares:0;
-  return {oldShares,oldPru,added,price,totalShares,newPru};
-}
-
-function updateStockPurchasePreview(){
-  if(activeStockPurchaseIndex<0)return;
-  const qty=readStockPurchaseNumber('stockPurchaseShares');
-  const price=readStockPurchaseNumber('stockPurchasePrice');
-  const preview=document.getElementById('stockPurchasePreview');
-  if(!preview)return;
-  if(qty<=0 || price<=0){
-    preview.textContent='Saisis le nombre de parts achetées et leur prix unitaire.';
-    return;
-  }
-  const result=calculateStockPurchaseResult(activeStockPurchaseIndex,qty,price);
-  if(!result)return;
-  preview.innerHTML=
-    `Après achat : <strong>${result.totalShares.toLocaleString('fr-FR',{maximumFractionDigits:6})} part(s)</strong><br>`+
-    `Nouveau PRU : <strong>${euro(result.newPru)}</strong>`;
-}
-
-function submitStockPurchase(){
-  if(activeStockPurchaseIndex<0)return;
-  const qty=readStockPurchaseNumber('stockPurchaseShares');
-  const price=readStockPurchaseNumber('stockPurchasePrice');
-  if(qty<=0 || price<=0){
-    alert('Renseigne le nombre de parts achetées et le prix d’achat unitaire.');
-    return;
-  }
-
-  const item=data.bourse[activeStockPurchaseIndex];
-  const result=calculateStockPurchaseResult(activeStockPurchaseIndex,qty,price);
-  if(!item || !result)return;
-
-  const meta=getStockMeta(item);
-  meta.shares=result.totalShares;
-  meta.pru=result.newPru;
-  meta.pruSet=true;
-  item[2]=meta;
-  recalculateStockItem(item);
-  save();
-
-  const index=activeStockPurchaseIndex;
-  closeStockPurchaseModal();
-  render();
-
-  // Le cours actuel ne change pas : seul le nombre de parts et le PRU sont recalculés.
-  refreshStockPerformance(index);
-}
-
-function updateStockField(index,field,value){
-  if(!Array.isArray(data.bourse)||!data.bourse[index])return;
-  const item=data.bourse[index];
-  const meta=getStockMeta(item);
-
-  if(field==='label'){
-    item[0]=String(value||'');
-  }else if(field==='isin'){
-    meta.isin=String(value||'').trim().toUpperCase();
-    item[2]=meta;
-  }else if(field==='account'){
-    meta.account=String(value||'').toUpperCase()==='CTO'?'CTO':'PEA';
-    item[2]=meta;
-  }else if(field==='shares'){
-    const n=Number(value);
-    meta.shares=Number.isFinite(n)&&n>=0?n:0;
-    item[2]=meta;
-    recalculateStockItem(item);
-  }else if(field==='pricePerShare'){
-    const n=Number(value);
-    meta.pricePerShare=Number.isFinite(n)&&n>=0?n:0;
-    item[2]=meta;
-    recalculateStockItem(item);
-  }else if(field==='pru'){
-    const raw=String(value??'').trim().replace(',','.');
-    if(raw===''){
-      meta.pru=0;
-      meta.pruSet=false;
-    }else{
-      const n=Number(raw);
-      meta.pru=Number.isFinite(n)&&n>=0?n:0;
-      meta.pruSet=true;
-    }
-    item[2]=meta;
-  }
-
-  const row=document.querySelector(`[data-stock-index="${index}"]`);
-  const valueEl=row?.querySelector('.stock-calculated-value strong');
-  if(valueEl)valueEl.textContent=euro(Number(item[1])||0);
-  refreshStockPerformance(index);
-
-  updateTotals();
-  renderAssetDistribution();
-  save();
-
-  if(field==='isin'){
-    render();
-    const currentIndex=Array.isArray(data.bourse)?data.bourse.indexOf(item):-1;
-    if(currentIndex>=0 && getStockMeta(item).isin){
-      setTimeout(()=>refreshStockPrice(currentIndex,{silent:true}),0);
-    }
-  }
 }
 
 function stockAllocationInlineHtml(item,idx){
@@ -6036,7 +5862,7 @@ function renderStockRow(item,idx,cont){
         </div>
       </div>
       <div class="stock-compact-actions">
-        <button class="stock-icon-btn" type="button" onclick="openStockEditModal(${idx})" title="Modifier" aria-label="Modifier">✎</button>
+        <button class="stock-icon-btn" type="button" onclick="openStockEditModal(${idx})" title="${isTradeRepublicManagedItem(item)?'Modifier le libellé — données gérées par Trade Republic':'Modifier'}" aria-label="Modifier">✎</button>
         <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('bourse',${idx})" title="Archiver" aria-label="Supprimer">×</button>
       </div>
     </div>
@@ -6444,7 +6270,7 @@ function childInsurancePerformanceHtml(item){
 function renderChildInsuranceRow(item,idx,cont){
   const owner=getItemOwner(item,'assurancevie');
   const ownerLabel=getPatrimoineOwnerLabel(owner);
-  const label=String(item?.[0]||'Linxea Spirit 2');
+  const label=String(item?.[0]||'Linxea Avenir 2');
   const amount=Number(item?.[1])||0;
   const row=document.createElement('div');
   row.className='child-av-card';
