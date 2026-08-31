@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.04 : Sécurité — sauvegardes chiffrées AES-256-GCM par mot de passe -->
 <!-- V26.2.03 : Sécurité — validation stricte des imports JSON avant toute écriture -->
 <!-- V26.2.02 : Sécurité — CSP compatible + SRI sur dépendances statiques CDN -->
 <!-- V26.2.01 : Sécurité — déconnexion avec purge des données financières locales -->
@@ -27,7 +28,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-H3bx2DAu8yJNh+YXs30y85si2KD3jxmBrAYE2grtTMk=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-6KVDH4kYC1PWI58qij2NidPq7LW766hYDHSmbhM6QXs=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1982,7 +1983,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
       <div class="section-header"><h2>🗓️ Historique</h2></div>
       <input type="text" id="historySearchInput" placeholder="🔍 Rechercher (mois, libellé, montant)..." oninput="renderHistory()" style="width:100%;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:13px;outline:none;margin-top:4px">
       <div id="history-container"></div>
-      <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">⬇️ Exporter</button><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
+      <div class="action-row"><button class="btn btn-secondary" style="flex:1;color:#f85149" onclick="resetHistory()">🗑️ Reset</button><button class="btn btn-secondary" style="flex:1" onclick="exportData()">🔐 Exporter</button><input type="file" id="importFile" accept=".bpbackup,.json,application/json,application/octet-stream" style="display:none" onchange="importData(event)"><button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('importFile').click()">⬆️ Importer</button></div>
     </div>
     <div class="app-footer">Budget & Patrimoine</div>
   </div>
@@ -11073,30 +11074,321 @@ function renderInvoices(){
 }
 
 
-function exportData(){
-  const exportObj={
-    data,
-    monthHistory,
-    patrimoineHistory,
-    annotations
-  };
+const ENCRYPTED_BACKUP_FORMAT='budget-patrimoine-encrypted-backup';
+const ENCRYPTED_BACKUP_VERSION=1;
+const BACKUP_PBKDF2_ITERATIONS=600000;
+const BACKUP_PBKDF2_MIN_ITERATIONS=100000;
+const BACKUP_PBKDF2_MAX_ITERATIONS=1000000;
+const BACKUP_MAX_PLAINTEXT_BYTES=10*1024*1024;
+const BACKUP_AAD_TEXT='BudgetPatrimoineBackup|v1';
 
-  const blob=new Blob(
-    [JSON.stringify(exportObj,null,2)],
-    {type:'application/json'}
+function backupBytesToBase64(bytes){
+  let binary='';
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk){
+    binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+  }
+  return btoa(binary);
+}
+
+function backupBase64ToBytes(value,label){
+  if(typeof value!=='string'||!value||value.length>25*1024*1024){
+    throw new Error(`${label} invalide dans la sauvegarde.`);
+  }
+  try{
+    const binary=atob(value);
+    const out=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)out[i]=binary.charCodeAt(i);
+    return out;
+  }catch{
+    throw new Error(`${label} invalide dans la sauvegarde.`);
+  }
+}
+
+async function deriveBackupKey(password,salt,iterations,usage){
+  const encoder=new TextEncoder();
+  const material=await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
   );
+  return crypto.subtle.deriveKey(
+    {
+      name:'PBKDF2',
+      salt,
+      iterations,
+      hash:'SHA-256'
+    },
+    material,
+    {
+      name:'AES-GCM',
+      length:256
+    },
+    false,
+    [usage]
+  );
+}
 
+function requestBackupPassword(mode='import'){
+  return new Promise(resolve=>{
+    const exporting=mode==='export';
+    const overlay=document.createElement('div');
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px';
+
+    const card=document.createElement('div');
+    card.style.cssText='width:min(430px,100%);background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:16px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.45);font-family:inherit';
+
+    const title=document.createElement('div');
+    title.textContent=exporting?'🔐 Protéger la sauvegarde':'🔓 Ouvrir la sauvegarde';
+    title.style.cssText='font-size:18px;font-weight:800;margin-bottom:8px';
+
+    const info=document.createElement('div');
+    info.textContent=exporting
+      ?"Choisis un mot de passe d’au moins 12 caractères. Il ne sera ni enregistré ni récupérable en cas d’oubli."
+      :"Entre le mot de passe utilisé lors de la création de cette sauvegarde.";
+    info.style.cssText='font-size:13px;color:#8b949e;line-height:1.45;margin-bottom:16px';
+
+    const makeInput=(placeholder,autocomplete)=>{
+      const input=document.createElement('input');
+      input.type='password';
+      input.placeholder=placeholder;
+      input.autocomplete=autocomplete;
+      input.spellcheck=false;
+      input.style.cssText='width:100%;padding:12px 13px;margin:0 0 10px;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:10px;font:inherit;outline:none';
+      return input;
+    };
+
+    const passwordInput=makeInput('Mot de passe',exporting?'new-password':'off');
+    const confirmInput=exporting?makeInput('Confirmer le mot de passe','new-password'):null;
+
+    const error=document.createElement('div');
+    error.style.cssText='min-height:18px;font-size:12px;color:#f85149;margin:0 0 10px';
+
+    const actions=document.createElement('div');
+    actions.style.cssText='display:flex;gap:10px;justify-content:flex-end';
+
+    const cancel=document.createElement('button');
+    cancel.type='button';
+    cancel.textContent='Annuler';
+    cancel.style.cssText='padding:10px 14px;border-radius:9px;border:1px solid #30363d;background:#21262d;color:#e6edf3;font-weight:700;cursor:pointer';
+
+    const validate=document.createElement('button');
+    validate.type='button';
+    validate.textContent=exporting?'Chiffrer et exporter':'Déchiffrer';
+    validate.style.cssText='padding:10px 14px;border-radius:9px;border:0;background:#238636;color:white;font-weight:800;cursor:pointer';
+
+    const cleanup=value=>{
+      document.removeEventListener('keydown',onKey);
+      overlay.remove();
+      resolve(value);
+    };
+
+    const submit=()=>{
+      const password=passwordInput.value;
+      if(!password){
+        error.textContent='Entre un mot de passe.';
+        passwordInput.focus();
+        return;
+      }
+      if(exporting){
+        if(password.length<12){
+          error.textContent='Le mot de passe doit contenir au moins 12 caractères.';
+          passwordInput.focus();
+          return;
+        }
+        if(password!==confirmInput.value){
+          error.textContent='Les deux mots de passe ne correspondent pas.';
+          confirmInput.focus();
+          return;
+        }
+      }
+      cleanup(password);
+    };
+
+    const onKey=event=>{
+      if(event.key==='Escape'){
+        event.preventDefault();
+        cleanup(null);
+      }else if(event.key==='Enter'){
+        event.preventDefault();
+        submit();
+      }
+    };
+
+    cancel.addEventListener('click',()=>cleanup(null));
+    validate.addEventListener('click',submit);
+    document.addEventListener('keydown',onKey);
+
+    card.append(title,info,passwordInput);
+    if(confirmInput)card.append(confirmInput);
+    card.append(error);
+    actions.append(cancel,validate);
+    card.append(actions);
+    overlay.append(card);
+    document.body.append(overlay);
+    setTimeout(()=>passwordInput.focus(),0);
+  });
+}
+
+async function encryptBackupObject(exportObj,password){
+  if(!window.crypto?.subtle){
+    throw new Error("Le chiffrement Web Crypto n'est pas disponible sur cet appareil.");
+  }
+
+  const encoder=new TextEncoder();
+  const plaintext=encoder.encode(JSON.stringify(exportObj));
+  if(plaintext.byteLength>BACKUP_MAX_PLAINTEXT_BYTES){
+    throw new Error("La sauvegarde dépasse la taille maximale de 10 Mo.");
+  }
+
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await deriveBackupKey(password,salt,BACKUP_PBKDF2_ITERATIONS,'encrypt');
+  const additionalData=encoder.encode(BACKUP_AAD_TEXT);
+
+  const ciphertext=new Uint8Array(await crypto.subtle.encrypt(
+    {
+      name:'AES-GCM',
+      iv,
+      additionalData,
+      tagLength:128
+    },
+    key,
+    plaintext
+  ));
+
+  return{
+    format:ENCRYPTED_BACKUP_FORMAT,
+    version:ENCRYPTED_BACKUP_VERSION,
+    createdAt:new Date().toISOString(),
+    kdf:{
+      name:'PBKDF2',
+      hash:'SHA-256',
+      iterations:BACKUP_PBKDF2_ITERATIONS,
+      salt:backupBytesToBase64(salt)
+    },
+    cipher:{
+      name:'AES-GCM',
+      keyLength:256,
+      tagLength:128,
+      iv:backupBytesToBase64(iv)
+    },
+    ciphertext:backupBytesToBase64(ciphertext)
+  };
+}
+
+function isEncryptedBackupEnvelope(value){
+  return isPlainImportObject(value)
+    && value.format===ENCRYPTED_BACKUP_FORMAT
+    && value.version===ENCRYPTED_BACKUP_VERSION;
+}
+
+async function decryptBackupEnvelope(envelope,password){
+  if(!window.crypto?.subtle){
+    throw new Error("Le déchiffrement Web Crypto n'est pas disponible sur cet appareil.");
+  }
+  if(!isEncryptedBackupEnvelope(envelope)){
+    throw new Error("Format de sauvegarde chiffrée non reconnu.");
+  }
+  if(!isPlainImportObject(envelope.kdf)
+     || envelope.kdf.name!=='PBKDF2'
+     || envelope.kdf.hash!=='SHA-256'){
+    throw new Error("Paramètres de dérivation de clé invalides.");
+  }
+  if(!Number.isInteger(envelope.kdf.iterations)
+     || envelope.kdf.iterations<BACKUP_PBKDF2_MIN_ITERATIONS
+     || envelope.kdf.iterations>BACKUP_PBKDF2_MAX_ITERATIONS){
+    throw new Error("Nombre d'itérations PBKDF2 invalide.");
+  }
+  if(!isPlainImportObject(envelope.cipher)
+     || envelope.cipher.name!=='AES-GCM'
+     || envelope.cipher.keyLength!==256
+     || envelope.cipher.tagLength!==128){
+    throw new Error("Paramètres de chiffrement invalides.");
+  }
+
+  const salt=backupBase64ToBytes(envelope.kdf.salt,'Sel');
+  const iv=backupBase64ToBytes(envelope.cipher.iv,'IV');
+  const ciphertext=backupBase64ToBytes(envelope.ciphertext,'Données chiffrées');
+
+  if(salt.length!==16)throw new Error("Sel de sauvegarde invalide.");
+  if(iv.length!==12)throw new Error("IV de sauvegarde invalide.");
+  if(ciphertext.length<17||ciphertext.length>15*1024*1024){
+    throw new Error("Taille des données chiffrées invalide.");
+  }
+
+  const encoder=new TextEncoder();
+  const key=await deriveBackupKey(password,salt,envelope.kdf.iterations,'decrypt');
+
+  let plaintext;
+  try{
+    plaintext=await crypto.subtle.decrypt(
+      {
+        name:'AES-GCM',
+        iv,
+        additionalData:encoder.encode(BACKUP_AAD_TEXT),
+        tagLength:128
+      },
+      key,
+      ciphertext
+    );
+  }catch{
+    throw new Error("Mot de passe incorrect ou sauvegarde chiffrée endommagée.");
+  }
+
+  const decoded=new TextDecoder('utf-8',{fatal:true}).decode(plaintext);
+  try{
+    return JSON.parse(decoded);
+  }catch{
+    throw new Error("La sauvegarde déchiffrée est endommagée.");
+  }
+}
+
+function downloadEncryptedBackup(envelope){
+  const blob=new Blob(
+    [JSON.stringify(envelope)],
+    {type:'application/octet-stream'}
+  );
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-
   a.href=url;
-  a.download=`budget_patrimoine_${new Date().toISOString().split('T')[0]}.json`;
+  a.download=`budget_patrimoine_${new Date().toISOString().split('T')[0]}.bpbackup`;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 
-  URL.revokeObjectURL(url);
+async function exportData(){
+  const password=await requestBackupPassword('export');
+  if(password===null)return;
+
+  try{
+    const exportObj={
+      data,
+      monthHistory,
+      patrimoineHistory,
+      annotations
+    };
+
+    const encrypted=await encryptBackupObject(exportObj,password);
+    downloadEncryptedBackup(encrypted);
+    alert(
+      "Sauvegarde chiffrée créée.\n\n"+
+      "Conserve le fichier ET son mot de passe : sans ce mot de passe, la sauvegarde ne pourra pas être restaurée."
+    );
+  }catch(err){
+    console.error("Export chiffré impossible :",err);
+    alert(`Export impossible : ${err?.message||"erreur de chiffrement"}`);
+  }
 }
 
 const IMPORT_JSON_MAX_BYTES=10*1024*1024;
+const IMPORT_ENCRYPTED_MAX_BYTES=15*1024*1024;
 const IMPORT_JSON_MAX_DEPTH=40;
 const IMPORT_JSON_MAX_NODES=300000;
 const IMPORT_JSON_MAX_ARRAY_ITEMS=50000;
@@ -11293,11 +11585,11 @@ async function importData(event){
     if(file.size<=0){
       throw new Error("Le fichier est vide.");
     }
-    if(file.size>IMPORT_JSON_MAX_BYTES){
-      throw new Error("Le fichier dépasse la taille maximale autorisée de 10 Mo.");
+    if(file.size>IMPORT_ENCRYPTED_MAX_BYTES){
+      throw new Error("Le fichier dépasse la taille maximale autorisée de 15 Mo.");
     }
-    if(file.name && !/\.json$/i.test(file.name)){
-      throw new Error("Sélectionne un fichier de sauvegarde .json.");
+    if(file.name && !/\.(json|bpbackup)$/i.test(file.name)){
+      throw new Error("Sélectionne une sauvegarde .bpbackup ou un ancien fichier .json.");
     }
 
     const raw=await file.text();
@@ -11305,19 +11597,37 @@ async function importData(event){
       throw new Error("Le fichier est vide.");
     }
 
-    let imported;
+    let parsed;
     try{
-      imported=JSON.parse(raw);
+      parsed=JSON.parse(raw);
     }catch{
-      throw new Error("Le contenu n'est pas un JSON valide.");
+      throw new Error("Le contenu du fichier n'est pas une sauvegarde valide.");
+    }
+
+    let imported;
+    let encrypted=false;
+
+    if(isEncryptedBackupEnvelope(parsed)){
+      encrypted=true;
+      const password=await requestBackupPassword('import');
+      if(password===null)return;
+      imported=await decryptBackupEnvelope(parsed,password);
+    }else{
+      if(file.size>IMPORT_JSON_MAX_BYTES){
+        throw new Error("Un ancien export JSON non chiffré ne peut pas dépasser 10 Mo.");
+      }
+      imported=parsed;
     }
 
     // Aucune donnée de l'application n'a encore été modifiée à ce stade.
     const prepared=prepareImportedBackup(imported);
 
     const summary=[
-      `Fichier : ${file.name||'sauvegarde JSON'}`,
+      `Fichier : ${file.name||'sauvegarde'}`,
       `Taille : ${(file.size/1024).toFixed(1)} Ko`,
+      encrypted
+        ? "Protection : sauvegarde chiffrée AES-256-GCM"
+        : "Protection : ⚠️ ancien export JSON non chiffré",
       `Historique mensuel : ${prepared.monthHistory.length} entrée${prepared.monthHistory.length>1?'s':''}`,
       `Historique patrimoine : ${prepared.patrimoineHistory.length} entrée${prepared.patrimoineHistory.length>1?'s':''}`,
       '',
@@ -11347,12 +11657,14 @@ async function importData(event){
     save();
     render();
 
-    alert("Importation réussie et vérifiée.");
+    alert(encrypted
+      ?"Sauvegarde chiffrée importée et vérifiée."
+      :"Ancienne sauvegarde JSON importée et vérifiée."
+    );
   }catch(err){
-    console.error("Import JSON refusé :",err);
+    console.error("Import refusé :",err);
     alert(`Importation refusée : ${err?.message||"fichier incompatible"}`);
   }finally{
-    // Permet de sélectionner à nouveau exactement le même fichier.
     if(input)input.value='';
   }
 }
@@ -12208,7 +12520,7 @@ if(window.visualViewport){
     <div class="settings-section">
       <div style="font-weight:700">Sauvegarde</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-        <button class="btn btn-secondary" onclick="exportData()">⬇️ Exporter les données</button>
+        <button class="btn btn-secondary" onclick="exportData()">🔐 Exporter les données</button>
         <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
       </div>
     </div>
