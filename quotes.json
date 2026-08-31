@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-08-31T21:23:44Z",
+  "updatedAt": "2026-08-31T22:23:47Z",
   "quotes": {
     "IE00B4ND3602": {
       "price": 74.5,
       "currency": "EUR",
       "source": "Quotrix · Gold · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
-      "updatedAt": "2026-08-31T21:23:44Z",
+      "updatedAt": "2026-08-31T22:23:47Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -21,7 +21,7 @@
         {
           "date": "2026-08-31",
           "price": 74.5,
-          "updatedAt": "2026-08-31T21:23:44Z"
+          "updatedAt": "2026-08-31T22:23:47Z"
         }
       ]
     },
@@ -30,7 +30,7 @@
       "currency": "EUR",
       "source": "Quotrix · WPEA · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etf/IE0002XZSHO1/",
-      "updatedAt": "2026-08-31T21:23:44Z",
+      "updatedAt": "2026-08-31T22:23:47Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -45,7 +45,7 @@
         {
           "date": "2026-08-31",
           "price": 6.952,
-          "updatedAt": "2026-08-31T21:23:44Z"
+          "updatedAt": "2026-08-31T22:23:47Z"
         }
       ]
     },
@@ -54,7 +54,7 @@
       "currency": "EUR",
       "source": "Lang & Schwarz · PAEEM · Bid",
       "sourceUrl": "https://www.ls-tc.de/en/etf/1371933",
-      "updatedAt": "2026-08-31T21:23:44Z",
+      "updatedAt": "2026-08-31T22:23:47Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -69,7 +69,7 @@
         {
           "date": "2026-08-31",
           "price": 35.335,
-          "updatedAt": "2026-08-31T21:23:44Z"
+          "updatedAt": "2026-08-31T22:23:47Z"
         }
       ]
     },
@@ -78,7 +78,7 @@
       "currency": "EUR",
       "source": "Borsa Italiana · Paris · ETZ · ultimo corso · fallback",
       "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0011550193-XPAR.html?lang=it",
-      "updatedAt": "2026-08-31T21:23:44Z",
+      "updatedAt": "2026-08-31T22:23:47Z",
       "history": [
         {
           "date": "2026-08-30",
@@ -88,7 +88,7 @@
         {
           "date": "2026-08-31",
           "price": 21.43,
-          "updatedAt": "2026-08-31T21:23:44Z"
+          "updatedAt": "2026-08-31T22:23:47Z"
         }
       ]
     }
