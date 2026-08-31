@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V26.1.98 : Sécurité — durcissement XSS, arguments JS dynamiques sûrs et URLs externes validées -->
+<!-- V26.2.00 : Patrimoine — Participations / Sociétés, acquisitions datées et valorisation facultative -->
 <!-- V26.1.92 : Bourse — actualisation automatique horaire en semaine -->
 <!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
 
@@ -1280,6 +1280,34 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .personal-user-email{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:10px}
 .personal-logout{border:1px solid #30363d;background:#161b22;color:#f85149;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;padding:5px 7px;white-space:nowrap}
 
+
+/* Participations / Sociétés */
+.participation-card{padding:14px;border:1px solid #30363d;border-radius:12px;background:#0d1117;margin-bottom:9px;display:flex;flex-direction:column;gap:11px}
+.participation-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.participation-title{font-size:14px;font-weight:800;color:#fff;line-height:1.35}
+.participation-sub{font-size:12px;color:#c9d1d9;margin-top:4px}
+.participation-value{text-align:right;white-space:nowrap}
+.participation-value span{display:block;font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.04em}
+.participation-value strong{display:block;font-size:17px;color:#e6edf3;margin-top:2px}
+.participation-value strong.unvalued{font-size:13px;color:#d29922}
+.participation-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.participation-meta{padding:9px 10px;border:1px solid #21262d;border-radius:9px;background:#161b22;min-width:0}
+.participation-meta span{display:block;font-size:10px;color:#8b949e;margin-bottom:3px}
+.participation-meta strong{display:block;font-size:12px;color:#c9d1d9;overflow-wrap:anywhere}
+.participation-acq-title{font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:800;letter-spacing:.04em}
+.participation-acq-list{display:flex;flex-direction:column;gap:6px}
+.participation-acq-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border:1px solid #21262d;border-radius:8px;background:#161b22}
+.participation-acq-main{min-width:0;font-size:12px;color:#c9d1d9}
+.participation-acq-main strong{color:#fff}
+.participation-acq-actions{display:flex;gap:5px;flex:0 0 auto}
+.participation-mini-btn{border:1px solid #30363d;background:#21262d;color:#c9d1d9;border-radius:6px;min-width:30px;height:28px;cursor:pointer}
+.participation-mini-btn:hover{background:#30363d}
+.participation-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.participation-modal-note{font-size:11px;color:#8b949e;line-height:1.5;margin-top:-2px}
+.participation-initial-box{padding:10px;border:1px solid #30363d;border-radius:9px;background:#0d1117;margin-bottom:10px}
+.participation-initial-title{font-size:12px;font-weight:800;color:#fff;margin-bottom:8px}
+@media(max-width:420px){.participation-head{flex-direction:column}.participation-value{text-align:left}.participation-meta-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -1449,6 +1477,78 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 </div>
 
 
+
+
+<!-- MODAL PARTICIPATION / SOCIÉTÉ -->
+<div class="modal-overlay" id="participationModal">
+  <div class="modal" style="max-width:470px;max-height:92vh;overflow-y:auto;">
+    <h3 id="participationModalTitle">Ajouter une participation</h3>
+    <div class="modal-field">
+      <label>Société / participation</label>
+      <input type="text" id="participationLabel" maxlength="160" placeholder="Ex : Société familiale">
+    </div>
+    <div class="invoice-modal-grid">
+      <div class="modal-field">
+        <label>Nombre total de parts de la société</label>
+        <input type="number" id="participationTotalShares" min="1" step="1" inputmode="numeric" placeholder="1000">
+      </div>
+      <div class="modal-field">
+        <label>Valeur estimée de votre participation (€)</label>
+        <input type="number" id="participationValue" min="0" step="0.01" inputmode="decimal" placeholder="Laisser vide si inconnue">
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Exploitation / activité</label>
+      <input type="text" id="participationActivity" maxlength="200" placeholder="Ex : Activité ou établissement exploité">
+    </div>
+    <div class="modal-field">
+      <label>Localisation</label>
+      <input type="text" id="participationLocation" maxlength="200" placeholder="Ex : Québec, Canada">
+    </div>
+
+    <div class="participation-initial-box" id="participationInitialAcquisition">
+      <div class="participation-initial-title">Acquisition initiale</div>
+      <div class="invoice-modal-grid">
+        <div class="modal-field">
+          <label>Date d’acquisition</label>
+          <input type="date" id="participationInitialDate">
+        </div>
+        <div class="modal-field">
+          <label>Parts acquises</label>
+          <input type="number" id="participationInitialShares" min="1" step="1" inputmode="numeric" placeholder="100">
+        </div>
+      </div>
+    </div>
+
+    <div class="participation-modal-note">
+      La participation est calculée automatiquement à partir du nombre de parts détenues et du nombre total de parts. Si la valeur estimée reste vide, l’actif apparaît comme « Non valorisée » et n’est pas inclus dans les totaux chiffrés.
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" type="button" onclick="closeParticipationModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" type="button" onclick="submitParticipationModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ACQUISITION DE PARTS -->
+<div class="modal-overlay" id="participationAcquisitionModal">
+  <div class="modal" style="max-width:390px;">
+    <h3 id="participationAcquisitionTitle">Ajouter des parts</h3>
+    <div class="modal-field">
+      <label>Date d’acquisition</label>
+      <input type="date" id="participationAcquisitionDate">
+    </div>
+    <div class="modal-field">
+      <label>Nombre de parts acquises</label>
+      <input type="number" id="participationAcquisitionShares" min="1" step="1" inputmode="numeric" placeholder="10">
+    </div>
+    <div class="participation-modal-note" id="participationAcquisitionPreview"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" type="button" onclick="closeParticipationAcquisitionModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" type="button" onclick="submitParticipationAcquisition()">Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL DATE OUVERTURE PEA -->
 <div class="modal-overlay" id="peaOpeningModal">
@@ -2456,12 +2556,14 @@ function createEmptyBetaData(){
     per:[],
     crowdfunding:[],
     privateequity:[],
+    participations:[],
     metaux:[],
     partssociales:[],
     collection:[],
     vehicules:[],
     autres:[],
     activeAssetCategories:[],
+    activeAssetCategoriesByOwner:{},
     dettes:[],
     budgetRevenus:[],
     budgetFixes:[],
@@ -2549,7 +2651,7 @@ function inferLegacyProfileIdMap(){
     if(!seen.includes(id))seen.push(id);
     counts.set(id,(counts.get(id)||0)+1);
   };
-  const assetKeys=['immobilier','epargne','assurancevie','scpi','bourse','crypto','per','crowdfunding','privateequity','metaux','partssociales','collection','vehicules','autres','dettes'];
+  const assetKeys=['immobilier','epargne','assurancevie','scpi','bourse','crypto','per','crowdfunding','privateequity','participations','metaux','partssociales','collection','vehicules','autres','dettes'];
   assetKeys.forEach(key=>(data?.[key]||[]).forEach(item=>{
     if(!Array.isArray(item))return;
     const meta=item[2]&&typeof item[2]==='object'&&!Array.isArray(item[2])?item[2]:{};
@@ -2697,6 +2799,7 @@ const ASSET_CATEGORY_DEFINITIONS=[
   {key:'per',label:'PER / Retraite',shortLabel:'PER',icon:'🏦',color:'#db6d28'},
   {key:'crowdfunding',label:'Crowdfunding / Crowdlending',shortLabel:'Crowdfunding',icon:'🤝',color:'#2f81f7'},
   {key:'privateequity',label:'Private Equity / Non coté',shortLabel:'Non coté',icon:'🏭',color:'#bc8cff'},
+  {key:'participations',label:'Participations / Sociétés',shortLabel:'Participations',icon:'📊',color:'#79c0ff'},
   {key:'metaux',label:'Métaux précieux',shortLabel:'Métaux',icon:'🥇',color:'#d4a72c'},
   {key:'partssociales',label:'Parts sociales',shortLabel:'Parts sociales',icon:'🏛️',color:'#56d364'},
   {key:'collection',label:'Objets de valeur / Collection',shortLabel:'Collection',icon:'⌚',color:'#f778ba'},
@@ -2706,31 +2809,65 @@ const ASSET_CATEGORY_DEFINITIONS=[
 const ASSET_CATEGORY_MAP=Object.fromEntries(ASSET_CATEGORY_DEFINITIONS.map(c=>[c.key,c]));
 const NATIVE_PATRIMOINE_KEYS=['epargne','dettes'];
 
+function syncLegacyActiveAssetCategories(){
+  const union=[];
+  PATRIMOINE_OWNER_IDS.forEach(owner=>{
+    const list=Array.isArray(data.activeAssetCategoriesByOwner?.[owner])
+      ? data.activeAssetCategoriesByOwner[owner]
+      : [];
+    list.forEach(key=>{
+      if(ASSET_CATEGORY_MAP[key]&&!union.includes(key))union.push(key);
+    });
+  });
+  // Compatibilité avec d'anciennes versions de l'application.
+  data.activeAssetCategories=union;
+}
+
 function ensureAssetCategoryData(){
   ASSET_CATEGORY_DEFINITIONS.forEach(c=>{if(!Array.isArray(data[c.key]))data[c.key]=[];});
 
-  // Migration douce : sur un ancien compte sans préférence enregistrée,
-  // toute catégorie contenant déjà des lignes reste automatiquement visible.
-  if(!Array.isArray(data.activeAssetCategories)){
-    data.activeAssetCategories=ASSET_CATEGORY_DEFINITIONS
-      .filter(c=>Array.isArray(data[c.key])&&data[c.key].length>0)
-      .map(c=>c.key);
+  const legacy=Array.isArray(data.activeAssetCategories)
+    ? [...new Set(data.activeAssetCategories)].filter(key=>ASSET_CATEGORY_MAP[key])
+    : [];
+
+  if(!data.activeAssetCategoriesByOwner
+     || typeof data.activeAssetCategoriesByOwner!=='object'
+     || Array.isArray(data.activeAssetCategoriesByOwner)){
+    data.activeAssetCategoriesByOwner={};
   }
 
-  data.activeAssetCategories=[...new Set(data.activeAssetCategories)]
-    .filter(key=>ASSET_CATEGORY_MAP[key]);
+  PATRIMOINE_OWNER_IDS.forEach(owner=>{
+    let list=data.activeAssetCategoriesByOwner[owner];
 
-  // Migration de la version où Immobilier était natif : si un compte possède
-  // déjà des biens, la catégorie reste visible automatiquement. Un compte sans
-  // immobilier ne l'affiche pas et pourra l'ajouter depuis le menu.
-  if(Array.isArray(data.immobilier)&&data.immobilier.length>0&&!data.activeAssetCategories.includes('immobilier')){
-    data.activeAssetCategories.unshift('immobilier');
-  }
+    // Migration depuis l'ancien réglage global : on conserve au premier passage
+    // le même affichage qu'avant sur tous les profils.
+    if(!Array.isArray(list)){
+      list=[...legacy];
+    }
+
+    list=[...new Set(list)].filter(key=>ASSET_CATEGORY_MAP[key]);
+
+    // Une catégorie qui contient des lignes pour ce profil doit toujours rester
+    // visible, notamment après une synchronisation externe.
+    ASSET_CATEGORY_DEFINITIONS.forEach(c=>{
+      if(getOwnedItems(c.key,owner).length>0&&!list.includes(c.key)){
+        list.push(c.key);
+      }
+    });
+
+    data.activeAssetCategoriesByOwner[owner]=list;
+  });
+
+  syncLegacyActiveAssetCategories();
 }
 
-function getActiveAssetCategoryKeys(){
+function getActiveAssetCategoryKeys(owner=activePatrimoineOwner){
   ensureAssetCategoryData();
-  const active=new Set(data.activeAssetCategories);
+  const active=new Set(
+    Array.isArray(data.activeAssetCategoriesByOwner?.[owner])
+      ? data.activeAssetCategoriesByOwner[owner]
+      : []
+  );
 
   // Ordre visuel demandé :
   // Epargne / Bourse / Crypto / Assurance vie / Autres actifs / Immobilier / Emprunts
@@ -5975,6 +6112,298 @@ function renderLoanCards(cont){
   });
 }
 
+
+/* PARTICIPATIONS / SOCIÉTÉS */
+let activeParticipationIndex=-1;
+let activeParticipationAcquisitionIndex=-1;
+
+function getParticipationMeta(item){
+  const raw=item&&typeof item[2]==='object'&&item[2]!==null&&!Array.isArray(item[2])?item[2]:{};
+  const acquisitions=Array.isArray(raw.acquisitions)
+    ? raw.acquisitions.map((a,index)=>({
+        id:String(a?.id||`legacy_${index}`),
+        date:String(a?.date||''),
+        shares:Math.max(0,Number(a?.shares)||0)
+      })).filter(a=>a.shares>0)
+    : [];
+  return{
+    owner:PATRIMOINE_OWNER_IDS.includes(raw.owner)?raw.owner:'household',
+    totalShares:Math.max(0,Number(raw.totalShares)||0),
+    activity:String(raw.activity||''),
+    location:String(raw.location||''),
+    valuationKnown:raw.valuationKnown===true,
+    acquisitions
+  };
+}
+
+function getParticipationOwnedShares(item){
+  return getParticipationMeta(item).acquisitions.reduce((sum,a)=>sum+(Number(a.shares)||0),0);
+}
+
+function getParticipationPercent(item){
+  const meta=getParticipationMeta(item);
+  const owned=getParticipationOwnedShares(item);
+  return meta.totalShares>0?(owned/meta.totalShares)*100:null;
+}
+
+function formatParticipationPercent(value){
+  if(value===null||value===undefined||!Number.isFinite(Number(value)))return '—';
+  return `${Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2})} %`;
+}
+
+function formatParticipationDate(value){
+  if(!value)return '—';
+  const d=new Date(`${value}T12:00:00`);
+  if(Number.isNaN(d.getTime()))return String(value);
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+}
+
+function formatParticipationParts(owned,total){
+  const ownedText=Number(owned||0).toLocaleString('fr-FR',{maximumFractionDigits:0});
+  const totalText=Number(total||0).toLocaleString('fr-FR',{maximumFractionDigits:0});
+  return total>0?`${ownedText} / ${totalText} parts`:`${ownedText} part${Number(owned)!==1?'s':''}`;
+}
+
+function getParticipationCategoryValueLabel(items=getOwnedItems('participations')){
+  const valued=items.filter(i=>getParticipationMeta(i).valuationKnown);
+  const unvalued=items.length-valued.length;
+  const total=valued.reduce((sum,i)=>sum+(Number(i[1])||0),0);
+  if(unvalued>0){
+    if(total>0)return `${euro(total)} + ${unvalued} non valorisée${unvalued>1?'s':''}`;
+    return unvalued>1?'Non valorisées':'Non valorisée';
+  }
+  return euro(total);
+}
+
+function openParticipationModal(index=-1){
+  activeParticipationIndex=index;
+  const editing=index>=0&&Array.isArray(data.participations)&&data.participations[index]
+    && getItemOwner(data.participations[index],'participations')===activePatrimoineOwner;
+  const item=editing?data.participations[index]:['',0,{owner:activePatrimoineOwner,totalShares:0,valuationKnown:false,acquisitions:[]}];
+  const meta=getParticipationMeta(item);
+
+  document.getElementById('participationModalTitle').textContent=editing?'Modifier la participation':'Ajouter une participation';
+  document.getElementById('participationLabel').value=String(item[0]||'');
+  document.getElementById('participationTotalShares').value=meta.totalShares||'';
+  document.getElementById('participationValue').value=meta.valuationKnown?String(Number(item[1])||0):'';
+  document.getElementById('participationActivity').value=meta.activity;
+  document.getElementById('participationLocation').value=meta.location;
+  document.getElementById('participationInitialDate').value='';
+  document.getElementById('participationInitialShares').value='';
+  document.getElementById('participationInitialAcquisition').style.display=editing?'none':'block';
+  document.getElementById('participationModal').classList.add('active');
+  setTimeout(()=>document.getElementById('participationLabel')?.focus(),50);
+}
+
+function closeParticipationModal(){
+  document.getElementById('participationModal')?.classList.remove('active');
+  activeParticipationIndex=-1;
+}
+
+function submitParticipationModal(){
+  const label=String(document.getElementById('participationLabel').value||'').trim();
+  const totalShares=Number(document.getElementById('participationTotalShares').value||0);
+  const valueRaw=String(document.getElementById('participationValue').value||'').trim();
+  const valuationKnown=valueRaw!=='';
+  const amount=valuationKnown?Number(valueRaw):0;
+  const activity=String(document.getElementById('participationActivity').value||'').trim();
+  const location=String(document.getElementById('participationLocation').value||'').trim();
+  const editing=activeParticipationIndex>=0&&data.participations?.[activeParticipationIndex];
+
+  if(!label){document.getElementById('participationLabel').focus();return;}
+  if(!Number.isFinite(totalShares)||totalShares<=0||!Number.isInteger(totalShares)){
+    alert('Indique un nombre total de parts supérieur à 0.');
+    document.getElementById('participationTotalShares').focus();return;
+  }
+  if(valuationKnown&&(!Number.isFinite(amount)||amount<0)){
+    document.getElementById('participationValue').focus();return;
+  }
+
+  let acquisitions=[];
+  let owner=activePatrimoineOwner;
+  if(editing){
+    const existingMeta=getParticipationMeta(editing);
+    acquisitions=existingMeta.acquisitions.map(a=>({...a}));
+    owner=getItemOwner(editing,'participations');
+    const owned=acquisitions.reduce((sum,a)=>sum+a.shares,0);
+    if(owned>totalShares){
+      alert(`Tu détiens déjà ${owned.toLocaleString('fr-FR')} parts. Le nombre total de parts de la société ne peut pas être inférieur.`);
+      document.getElementById('participationTotalShares').focus();return;
+    }
+  }else{
+    const date=String(document.getElementById('participationInitialDate').value||'');
+    const shares=Number(document.getElementById('participationInitialShares').value||0);
+    if(!date){
+      alert('Indique la date de l’acquisition initiale.');
+      document.getElementById('participationInitialDate').focus();return;
+    }
+    if(!Number.isFinite(shares)||shares<=0||!Number.isInteger(shares)){
+      alert('Indique le nombre de parts acquises.');
+      document.getElementById('participationInitialShares').focus();return;
+    }
+    if(shares>totalShares){
+      alert('Les parts acquises ne peuvent pas dépasser le nombre total de parts de la société.');
+      document.getElementById('participationInitialShares').focus();return;
+    }
+    acquisitions=[{id:makeLocalId('participation_acq'),date,shares}];
+  }
+
+  const newItem=[label,valuationKnown?amount:0,{
+    owner,
+    totalShares,
+    activity,
+    location,
+    valuationKnown,
+    acquisitions
+  }];
+
+  if(!Array.isArray(data.participations))data.participations=[];
+  if(editing)data.participations[activeParticipationIndex]=newItem;
+  else data.participations.push(newItem);
+
+  closeParticipationModal();
+  openAssetAccordions.add('participations');
+  render();
+  save();
+}
+
+function openParticipationAcquisitionModal(itemIndex,acquisitionIndex=-1){
+  const item=data.participations?.[itemIndex];
+  if(!item||getItemOwner(item,'participations')!==activePatrimoineOwner)return;
+  const meta=getParticipationMeta(item);
+  const acq=acquisitionIndex>=0?meta.acquisitions[acquisitionIndex]:null;
+
+  activeParticipationIndex=itemIndex;
+  activeParticipationAcquisitionIndex=acquisitionIndex;
+  document.getElementById('participationAcquisitionTitle').textContent=acq?'Modifier l’acquisition':'Ajouter des parts';
+  document.getElementById('participationAcquisitionDate').value=acq?.date||getLocalDateKey();
+  document.getElementById('participationAcquisitionShares').value=acq?.shares||'';
+
+  const owned=getParticipationOwnedShares(item);
+  const pct=getParticipationPercent(item);
+  document.getElementById('participationAcquisitionPreview').textContent=
+    `Actuellement : ${formatParticipationParts(owned,meta.totalShares)} · ${formatParticipationPercent(pct)} du capital.`;
+  document.getElementById('participationAcquisitionModal').classList.add('active');
+  setTimeout(()=>document.getElementById('participationAcquisitionShares')?.focus(),50);
+}
+
+function closeParticipationAcquisitionModal(){
+  document.getElementById('participationAcquisitionModal')?.classList.remove('active');
+  activeParticipationIndex=-1;
+  activeParticipationAcquisitionIndex=-1;
+}
+
+function submitParticipationAcquisition(){
+  const item=data.participations?.[activeParticipationIndex];
+  if(!item||getItemOwner(item,'participations')!==activePatrimoineOwner)return;
+  const meta=getParticipationMeta(item);
+  const date=String(document.getElementById('participationAcquisitionDate').value||'');
+  const shares=Number(document.getElementById('participationAcquisitionShares').value||0);
+
+  if(!date){document.getElementById('participationAcquisitionDate').focus();return;}
+  if(!Number.isFinite(shares)||shares<=0||!Number.isInteger(shares)){
+    alert('Indique un nombre de parts supérieur à 0.');
+    document.getElementById('participationAcquisitionShares').focus();return;
+  }
+
+  const acquisitions=meta.acquisitions.map(a=>({...a}));
+  const currentIndex=activeParticipationAcquisitionIndex;
+  const oldShares=currentIndex>=0&&acquisitions[currentIndex]?acquisitions[currentIndex].shares:0;
+  const projected=getParticipationOwnedShares(item)-oldShares+shares;
+  if(meta.totalShares>0&&projected>meta.totalShares){
+    alert(`Cette opération porterait ta participation à ${projected.toLocaleString('fr-FR')} parts sur ${meta.totalShares.toLocaleString('fr-FR')}.`);
+    return;
+  }
+
+  if(currentIndex>=0&&acquisitions[currentIndex]){
+    acquisitions[currentIndex]={...acquisitions[currentIndex],date,shares};
+  }else{
+    acquisitions.push({id:makeLocalId('participation_acq'),date,shares});
+  }
+
+  item[2]={...(item[2]||{}),acquisitions};
+  closeParticipationAcquisitionModal();
+  render();
+  save();
+}
+
+function deleteParticipationAcquisition(itemIndex,acquisitionIndex){
+  const item=data.participations?.[itemIndex];
+  if(!item||getItemOwner(item,'participations')!==activePatrimoineOwner)return;
+  const meta=getParticipationMeta(item);
+  if(meta.acquisitions.length<=1){
+    alert('Une participation doit conserver au moins une acquisition. Supprime la participation entière si nécessaire.');
+    return;
+  }
+  const acq=meta.acquisitions[acquisitionIndex];
+  if(!acq)return;
+  if(!confirm(`Supprimer l’acquisition du ${formatParticipationDate(acq.date)} (${acq.shares.toLocaleString('fr-FR')} parts) ?`))return;
+  const acquisitions=meta.acquisitions.filter((_,i)=>i!==acquisitionIndex);
+  item[2]={...(item[2]||{}),acquisitions};
+  render();
+  save();
+}
+
+function renderParticipationRows(cont){
+  const rows=(Array.isArray(data.participations)?data.participations:[])
+    .map((item,idx)=>({item,idx}))
+    .filter(({item})=>getItemOwner(item,'participations')===activePatrimoineOwner);
+
+  if(!rows.length){
+    cont.innerHTML='<div class="stock-envelope-empty">Aucune participation enregistrée</div>';
+    return;
+  }
+
+  rows.forEach(({item,idx})=>{
+    const meta=getParticipationMeta(item);
+    const owned=getParticipationOwnedShares(item);
+    const pct=getParticipationPercent(item);
+    const sortedAcq=meta.acquisitions
+      .map((a,originalIndex)=>({a,originalIndex}))
+      .sort((x,y)=>String(x.a.date).localeCompare(String(y.a.date))||x.originalIndex-y.originalIndex);
+
+    const row=document.createElement('div');
+    row.className='participation-card';
+    row.innerHTML=`
+      <div class="participation-head">
+        <div>
+          <div class="participation-title">${escapeHtml(item[0]||'Participation')}</div>
+          <div class="participation-sub">Participation : <strong>${escapeHtml(formatParticipationPercent(pct))}</strong> — ${escapeHtml(formatParticipationParts(owned,meta.totalShares))}</div>
+        </div>
+        <div class="participation-value">
+          <span>Valeur</span>
+          <strong class="${meta.valuationKnown?'':'unvalued'}">${meta.valuationKnown?euro(Number(item[1])||0):'Non valorisée'}</strong>
+        </div>
+      </div>
+
+      ${(meta.activity||meta.location)?`<div class="participation-meta-grid">
+        ${meta.activity?`<div class="participation-meta"><span>Exploitation / activité</span><strong>${escapeHtml(meta.activity)}</strong></div>`:''}
+        ${meta.location?`<div class="participation-meta"><span>Localisation</span><strong>${escapeHtml(meta.location)}</strong></div>`:''}
+      </div>`:''}
+
+      <div>
+        <div class="participation-acq-title">Historique des acquisitions</div>
+        <div class="participation-acq-list">
+          ${sortedAcq.map(({a,originalIndex})=>`<div class="participation-acq-row">
+            <div class="participation-acq-main"><strong>${escapeHtml(formatParticipationDate(a.date))}</strong> · +${Number(a.shares).toLocaleString('fr-FR')} parts</div>
+            <div class="participation-acq-actions">
+              <button class="participation-mini-btn" type="button" onclick="openParticipationAcquisitionModal(${idx},${originalIndex})" title="Modifier cette acquisition">✏️</button>
+              <button class="participation-mini-btn" type="button" onclick="deleteParticipationAcquisition(${idx},${originalIndex})" title="Supprimer cette acquisition" style="color:#f85149">×</button>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="participation-actions">
+        <button class="btn btn-primary" type="button" onclick="openParticipationAcquisitionModal(${idx})">＋ Ajouter des parts</button>
+        <button class="btn btn-secondary" type="button" onclick="openParticipationModal(${idx})">✏️ Modifier</button>
+        <button class="btn btn-secondary" type="button" onclick="delPatrimoine('participations',${idx})" style="color:#f85149">🗑 Supprimer</button>
+      </div>
+    `;
+    cont.appendChild(row);
+  });
+}
+
 /* CATÉGORIES D’ACTIFS CONFIGURABLES */
 function renderAssetCategoryPicker(){
   const select=document.getElementById('asset-category-select');
@@ -6006,9 +6435,12 @@ function addSelectedAssetCategory(){
   const select=document.getElementById('asset-category-select');
   if(!select||!select.value||!ASSET_CATEGORY_MAP[select.value])return;
   ensureAssetCategoryData();
-  if(!data.activeAssetCategories.includes(select.value)){
-    data.activeAssetCategories.push(select.value);
+  const owner=activePatrimoineOwner;
+  const list=data.activeAssetCategoriesByOwner[owner];
+  if(!list.includes(select.value)){
+    list.push(select.value);
   }
+  syncLegacyActiveAssetCategories();
   document.getElementById('asset-category-add-panel')?.classList.remove('active');
   render();
   save();
@@ -6016,21 +6448,26 @@ function addSelectedAssetCategory(){
 
 function removeAssetCategory(key){
   const cfg=ASSET_CATEGORY_MAP[key];
+  const owner=activePatrimoineOwner;
   if(!cfg)return;
-  if(!getActiveAssetCategoryKeys().includes(key))return;
+  if(!getActiveAssetCategoryKeys(owner).includes(key))return;
 
-  if(Array.isArray(data[key])&&data[key].length>0){
-    alert(`La catégorie « ${cfg.label} » contient encore des éléments.\n\nSupprime d’abord toutes ses lignes avant de retirer la catégorie.`);
+  const ownedCount=getOwnedItems(key,owner).length;
+  if(ownedCount>0){
+    alert(`La catégorie « ${cfg.label} » contient encore ${ownedCount} ligne${ownedCount>1?'s':''} pour ${getPatrimoineOwnerLabel(owner)}.\n\nSupprime d’abord ${ownedCount>1?'ces lignes':'cette ligne'} avant de retirer la catégorie.`);
     return;
   }
 
-  if(!confirm(`Voulez-vous vraiment supprimer la catégorie « ${cfg.label} » ?\n\nLa catégorie sera retirée de votre patrimoine. Vous pourrez l’ajouter de nouveau plus tard.`))return;
+  if(!confirm(`Supprimer la catégorie « ${cfg.label} » pour ${getPatrimoineOwnerLabel(owner)} ?\n\nElle restera disponible sur les autres profils et pourra être ajoutée de nouveau ici plus tard.`))return;
 
-  data.activeAssetCategories=data.activeAssetCategories.filter(k=>k!==key);
+  data.activeAssetCategoriesByOwner[owner]=data.activeAssetCategoriesByOwner[owner].filter(k=>k!==key);
+  syncLegacyActiveAssetCategories();
+
   if(currentChartSeries===key){
     currentChartSeries='total';
     localStorage.setItem('finaryChartSeries','total');
   }
+  openAssetAccordions.delete(key);
   render();
   save();
 }
@@ -6083,6 +6520,7 @@ function renderOptionalAssetCategorySections(){
         ${c.key==='bourse' && isTradeRepublicOwner(activePatrimoineOwner)?`<button id="tradeRepublicSyncBtn" class="tr-sync-btn-red" type="button" onclick="event.stopPropagation();requestTradeRepublicSync()" title="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}" aria-label="Actualiser Trade Republic · ${escapeHtml(getPatrimoineOwnerLabel())}">↻ Trade Republic</button>`:''}
         ${c.key==='assurancevie' && isLinxeaProfile(activePatrimoineOwner)?`<button id="linxeaSyncBtn" class="linxea-sync-btn" type="button" onclick="event.stopPropagation();requestLinxeaSync()" title="Actualiser les contrats Linxea" aria-label="Actualiser les contrats Linxea">↻ Linxea</button>`:''}
         <div class="category-header-actions">
+          ${getOwnedItems(c.key,activePatrimoineOwner).length===0?`<button class="category-remove-btn" type="button" onclick="event.stopPropagation();removeAssetCategory('${c.key}')" title="Supprimer cette catégorie pour ${escapeHtml(getPatrimoineOwnerLabel())}" aria-label="Supprimer ${escapeHtml(c.label)} pour ${escapeHtml(getPatrimoineOwnerLabel())}">🗑</button>`:''}
           <span class="section-total" id="total-${c.key}">0 €</span>
           <span class="asset-accordion-chevron" aria-hidden="true">⌄</span>
         </div>
@@ -6287,6 +6725,11 @@ function render(){
       return;
     }
 
+    if(key==='participations'){
+      renderParticipationRows(cont);
+      return;
+    }
+
     // Dans le budget, les lignes non cochées restent en haut et
     // les lignes cochées sont affichées en bas, sans modifier data.
     const displayItems=data[key]
@@ -6422,6 +6865,7 @@ function togglePaid(k,i){
 
 function addItem(k){
   if(k==='dettes'){openLoanModal(-1);return;}
+  if(k==='participations'){openParticipationModal(-1);return;}
   if(!data[k])data[k]=[];
   if(k==='bourse'){
     openStockEditModal(-1);
@@ -6495,6 +6939,7 @@ function saveLocalOnly(){
    V26 — paramètres, archivage, récurrence, allocation
    =========================== */
 function ensureV26Data(){
+  if(!Array.isArray(data.participations))data.participations=[];
   if(!Array.isArray(data.loyaltyCards))data.loyaltyCards=[];
   if(!Array.isArray(data.archives))data.archives=[];
   if(!Array.isArray(data.recurringBudgetIgnored))data.recurringBudgetIgnored=[];
@@ -7075,7 +7520,7 @@ function getPatrimoineReportModel(){
   const now=new Date();
   const rawCategories=[
     {key:'epargne',label:'Épargne'},
-    ...getActiveAssetCategoryKeys().map(key=>({key,label:ASSET_CATEGORY_MAP[key].label})),
+    ...getActiveAssetCategoryKeys(owner).map(key=>({key,label:ASSET_CATEGORY_MAP[key].label})),
     {key:'dettes',label:'Emprunts'}
   ];
 
@@ -7126,6 +7571,25 @@ function getPatrimoineReportModel(){
         };
       }
 
+      if(c.key==='participations'){
+        const meta=getParticipationMeta(i);
+        const ownedShares=getParticipationOwnedShares(i);
+        const percentage=getParticipationPercent(i);
+        return{
+          ...base,
+          kind:'participation',
+          participationMeta:{
+            totalShares:meta.totalShares,
+            ownedShares,
+            percentage,
+            activity:meta.activity,
+            location:meta.location,
+            valuationKnown:meta.valuationKnown,
+            acquisitions:meta.acquisitions.map(a=>({...a})).sort((a,b)=>String(a.date).localeCompare(String(b.date)))
+          }
+        };
+      }
+
       if(c.key==='assurancevie'){
         const perfRaw=rawMeta.linxeaPerformance;
         const performance=(perfRaw!==undefined&&perfRaw!==null&&perfRaw!==''&&Number.isFinite(Number(perfRaw)))?Number(perfRaw):null;
@@ -7164,6 +7628,9 @@ function getPatrimoineReportModel(){
       items,
       total,
       count:items.length,
+      unvaluedCount:c.key==='participations'
+        ? items.filter(i=>i.kind==='participation'&&!i.participationMeta?.valuationKnown).length
+        : 0,
       weight:c.key==='dettes'?(totals.assets>0?(total/totals.assets)*100:0):(totals.assets>0?(total/totals.assets)*100:0)
     };
   });
@@ -7246,11 +7713,19 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
     return `${n>0?'+':''}${n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} %`;
   };
 
+  const categoryValueText=c=>{
+    if(c?.key==='participations'&&Number(c.unvaluedCount)>0){
+      if(Number(c.total)>0)return `${euro(c.total)} + ${c.unvaluedCount} non valorisée${c.unvaluedCount>1?'s':''}`;
+      return c.unvaluedCount>1?'Non valorisées':'Non valorisée';
+    }
+    return euro(Number(c?.total)||0);
+  };
+
   const categorySummary=model.categories.map(c=>`
     <tr>
       <td><strong>${esc(c.label)}</strong><span class="row-sub">${c.count} ligne${c.count>1?'s':''}</span></td>
-      <td class="num">${c.key==='dettes'?'—':fmtPct(c.weight)}</td>
-      <td class="num ${c.key==='dettes'?'debt':''}">${euro(c.total)}</td>
+      <td class="num">${c.key==='dettes'||(c.key==='participations'&&c.unvaluedCount>0&&c.total===0)?'—':fmtPct(c.weight)}</td>
+      <td class="num ${c.key==='dettes'?'debt':''}">${categoryValueText(c)}</td>
     </tr>
   `).join('');
 
@@ -7305,6 +7780,21 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
       return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="detail-list">${cards}</div></section>`;
     }
 
+    if(c.key==='participations'){
+      const cards=c.items.length?c.items.map(i=>{
+        const m=i.participationMeta||{};
+        const acq=Array.isArray(m.acquisitions)&&m.acquisitions.length
+          ? `<div class="acq-report"><div class="acq-report-title">Historique des acquisitions</div>${m.acquisitions.map(a=>`<div class="acq-report-row"><span>${esc(formatParticipationDate(a.date))}</span><strong>+${Number(a.shares||0).toLocaleString('fr-FR')} parts</strong></div>`).join('')}</div>`
+          : '';
+        return `<div class="detail-card investment-report-card">
+          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">Participation : ${esc(formatParticipationPercent(m.percentage))} — ${esc(formatParticipationParts(m.ownedShares,m.totalShares))}</div></div><div class="detail-value">${m.valuationKnown?euro(i.amount):'Non valorisée'}${m.valuationKnown?'':'<span>non incluse dans les totaux</span>'}</div></div>
+          <div class="metric-grid compact"><div><span>Parts détenues</span><strong>${esc(formatParticipationParts(m.ownedShares,m.totalShares))}</strong></div><div><span>Exploitation / activité</span><strong>${esc(m.activity||'—')}</strong></div><div><span>Localisation</span><strong>${esc(m.location||'—')}</strong></div></div>
+          ${acq}
+        </div>`;
+      }).join(''):`<div class="empty padded">Aucune participation</div>`;
+      return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${categoryValueText(c)}</strong></div><div class="detail-list">${cards}</div></section>`;
+    }
+
     if(c.key==='assurancevie'){
       const cards=c.items.length?c.items.map(i=>{
         const m=i.insuranceMeta||{};
@@ -7317,7 +7807,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
       return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><div class="detail-list">${cards}</div></section>`;
     }
 
-    return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${euro(c.total)}</strong></div><table class="detail-table"><thead><tr><th>Support / actif</th><th class="num">% catégorie</th><th class="num">% actifs</th><th class="num">Valeur</th></tr></thead><tbody>${genericRows(c)}</tbody></table></section>`;
+    return `<section class="detail-section"><div class="section-title"><span>${esc(c.label)}</span><strong>${categoryValueText(c)}</strong></div><table class="detail-table"><thead><tr><th>Support / actif</th><th class="num">% catégorie</th><th class="num">% actifs</th><th class="num">Valeur</th></tr></thead><tbody>${genericRows(c)}</tbody></table></section>`;
   }).join('');
 
   const liquidSummary=model.liquidCategories.length
@@ -7364,6 +7854,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
   .detail-section,.chart-section{break-inside:avoid;margin:0 0 12px;border:1px solid #bbb;border-radius:8px;overflow:hidden}.section-title{background:#f2f2f2;padding:8px 10px;display:flex;justify-content:space-between;gap:12px;font-size:11px;font-weight:800}.detail-table td{padding:6px 10px}
   .detail-list{padding:9px;display:flex;flex-direction:column;gap:8px}.detail-card{border:1px solid #ccc;border-radius:7px;padding:9px;break-inside:avoid}.detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.detail-head>div:first-child{min-width:0}.detail-head strong{font-size:12px}.detail-sub{font-size:9px;color:#666;margin-top:2px}.detail-value{text-align:right;font-size:14px;font-weight:800;white-space:nowrap}.detail-value span{display:block;font-size:8px;color:#666;font-weight:700;text-transform:uppercase}.metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:8px}.metric-grid.compact{grid-template-columns:repeat(3,minmax(0,1fr))}.metric-grid>div{border:1px solid #ddd;border-radius:5px;padding:6px;min-width:0}.metric-grid span{display:block;font-size:8px;color:#666;text-transform:uppercase;font-weight:700}.metric-grid strong{display:block;font-size:10px;margin-top:2px;overflow-wrap:anywhere}.sync-line{margin-top:7px;color:#666;font-size:8.5px}
   .loan-report-progress-line{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:9px;color:#555}.loan-report-progress{height:7px;border:1px solid #bbb;background:#eee;border-radius:999px;overflow:hidden;margin-top:3px}.loan-report-progress>div{height:100%;background:#444}
+  .acq-report{margin-top:8px;border-top:1px solid #ddd;padding-top:7px}.acq-report-title{font-size:8px;text-transform:uppercase;color:#666;font-weight:800;margin-bottom:4px}.acq-report-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:9px;border-bottom:1px dotted #ddd}.acq-report-row:last-child{border-bottom:0}
   .chart-caption{font-size:9px;color:#666;padding:6px 10px 0;text-align:right}.report-chart{padding:5px 9px 9px;overflow:hidden}.report-chart .chart-tooltip{display:none!important}.report-chart svg{width:100%;height:195px;display:block}.report-chart .chart-line{fill:none;stroke:#222;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.report-chart .chart-area{fill:#ddd;opacity:.45}.report-chart .chart-grid-line{stroke:#ccc;stroke-width:1}.report-chart .chart-axis-label,.report-chart .chart-last-label{fill:#555;font-size:9px}.report-chart .chart-point,.report-chart .chart-point-last{fill:#222}.report-chart .chart-cursor-line{display:none}
   .footer{text-align:center;color:#555;font-size:9px;margin-top:18px;padding-top:9px;border-top:1px solid #ddd}
   @media(max-width:640px){.report{padding:16px}.two-cols{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}.metric-grid,.metric-grid.compact{grid-template-columns:1fr 1fr}}
@@ -7415,7 +7906,10 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
 
   model.categories.forEach(c=>{
     const weight=c.key==='dettes'?'':` · ${(Number(c.weight)||0).toLocaleString('fr-FR',{maximumFractionDigits:1})} % des actifs`;
-    lines.push(`${c.label} : ${euro(c.total)}${weight} · ${c.count} ligne${c.count>1?'s':''}`);
+    const categoryValue=c.key==='participations'&&Number(c.unvaluedCount)>0
+      ? (Number(c.total)>0?`${euro(c.total)} + ${c.unvaluedCount} non valorisée${c.unvaluedCount>1?'s':''}`:(c.unvaluedCount>1?'Non valorisées':'Non valorisée'))
+      : euro(c.total);
+    lines.push(`${c.label} : ${categoryValue}${weight} · ${c.count} ligne${c.count>1?'s':''}`);
   });
 
   if(model.monthlyHistory.length){
@@ -7468,6 +7962,21 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
         lines.push(`• ${i.label} : ${euro(i.amount)}`);
         lines.push(`  Quantité : ${Number(m.quantity||0).toLocaleString('fr-FR',{maximumFractionDigits:8})} BTC · Cours : ${m.priceEur>0?euro(m.priceEur):'—'}`);
         if(m.pruSet)lines.push(`  PRU : ${euro(m.pru)} · Capital investi : ${euro(i.invested||0)} · Gain/perte : ${i.gain>0?'+':''}${euro(i.gain||0)} · Performance : ${i.performance===null?'—':`${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`}`);
+      });
+      return;
+    }
+
+    if(c.key==='participations'){
+      c.items.forEach(i=>{
+        const m=i.participationMeta||{};
+        lines.push(`• ${i.label} : ${m.valuationKnown?euro(i.amount):'Non valorisée (non incluse dans les totaux)'}`);
+        lines.push(`  Participation : ${formatParticipationPercent(m.percentage)} · ${formatParticipationParts(m.ownedShares,m.totalShares)}`);
+        if(m.activity)lines.push(`  Exploitation / activité : ${m.activity}`);
+        if(m.location)lines.push(`  Localisation : ${m.location}`);
+        if(Array.isArray(m.acquisitions)&&m.acquisitions.length){
+          lines.push('  Historique des acquisitions :');
+          m.acquisitions.forEach(a=>lines.push(`    - ${formatParticipationDate(a.date)} : +${Number(a.shares||0).toLocaleString('fr-FR')} parts`));
+        }
       });
       return;
     }
@@ -7656,7 +8165,12 @@ function updateTotals(){
 
   ['epargne',...getActiveAssetCategoryKeys(),'dettes'].forEach(k=>{
     const e=document.getElementById(`total-${k}`);
-    if(e)e.textContent=euro(getOwnedItems(k).reduce((a,i)=>a+(Number(i[1])||0),0));
+    if(!e)return;
+    if(k==='participations'){
+      e.textContent=getParticipationCategoryValueLabel(getOwnedItems(k));
+      return;
+    }
+    e.textContent=euro(getOwnedItems(k).reduce((a,i)=>a+(Number(i[1])||0),0));
   });
 
   const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
@@ -10965,6 +11479,10 @@ document.getElementById('historyMonthModal').addEventListener('click',e=>{
 
 document.getElementById('loanModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLoanModal();});
 document.getElementById('loanModal').addEventListener('keydown',e=>{if(e.key==='Escape')closeLoanModal();});
+document.getElementById('participationModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeParticipationModal();});
+document.getElementById('participationModal').addEventListener('keydown',e=>{if(e.key==='Escape')closeParticipationModal();});
+document.getElementById('participationAcquisitionModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeParticipationAcquisitionModal();});
+document.getElementById('participationAcquisitionModal').addEventListener('keydown',e=>{if(e.key==='Escape')closeParticipationAcquisitionModal();});
 
 document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closePatrimoineAmountModal();
