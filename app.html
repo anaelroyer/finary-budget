@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- V26.1.88 : Véhicules — tri futur par premier terme réel date OU kilométrage estimé -->
+<!-- V26.1.87 : Véhicules — tri futur par échéance affichée (date réelle, sinon km restants) -->
+<!-- V26.1.86 : tri futur véhicule corrigé sans conversion km artificielle -->
+<!-- V26.1.85 : tri entretiens par première échéance réelle date OU kilométrage -->
 <!-- V26.1.83 : montant des bons / avoirs -->
 <!-- V26.1.82 : type des bons — Réduction ou Crédit cagnotte -->
 <!-- V26.1.81 : Bons & avoirs repliables, tri par validité et actions directes -->
@@ -9239,17 +9243,42 @@ function getVehicleMileageRate(vehicle){
   return kmPerDay>0?kmPerDay:null;
 }
 
+function estimateVehicleMileageThresholdDate(vehicle,dueMileage){
+  const currentKm=Number(vehicle.mileage)||0;
+  const targetKm=Number(dueMileage)||0;
+  if(targetKm<=0)return '';
+  const kmPerDay=getVehicleMileageRate(vehicle);
+  if(!kmPerDay)return '';
+  const offsetDays=(targetKm-currentKm)/kmPerDay;
+  if(!Number.isFinite(offsetDays)||Math.abs(offsetDays)>3650)return '';
+  const base=parseLocalDate(dateToLocalISO(new Date()));
+  base.setDate(base.getDate()+Math.round(offsetDays));
+  return dateToLocalISO(base);
+}
+
 function estimateVehicleMileageDueDate(vehicle,dueMileage){
   const currentKm=Number(vehicle.mileage)||0;
   const remaining=Number(dueMileage)-currentKm;
   if(remaining<=0)return '';
-  const kmPerDay=getVehicleMileageRate(vehicle);
-  if(!kmPerDay)return '';
-  const days=Math.ceil(remaining/kmPerDay);
-  if(!Number.isFinite(days)||days<0||days>3650)return '';
-  const base=parseLocalDate(dateToLocalISO(new Date()));
-  base.setDate(base.getDate()+days);
-  return dateToLocalISO(base);
+  return estimateVehicleMileageThresholdDate(vehicle,dueMileage);
+}
+
+function getScheduleMileageOffsetDays(v,sc,km){
+  if(km===null||km===undefined||!Number.isFinite(Number(km)))return null;
+  const kmPerDay=getVehicleMileageRate(v);
+  if(kmPerDay&&kmPerDay>0)return Number(km)/kmPerDay;
+
+  // Sans historique kilométrique suffisant, on conserve la logique « premier terme »
+  // en rapportant la distance restante/dépassée à la périodicité du plan.
+  const intervalKm=Number(sc.intervalKm)||0;
+  if(intervalKm<=0)return null;
+  let referenceDays=365;
+  if(Number(sc.intervalMonths)>0){
+    const last=parseLocalDate(sc.lastDate);
+    const due=parseLocalDate(sc.dueDate);
+    referenceDays=last&&due?Math.max(1,(due-last)/86400000):Math.max(1,Number(sc.intervalMonths)*30.4375);
+  }
+  return (Number(km)/intervalKm)*referenceDays;
 }
 
 function formatMonthYearFR(iso){
@@ -9491,11 +9520,13 @@ function getScheduleStatus(v,sc){
   const dueKm=Number(sc.dueMileage)||0;
   const km=dueKm>0?dueKm-currentKm:null;
 
-  // Entretien « X mois OU Y km » : c'est toujours le PREMIER des deux termes
-  // qui commande l'échéance. Pour le kilométrage, on projette la date de passage
-  // au kilométrage cible à partir du rythme réel du véhicule lorsqu'il est connu.
-  const estimatedMileageDate=km!==null&&km>0?estimateVehicleMileageDueDate(v,dueKm):'';
+  // « X mois OU Y km » : le PREMIER terme atteint commande toujours.
+  // Quand le rythme kilométrique est connu, le seuil km est ramené à une date
+  // (y compris lorsqu'il est déjà dépassé), ce qui permet un tri chronologique réel.
+  const estimatedMileageDate=km!==null?estimateVehicleMileageThresholdDate(v,dueKm):'';
   const estimatedMileageDue=parseLocalDate(estimatedMileageDate);
+  const mileageOffsetDays=km!==null?getScheduleMileageOffsetDays(v,sc,km):null;
+  const dateOffsetDays=days!==null?Number(days):null;
 
   const dateOverdue=days!==null&&days<0;
   const mileageOverdue=km!==null&&km<0;
@@ -9525,32 +9556,35 @@ function getScheduleStatus(v,sc){
   const dateSoon=days!==null&&soonDaysThreshold!==null&&days>=0&&days<=soonDaysThreshold;
   const mileageSoon=km!==null&&soonKmThreshold!==null&&km>=0&&km<=soonKmThreshold;
 
-  let primaryTerm='';
-  let primaryDueDate='';
+  // Offset signé jusqu'à chaque terme : négatif = dépassé, positif = à venir.
+  // Le plus petit offset est toujours le premier terme échu / à échoir.
+  const candidates=[];
+  if(dateOffsetDays!==null&&Number.isFinite(dateOffsetDays))candidates.push({term:'date',offset:dateOffsetDays});
+  if(mileageOffsetDays!==null&&Number.isFinite(mileageOffsetDays))candidates.push({term:'mileage',offset:mileageOffsetDays});
+  candidates.sort((a,b)=>a.offset-b.offset);
 
+  let primaryTerm=candidates[0]?.term||'';
+  let sortOffsetDays=candidates[0]?.offset??Number.POSITIVE_INFINITY;
+  let primaryDueDate='';
+  if(primaryTerm==='date')primaryDueDate=sc.dueDate||'';
+  else if(primaryTerm==='mileage'&&estimatedMileageDue)primaryDueDate=estimatedMileageDate;
+
+  // Si un terme est réellement dépassé, il doit primer sur tout terme futur.
+  // Cette sécurité couvre les anciens plans ne disposant pas d'assez d'historique km.
   if(dateOverdue||mileageOverdue){
-    if(dateOverdue&&mileageOverdue)primaryTerm='both';
-    else primaryTerm=dateOverdue?'date':'mileage';
-  }else if(due&&estimatedMileageDue){
-    if(due<=estimatedMileageDue){
-      primaryTerm='date';
-      primaryDueDate=sc.dueDate||'';
-    }else{
+    const overdueCandidates=candidates.filter(c=>c.offset<0);
+    if(overdueCandidates.length){
+      overdueCandidates.sort((a,b)=>a.offset-b.offset);
+      primaryTerm=overdueCandidates[0].term;
+      sortOffsetDays=overdueCandidates[0].offset;
+      primaryDueDate=primaryTerm==='date'?(sc.dueDate||''):(estimatedMileageDue?estimatedMileageDate:'');
+    }else if(dateOverdue){
+      primaryTerm='date';sortOffsetDays=Number(days);primaryDueDate=sc.dueDate||'';
+    }else if(mileageOverdue){
       primaryTerm='mileage';
-      primaryDueDate=estimatedMileageDate;
+      sortOffsetDays=mileageOffsetDays!==null?mileageOffsetDays:-Math.abs(Number(km)||0);
+      primaryDueDate=estimatedMileageDue?estimatedMileageDate:'';
     }
-  }else if(due&&km!==null){
-    // Sans historique kilométrique suffisant pour projeter une date, on choisit
-    // le terme déjà le plus proche de son seuil « à prévoir » ; sinon la date.
-    if(mileageSoon&&!dateSoon)primaryTerm='mileage';
-    else primaryTerm='date';
-    primaryDueDate=primaryTerm==='date'?(sc.dueDate||''):'';
-  }else if(due){
-    primaryTerm='date';
-    primaryDueDate=sc.dueDate||'';
-  }else if(km!==null){
-    primaryTerm='mileage';
-    primaryDueDate=estimatedMileageDate;
   }
 
   let status='ok';
@@ -9561,14 +9595,14 @@ function getScheduleStatus(v,sc){
   }else if(primaryTerm==='mileage'){
     status=(mileageDueNow||mileageSoon)?'soon':'ok';
   }else{
-    // Fallback conservateur si aucun terme prioritaire n'a pu être déterminé.
     status=(dateDueNow||mileageDueNow||dateSoon||mileageSoon)?'soon':'ok';
   }
 
   return {
     status,days,km,soonDaysThreshold,soonKmThreshold,
     dateOverdue,mileageOverdue,dateDueNow,mileageDueNow,
-    dateSoon,mileageSoon,primaryTerm,primaryDueDate,estimatedMileageDate
+    dateSoon,mileageSoon,primaryTerm,primaryDueDate,estimatedMileageDate,
+    mileageOffsetDays,dateOffsetDays,sortOffsetDays
   };
 }
 
@@ -9588,13 +9622,12 @@ function scheduleMeta(v,sc,status){
 }
 
 function schedulePriorityMeta(sc,status){
-  if(status.primaryTerm==='both')return '⏱ Date et kilométrage dépassés';
   if(status.primaryTerm==='date'){
-    if(status.status==='overdue')return '⏱ Terme déclencheur : date';
+    if(status.status==='overdue')return '⏱ Premier terme échu : date';
     return '⏱ Première échéance prévue : date';
   }
   if(status.primaryTerm==='mileage'){
-    if(status.status==='overdue')return '⏱ Terme déclencheur : kilométrage';
+    if(status.status==='overdue')return '⏱ Premier terme échu : kilométrage';
     return '⏱ Première échéance prévue : kilométrage';
   }
   return '';
@@ -9637,6 +9670,40 @@ function openInvoiceById(invoiceId){
   switchTab('factures');openInvoiceModal(idx);
 }
 
+function getFutureScheduleSortKey(vehicle,sc,st){
+  const dateDays=(st.days!==null&&st.days!==undefined&&Number.isFinite(Number(st.days))&&Number(st.days)>=0)?Number(st.days):null;
+  const kmRemaining=(st.km!==null&&st.km!==undefined&&Number.isFinite(Number(st.km))&&Number(st.km)>=0)?Number(st.km):null;
+  const kmPerDay=getVehicleMileageRate(vehicle);
+  const mileageDays=(kmRemaining!==null&&kmPerDay&&kmPerDay>0)?kmRemaining/kmPerDay:null;
+
+  // À prévoir / À jour : on classe sur le PREMIER terme qui sera réellement atteint.
+  // - date réelle si elle arrive avant ;
+  // - seuil kilométrique converti en délai avec le rythme réel du véhicule s'il arrive avant ;
+  // - sans rythme km fiable, on n'invente pas de conversion et la date reste la référence.
+  const candidates=[];
+  if(dateDays!==null)candidates.push({term:'date',days:dateDays});
+  if(mileageDays!==null&&Number.isFinite(mileageDays)&&mileageDays>=0)candidates.push({term:'mileage',days:mileageDays});
+  if(candidates.length){
+    candidates.sort((a,b)=>a.days-b.days || (a.term==='date'?-1:1));
+    const first=candidates[0];
+    return {
+      kind:0,
+      value:first.days,
+      term:first.term,
+      dateDays:dateDays??Number.POSITIVE_INFINITY,
+      mileageDays:mileageDays??Number.POSITIVE_INFINITY,
+      km:kmRemaining??Number.POSITIVE_INFINITY
+    };
+  }
+
+  // Échéance uniquement kilométrique sans historique suffisant : on ne peut pas
+  // la convertir honnêtement en jours, donc on la classe parmi ses semblables par km restants.
+  if(kmRemaining!==null){
+    return {kind:1,value:kmRemaining,term:'mileage',km:kmRemaining};
+  }
+  return {kind:2,value:Number.POSITIVE_INFINITY,term:'',km:Number.POSITIVE_INFINITY};
+}
+
 function renderVehicles(){
   ensureVehicleData();
   const tabs=document.getElementById('vehicle-tabs');
@@ -9670,11 +9737,30 @@ function renderVehicles(){
   alertRows.sort((a,b)=>{
     const statusDiff=priority[a.st.status]-priority[b.st.status];
     if(statusDiff)return statusDiff;
-    const ad=a.st.primaryDueDate||a.sc.dueDate||'9999-12-31';
-    const bd=b.st.primaryDueDate||b.sc.dueDate||'9999-12-31';
+
+    if(a.st.status==='overdue'){
+      // En retard : comportement validé — le terme le plus anciennement dépassé remonte.
+      const ao=Number(a.st.sortOffsetDays),bo=Number(b.st.sortOffsetDays);
+      const aValid=Number.isFinite(ao),bValid=Number.isFinite(bo);
+      if(aValid&&bValid&&ao!==bo)return ao-bo;
+      if(aValid!==bValid)return aValid?-1:1;
+    }else{
+      // À prévoir / À jour : le premier terme réel commande le tri.
+      // Si le rythme km permet d'atteindre le seuil avant la date, l'entretien remonte dans la liste.
+      const ak=getFutureScheduleSortKey(a.vehicle,a.sc,a.st);
+      const bk=getFutureScheduleSortKey(b.vehicle,b.sc,b.st);
+      if(ak.kind!==bk.kind)return ak.kind-bk.kind;
+      if(ak.value!==bk.value)return ak.value-bk.value;
+      if(ak.km!==bk.km)return ak.km-bk.km;
+    }
+
+    // Derniers départages stables si deux échéances sont équivalentes.
+    const ad=a.sc.dueDate||a.st.primaryDueDate||'9999-12-31';
+    const bd=b.sc.dueDate||b.st.primaryDueDate||'9999-12-31';
     if(ad!==bd)return ad.localeCompare(bd);
-    const ak=Number(a.sc.dueMileage)||Number.MAX_SAFE_INTEGER,bk=Number(b.sc.dueMileage)||Number.MAX_SAFE_INTEGER;
-    return ak-bk;
+    const aKm=Number(a.sc.dueMileage)||Number.MAX_SAFE_INTEGER,bKm=Number(b.sc.dueMileage)||Number.MAX_SAFE_INTEGER;
+    if(aKm!==bKm)return aKm-bKm;
+    return String(a.sc.title||'').localeCompare(String(b.sc.title||''),'fr',{sensitivity:'base'});
   });
   const counts={ok:0,soon:0,overdue:0};alertRows.forEach(x=>counts[x.st.status]++);
   if(vehicleAlertDetailFilter&&counts[vehicleAlertDetailFilter]===0)vehicleAlertDetailFilter='';
