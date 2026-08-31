@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.06 : Menus — Entrée + Plat + Dessert pour chaque repas Midi/Soir -->
 <!-- V26.2.05 : Factures — suppression des exports CSV/JSON non chiffrés -->
 <!-- V26.2.04 : Sécurité — sauvegardes chiffrées AES-256-GCM par mot de passe -->
 <!-- V26.2.03 : Sécurité — validation stricte des imports JSON avant toute écriture -->
@@ -29,7 +30,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-PHotAzP02qa811SZM/ZQXQ3PhTeXe18SZ3UcLR09Sw0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-DAGWfOhnrv+xj6ASv0YnffEdHeSsQq84CwO2Ch21vA4=' 'sha256-S11Y2r1OUBTYpMdnRksLtuERso7muExuEgmbV4gkwZ0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -790,16 +791,30 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .menu-day-name{font-size:14px;font-weight:800;color:#f0f6fc;text-transform:capitalize}
 .menu-day-date{font-size:11px;color:#8b949e}
 .menu-meals{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.menu-meal{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:9px;display:flex;flex-direction:column;min-height:112px}
-.menu-meal-label{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;font-weight:800;margin-bottom:5px}
+.menu-meal{
+  background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:9px;
+  display:flex;flex-direction:column;min-height:250px
+}
+.menu-meal-label{
+  font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.4px;
+  font-weight:800;margin-bottom:4px
+}
+.menu-course{
+  position:relative;padding:7px 0 8px;border-top:1px solid #21262d
+}
+.menu-course:first-of-type{border-top:0;padding-top:3px}
+.menu-course-label{
+  font-size:10px;font-weight:800;color:#8b949e;text-transform:uppercase;
+  letter-spacing:.35px;margin-bottom:2px
+}
+.menu-course[data-course="plat"] .menu-course-label{color:#58a6ff}
 .menu-meal input{
-  width:100%;min-height:42px;border:0;background:transparent;color:#e6edf3;
+  width:100%;min-height:34px;border:0;background:transparent;color:#e6edf3;
   font:inherit;font-size:13px;line-height:1.35;outline:none;padding:0
 }
 .menu-meal input::placeholder{color:#484f58}
-.menu-meal{position:relative}
 .menu-dish-picker{
-  display:none;position:absolute;left:7px;right:7px;top:calc(100% - 3px);z-index:60;
+  display:none;position:absolute;left:0;right:0;top:calc(100% - 4px);z-index:70;
   max-height:220px;overflow-y:auto;background:#161b22;border:1px solid #30363d;
   border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.45);padding:5px
 }
@@ -847,7 +862,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   background:#0d1117;border:1px solid #21262d;border-radius:9px;font-size:13px
 }
 .menu-meal.disabled{opacity:.28}
-.menu-meal.disabled textarea{pointer-events:none}
+.menu-meal.disabled input{pointer-events:none}
 .menu-hint{font-size:11px;color:#8b949e;line-height:1.45}
 @media(max-width:380px){
   .menu-meals{grid-template-columns:1fr}
@@ -3514,6 +3529,10 @@ function ensureMenusData(){
     changed=true;
   }
 
+  // V26.2.06 : chaque repas possède désormais Entrée / Plat / Dessert.
+  // Les anciens repas à plat unique sont automatiquement placés dans « Plat ».
+  if(migrateLegacyMenuMealsToCourses())changed=true;
+
   const defaultMenuDishes=[
     'Tarte rustique',
     'Pâtes carbonara',
@@ -3546,7 +3565,7 @@ function ensureMenusData(){
 
   // Si plusieurs périodes sont passées (application non ouverte pendant un moment),
   // on avance autant que nécessaire. Chaque semaine terminée alimente seulement
-  // les statistiques de plats, jamais un historique de planning.
+  // les statistiques de préparations, jamais un historique de planning.
   let guard=0;
   while(guard++<12){
     const start=menuDateFromKey(data.menus.cycleStart);
@@ -3603,6 +3622,40 @@ function ensureMenusData(){
 
   return changed;
 }
+
+function migrateLegacyMenuMealsToCourses(){
+  let changed=false;
+  const weeks=data.menus?.weeks;
+  if(!weeks || typeof weeks!=='object' || Array.isArray(weeks))return false;
+
+  Object.values(weeks).forEach(week=>{
+    if(!week || typeof week!=='object' || Array.isArray(week))return;
+    if(!week.meals || typeof week.meals!=='object' || Array.isArray(week.meals)){
+      week.meals={};
+      changed=true;
+      return;
+    }
+
+    Object.keys(week.meals).forEach(key=>{
+      // Ancien format : "0_midi" / "3_soir".
+      if(!/^\d+_(midi|soir)$/.test(key))return;
+
+      const legacy=String(week.meals[key]||'').trim();
+      const platKey=key+'_plat';
+
+      // Ne jamais écraser un éventuel plat déjà présent dans le nouveau format.
+      if(legacy && !String(week.meals[platKey]||'').trim()){
+        week.meals[platKey]=legacy;
+      }
+
+      delete week.meals[key];
+      changed=true;
+    });
+  });
+
+  return changed;
+}
+
 function archiveMenuWeekDishes(cycleKey){
   const week=data.menus && data.menus.weeks ? data.menus.weeks[cycleKey] : null;
   const meals=week && week.meals ? week.meals : {};
@@ -3639,7 +3692,7 @@ function getMenuDishSuggestions(){
     };
   });
 
-  // Les plats des deux semaines visibles sont proposés immédiatement.
+  // Les préparations des deux semaines visibles sont proposées immédiatement.
   Object.values(data.menus.weeks||{}).forEach(week=>{
     Object.values((week&&week.meals)||{}).forEach(raw=>{
       const label=String(raw||'').trim();
@@ -3665,7 +3718,7 @@ function getMenuDishSuggestions(){
 function menuDishPickerHtml(inputId){
   const items=getMenuDishSuggestions();
   if(!items.length){
-    return `<div class="menu-dish-picker" id="${inputId}_picker"><div class="menu-dish-empty">Aucun plat enregistré</div></div>`;
+    return `<div class="menu-dish-picker" id="${inputId}_picker"><div class="menu-dish-empty">Aucune préparation enregistrée</div></div>`;
   }
   return `<div class="menu-dish-picker" id="${inputId}_picker">` +
     items.map(item=>{
@@ -3727,6 +3780,17 @@ function chooseMenuDish(inputId,label){
   closeMenuDishPickers();
   setTimeout(()=>renderMenus(),0);
 }
+
+function scheduleMenuDishBlurRender(){
+  setTimeout(()=>{
+    const active=document.activeElement;
+    // Lorsqu'on passe d'Entrée à Plat ou Dessert, ne pas reconstruire
+    // immédiatement le repas afin de conserver le focus clavier.
+    if(active && active.closest && active.closest('.menu-meal'))return;
+    renderMenus();
+  },180);
+}
+
 document.addEventListener('pointerdown',e=>{
   if(!e.target.closest('.menu-meal'))closeMenuDishPickers();
 });
@@ -4003,7 +4067,7 @@ let menuRecipeEditing={cycleKey:'',mealKey:''};
 function editMenuRecipe(cycleKey,mealKey){
   const label=getMealDishLabel(cycleKey,mealKey);
   if(!label){
-    alert('Saisissez d’abord le nom du plat.');
+    alert('Saisissez d’abord le nom de la préparation.');
     return;
   }
 
@@ -4118,8 +4182,41 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-function menuMealKey(dayOffset,meal){
-  return `${dayOffset}_${meal}`;
+const MENU_COURSES=[
+  {key:'entree',label:'Entrée',placeholder:'Ex. Salade / crudités'},
+  {key:'plat',label:'Plat',placeholder:'Ex. Poulet / riz'},
+  {key:'dessert',label:'Dessert',placeholder:'Ex. Yaourt / tarte'}
+];
+
+function menuMealKey(dayOffset,meal,course=''){
+  return `${dayOffset}_${meal}${course?'_'+course:''}`;
+}
+
+function menuCourseInputHtml(cycleKey,meals,dayOffset,meal,course,enabled){
+  const mealKey=menuMealKey(dayOffset,meal,course.key);
+  const value=String(meals[mealKey]||'');
+  const inputId=`menu_${cycleKey}_${mealKey}`;
+
+  return `<div class="menu-course" data-course="${course.key}">
+    <div class="menu-course-label">${escapeHtml(course.label)}</div>
+    <input
+      id="${inputId}"
+      type="text"
+      autocomplete="off"
+      class="${menuDishInputClass(value)}"
+      data-cycle-key="${cycleKey}"
+      data-meal-key="${mealKey}"
+      ${enabled?'':'disabled'}
+      placeholder="${enabled?escapeHtml(course.placeholder):''}"
+      value="${escapeHtml(value)}"
+      onfocus="openMenuDishDropdown(this)"
+      onclick="menuDishInputClick('${cycleKey}','${mealKey}',this)"
+      oninput="updateMenuMeal('${cycleKey}','${mealKey}',this.value);filterMenuDishDropdown(this)"
+      onblur="scheduleMenuDishBlurRender()"
+    >
+    ${enabled?menuDishPickerHtml(inputId):''}
+    ${enabled?menuRecipeHtml(cycleKey,mealKey,value):''}
+  </div>`;
 }
 function formatMenuPeriodDate(date,withYear=false){
   return date.toLocaleDateString('fr-FR',{
@@ -4224,7 +4321,7 @@ function openWeekShoppingList(cycleKey){
 
   if(built.missing.length){
     missing.style.display='block';
-    missing.innerHTML=`⚠️ ${built.missing.length} plat${built.missing.length>1?'s':''} sans ingrédients : ${built.missing.map(escapeHtml).join(', ')}`;
+    missing.innerHTML=`⚠️ ${built.missing.length} préparation${built.missing.length>1?'s':''} sans ingrédients : ${built.missing.map(escapeHtml).join(', ')}`;
   }else{missing.style.display='none';missing.innerHTML='';}
 
   const oldManual=document.getElementById('shoppingManualArea');
@@ -4283,7 +4380,7 @@ function copyWeekShoppingList(){
   ];
 
   if(missing.length){
-    lines.push('','Plats sans ingrédients : '+missing.join(', '));
+    lines.push('','Préparations sans ingrédients : '+missing.join(', '));
   }
 
   const payload=lines.join('\n');
@@ -4336,10 +4433,6 @@ function renderMenuWeek(cycleKey,index){
           onclick="openWeekShoppingList('${cycleKey}')">🛒 Générer ma liste de courses</button>
       </div>
       ${days.map(day=>{
-        const midiKey=menuMealKey(day.offset,'midi');
-        const soirKey=menuMealKey(day.offset,'soir');
-        const midi=String(meals[midiKey]||'');
-        const soir=String(meals[soirKey]||'');
         const dayName=day.date.toLocaleDateString('fr-FR',{weekday:'long'});
         const dateText=day.date.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
 
@@ -4352,43 +4445,15 @@ function renderMenuWeek(cycleKey,index){
             <div class="menu-meals">
               <div class="menu-meal${day.showMidi?'':' disabled'}">
                 <div class="menu-meal-label">☀️ Midi</div>
-                <input
-                  id="menu_${cycleKey}_${midiKey}"
-                  type="text"
-                  autocomplete="off"
-                  class="${menuDishInputClass(midi)}"
-                  data-cycle-key="${cycleKey}"
-                  data-meal-key="${midiKey}"
-                  ${day.showMidi?'':'disabled'}
-                  placeholder="${day.showMidi?'Ex. Poulet / riz':''}"
-                  value="${escapeHtml(midi)}"
-                  onfocus="openMenuDishDropdown(this)"
-                  onclick="menuDishInputClick('${cycleKey}','${midiKey}',this)"
-                  oninput="updateMenuMeal('${cycleKey}','${midiKey}',this.value);filterMenuDishDropdown(this)"
-                  onblur="setTimeout(()=>renderMenus(),140)"
-                >
-                ${day.showMidi?menuDishPickerHtml(`menu_${cycleKey}_${midiKey}`):''}
-                ${day.showMidi?menuRecipeHtml(cycleKey,midiKey,midi):''}
+                ${MENU_COURSES.map(course=>
+                  menuCourseInputHtml(cycleKey,meals,day.offset,'midi',course,day.showMidi)
+                ).join('')}
               </div>
               <div class="menu-meal${day.showSoir?'':' disabled'}">
                 <div class="menu-meal-label">🌙 Soir</div>
-                <input
-                  id="menu_${cycleKey}_${soirKey}"
-                  type="text"
-                  autocomplete="off"
-                  class="${menuDishInputClass(soir)}"
-                  data-cycle-key="${cycleKey}"
-                  data-meal-key="${soirKey}"
-                  ${day.showSoir?'':'disabled'}
-                  placeholder="${day.showSoir?'Ex. Lasagnes':''}"
-                  value="${escapeHtml(soir)}"
-                  onfocus="openMenuDishDropdown(this)"
-                  onclick="menuDishInputClick('${cycleKey}','${soirKey}',this)"
-                  oninput="updateMenuMeal('${cycleKey}','${soirKey}',this.value);filterMenuDishDropdown(this)"
-                  onblur="setTimeout(()=>renderMenus(),140)"
-                >
-                ${day.showSoir?menuDishPickerHtml(`menu_${cycleKey}_${soirKey}`):''}
-                ${day.showSoir?menuRecipeHtml(cycleKey,soirKey,soir):''}
+                ${MENU_COURSES.map(course=>
+                  menuCourseInputHtml(cycleKey,meals,day.offset,'soir',course,day.showSoir)
+                ).join('')}
               </div>
             </div>
           </div>
