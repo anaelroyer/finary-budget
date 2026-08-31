@@ -1,15 +1,17 @@
-name: Mise à jour des cours — V22.2 test L&S PAEEM
+name: Mise à jour des cours — horaire en semaine
 
 on:
   workflow_dispatch:
   schedule:
-    # Relevés réguliers toutes les 6 h
-    - cron: "17 */6 * * *"
-    # Dernier relevé quotidien à 22 h 45 heure de Paris :
+    # Relevé toutes les heures, du lundi au vendredi.
+    # GitHub Actions interprète le cron en UTC ; un contrôle Europe/Paris
+    # ci-dessous empêche aussi tout relevé tombant réellement un week-end en France.
+    - cron: "17 * * * 1-5"
+    # Dernier relevé quotidien à 22 h 45 heure de Paris, du lundi au vendredi :
     # 20:45 UTC en heure d'été, 21:45 UTC en heure d'hiver.
     # Les deux sont planifiés ; un contrôle Europe/Paris n'en laisse passer qu'un.
-    - cron: "45 20 * * *"
-    - cron: "45 21 * * *"
+    - cron: "45 20 * * 1-5"
+    - cron: "45 21 * * 1-5"
 
 permissions:
   contents: write
@@ -23,19 +25,32 @@ jobs:
         id: timing
         shell: bash
         run: |
-          # Les exécutions manuelles et le cron toutes les 6 h passent toujours.
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "17 */6 * * *" ]; then
+          # Une exécution manuelle reste toujours autorisée, même le week-end.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PARIS_TIME="$(TZ=Europe/Paris date +%H:%M)"
+          PARIS_HOUR="$(TZ=Europe/Paris date +%H)"
+          PARIS_DOW="$(TZ=Europe/Paris date +%u)"
+          echo "Heure de Paris : $PARIS_TIME · jour ISO : $PARIS_DOW"
+
+          # Aucun relevé automatique le samedi (6) ni le dimanche (7).
+          if [ "$PARIS_DOW" -gt 5 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Exécution ignorée : week-end en France."
+            exit 0
+          fi
+
+          # Le cron horaire passe directement les jours ouvrés.
+          if [ "${{ github.event.schedule }}" = "17 * * * 1-5" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           # Pour les deux crons 20:45/21:45 UTC, on ne poursuit que s'il est
-          # réellement 22:45 dans le fuseau Europe/Paris (été comme hiver).
-          PARIS_TIME="$(TZ=Europe/Paris date +%H:%M)"
-          PARIS_HOUR="$(TZ=Europe/Paris date +%H)"
-          echo "Heure de Paris : $PARIS_TIME"
-          # GitHub Actions peut démarrer un cron avec quelques minutes de retard.
-          # On accepte donc toute exécution du cron spécial pendant l'heure 22.
+          # réellement dans l'heure 22 dans le fuseau Europe/Paris.
           if [ "$PARIS_HOUR" = "22" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
