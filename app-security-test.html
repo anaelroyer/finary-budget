@@ -10629,8 +10629,13 @@ async function uploadInvoicePhotoBlob(blob){
 
 async function openInvoiceBlobInNewTab(blob){
   const objectUrl=URL.createObjectURL(blob);
-  const viewer=window.open(objectUrl,'_blank','noopener,noreferrer');
-  if(!viewer){URL.revokeObjectURL(objectUrl);throw new Error('Le navigateur a bloqué l’ouverture de la facture.');}
+
+  // Avec "noopener,noreferrer", window.open() peut renvoyer null même si
+  // l'onglet a réellement été ouvert. Ne pas interpréter cette valeur
+  // comme un blocage du navigateur.
+  window.open(objectUrl,'_blank','noopener,noreferrer');
+
+  // L'URL Blob reste disponible assez longtemps pour que le nouvel onglet la charge.
   setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
 }
 
