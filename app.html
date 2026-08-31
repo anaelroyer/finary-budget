@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!-- V26.1.91 : cache PWA renforcé pour bibliothèques externes (Fidélité + dépendances statiques) -->
+
+<!-- V26.1.90 : fiabilisation globale — plans véhicule, échéances km, logos Fidélité, nettoyage CSS -->
 <!-- V26.1.89 : Véhicules — note libre par entretien dans le plan -->
 <!-- V26.1.88 : Véhicules — tri futur par premier terme réel date OU kilométrage estimé -->
 <!-- V26.1.87 : Véhicules — tri futur par échéance affichée (date réelle, sinon km restants) -->
@@ -584,9 +587,9 @@ body.hide-amounts .bank-current-value::after,body.hide-amounts .bank-forecast-va
 .loyalty-card{position:relative;border:1px solid #30363d;background:#161b22;border-radius:14px;padding:13px;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:11px;align-items:center;cursor:pointer;transition:background .15s,border-color .15s,transform .1s}
 .loyalty-card:hover{background:#1b2129;border-color:#484f58}
 .loyalty-card:active{transform:scale(.99)}
-.loyalty-brand-mark{width:46px;height:46px;border-radius:12px;background:#21262d;border:1px solid #30363d;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#e6edf3;text-transform:uppercase;letter-spacing:-.5px;overflow:hidden;flex:0 0 auto}.loyalty-brand-mark.has-logo{padding:0;background:#fff;border-color:#30363d}.loyalty-brand-mark img{display:block;width:100%;height:100%;object-fit:cover}
+.loyalty-brand-mark{width:46px;height:46px;border-radius:12px;background:#21262d;border:1px solid #30363d;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#e6edf3;text-transform:uppercase;letter-spacing:-.5px;overflow:hidden;flex:0 0 auto}
 .loyalty-brand-mark.has-logo{background:#fff;border-color:#d0d7de;padding:4px}
-.loyalty-brand-mark img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.loyalty-brand-mark img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
 .loyalty-display-title{display:flex;align-items:center;gap:12px;min-width:0}
 .loyalty-display-title .loyalty-brand-mark{width:54px;height:54px;border-radius:14px;font-size:20px}
 .loyalty-display-title-text{min-width:0}
@@ -1591,7 +1594,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 <div class="modal-overlay" id="vehiclePlanModal">
   <div class="modal" style="max-width:560px;max-height:92vh;overflow-y:auto;">
     <h3 id="vehiclePlanModalTitle">Créer un plan d'entretien</h3>
-    <div class="vehicle-section-note">Coche les entretiens à suivre. Pour chacun, indique la date et le kilométrage du dernier entretien, puis sa périodicité en durée et/ou en kilomètres.</div>
+    <div class="vehicle-section-note">Coche les entretiens à suivre. Renseigne la date du dernier entretien si tu utilises une périodicité en mois, le kilométrage si tu utilises une périodicité en km, ou les deux si les deux termes sont suivis.</div>
     <div class="vehicle-plan-modal-tools">
       <button type="button" class="btn btn-primary" onclick="selectRecommendedVehiclePlanItems()">Sélection recommandée</button>
       <button type="button" class="btn btn-secondary" onclick="setAllVehiclePlanItems(true)">Tout sélectionner</button>
@@ -8842,10 +8845,17 @@ function maintenancePlanPreviewHtml(item){
   return parts.length?`Calcul automatique : ${parts.join(' · ')}`:'La prochaine échéance sera calculée dès qu’une périodicité valide sera renseignée.';
 }
 
+function updateVehiclePlanActionLabel(){
+  const hasPlan=Array.isArray(vehicleMaintenancePlanDraft)&&vehicleMaintenancePlanDraft.length>0;
+  const btn=document.getElementById('assistantTargetMaintenancePlan');
+  if(btn)btn.textContent=hasPlan?"Modifier le plan d'entretien":"Créer un plan d'entretien";
+}
+
 function renderVehicleMaintenancePlanSummary(){
   const host=document.getElementById('vehicleMaintenancePlanSummary');
   if(!host)return;
   const plan=(vehicleMaintenancePlanDraft||[]).map(normalizeMaintenancePlanItem);
+  updateVehiclePlanActionLabel();
   if(!plan.length){
     host.innerHTML='<div class="vehicle-empty" style="padding:12px 6px">Aucun plan d’entretien défini.</div>';
     return;
@@ -8942,10 +8952,11 @@ function setAllVehiclePlanItems(enabled){
 }
 
 function openVehiclePlanModal(){
+  const editingPlan=Array.isArray(vehicleMaintenancePlanDraft)&&vehicleMaintenancePlanDraft.length>0;
   buildVehiclePlanModalDraft();
   const label=[document.getElementById('vehicleMake')?.value.trim(),document.getElementById('vehicleModel')?.value.trim()].filter(Boolean).join(' ')||document.getElementById('vehicleRegistration')?.value.trim()||'Nouveau véhicule';
   const powertrain=getVehiclePlanPowertrain();
-  document.getElementById('vehiclePlanModalTitle').textContent=`Créer un plan d'entretien · ${label}${powertrain?' · '+powertrain:''}`;
+  document.getElementById('vehiclePlanModalTitle').textContent=`${editingPlan?'Modifier':'Créer'} un plan d'entretien · ${label}${powertrain?' · '+powertrain:''}`;
   renderVehiclePlanModalEditor();
   document.getElementById('vehiclePlanModal').classList.add('active');
 }
@@ -8966,9 +8977,9 @@ function validateSelectedVehiclePlan(rows){
       cleaned.push(p);
       continue;
     }
-    if(!p.lastDate){alert(`Renseigne la date du dernier entretien pour « ${p.type} ».`);return null;}
-    if(p.lastMileage===''){alert(`Renseigne le kilométrage du dernier entretien pour « ${p.type} ».`);return null;}
     if(p.intervalMonths<=0&&p.intervalKm<=0){alert(`Renseigne une périodicité en durée et/ou en kilomètres pour « ${p.type} ».`);return null;}
+    if(p.intervalMonths>0&&!p.lastDate){alert(`Renseigne la date du dernier entretien pour « ${p.type} », car une périodicité en mois est définie.`);return null;}
+    if(p.intervalKm>0&&p.lastMileage===''){alert(`Renseigne le kilométrage du dernier entretien pour « ${p.type} », car une périodicité kilométrique est définie.`);return null;}
     p.legacy=false;
     p.legacyDueDate='';
     p.legacyDueMileage=0;
@@ -9249,15 +9260,30 @@ function getVehicleMileageRate(vehicle){
   return kmPerDay>0?kmPerDay:null;
 }
 
+function getVehicleMileageReferencePoint(vehicle){
+  const points=[];
+  (vehicle.mileageHistory||[]).forEach(row=>{
+    const date=parseLocalDate(row?.date||'');
+    const km=Number(row?.mileage);
+    if(date&&Number.isFinite(km)&&km>=0)points.push({date,km});
+  });
+  const currentDate=parseLocalDate(vehicle.mileageDate||'');
+  const currentKm=Number(vehicle.mileage);
+  if(currentDate&&Number.isFinite(currentKm)&&currentKm>=0)points.push({date:currentDate,km:currentKm});
+  if(!points.length)return null;
+  points.sort((a,b)=>a.date-b.date||a.km-b.km);
+  return points[points.length-1];
+}
+
 function estimateVehicleMileageThresholdDate(vehicle,dueMileage){
-  const currentKm=Number(vehicle.mileage)||0;
   const targetKm=Number(dueMileage)||0;
   if(targetKm<=0)return '';
   const kmPerDay=getVehicleMileageRate(vehicle);
-  if(!kmPerDay)return '';
-  const offsetDays=(targetKm-currentKm)/kmPerDay;
+  const reference=getVehicleMileageReferencePoint(vehicle);
+  if(!kmPerDay||!reference)return '';
+  const offsetDays=(targetKm-reference.km)/kmPerDay;
   if(!Number.isFinite(offsetDays)||Math.abs(offsetDays)>3650)return '';
-  const base=parseLocalDate(dateToLocalISO(new Date()));
+  const base=new Date(reference.date.getTime());
   base.setDate(base.getDate()+Math.round(offsetDays));
   return dateToLocalISO(base);
 }
@@ -9271,20 +9297,11 @@ function estimateVehicleMileageDueDate(vehicle,dueMileage){
 
 function getScheduleMileageOffsetDays(v,sc,km){
   if(km===null||km===undefined||!Number.isFinite(Number(km)))return null;
-  const kmPerDay=getVehicleMileageRate(v);
-  if(kmPerDay&&kmPerDay>0)return Number(km)/kmPerDay;
-
-  // Sans historique kilométrique suffisant, on conserve la logique « premier terme »
-  // en rapportant la distance restante/dépassée à la périodicité du plan.
-  const intervalKm=Number(sc.intervalKm)||0;
-  if(intervalKm<=0)return null;
-  let referenceDays=365;
-  if(Number(sc.intervalMonths)>0){
-    const last=parseLocalDate(sc.lastDate);
-    const due=parseLocalDate(sc.dueDate);
-    referenceDays=last&&due?Math.max(1,(due-last)/86400000):Math.max(1,Number(sc.intervalMonths)*30.4375);
-  }
-  return (Number(km)/intervalKm)*referenceDays;
+  const estimatedDate=estimateVehicleMileageThresholdDate(v,Number(sc.dueMileage)||0);
+  const estimated=parseLocalDate(estimatedDate);
+  const today=parseLocalDate(dateToLocalISO(new Date()));
+  if(!estimated||!today)return null;
+  return Math.ceil((estimated-today)/86400000);
 }
 
 function formatMonthYearFR(iso){
@@ -9596,6 +9613,10 @@ function getScheduleStatus(v,sc){
   let status='ok';
   if(dateOverdue||mileageOverdue){
     status='overdue';
+  }else if(mileageOffsetDays===null&&km!==null){
+    // Sans historique km suffisant, aucune date kilométrique n'est inventée :
+    // les seuils de proximité date/km peuvent néanmoins signaler « À prévoir ».
+    status=(dateDueNow||mileageDueNow||dateSoon||mileageSoon)?'soon':'ok';
   }else if(primaryTerm==='date'){
     status=(dateDueNow||dateSoon)?'soon':'ok';
   }else if(primaryTerm==='mileage'){
@@ -9679,16 +9700,14 @@ function openInvoiceById(invoiceId){
 function getFutureScheduleSortKey(vehicle,sc,st){
   const dateDays=(st.days!==null&&st.days!==undefined&&Number.isFinite(Number(st.days))&&Number(st.days)>=0)?Number(st.days):null;
   const kmRemaining=(st.km!==null&&st.km!==undefined&&Number.isFinite(Number(st.km))&&Number(st.km)>=0)?Number(st.km):null;
-  const kmPerDay=getVehicleMileageRate(vehicle);
-  const mileageDays=(kmRemaining!==null&&kmPerDay&&kmPerDay>0)?kmRemaining/kmPerDay:null;
+  const mileageOffset=(st.mileageOffsetDays!==null&&st.mileageOffsetDays!==undefined&&Number.isFinite(Number(st.mileageOffsetDays)))?Number(st.mileageOffsetDays):null;
+  const mileageDays=(kmRemaining!==null&&mileageOffset!==null)?Math.max(0,mileageOffset):null;
 
-  // À prévoir / À jour : on classe sur le PREMIER terme qui sera réellement atteint.
-  // - date réelle si elle arrive avant ;
-  // - seuil kilométrique converti en délai avec le rythme réel du véhicule s'il arrive avant ;
-  // - sans rythme km fiable, on n'invente pas de conversion et la date reste la référence.
+  // À prévoir / À jour : le PREMIER terme réellement estimable commande.
+  // L'échéance km est ancrée sur la date du dernier relevé kilométrique connu.
   const candidates=[];
   if(dateDays!==null)candidates.push({term:'date',days:dateDays});
-  if(mileageDays!==null&&Number.isFinite(mileageDays)&&mileageDays>=0)candidates.push({term:'mileage',days:mileageDays});
+  if(mileageDays!==null)candidates.push({term:'mileage',days:mileageDays});
   if(candidates.length){
     candidates.sort((a,b)=>a.days-b.days || (a.term==='date'?-1:1));
     const first=candidates[0];
@@ -9702,11 +9721,8 @@ function getFutureScheduleSortKey(vehicle,sc,st){
     };
   }
 
-  // Échéance uniquement kilométrique sans historique suffisant : on ne peut pas
-  // la convertir honnêtement en jours, donc on la classe parmi ses semblables par km restants.
-  if(kmRemaining!==null){
-    return {kind:1,value:kmRemaining,term:'mileage',km:kmRemaining};
-  }
+  // Échéance uniquement kilométrique sans historique suffisant : comparaison honnête en km.
+  if(kmRemaining!==null)return {kind:1,value:kmRemaining,term:'mileage',km:kmRemaining};
   return {kind:2,value:Number.POSITIVE_INFINITY,term:'',km:Number.POSITIVE_INFINITY};
 }
 
@@ -11286,7 +11302,10 @@ window.addEventListener('DOMContentLoaded',()=>{
 /* PWA : enregistrement du Service Worker */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(err => {
+    navigator.serviceWorker.register('./service-worker.js').then(reg => {
+      // Force une vérification légère de la version du cache à chaque chargement.
+      reg.update().catch(()=>{});
+    }).catch(err => {
       console.warn('Service Worker non enregistré :', err);
     });
   });
@@ -11750,29 +11769,29 @@ function loyaltyResolveBrandKey(name=''){
   const normalized=loyaltyNormalizeBrandName(name);
   if(!normalized)return '';
   if(LOYALTY_BRAND_LOGOS[normalized])return normalized;
-  if(/(nicolas)/.test(normalized))return 'nicolas';
-  if(/(magasin u|super u|hyper u|u express)/.test(normalized))return 'magasin u';
-  if(/(carrefour)/.test(normalized))return 'carrefour';
-  if(/(e leclerc|leclerc)/.test(normalized))return 'leclerc';
-  if(/(intermarche)/.test(normalized))return 'intermarche';
-  if(/(auchan)/.test(normalized))return 'auchan';
-  if(/(lidl)/.test(normalized))return 'lidl';
-  if(/(fnac)/.test(normalized))return 'fnac';
-  if(/(decathlon)/.test(normalized))return 'decathlon';
-  if(/(monoprix)/.test(normalized))return 'monoprix';
-  if(/(boulanger)/.test(normalized))return 'boulanger';
-  if(/(sephora)/.test(normalized))return 'sephora';
-  if(/(jardiland)/.test(normalized))return 'jardiland';
-  if(/(leroy merlin)/.test(normalized))return 'leroy merlin';
-  if(/(magasin vert)/.test(normalized))return 'magasin vert';
+  if(/\b(nicolas)\b/.test(normalized))return 'nicolas';
+  if(/\b(magasin u|super u|hyper u|u express)\b/.test(normalized))return 'magasin u';
+  if(/\b(carrefour)\b/.test(normalized))return 'carrefour';
+  if(/\b(e leclerc|leclerc)\b/.test(normalized))return 'leclerc';
+  if(/\b(intermarche)\b/.test(normalized))return 'intermarche';
+  if(/\b(auchan)\b/.test(normalized))return 'auchan';
+  if(/\b(lidl)\b/.test(normalized))return 'lidl';
+  if(/\b(fnac)\b/.test(normalized))return 'fnac';
+  if(/\b(decathlon)\b/.test(normalized))return 'decathlon';
+  if(/\b(monoprix)\b/.test(normalized))return 'monoprix';
+  if(/\b(boulanger)\b/.test(normalized))return 'boulanger';
+  if(/\b(sephora)\b/.test(normalized))return 'sephora';
+  if(/\b(jardiland)\b/.test(normalized))return 'jardiland';
+  if(/\b(leroy merlin)\b/.test(normalized))return 'leroy merlin';
+  if(/\b(magasin vert)\b/.test(normalized))return 'magasin vert';
   if(/mc ?donald/.test(normalized)||/mcdonald/.test(normalized)||normalized.includes('macdo'))return 'mcdonalds';
-  if(/(promocash|promo cash)/.test(normalized))return 'promocash';
-  if(/(sport 2000)/.test(normalized))return 'sport 2000';
-  if(/(mr bricolage|monsieur bricolage)/.test(normalized))return 'mr bricolage';
-  if(/(cabesto)/.test(normalized))return 'cabesto';
-  if(/(espace emeraude)/.test(normalized))return 'espace emeraude';
-  if(/(etam|etam lingerie)/.test(normalized))return 'etam';
-  if(/(inter ?sport)/.test(normalized))return 'intersport';
+  if(/\b(promocash|promo cash)\b/.test(normalized))return 'promocash';
+  if(/\b(sport 2000)\b/.test(normalized))return 'sport 2000';
+  if(/\b(mr bricolage|monsieur bricolage)\b/.test(normalized))return 'mr bricolage';
+  if(/\b(cabesto)\b/.test(normalized))return 'cabesto';
+  if(/\b(espace emeraude)\b/.test(normalized))return 'espace emeraude';
+  if(/\b(etam|etam lingerie)\b/.test(normalized))return 'etam';
+  if(/\b(inter ?sport)\b/.test(normalized))return 'intersport';
   return '';
 }
 
