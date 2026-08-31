@@ -13,11 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Lire les recettes et synchroniser les ingrédients
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Authentification serveur Firestore
         env:
-          FIREBASE_WORKFLOW_API_KEY: ${{ secrets.FIREBASE_WORKFLOW_API_KEY }}
-          FIREBASE_SYNC_EMAIL: ${{ secrets.FIREBASE_SYNC_EMAIL }}
-          FIREBASE_SYNC_PASSWORD: ${{ secrets.FIREBASE_SYNC_PASSWORD }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: node google-firestore-token.mjs
+
+      - name: Lire les recettes et synchroniser les ingrédients
         run: |
           python3 - <<'PY'
           import hashlib
@@ -29,10 +33,6 @@ jobs:
           import urllib.request
           from datetime import datetime, timezone, timedelta
           from html.parser import HTMLParser
-
-          FIREBASE_API_KEY = os.environ.get("FIREBASE_WORKFLOW_API_KEY", "").strip()
-          if not FIREBASE_API_KEY:
-              raise RuntimeError("Secret FIREBASE_WORKFLOW_API_KEY manquant")
           FIREBASE_PROJECT = "finances-royer"
           FIRESTORE_DOC = "budget_shared/main_account"
 
@@ -202,20 +202,9 @@ jobs:
               if isinstance(value,dict):return {"mapValue":{"fields":{str(k):python_to_fs(v) for k,v in value.items()}}}
               return {"stringValue":str(value)}
 
-          firebase_email=os.environ.get("FIREBASE_SYNC_EMAIL", "").strip()
-          firebase_password=os.environ.get("FIREBASE_SYNC_PASSWORD", "")
-          if not firebase_email or not firebase_password:
-              raise RuntimeError("Secrets FIREBASE_SYNC_EMAIL / FIREBASE_SYNC_PASSWORD manquants")
-
-          auth=request_json(
-              "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="+FIREBASE_API_KEY,
-              data={
-                  "email":firebase_email,
-                  "password":firebase_password,
-                  "returnSecureToken":True,
-              },
-          )
-          token=auth["idToken"]
+          token=os.environ.get("GOOGLE_FIRESTORE_TOKEN","").strip()
+          if not token:
+              raise RuntimeError("Jeton serveur Firestore manquant")
           fs_headers={"Authorization":"Bearer "+token}
 
           doc_url=(
