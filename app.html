@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.07 : Épargne — livrets en cartes, libellés fixes et modification par modale -->
 <!-- V26.2.06 : Menus — Entrée + Plat + Dessert pour chaque repas Midi/Soir -->
 <!-- V26.2.05 : Factures — suppression des exports CSV/JSON non chiffrés -->
 <!-- V26.2.04 : Sécurité — sauvegardes chiffrées AES-256-GCM par mot de passe -->
@@ -160,10 +161,44 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
   background:#000;
   border:1px solid #30363d;
 }
+.asset-provider-logo.credit-agricole{
+  width:46px;
+  height:46px;
+  padding:3px;
+  background:#fff;
+  border:1px solid rgba(63,185,80,.28);
+  border-radius:11px;
+}
+.savings-compact-card{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+  border:1px solid rgba(63,185,80,.34);
+  border-radius:12px;
+  background:linear-gradient(145deg,#0d1117 0%,#101a15 100%);
+  box-shadow:inset 3px 0 0 rgba(63,185,80,.78);
+}
+.savings-compact-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.savings-brand-heading{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
+.savings-compact-title{min-width:0}
+.savings-compact-title strong{display:block;color:#f0f6fc;font-size:15px;line-height:1.25;overflow-wrap:anywhere}
+.savings-compact-sub{margin-top:3px;color:#8b949e;font-size:11px}
+.savings-compact-main{display:grid;grid-template-columns:1fr;gap:7px}
+.savings-balance-stat{padding:10px 11px;border:1px solid rgba(63,185,80,.18);background:rgba(63,185,80,.06)}
+.savings-balance-stat .stock-stat-value{color:#3fb950;font-size:17px}
+.savings-card-actions{display:grid;grid-template-columns:1fr;gap:7px}
+.savings-edit-btn{width:100%;font-size:12px;padding:8px 10px}
+.savings-modal-brand{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #30363d;border-radius:10px;background:#0d1117}
+.savings-modal-brand strong{display:block;color:#f0f6fc;font-size:13px}
+.savings-modal-brand span{display:block;color:#8b949e;font-size:10px;margin-top:2px}
+.savings-modal-note{color:#8b949e;font-size:11px;line-height:1.45}
 @media(max-width:430px){
   .stock-brand-heading,.crypto-brand-heading{gap:7px}
   .asset-provider-logo.trade-republic{width:40px;height:40px;padding:3px}
   .asset-provider-logo.okx{width:38px;height:38px;padding:3px}
+  .asset-provider-logo.credit-agricole{width:42px;height:42px}
+  .savings-brand-heading{gap:8px}
 }
 .stock-compact-title,.crypto-compact-title{min-width:0}
 .stock-compact-title strong,.crypto-compact-title strong{
@@ -1494,6 +1529,24 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closePatrimoineAmountModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="submitPatrimoineAmount()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE LIVRET D'ÉPARGNE -->
+<div class="modal-overlay" id="savingsEditModal">
+  <div class="modal">
+    <h3 id="savingsEditTitle">Ajouter un livret</h3>
+    <div class="savings-modal-brand">
+      <div class="asset-provider-logo credit-agricole" aria-hidden="true"><img src="logo-credit-agricole.png" alt=""></div>
+      <div><strong>Crédit Agricole</strong><span>Livret d'épargne</span></div>
+    </div>
+    <div class="modal-field"><label>Libellé du livret</label><input type="text" id="savingsLabelInput" maxlength="120" placeholder="Ex : Livret A, LEP, LDDS"></div>
+    <div class="modal-field"><label>Solde actuel (€)</label><input type="number" id="savingsAmountInput" min="0" step="0.01" inputmode="decimal" placeholder="0"></div>
+    <div class="savings-modal-note">Le libellé sera affiché en lecture seule dans la carte du livret.</div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeSavingsEditModal()">Annuler</button>
+      <button class="btn btn-primary" id="savingsEditSubmitBtn" style="flex:1" onclick="submitSavingsEdit()">Ajouter</button>
     </div>
   </div>
 </div>
@@ -5168,6 +5221,85 @@ function submitPatrimoineAmount(){
   save();
 }
 
+/* LIVRETS D'ÉPARGNE */
+let activeSavingsEditIndex=-1;
+
+function openSavingsEditModal(index=-1){
+  const editing=Number.isInteger(index)&&index>=0&&Array.isArray(data.epargne?.[index]);
+  if(editing&&getItemOwner(data.epargne[index],'epargne')!==activePatrimoineOwner)return;
+  activeSavingsEditIndex=editing?index:-1;
+  const item=editing?data.epargne[index]:['',0,{owner:activePatrimoineOwner}];
+  const labelInput=document.getElementById('savingsLabelInput');
+  const amountInput=document.getElementById('savingsAmountInput');
+
+  document.getElementById('savingsEditTitle').textContent=editing?'Modifier le livret':'Ajouter un livret';
+  document.getElementById('savingsEditSubmitBtn').textContent=editing?'Enregistrer':'Ajouter';
+  labelInput.value=String(item[0]||'');
+  amountInput.value=Number(item[1])||0;
+  document.getElementById('savingsEditModal').classList.add('active');
+  setTimeout(()=>{labelInput.focus();labelInput.select();},50);
+}
+
+function closeSavingsEditModal(){
+  const overlay=document.getElementById('savingsEditModal');
+  appResetKeyboardSafeModal(overlay);
+  overlay.classList.remove('active');
+  activeSavingsEditIndex=-1;
+}
+
+function submitSavingsEdit(){
+  const labelInput=document.getElementById('savingsLabelInput');
+  const amountInput=document.getElementById('savingsAmountInput');
+  const label=labelInput.value.trim();
+  const amount=Number(amountInput.value);
+
+  if(!label){labelInput.focus();return;}
+  if(amountInput.value.trim()===''){amountInput.focus();return;}
+  if(!Number.isFinite(amount)||amount<0){amountInput.focus();return;}
+
+  if(activeSavingsEditIndex>=0&&Array.isArray(data.epargne?.[activeSavingsEditIndex])){
+    data.epargne[activeSavingsEditIndex][0]=label;
+    data.epargne[activeSavingsEditIndex][1]=amount;
+  }else{
+    if(!Array.isArray(data.epargne))data.epargne=[];
+    data.epargne.push([label,amount,{owner:activePatrimoineOwner}]);
+  }
+
+  closeSavingsEditModal();
+  render();
+  save();
+}
+
+function renderSavingsCards(cont){
+  const owned=(data.epargne||[])
+    .map((item,idx)=>({item,idx}))
+    .filter(({item})=>getItemOwner(item,'epargne')===activePatrimoineOwner);
+
+  if(!owned.length){
+    cont.innerHTML='<div class="stock-envelope-empty">Aucun livret enregistré</div>';
+    return;
+  }
+
+  owned.forEach(({item,idx})=>{
+    const label=String(item[0]||'Livret sans nom').trim()||'Livret sans nom';
+    const amount=Number(item[1])||0;
+    const row=document.createElement('div');
+    row.className='savings-compact-card';
+    row.dataset.savingsIndex=String(idx);
+    row.innerHTML=`
+      <div class="savings-compact-top">
+        <div class="savings-brand-heading">
+          <div class="asset-provider-logo credit-agricole" aria-hidden="true"><img src="logo-credit-agricole.png" alt=""></div>
+          <div class="savings-compact-title"><strong>${escapeHtml(label)}</strong><div class="savings-compact-sub">Crédit Agricole · Livret d'épargne</div></div>
+        </div>
+        <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('epargne',${idx})" title="Archiver ce livret" aria-label="Archiver ${escapeHtml(label)}">×</button>
+      </div>
+      <div class="savings-compact-main"><div class="stock-stat savings-balance-stat"><span class="stock-stat-label">Solde actuel</span><span class="stock-stat-value">${euro(amount)}</span></div></div>
+      <div class="savings-card-actions"><button class="btn btn-secondary savings-edit-btn" type="button" onclick="openSavingsEditModal(${idx})">✎ Modifier</button></div>`;
+    cont.appendChild(row);
+  });
+}
+
 
 
 /* ANNOTATIONS */
@@ -6864,6 +6996,7 @@ function render(){
     const isBudget=key.startsWith('budget');
 
     if(key==='dettes'){renderLoanCards(cont);return;}
+    if(key==='epargne'){renderSavingsCards(cont);return;}
     if(key==='bourse'){
       ensureStockAccounts();
       const stockOrder={
@@ -7066,6 +7199,7 @@ function togglePaid(k,i){
 function addItem(k){
   if(k==='dettes'){openLoanModal(-1);return;}
   if(k==='participations'){openParticipationModal(-1);return;}
+  if(k==='epargne'){openSavingsEditModal(-1);return;}
   if(!data[k])data[k]=[];
   if(k==='bourse'){
     openStockEditModal(-1);
@@ -12097,6 +12231,15 @@ document.getElementById('patrimoineAmountModal').addEventListener('keydown',e=>{
   }
 });
 
+document.getElementById('savingsEditModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    submitSavingsEdit();
+  }else if(e.key==='Escape'){
+    closeSavingsEditModal();
+  }
+});
+
 /* Fermer les modales en cliquant sur le fond */
 document.getElementById('genericModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closeModal();
@@ -12115,6 +12258,10 @@ document.getElementById('participationAcquisitionModal').addEventListener('keydo
 
 document.getElementById('patrimoineAmountModal').addEventListener('click',e=>{
   if(e.target===e.currentTarget)closePatrimoineAmountModal();
+});
+
+document.getElementById('savingsEditModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)closeSavingsEditModal();
 });
 
 document.getElementById('invoiceModal').addEventListener('click',e=>{
