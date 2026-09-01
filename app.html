@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.09 : Épargne — progression des livrets vers leurs plafonds réglementaires -->
 <!-- V26.2.08 : Firebase — lecture distante obligatoire avant toute écriture ou reconnexion -->
 <!-- V26.2.07 : Épargne — livrets en cartes, libellés fixes et modification par modale -->
 <!-- V26.2.06 : Menus — Entrée + Plat + Dessert pour chaque repas Midi/Soir -->
@@ -32,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-VZE/0OU5/XqlZTzM5EzbZRqFtYZyfG5RHFlynHltFSU=' 'sha256-Rf6hHwY1mh1pjAlf4qUsZ8bkQWz6mJPxXxoSzFErGOQ=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-VZE/0OU5/XqlZTzM5EzbZRqFtYZyfG5RHFlynHltFSU=' 'sha256-P3N7sT/Yk1cFv+ThlIK+mLwTQqyrcFKa3O8Bb/8CriI=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -188,6 +189,15 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .savings-compact-main{display:grid;grid-template-columns:1fr;gap:7px}
 .savings-balance-stat{padding:10px 11px;border:1px solid rgba(63,185,80,.18);background:rgba(63,185,80,.06)}
 .savings-balance-stat .stock-stat-value{color:#3fb950;font-size:17px}
+.savings-ceiling-progress{padding:1px 1px 0}
+.savings-ceiling-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;color:#8b949e;font-size:11px}
+.savings-ceiling-line strong{color:#c9d1d9;font-size:11px;white-space:nowrap}
+.savings-ceiling-track{height:8px;overflow:hidden;border-radius:999px;background:#21262d}
+.savings-ceiling-fill{height:100%;border-radius:999px;background:#3fb950;transition:width .2s ease}
+.savings-ceiling-fill.over{background:#d29922}
+.savings-ceiling-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;color:#8b949e;font-size:10px}
+.savings-ceiling-foot .over{color:#d29922;font-weight:700}
+body.hide-amounts .savings-ceiling-progress{display:none}
 .savings-card-actions{display:grid;grid-template-columns:1fr;gap:7px}
 .savings-edit-btn{width:100%;font-size:12px;padding:8px 10px}
 .savings-modal-brand{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #30363d;border-radius:10px;background:#0d1117}
@@ -200,6 +210,7 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
   .asset-provider-logo.okx{width:38px;height:38px;padding:3px}
   .asset-provider-logo.credit-agricole{width:42px;height:42px}
   .savings-brand-heading{gap:8px}
+  .savings-ceiling-line,.savings-ceiling-foot{align-items:flex-start;flex-direction:column;gap:2px}
 }
 .stock-compact-title,.crypto-compact-title{min-width:0}
 .stock-compact-title strong,.crypto-compact-title strong{
@@ -5382,6 +5393,39 @@ function submitSavingsEdit(){
   save();
 }
 
+const SAVINGS_CEILING_RULES=[
+  {label:'LEP',ceiling:10000,patterns:[/\blep\b/,/livret d epargne populaire/,/livret epargne populaire/]},
+  {label:'LDDS',ceiling:12000,patterns:[/\bldds\b/,/developpement durable/,/developpement durable et solidaire/]},
+  {label:'Livret Jeune',ceiling:1600,patterns:[/livret jeune/]},
+  {label:'Livret A',ceiling:22950,patterns:[/\blivret a\b/]}
+];
+
+function getSavingsCeilingRule(label){
+  const normalized=normalizeText(label).replace(/[^a-z0-9]+/g,' ').trim();
+  return SAVINGS_CEILING_RULES.find(rule=>rule.patterns.some(pattern=>pattern.test(normalized)))||null;
+}
+
+function savingsCeilingProgressHtml(label,amount){
+  const rule=getSavingsCeilingRule(label);
+  if(!rule)return '';
+
+  const safeAmount=Math.max(0,Number(amount)||0);
+  const rawPercent=rule.ceiling>0?safeAmount/rule.ceiling*100:0;
+  const displayPercent=rawPercent.toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const width=Math.max(0,Math.min(100,rawPercent));
+  const remaining=rule.ceiling-safeAmount;
+  const over=remaining<0;
+  const remainingText=over
+    ? `Dépassement : ${euro(Math.abs(remaining))}`
+    : `Reste : ${euro(remaining)}`;
+
+  return `<div class="savings-ceiling-progress">
+    <div class="savings-ceiling-line"><span>Progression vers le plafond</span><strong>${displayPercent} %</strong></div>
+    <div class="savings-ceiling-track" role="progressbar" aria-label="Progression vers le plafond ${escapeHtml(rule.label)}" aria-valuenow="${Math.min(100,Math.round(rawPercent*10)/10)}" aria-valuemin="0" aria-valuemax="100"><div class="savings-ceiling-fill ${over?'over':''}" style="width:${width}%"></div></div>
+    <div class="savings-ceiling-foot"><span>Plafond : ${euro(rule.ceiling)}</span><span class="${over?'over':''}">${remainingText}</span></div>
+  </div>`;
+}
+
 function renderSavingsCards(cont){
   const owned=(data.epargne||[])
     .map((item,idx)=>({item,idx}))
@@ -5407,6 +5451,7 @@ function renderSavingsCards(cont){
         <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('epargne',${idx})" title="Archiver ce livret" aria-label="Archiver ${escapeHtml(label)}">×</button>
       </div>
       <div class="savings-compact-main"><div class="stock-stat savings-balance-stat"><span class="stock-stat-label">Solde actuel</span><span class="stock-stat-value">${euro(amount)}</span></div></div>
+      ${savingsCeilingProgressHtml(label,amount)}
       <div class="savings-card-actions"><button class="btn btn-secondary savings-edit-btn" type="button" onclick="openSavingsEditModal(${idx})">✎ Modifier</button></div>`;
     cont.appendChild(row);
   });
