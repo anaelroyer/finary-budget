@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.08 : Firebase — lecture distante obligatoire avant toute écriture ou reconnexion -->
 <!-- V26.2.07 : Épargne — livrets en cartes, libellés fixes et modification par modale -->
 <!-- V26.2.06 : Menus — Entrée + Plat + Dessert pour chaque repas Midi/Soir -->
 <!-- V26.2.05 : Factures — suppression des exports CSV/JSON non chiffrés -->
@@ -2380,6 +2381,9 @@ window.firebaseWriting=false;
 let firebaseSaveTimer=null,
     firebaseSaveInProgress=false,
     firebaseSavePending=false,
+    firebaseInitialReadComplete=false,
+    firebaseOfflineChangesPending=false,
+    firebaseRecoveryWritePending=false,
     snapshotUnsubscribe=null,
     currentUser=null;
 
@@ -2630,8 +2634,59 @@ window.requestLinxeaSync=async function(){
   }
 };
 
+function firebaseStateHasMeaningfulData(stateData,stateMonthHistory,statePatrimoineHistory,stateAnnotations){
+  const meaningfulArrayKeys=[
+    'budgetRevenus','budgetFixes','budgetDepenses','bankTransfers',
+    'immobilier','epargne','assurancevie','bourse','crypto','participations','dettes',
+    'factures','loyaltyCards','garageVehicles','vehicleMaintenance','archives'
+  ];
+  const hasRows=stateData&&typeof stateData==='object'&&meaningfulArrayKeys.some(key=>Array.isArray(stateData[key])&&stateData[key].length>0);
+  const hasMenus=stateData?.menus&&typeof stateData.menus==='object'&&JSON.stringify(stateData.menus).length>120;
+  return Boolean(
+    hasRows||
+    hasMenus||
+    (Array.isArray(stateMonthHistory)&&stateMonthHistory.length>0)||
+    (Array.isArray(statePatrimoineHistory)&&statePatrimoineHistory.length>0)||
+    String(stateAnnotations||'').trim()
+  );
+}
+
+function firebaseLocalStateHasMeaningfulData(){
+  return firebaseStateHasMeaningfulData(
+    window.data,
+    window.monthHistory,
+    window.patrimoineHistory,
+    window.annotations
+  );
+}
+
+function firebaseSnapshotHasMeaningfulData(snapshot){
+  if(!snapshot?.exists())return false;
+  const remote=snapshot.data()||{};
+  try{
+    return firebaseStateHasMeaningfulData(
+      remote.data?JSON.parse(remote.data):undefined,
+      remote.monthHistory?JSON.parse(remote.monthHistory):[],
+      remote.patrimoineHistory?JSON.parse(remote.patrimoineHistory):[],
+      typeof remote.annotations==='string'?remote.annotations:''
+    );
+  }catch(error){
+    console.error('État Firebase illisible :',error);
+    return false;
+  }
+}
+
 window.firebaseSave=function(){
-  if(!window.firebaseReady||!currentUser)return;
+  if(!currentUser)return;
+  if(!window.firebaseReady){
+    firebaseOfflineChangesPending=true;
+    setFirebaseStatus('Modifications conservées localement — attente de Firebase','sync-pending');
+    return;
+  }
+  if(!firebaseInitialReadComplete){
+    setFirebaseStatus('Lecture Firebase en cours — enregistrement suspendu','sync-pending');
+    return;
+  }
   clearTimeout(firebaseSaveTimer);
   firebaseSaveTimer=setTimeout(async()=>{
     if(firebaseSaveInProgress){
@@ -2648,9 +2703,12 @@ window.firebaseSave=function(){
         patrimoineHistory:JSON.stringify(window.patrimoineHistory),
         annotations:window.annotations||''
       },{merge:true});
+      firebaseOfflineChangesPending=false;
+      firebaseRecoveryWritePending=false;
       setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
     }catch(error){
       console.error(error);
+      firebaseOfflineChangesPending=true;
       setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
     }finally{
       firebaseSaveInProgress=false;
@@ -2691,7 +2749,7 @@ onAuthStateChanged(auth,async user=>{
   // V26.1.49 : une ancienne session anonyme de l'application personnelle
   // ne doit jamais contourner l'écran E-mail / Mot de passe.
   if(user?.isAnonymous){
-    currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;
+    currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;firebaseInitialReadComplete=false;firebaseRecoveryWritePending=false;
     if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
     if(bar)bar.style.display='none';
     if(overlay)overlay.style.display='flex';
@@ -2701,7 +2759,7 @@ onAuthStateChanged(auth,async user=>{
   }
 
   if(!user){
-    currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;
+    currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;firebaseInitialReadComplete=false;firebaseRecoveryWritePending=false;
     if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
     if(bar)bar.style.display='none';
     if(overlay)overlay.style.display='flex';
@@ -2709,35 +2767,89 @@ onAuthStateChanged(auth,async user=>{
     return;
   }
   currentUser=user;
+  window.firebaseReady=false;
+  firebaseInitialReadComplete=false;
   window.personalFirebaseAuthenticated=true;
   if(emailEl)emailEl.textContent=user.email||'Compte connecté';
   if(bar)bar.style.display='flex';
   setFirebaseStatus('Synchronisation…','sync-pending');
   try{
     const snap=await getDoc(sharedRef);
+    const localRecoveryAvailable=firebaseLocalStateHasMeaningfulData()&&!firebaseSnapshotHasMeaningfulData(snap);
+    let existed=snap.exists();
+
+    // Si Firebase répond mais que son document est vide, une copie locale non vide
+    // est prioritaire : elle permet de restaurer automatiquement les données.
+    if(localRecoveryAvailable){
+      firebaseInitialReadComplete=true;
+      window.firebaseReady=true;
+      firebaseOfflineChangesPending=true;
+      firebaseRecoveryWritePending=true;
+      setFirebaseStatus('Récupération des données locales…','sync-pending');
+      window.firebaseSave();
+    }else{
+      firebaseRecoveryWritePending=false;
+      existed=await applyRemoteSnapshot(snap);
+    }
+    firebaseInitialReadComplete=true;
     window.firebaseReady=true;
-    const existed=await applyRemoteSnapshot(snap);
-    if(!existed)window.firebaseSave();
-    setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
+    if(!existed&&!localRecoveryAvailable)window.firebaseSave();
+    if(!localRecoveryAvailable){
+      setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
+    }
     if(snapshotUnsubscribe)snapshotUnsubscribe();
     snapshotUnsubscribe=onSnapshot(sharedRef,snapshot=>{
-      if(!snapshot.exists()||window.firebaseWriting)return;
+      if(!snapshot.exists()||window.firebaseWriting||firebaseRecoveryWritePending)return;
       applyRemoteSnapshot(snapshot).catch(console.error);
     });
     if(overlay)overlay.style.display='none';
   }catch(error){
-    console.error(error);window.firebaseReady=false;
+    console.error(error);window.firebaseReady=false;firebaseInitialReadComplete=false;
     setFirebaseStatus('⚠️ Connexion Firebase impossible','sync-offline');
     setAuthMessage('Impossible d’ouvrir les données existantes : '+(error?.message||error),'error');
     if(overlay)overlay.style.display='flex';
   }
 });
 
-window.addEventListener('offline',()=>{setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');});
-window.addEventListener('online',()=>{
+window.addEventListener('offline',()=>{
+  window.firebaseReady=false;
+  setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
+});
+window.addEventListener('online',async()=>{
   if(!currentUser)return;
-  setFirebaseStatus('Connexion retrouvée — synchronisation…','sync-pending');
-  window.firebaseReady=true;if(window.firebaseSave)window.firebaseSave();
+  setFirebaseStatus('Connexion retrouvée — lecture de Firebase…','sync-pending');
+  window.firebaseReady=false;
+  firebaseInitialReadComplete=false;
+  try{
+    const snap=await getDoc(sharedRef);
+    const preserveLocal=firebaseOfflineChangesPending&&firebaseLocalStateHasMeaningfulData();
+    let existed=snap.exists();
+
+    if(!preserveLocal){
+      firebaseRecoveryWritePending=false;
+      existed=await applyRemoteSnapshot(snap);
+    }
+    firebaseInitialReadComplete=true;
+    window.firebaseReady=true;
+
+    // Une reconnexion vérifie toujours Firebase en premier. Un cache local vide
+    // ne doit jamais remplacer le document distant.
+    if(preserveLocal&&window.firebaseSave){
+      firebaseRecoveryWritePending=true;
+      setFirebaseStatus('Envoi des modifications conservées localement…','sync-pending');
+      window.firebaseSave();
+    }else if(!existed&&firebaseOfflineChangesPending&&window.firebaseSave){
+      window.firebaseSave();
+    }else{
+      firebaseOfflineChangesPending=false;
+      setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
+    }
+  }catch(error){
+    console.error(error);
+    window.firebaseReady=false;
+    firebaseInitialReadComplete=false;
+    setFirebaseStatus('⚠️ Connexion Firebase impossible','sync-offline');
+  }
 });
 
 (async function initFirebase(){
