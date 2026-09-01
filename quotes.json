@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-09-01T05:27:41Z",
+  "updatedAt": "2026-09-01T06:35:29Z",
   "quotes": {
     "IE00B4ND3602": {
-      "price": 73.96,
+      "price": 74.11,
       "currency": "EUR",
       "source": "Quotrix · Gold · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
-      "updatedAt": "2026-09-01T05:27:41Z",
+      "updatedAt": "2026-09-01T06:35:29Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -25,17 +25,17 @@
         },
         {
           "date": "2026-09-01",
-          "price": 73.96,
-          "updatedAt": "2026-09-01T05:27:41Z"
+          "price": 74.11,
+          "updatedAt": "2026-09-01T06:35:29Z"
         }
       ]
     },
     "IE0002XZSHO1": {
-      "price": 6.952,
+      "price": 6.96,
       "currency": "EUR",
       "source": "Quotrix · WPEA · Dernier cours",
       "sourceUrl": "https://www.quotrix.de/etf/IE0002XZSHO1/",
-      "updatedAt": "2026-09-01T05:27:41Z",
+      "updatedAt": "2026-09-01T06:35:29Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -54,17 +54,17 @@
         },
         {
           "date": "2026-09-01",
-          "price": 6.952,
-          "updatedAt": "2026-09-01T05:27:41Z"
+          "price": 6.96,
+          "updatedAt": "2026-09-01T06:35:29Z"
         }
       ]
     },
     "FR0013412020": {
-      "price": 35.415,
+      "price": 35.445,
       "currency": "EUR",
       "source": "Lang & Schwarz · PAEEM · Bid",
       "sourceUrl": "https://www.ls-tc.de/en/etf/1371933",
-      "updatedAt": "2026-09-01T05:27:41Z",
+      "updatedAt": "2026-09-01T06:35:29Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -83,8 +83,8 @@
         },
         {
           "date": "2026-09-01",
-          "price": 35.415,
-          "updatedAt": "2026-09-01T05:27:41Z"
+          "price": 35.445,
+          "updatedAt": "2026-09-01T06:35:29Z"
         }
       ]
     },
@@ -93,7 +93,7 @@
       "currency": "EUR",
       "source": "Borsa Italiana · Paris · ETZ · prezzo di riferimento · fallback",
       "sourceUrl": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0011550193-XPAR.html?lang=it",
-      "updatedAt": "2026-09-01T05:27:41Z",
+      "updatedAt": "2026-09-01T06:35:29Z",
       "history": [
         {
           "date": "2026-08-30",
@@ -108,7 +108,7 @@
         {
           "date": "2026-09-01",
           "price": 21.43,
-          "updatedAt": "2026-09-01T05:27:41Z"
+          "updatedAt": "2026-09-01T06:35:29Z"
         }
       ]
     }
