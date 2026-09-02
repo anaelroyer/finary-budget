@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-cq/wy+qdVnIQKAqQooUmfRZH6vkRHtnCE+vPfJRL04w=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-VhNE0tnFCg8/c3pUdPDcWS0sUA7aQ2oYIt2L5bLwaAs=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2389,6 +2389,7 @@ window.deletePrivateInvoiceFile=async function(ref){
 
 window.firebaseReady=false;
 window.firebaseWriting=false;
+const OFFLINE_AUTH_MARKER_KEY='finaryOfflineSessionValidated';
 let firebaseSaveTimer=null,
     firebaseSaveInProgress=false,
     firebaseSavePending=false,
@@ -2397,6 +2398,17 @@ let firebaseSaveTimer=null,
     firebaseRecoveryWritePending=false,
     snapshotUnsubscribe=null,
     currentUser=null;
+
+function hasOfflineSessionAuthorization(){
+  try{return localStorage.getItem(OFFLINE_AUTH_MARKER_KEY)==='1';}
+  catch(_error){return false;}
+}
+function rememberOfflineSessionAuthorization(){
+  try{localStorage.setItem(OFFLINE_AUTH_MARKER_KEY,'1');}catch(_error){}
+}
+function clearOfflineSessionAuthorization(){
+  try{localStorage.removeItem(OFFLINE_AUTH_MARKER_KEY);}catch(_error){}
+}
 
 function setFirebaseStatus(message,state=''){
   const el=document.getElementById('firebaseStatus');
@@ -2466,6 +2478,7 @@ window.personalLogout=async function(){
     // Déconnecte d'abord Firebase afin de ne jamais effacer le cache local
     // si la déconnexion elle-même échoue.
     await signOut(auth);
+    clearOfflineSessionAuthorization();
 
     // Supprime ensuite les données financières conservées sur cet appareil.
     clearPersonalSensitiveLocalData();
@@ -2770,6 +2783,26 @@ onAuthStateChanged(auth,async user=>{
   }
 
   if(!user){
+    // Au redémarrage sans réseau, Firebase Auth peut ne pas restituer immédiatement
+    // l'utilisateur mémorisé. Une session déjà validée en ligne peut néanmoins
+    // ouvrir la copie locale : aucune écriture distante ne sera autorisée avant
+    // une nouvelle authentification/lecture Firebase.
+    const offlineLocalSession=!navigator.onLine&&hasOfflineSessionAuthorization()&&firebaseLocalStateHasMeaningfulData();
+    if(offlineLocalSession){
+      currentUser={offlineCachedSession:true};
+      window.firebaseReady=false;
+      window.personalFirebaseAuthenticated=true;
+      firebaseInitialReadComplete=false;
+      firebaseRecoveryWritePending=false;
+      firebaseOfflineChangesPending=true;
+      if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
+      if(bar)bar.style.display='flex';
+      if(emailEl)emailEl.textContent='Session locale';
+      if(overlay)overlay.style.display='none';
+      setAuthMessage('');
+      setFirebaseStatus('⚠️ Hors ligne — données locales, modifications conservées sur cet appareil','sync-offline');
+      return;
+    }
     currentUser=null;window.firebaseReady=false;window.personalFirebaseAuthenticated=false;firebaseInitialReadComplete=false;firebaseRecoveryWritePending=false;
     if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
     if(bar)bar.style.display='none';
@@ -2778,6 +2811,7 @@ onAuthStateChanged(auth,async user=>{
     return;
   }
   currentUser=user;
+  rememberOfflineSessionAuthorization();
   window.firebaseReady=false;
   firebaseInitialReadComplete=false;
   window.personalFirebaseAuthenticated=true;
