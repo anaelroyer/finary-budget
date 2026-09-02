@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-pSdYDUdyn/JqJIaB0uOYELy00Kz2zEiSrpuFUNsEowA=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-74j/b43aBILA31knfw/2mKIlwnOPH8YDnAZ8QgQr0bI=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2393,12 +2393,15 @@ const OFFLINE_AUTH_MARKER_KEY='finaryOfflineSessionValidated';
 const REMEMBERED_AUTH_EMAIL_KEY='finaryRememberedAuthEmail';
 const OFFLINE_PENDING_SYNC_KEY='finaryOfflineChangesPending';
 const LAST_SYNCED_FINGERPRINT_KEY='finaryLastSyncedFingerprint';
+const OFFLINE_PATCH_QUEUE_KEY='finaryOfflinePatchQueue';
 let firebaseSaveTimer=null,
     firebaseSaveInProgress=false,
     firebaseSavePending=false,
     firebaseInitialReadComplete=false,
     firebaseOfflineChangesPending=false,
     firebaseRecoveryWritePending=false,
+    firebaseLastLocalSyncState=null,
+    firebaseMergeConflictCount=0,
     snapshotUnsubscribe=null,
     currentUser=null;
 
@@ -2433,6 +2436,141 @@ function firebaseStateFingerprint(dataValue,monthHistoryValue,patrimoineHistoryV
 function firebaseCurrentStateFingerprint(){
   return firebaseStateFingerprint(window.data,window.monthHistory,window.patrimoineHistory,window.annotations||'');
 }
+function firebaseCurrentSyncState(){
+  return{
+    data:window.data??null,
+    monthHistory:Array.isArray(window.monthHistory)?window.monthHistory:[],
+    patrimoineHistory:Array.isArray(window.patrimoineHistory)?window.patrimoineHistory:[],
+    annotations:typeof window.annotations==='string'?window.annotations:''
+  };
+}
+function firebaseCloneSyncValue(value){
+  if(typeof structuredClone==='function'){
+    try{return structuredClone(value);}catch(_error){}
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+function firebaseJsonEqual(a,b){
+  if(a===b)return true;
+  try{return JSON.stringify(a)===JSON.stringify(b);}catch(_error){return false;}
+}
+function getOfflinePatchQueue(){
+  try{
+    const value=JSON.parse(localStorage.getItem(OFFLINE_PATCH_QUEUE_KEY)||'[]');
+    return Array.isArray(value)?value:[];
+  }catch(_error){return [];}
+}
+function saveOfflinePatchQueue(queue){
+  try{
+    if(Array.isArray(queue)&&queue.length)localStorage.setItem(OFFLINE_PATCH_QUEUE_KEY,JSON.stringify(queue));
+    else localStorage.removeItem(OFFLINE_PATCH_QUEUE_KEY);
+  }catch(error){console.error('File de synchronisation locale impossible :',error);}
+}
+function clearOfflinePatchQueue(){
+  try{localStorage.removeItem(OFFLINE_PATCH_QUEUE_KEY);}catch(_error){}
+}
+function firebaseBuildPatches(before,after,path=[],out=[]){
+  if(firebaseJsonEqual(before,after))return out;
+  const beforeArray=Array.isArray(before),afterArray=Array.isArray(after);
+  const beforeObject=before&&typeof before==='object'&&!beforeArray;
+  const afterObject=after&&typeof after==='object'&&!afterArray;
+  if(beforeObject&&afterObject){
+    const keys=new Set([...Object.keys(before),...Object.keys(after)]);
+    keys.forEach(key=>firebaseBuildPatches(before[key],after[key],[...path,key],out));
+    return out;
+  }
+  if(beforeArray&&afterArray&&before.length===after.length){
+    for(let i=0;i<before.length;i++)firebaseBuildPatches(before[i],after[i],[...path,i],out);
+    return out;
+  }
+  out.push({
+    path,
+    beforeExists:before!==undefined,
+    afterExists:after!==undefined,
+    before:before===undefined?null:firebaseCloneSyncValue(before),
+    after:after===undefined?null:firebaseCloneSyncValue(after)
+  });
+  return out;
+}
+function queuePendingOfflineStateChanges(){
+  const current=firebaseCloneSyncValue(firebaseCurrentSyncState());
+  if(!firebaseLastLocalSyncState){
+    firebaseLastLocalSyncState=current;
+    return;
+  }
+  const patches=firebaseBuildPatches(firebaseLastLocalSyncState,current);
+  if(patches.length){
+    const queue=getOfflinePatchQueue();
+    queue.push(...patches);
+    saveOfflinePatchQueue(queue);
+  }
+  firebaseLastLocalSyncState=current;
+}
+function firebasePathValue(root,path){
+  let value=root;
+  for(const key of path){
+    if(value===null||value===undefined||!Object.prototype.hasOwnProperty.call(value,key))return{exists:false,value:undefined};
+    value=value[key];
+  }
+  return{exists:true,value};
+}
+function firebaseSetPathValue(root,path,exists,value){
+  if(!path.length)return exists?firebaseCloneSyncValue(value):undefined;
+  let target=root;
+  for(let i=0;i<path.length-1;i++){
+    const key=path[i],nextKey=path[i+1];
+    if(target[key]===null||typeof target[key]!=='object')target[key]=typeof nextKey==='number'?[]:{};
+    target=target[key];
+  }
+  const last=path[path.length-1];
+  if(exists)target[last]=firebaseCloneSyncValue(value);
+  else if(Array.isArray(target)&&typeof last==='number')target.splice(last,1);
+  else delete target[last];
+  return root;
+}
+function firebaseApplyOfflinePatchQueue(remoteState){
+  let merged=firebaseCloneSyncValue(remoteState);
+  let conflicts=0;
+  const queue=getOfflinePatchQueue();
+  queue.forEach(patch=>{
+    const remote=firebasePathValue(merged,patch.path||[]);
+    const beforeMatches=remote.exists===!!patch.beforeExists && (!remote.exists||firebaseJsonEqual(remote.value,patch.before));
+    const alreadyMatches=remote.exists===!!patch.afterExists && (!remote.exists||firebaseJsonEqual(remote.value,patch.after));
+    if(!beforeMatches&&!alreadyMatches)conflicts++;
+    merged=firebaseSetPathValue(merged,patch.path||[],!!patch.afterExists,patch.after);
+  });
+  return{state:merged,conflicts,patchCount:queue.length};
+}
+function firebaseSnapshotSyncState(snapshot){
+  const r=snapshot?.exists()?snapshot.data():{};
+  return{
+    data:r.data?JSON.parse(r.data):null,
+    monthHistory:r.monthHistory?JSON.parse(r.monthHistory):[],
+    patrimoineHistory:r.patrimoineHistory?JSON.parse(r.patrimoineHistory):[],
+    annotations:typeof r.annotations==='string'?r.annotations:''
+  };
+}
+function firebaseApplySnapshotAuxiliaryState(snapshot){
+  if(!snapshot?.exists())return;
+  const r=snapshot.data();
+  window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
+  window.recipeDataState=(r.recipeData && typeof r.recipeData==='object')?r.recipeData:{};
+  window.tradeRepublicSyncRequestState=(r.tradeRepublicSyncRequest && typeof r.tradeRepublicSyncRequest==='object')?r.tradeRepublicSyncRequest:null;
+  window.linxeaSyncRequestState=(r.linxeaSyncRequest && typeof r.linxeaSyncRequest==='object')?r.linxeaSyncRequest:null;
+  if(window.updateTradeRepublicSyncUI)window.updateTradeRepublicSyncUI();
+  if(window.updateLinxeaSyncUI)window.updateLinxeaSyncUI();
+}
+function firebaseApplyMergedOfflineState(snapshot){
+  const remoteState=firebaseSnapshotSyncState(snapshot);
+  const merged=firebaseApplyOfflinePatchQueue(remoteState);
+  firebaseApplySnapshotAuxiliaryState(snapshot);
+  firebaseLastLocalSyncState=firebaseCloneSyncValue(merged.state);
+  if(window.applyFirebaseState)window.applyFirebaseState(merged.state);
+  rememberLastSyncedFingerprint(firebaseStateFingerprint(remoteState.data,remoteState.monthHistory,remoteState.patrimoineHistory,remoteState.annotations));
+  firebaseLastLocalSyncState=firebaseCloneSyncValue(firebaseCurrentSyncState());
+  firebaseMergeConflictCount=merged.conflicts;
+  return merged;
+}
 function getLastSyncedFingerprint(){
   try{return localStorage.getItem(LAST_SYNCED_FINGERPRINT_KEY)||'';}
   catch(_error){return '';}
@@ -2444,6 +2582,7 @@ function rememberLastSyncedFingerprint(value){
   }catch(_error){}
 }
 function hasVerifiedPendingOfflineChanges(){
+  if(getOfflinePatchQueue().length)return true;
   if(!hasPendingOfflineChanges())return false;
   const lastSynced=getLastSyncedFingerprint();
   if(!lastSynced)return false;
@@ -2767,11 +2906,13 @@ function firebaseSnapshotHasMeaningfulData(snapshot){
 window.firebaseSave=function(){
   if(!currentUser)return;
   if(!window.firebaseReady){
+    queuePendingOfflineStateChanges();
     rememberPendingOfflineChanges();
     setFirebaseStatus('Modifications conservées localement — attente de Firebase','sync-pending');
     return;
   }
   if(!firebaseInitialReadComplete){
+    queuePendingOfflineStateChanges();
     rememberPendingOfflineChanges();
     setFirebaseStatus('Lecture Firebase en cours — modification conservée localement','sync-pending');
     return;
@@ -2795,10 +2936,15 @@ window.firebaseSave=function(){
       },{merge:true});
       rememberLastSyncedFingerprint(syncedFingerprint);
       clearPendingOfflineChanges();
+      clearOfflinePatchQueue();
+      firebaseLastLocalSyncState=firebaseCloneSyncValue(firebaseCurrentSyncState());
       firebaseRecoveryWritePending=false;
-      setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
+      const conflictSuffix=firebaseMergeConflictCount?` — ${firebaseMergeConflictCount} conflit${firebaseMergeConflictCount>1?'s':''} résolu${firebaseMergeConflictCount>1?'s':''} localement`:'';
+      firebaseMergeConflictCount=0;
+      setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}${conflictSuffix}`,'sync-ok');
     }catch(error){
       console.error(error);
+      queuePendingOfflineStateChanges();
       rememberPendingOfflineChanges();
       setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
     }finally{
@@ -2826,12 +2972,7 @@ async function applyRemoteSnapshot(snapshot){
   }catch(error){
     console.error('Empreinte Firebase impossible :',error);
   }
-  window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
-  window.recipeDataState=(r.recipeData && typeof r.recipeData==='object')?r.recipeData:{};
-  window.tradeRepublicSyncRequestState=(r.tradeRepublicSyncRequest && typeof r.tradeRepublicSyncRequest==='object')?r.tradeRepublicSyncRequest:null;
-  window.linxeaSyncRequestState=(r.linxeaSyncRequest && typeof r.linxeaSyncRequest==='object')?r.linxeaSyncRequest:null;
-  if(window.updateTradeRepublicSyncUI)window.updateTradeRepublicSyncUI();
-  if(window.updateLinxeaSyncUI)window.updateLinxeaSyncUI();
+  firebaseApplySnapshotAuxiliaryState(snapshot);
   if(window.applyFirebaseState){
     window.applyFirebaseState({
       data:r.data?JSON.parse(r.data):undefined,
@@ -2841,6 +2982,7 @@ async function applyRemoteSnapshot(snapshot){
     });
   }
   if(remoteFingerprint)rememberLastSyncedFingerprint(remoteFingerprint);
+  firebaseLastLocalSyncState=firebaseCloneSyncValue(firebaseCurrentSyncState());
   return true;
 }
 
@@ -2874,6 +3016,7 @@ onAuthStateChanged(auth,async user=>{
       firebaseInitialReadComplete=false;
       firebaseRecoveryWritePending=false;
       firebaseOfflineChangesPending=hasVerifiedPendingOfflineChanges();
+      firebaseLastLocalSyncState=firebaseCloneSyncValue(firebaseCurrentSyncState());
       if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
       if(bar)bar.style.display='flex';
       if(emailEl)emailEl.textContent='Session locale';
@@ -2903,6 +3046,7 @@ onAuthStateChanged(auth,async user=>{
   // Firebase reste la référence : aucune écriture distante n'est autorisée avant
   // la fin de la lecture initiale grâce à firebaseInitialReadComplete=false.
   const hasLocalStartupData=firebaseLocalStateHasMeaningfulData();
+  firebaseLastLocalSyncState=firebaseCloneSyncValue(firebaseCurrentSyncState());
   if(hasLocalStartupData && overlay)overlay.style.display='none';
 
   try{
@@ -2922,10 +3066,14 @@ onAuthStateChanged(auth,async user=>{
     // fermeture complète de l'app, la première lecture Firebase ne doit donc pas
     // écraser cette copie locale avant qu'elle ait été renvoyée au serveur.
     if(preserveLocal||localRecoveryAvailable){
+      if(preserveLocal&&getOfflinePatchQueue().length){
+        const merged=firebaseApplyMergedOfflineState(snap);
+        setFirebaseStatus(merged.conflicts?'Fusion des modifications — conflit détecté…':'Fusion des modifications hors ligne…','sync-pending');
+      }
       firebaseInitialReadComplete=true;
       window.firebaseReady=true;
       firebaseRecoveryWritePending=true;
-      setFirebaseStatus(preserveLocal?'Envoi des modifications hors ligne…':'Récupération des données locales…','sync-pending');
+      if(!(preserveLocal&&getOfflinePatchQueue().length))setFirebaseStatus(preserveLocal?'Envoi des modifications hors ligne…':'Récupération des données locales…','sync-pending');
       if(localRecoveryAvailable)rememberPendingOfflineChanges();
       window.firebaseSave();
     }else{
@@ -2960,6 +3108,7 @@ onAuthStateChanged(auth,async user=>{
 });
 
 window.addEventListener('offline',()=>{
+  if(!firebaseLastLocalSyncState)firebaseLastLocalSyncState=firebaseCloneSyncValue(firebaseCurrentSyncState());
   window.firebaseReady=false;
   setFirebaseStatus('⚠️ Hors ligne — modifications conservées sur cet appareil','sync-offline');
 });
@@ -2977,15 +3126,18 @@ window.addEventListener('online',async()=>{
     if(!preserveLocal){
       firebaseRecoveryWritePending=false;
       existed=await applyRemoteSnapshot(snap);
+    }else if(getOfflinePatchQueue().length){
+      const merged=firebaseApplyMergedOfflineState(snap);
+      setFirebaseStatus(merged.conflicts?'Fusion des modifications — conflit détecté…':'Fusion des modifications conservées localement…','sync-pending');
     }
     firebaseInitialReadComplete=true;
     window.firebaseReady=true;
 
-    // Une reconnexion vérifie toujours Firebase en premier. Un cache local vide
-    // ne doit jamais remplacer le document distant.
+    // Une reconnexion vérifie toujours Firebase en premier. Les modifications
+    // hors ligne sont rejouées uniquement sur les champs réellement modifiés.
     if(preserveLocal&&window.firebaseSave){
       firebaseRecoveryWritePending=true;
-      setFirebaseStatus('Envoi des modifications conservées localement…','sync-pending');
+      if(!getOfflinePatchQueue().length)setFirebaseStatus('Envoi des modifications conservées localement…','sync-pending');
       window.firebaseSave();
     }else if(!existed&&firebaseOfflineChangesPending&&window.firebaseSave){
       window.firebaseSave();
