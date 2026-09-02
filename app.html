@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-q7d/R+N2FKY+EUvsN1xBBANX+MJewlNwBupIRliFd3o=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-+qjjN46yuBwI77SHDSMUjExGzpHyZD21ZSTOXmzMFH8=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -5820,16 +5820,66 @@ function getStockMeta(item){
     priceSourceName:raw.priceSourceName||'',
     priceFetchStatus:raw.priceFetchStatus||'',
     account:String(raw.account||'').toUpperCase(),
-    owner:PATRIMOINE_OWNERS.some(o=>o.id===raw.owner)?raw.owner:'household'
+    owner:PATRIMOINE_OWNERS.some(o=>o.id===raw.owner)?raw.owner:'household',
+    quantityHistory:Array.isArray(raw.quantityHistory)?raw.quantityHistory:[]
   };
+}
+
+let HOLDING_HISTORY_SAVE_TIMER=null;
+function normalizeHoldingQuantityHistory(history){
+  const byDate=new Map();
+  (Array.isArray(history)?history:[]).forEach(point=>{
+    const date=String(point?.date||'').slice(0,10);
+    const quantity=Number(point?.quantity);
+    if(date && Number.isFinite(quantity) && quantity>=0)byDate.set(date,{date,quantity});
+  });
+  return [...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date)).slice(-3660);
+}
+function recordHoldingQuantity(history,quantity,date=getLocalDateKey()){
+  const normalized=normalizeHoldingQuantityHistory(history);
+  const qty=Math.max(0,Number(quantity)||0);
+  const key=String(date||'').slice(0,10);
+  if(!key)return{history:normalized,changed:false};
+  const sameDay=normalized.find(point=>point.date===key);
+  if(sameDay){
+    if(sameDay.quantity===qty)return{history:normalized,changed:false};
+    sameDay.quantity=qty;
+    return{history:normalized,changed:true};
+  }
+  const last=normalized[normalized.length-1];
+  if(last && last.quantity===qty)return{history:normalized,changed:false};
+  normalized.push({date:key,quantity:qty});
+  normalized.sort((a,b)=>a.date.localeCompare(b.date));
+  return{history:normalized.slice(-3660),changed:true};
+}
+function holdingQuantityAtDate(history,date,fallbackQuantity=0){
+  const normalized=normalizeHoldingQuantityHistory(history);
+  if(!normalized.length)return Math.max(0,Number(fallbackQuantity)||0);
+  const key=String(date||'').slice(0,10);
+  let quantity=normalized[0].quantity;
+  for(const point of normalized){
+    if(point.date>key)break;
+    quantity=point.quantity;
+  }
+  return Math.max(0,Number(quantity)||0);
+}
+function scheduleHoldingHistorySave(){
+  if(HOLDING_HISTORY_SAVE_TIMER)return;
+  HOLDING_HISTORY_SAVE_TIMER=setTimeout(()=>{
+    HOLDING_HISTORY_SAVE_TIMER=null;
+    save();
+  },0);
 }
 
 function recalculateStockItem(item){
   if(!Array.isArray(item))return 0;
   const meta=getStockMeta(item);
+  const quantityRecord=recordHoldingQuantity(meta.quantityHistory,meta.shares);
+  meta.quantityHistory=quantityRecord.history;
   const value=Math.max(0,meta.shares)*Math.max(0,meta.pricePerShare);
   item[1]=Number.isFinite(value)?value:0;
   item[2]=meta;
+  if(quantityRecord.changed)scheduleHoldingHistorySave();
   return item[1];
 }
 
@@ -5960,13 +6010,19 @@ function renderStockHistoryChart(index,payload){
   const allPoints=normalizeStockHistory(quote);
   const points=filterStockHistory(allPoints,months);
   const shares=Math.max(0,Number(meta?.shares)||0);
-  const valuePoints=points.map(point=>({...point,value:point.price*shares}));
+  const quantityHistory=normalizeHoldingQuantityHistory(meta?.quantityHistory);
+  const valuePoints=points.map(point=>({
+    ...point,
+    quantity:holdingQuantityAtDate(quantityHistory,point.date,shares),
+    value:point.price*holdingQuantityAtDate(quantityHistory,point.date,shares)
+  }));
   const labels={1:'1M',3:'3M',6:'6M',12:'1A'};
   const buttons=[1,3,6,12].map(m=>`<button type="button" class="stock-history-period-btn ${months===m?'active':''}" onclick="setStockHistoryPeriod(${index},${m})">${labels[m]}</button>`).join('');
 
   if(points.length<2){
     const last=points[0]||allPoints[allPoints.length-1];
-    const lastValue=(last?.price||Number(quote.price)||0)*shares;
+    const lastQuantity=holdingQuantityAtDate(quantityHistory,last?.date||getLocalDateKey(),shares);
+    const lastValue=(last?.price||Number(quote.price)||0)*lastQuantity;
     panel.innerHTML=`
       <div class="stock-history-head">
         <span class="stock-history-title">Évolution de la valeur</span>
@@ -6734,7 +6790,8 @@ function getCryptoBtcMeta(){
     priceEur:Number(raw.priceEur)||0,
     updatedAt:raw.updatedAt||'',
     source:raw.source||'OKX',
-    history:Array.isArray(raw.history)?raw.history:[]
+    history:Array.isArray(raw.history)?raw.history:[],
+    quantityHistory:Array.isArray(raw.quantityHistory)?raw.quantityHistory:[]
   };
 }
 
@@ -6747,19 +6804,25 @@ function syncOkxBtcToCryptoData(){
   if(state && typeof state==='object'){
     const quantity=Math.max(0,Number(state.quantity)||0);
     const priceEur=Math.max(0,Number(state.priceEur)||0);
+    const quantityRecord=recordHoldingQuantity(oldMeta.quantityHistory,quantity);
     const meta={
       ...oldMeta,
       quantity,
       priceEur,
       updatedAt:state.updatedAt||oldMeta.updatedAt||'',
       source:state.source||'OKX',
-      history:Array.isArray(state.history)?state.history:oldMeta.history
+      history:Array.isArray(state.history)?state.history:oldMeta.history,
+      quantityHistory:quantityRecord.history
     };
     data.crypto=[['Bitcoin',quantity*priceEur,meta]];
+    if(quantityRecord.changed)scheduleHoldingHistorySave();
   }else if(existing){
     const quantity=Math.max(0,Number(oldMeta.quantity)||0);
     const priceEur=Math.max(0,Number(oldMeta.priceEur)||0);
+    const quantityRecord=recordHoldingQuantity(oldMeta.quantityHistory,quantity);
+    oldMeta.quantityHistory=quantityRecord.history;
     data.crypto=[['Bitcoin',quantity*priceEur,oldMeta]];
+    if(quantityRecord.changed)scheduleHoldingHistorySave();
   }else{
     data.crypto=[['Bitcoin',0,{pru:0,pruSet:false,quantity:0,priceEur:0,updatedAt:'',source:'OKX',history:[]}]];
   }
@@ -6779,7 +6842,11 @@ function cryptoBtcHistoryHtml(meta){
     return '<div class="stock-history-empty">Historique de valeur BTC en cours de constitution.</div>';
   }
 
-  const visible=points.slice(-31).map(p=>({...p,value:p.price*quantity}));
+  const quantityHistory=normalizeHoldingQuantityHistory(meta?.quantityHistory);
+  const visible=points.slice(-31).map(p=>{
+    const historicalQuantity=holdingQuantityAtDate(quantityHistory,p.date,quantity);
+    return {...p,quantity:historicalQuantity,value:p.price*historicalQuantity};
+  });
   const values=visible.map(p=>p.value);
   let min=Math.min(...values),max=Math.max(...values);
   if(max===min){
