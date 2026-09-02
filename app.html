@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-BGm24nkvNT6U1Ypkdmypwr6puV4s9fRQIpujRrz10ew=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-pSdYDUdyn/JqJIaB0uOYELy00Kz2zEiSrpuFUNsEowA=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2392,6 +2392,7 @@ window.firebaseWriting=false;
 const OFFLINE_AUTH_MARKER_KEY='finaryOfflineSessionValidated';
 const REMEMBERED_AUTH_EMAIL_KEY='finaryRememberedAuthEmail';
 const OFFLINE_PENDING_SYNC_KEY='finaryOfflineChangesPending';
+const LAST_SYNCED_FINGERPRINT_KEY='finaryLastSyncedFingerprint';
 let firebaseSaveTimer=null,
     firebaseSaveInProgress=false,
     firebaseSavePending=false,
@@ -2414,6 +2415,39 @@ function clearOfflineSessionAuthorization(){
 function hasPendingOfflineChanges(){
   try{return localStorage.getItem(OFFLINE_PENDING_SYNC_KEY)==='1';}
   catch(_error){return false;}
+}
+function firebaseStateFingerprint(dataValue,monthHistoryValue,patrimoineHistoryValue,annotationsValue){
+  const raw=JSON.stringify([
+    dataValue??null,
+    Array.isArray(monthHistoryValue)?monthHistoryValue:[],
+    Array.isArray(patrimoineHistoryValue)?patrimoineHistoryValue:[],
+    typeof annotationsValue==='string'?annotationsValue:''
+  ]);
+  let hash=2166136261;
+  for(let i=0;i<raw.length;i++){
+    hash^=raw.charCodeAt(i);
+    hash=Math.imul(hash,16777619);
+  }
+  return (hash>>>0).toString(16).padStart(8,'0');
+}
+function firebaseCurrentStateFingerprint(){
+  return firebaseStateFingerprint(window.data,window.monthHistory,window.patrimoineHistory,window.annotations||'');
+}
+function getLastSyncedFingerprint(){
+  try{return localStorage.getItem(LAST_SYNCED_FINGERPRINT_KEY)||'';}
+  catch(_error){return '';}
+}
+function rememberLastSyncedFingerprint(value){
+  try{
+    const fingerprint=String(value||'');
+    if(fingerprint)localStorage.setItem(LAST_SYNCED_FINGERPRINT_KEY,fingerprint);
+  }catch(_error){}
+}
+function hasVerifiedPendingOfflineChanges(){
+  if(!hasPendingOfflineChanges())return false;
+  const lastSynced=getLastSyncedFingerprint();
+  if(!lastSynced)return false;
+  return firebaseCurrentStateFingerprint()!==lastSynced;
 }
 function rememberPendingOfflineChanges(){
   firebaseOfflineChangesPending=true;
@@ -2752,12 +2786,14 @@ window.firebaseSave=function(){
     window.firebaseWriting=true;
     setFirebaseStatus('Enregistrement…','sync-pending');
     try{
+      const syncedFingerprint=firebaseCurrentStateFingerprint();
       await setDoc(sharedRef,{
         data:JSON.stringify(window.data),
         monthHistory:JSON.stringify(window.monthHistory),
         patrimoineHistory:JSON.stringify(window.patrimoineHistory),
         annotations:window.annotations||''
       },{merge:true});
+      rememberLastSyncedFingerprint(syncedFingerprint);
       clearPendingOfflineChanges();
       firebaseRecoveryWritePending=false;
       setFirebaseStatus(`✓ Données synchronisées à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,'sync-ok');
@@ -2779,6 +2815,17 @@ window.firebaseSave=function(){
 async function applyRemoteSnapshot(snapshot){
   if(!snapshot?.exists())return false;
   const r=snapshot.data();
+  let remoteFingerprint='';
+  try{
+    remoteFingerprint=firebaseStateFingerprint(
+      r.data?JSON.parse(r.data):undefined,
+      r.monthHistory?JSON.parse(r.monthHistory):[],
+      r.patrimoineHistory?JSON.parse(r.patrimoineHistory):[],
+      typeof r.annotations==='string'?r.annotations:''
+    );
+  }catch(error){
+    console.error('Empreinte Firebase impossible :',error);
+  }
   window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
   window.recipeDataState=(r.recipeData && typeof r.recipeData==='object')?r.recipeData:{};
   window.tradeRepublicSyncRequestState=(r.tradeRepublicSyncRequest && typeof r.tradeRepublicSyncRequest==='object')?r.tradeRepublicSyncRequest:null;
@@ -2793,6 +2840,7 @@ async function applyRemoteSnapshot(snapshot){
       annotations:typeof r.annotations==='string'?r.annotations:undefined
     });
   }
+  if(remoteFingerprint)rememberLastSyncedFingerprint(remoteFingerprint);
   return true;
 }
 
@@ -2825,7 +2873,7 @@ onAuthStateChanged(auth,async user=>{
       window.personalFirebaseAuthenticated=true;
       firebaseInitialReadComplete=false;
       firebaseRecoveryWritePending=false;
-      firebaseOfflineChangesPending=hasPendingOfflineChanges();
+      firebaseOfflineChangesPending=hasVerifiedPendingOfflineChanges();
       if(snapshotUnsubscribe){snapshotUnsubscribe();snapshotUnsubscribe=null;}
       if(bar)bar.style.display='flex';
       if(emailEl)emailEl.textContent='Session locale';
@@ -2866,7 +2914,8 @@ onAuthStateChanged(auth,async user=>{
     }
     const snap=await getDoc(sharedRef);
     const localRecoveryAvailable=firebaseLocalStateHasMeaningfulData()&&!firebaseSnapshotHasMeaningfulData(snap);
-    const preserveLocal=firebaseOfflineChangesPending&&firebaseLocalStateHasMeaningfulData();
+    const preserveLocal=hasVerifiedPendingOfflineChanges()&&firebaseLocalStateHasMeaningfulData();
+    if(hasPendingOfflineChanges()&&!preserveLocal&&!localRecoveryAvailable)clearPendingOfflineChanges();
     let existed=snap.exists();
 
     // Une modification faite hors ligne reste marquée dans localStorage. Même après
@@ -2898,7 +2947,7 @@ onAuthStateChanged(auth,async user=>{
   }catch(error){
     console.error(error);window.firebaseReady=false;firebaseInitialReadComplete=false;
     if(hasLocalStartupData && !navigator.onLine){
-      firebaseOfflineChangesPending=hasPendingOfflineChanges();
+      firebaseOfflineChangesPending=hasVerifiedPendingOfflineChanges();
       setFirebaseStatus('⚠️ Hors ligne — données locales, modifications conservées sur cet appareil','sync-offline');
       setAuthMessage('');
       if(overlay)overlay.style.display='none';
@@ -2921,7 +2970,8 @@ window.addEventListener('online',async()=>{
   firebaseInitialReadComplete=false;
   try{
     const snap=await getDoc(sharedRef);
-    const preserveLocal=firebaseOfflineChangesPending&&firebaseLocalStateHasMeaningfulData();
+    const preserveLocal=hasVerifiedPendingOfflineChanges()&&firebaseLocalStateHasMeaningfulData();
+    if(hasPendingOfflineChanges()&&!preserveLocal)clearPendingOfflineChanges();
     let existed=snap.exists();
 
     if(!preserveLocal){
