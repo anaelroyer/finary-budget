@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-EWsVljwN0jHoz9CeZ6gXE+RCXT3fsCyLwhzYcXkKtL8=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-+IyGNPJjd+/C5E1BswtvTeSIohNIb7Id0vNvFaZ3bXA=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -5915,6 +5915,8 @@ function getStockMeta(item){
     account:String(raw.account||'').toUpperCase(),
     owner:PATRIMOINE_OWNERS.some(o=>o.id===raw.owner)?raw.owner:'household',
     quantityHistory:Array.isArray(raw.quantityHistory)?raw.quantityHistory:[],
+    investedEur:Number(raw.investedEur)||0,
+    originPerformanceComplete:raw.originPerformanceComplete===true,
     assetImage:String(raw.assetImage||'')
   };
 }
@@ -6910,7 +6912,9 @@ function syncOkxBtcToCryptoData(){
       updatedAt:state.updatedAt||oldMeta.updatedAt||'',
       source:state.source||'OKX',
       history:Array.isArray(state.history)?state.history:oldMeta.history,
-      quantityHistory:quantityRecord.history
+      quantityHistory:quantityRecord.history,
+      investedEur:Number(state.investedEur)||oldMeta.investedEur||0,
+      originPerformanceComplete:state.originPerformanceComplete===true
     };
     data.crypto=[['Bitcoin',quantity*priceEur,meta]];
     if(quantityRecord.changed)scheduleHoldingHistorySave();
@@ -6927,6 +6931,25 @@ function syncOkxBtcToCryptoData(){
 }
 
 
+
+function getCryptoBtcValueVariation(meta,limit=31){
+  const quantity=Math.max(0,Number(meta?.quantity)||0);
+  const points=(Array.isArray(meta?.history)?meta.history:[])
+    .map(p=>({date:String(p?.date||'').slice(0,10),price:Number(p?.price)}))
+    .filter(p=>p.date && Number.isFinite(p.price) && p.price>0)
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .slice(-Math.max(2,Number(limit)||31));
+  if(points.length<2)return null;
+  const quantityHistory=normalizeHoldingQuantityHistory(meta?.quantityHistory);
+  const valued=points.map(p=>{
+    const historicalQuantity=holdingQuantityAtDate(quantityHistory,p.date,quantity);
+    return {...p,quantity:historicalQuantity,value:p.price*historicalQuantity};
+  });
+  const first=valued[0],last=valued[valued.length-1];
+  const diff=last.value-first.value;
+  const pct=first.value?diff/first.value*100:0;
+  return {firstDate:first.date,lastDate:last.date,firstValue:first.value,lastValue:last.value,diff,pct,pointCount:valued.length};
+}
 
 function cryptoBtcHistoryHtml(meta){
   const quantity=Math.max(0,Number(meta?.quantity)||0);
@@ -8678,13 +8701,15 @@ function getPatrimoineReportModel(){
         const priceEur=Math.max(0,Number(rawMeta.priceEur)||0);
         const pru=Math.max(0,Number(rawMeta.pru)||0);
         const pruSet=rawMeta.pruSet===true||(rawMeta.pru!==undefined&&rawMeta.pru!==null&&rawMeta.pru!=='');
-        const invested=pruSet?quantity*pru:null;
+        const originPerformanceComplete=rawMeta.originPerformanceComplete===true;
+        const importedInvested=Math.max(0,Number(rawMeta.investedEur)||0);
+        const invested=originPerformanceComplete&&importedInvested>0?importedInvested:(pruSet?quantity*pru:null);
         const gain=invested===null?null:base.amount-invested;
-        const performance=(pruSet&&pru>0&&priceEur>0)?((priceEur-pru)/pru)*100:null;
+        const performance=invested>0?(gain/invested)*100:null;
         return {
           ...base,
           kind:'crypto',
-          cryptoMeta:{quantity,priceEur,pru,pruSet,updatedAt:String(rawMeta.updatedAt||''),source:String(rawMeta.source||'OKX')},
+          cryptoMeta:{quantity,priceEur,pru,pruSet,originPerformanceComplete,updatedAt:String(rawMeta.updatedAt||''),source:String(rawMeta.source||'OKX')},
           invested,
           gain,
           performance
@@ -8881,7 +8906,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
         const m=i.stockMeta||{};
         return `<div class="detail-card">
           <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">${esc(m.account||'—')} · ${esc(m.isin||'ISIN non renseigné')}</div></div><div class="detail-value">${euro(i.amount)}</div></div>
-          <div class="metric-grid"><div><span>Parts</span><strong>${Number(m.shares||0).toLocaleString('fr-FR',{maximumFractionDigits:6})}</strong></div><div><span>Cours</span><strong>${m.pricePerShare>0?euro(m.pricePerShare):'—'}</strong></div><div><span>PRU</span><strong>${m.pruSet?euro(m.pru):'—'}</strong></div><div><span>Capital investi</span><strong>${i.invested===null?'—':euro(i.invested)}</strong></div><div><span>Gain / perte</span><strong class="${Number(i.gain)>0?'positive':Number(i.gain)<0?'negative':''}">${signedEuro(i.gain)}</strong></div><div><span>Performance</span><strong class="${Number(i.performance)>0?'positive':Number(i.performance)<0?'negative':''}">${signedPct(i.performance)}</strong></div></div>
+          <div class="metric-grid"><div><span>Parts</span><strong>${Number(m.shares||0).toLocaleString('fr-FR',{maximumFractionDigits:6})}</strong></div><div><span>Cours</span><strong>${m.pricePerShare>0?euro(m.pricePerShare):'—'}</strong></div><div><span>PRU</span><strong>${m.pruSet?euro(m.pru):'—'}</strong></div><div><span>Capital investi</span><strong>${i.invested===null?'—':euro(i.invested)}</strong></div><div><span>Gain / perte depuis l'origine</span><strong class="${Number(i.gain)>0?'positive':Number(i.gain)<0?'negative':''}">${signedEuro(i.gain)}</strong></div><div><span>Performance depuis l'origine</span><strong class="${Number(i.performance)>0?'positive':Number(i.performance)<0?'negative':''}">${signedPct(i.performance)}</strong></div></div>
           <div class="sync-line">Dernière synchronisation : ${esc(fmtDateTime(i.tradeRepublicUpdatedAt))}</div>
         </div>`;
       }).join(''):`<div class="empty padded">Aucune ligne Bourse</div>`;
@@ -8891,9 +8916,12 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
     if(c.key==='crypto'){
       const cards=c.items.length?c.items.map(i=>{
         const m=i.cryptoMeta||{};
+        const perfClass=Number(i.performance)>0?'positive':Number(i.performance)<0?'negative':'';
+        const originReady=i.invested!==null&&i.performance!==null;
         return `<div class="detail-card">
           <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">${esc(m.source||'OKX')} · Simple Earn</div></div><div class="detail-value">${euro(i.amount)}</div></div>
-          <div class="metric-grid"><div><span>Quantité</span><strong>${Number(m.quantity||0).toLocaleString('fr-FR',{maximumFractionDigits:8})} BTC</strong></div><div><span>Cours BTC/EUR</span><strong>${m.priceEur>0?euro(m.priceEur):'—'}</strong></div><div><span>PRU</span><strong>${m.pruSet?euro(m.pru):'—'}</strong></div><div><span>Capital investi</span><strong>${i.invested===null?'—':euro(i.invested)}</strong></div><div><span>Gain / perte</span><strong class="${Number(i.gain)>0?'positive':Number(i.gain)<0?'negative':''}">${signedEuro(i.gain)}</strong></div><div><span>Performance</span><strong class="${Number(i.performance)>0?'positive':Number(i.performance)<0?'negative':''}">${signedPct(i.performance)}</strong></div></div>
+          <div class="metric-grid"><div><span>Quantité</span><strong>${Number(m.quantity||0).toLocaleString('fr-FR',{maximumFractionDigits:8})} BTC</strong></div><div><span>Cours BTC/EUR</span><strong>${m.priceEur>0?euro(m.priceEur):'—'}</strong></div><div><span>Capital investi</span><strong>${originReady?euro(i.invested):'—'}</strong></div><div><span>Gain / perte depuis l'origine</span><strong class="${perfClass}">${originReady?signedEuro(i.gain):'—'}</strong></div><div><span>Performance depuis l'origine</span><strong class="${perfClass}">${originReady?signedPct(i.performance):'—'}</strong></div></div>
+          ${!originReady?`<div class="sync-line">Performance depuis l'origine disponible dès que l'historique OKX couvre l'intégralité des achats BTC.</div>`:''}
           <div class="sync-line">Dernière synchronisation : ${esc(fmtDateTime(m.updatedAt))}</div>
         </div>`;
       }).join(''):`<div class="empty padded">Aucune ligne Crypto</div>`;
@@ -9071,7 +9099,7 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
         lines.push(`• ${i.label} : ${euro(i.amount)}`);
         lines.push(`  ${m.account||'—'} · ISIN ${m.isin||'—'}`);
         lines.push(`  Parts : ${Number(m.shares||0).toLocaleString('fr-FR',{maximumFractionDigits:6})} · Cours : ${m.pricePerShare>0?euro(m.pricePerShare):'—'} · PRU : ${m.pruSet?euro(m.pru):'—'}`);
-        if(i.invested!==null)lines.push(`  Capital investi : ${euro(i.invested)} · Gain/perte : ${i.gain>0?'+':''}${euro(i.gain)} · Performance : ${i.performance===null?'—':`${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`}`);
+        if(i.invested!==null)lines.push(`  Capital investi : ${euro(i.invested)} · Gain/perte depuis l'origine : ${i.gain>0?'+':''}${euro(i.gain)} · Performance depuis l'origine : ${i.performance===null?'—':`${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`}`);
       });
       return;
     }
@@ -9081,7 +9109,11 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
         const m=i.cryptoMeta||{};
         lines.push(`• ${i.label} : ${euro(i.amount)}`);
         lines.push(`  Quantité : ${Number(m.quantity||0).toLocaleString('fr-FR',{maximumFractionDigits:8})} BTC · Cours : ${m.priceEur>0?euro(m.priceEur):'—'}`);
-        if(m.pruSet)lines.push(`  PRU : ${euro(m.pru)} · Capital investi : ${euro(i.invested||0)} · Gain/perte : ${i.gain>0?'+':''}${euro(i.gain||0)} · Performance : ${i.performance===null?'—':`${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`}`);
+        if(i.invested!==null&&i.performance!==null){
+          lines.push(`  Capital investi : ${euro(i.invested)} · Gain/perte depuis l'origine : ${i.gain>0?'+':''}${euro(i.gain||0)} · Performance depuis l'origine : ${i.performance>0?'+':''}${i.performance.toLocaleString('fr-FR',{maximumFractionDigits:2})} %`);
+        }else{
+          lines.push(`  Performance depuis l'origine : historique OKX incomplet`);
+        }
       });
       return;
     }
@@ -9186,7 +9218,7 @@ async function savePatrimoineReportPdf(){
     iframe.style.width='820px';
     iframe.style.height='1120px';
     iframe.style.border='0';
-    iframe.style.opacity='0.01';
+    iframe.style.opacity='1';
     iframe.style.pointerEvents='none';
     document.body.appendChild(iframe);
 
