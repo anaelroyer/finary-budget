@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-JV1bDe768IuYz9A4+5PHqUz5sJDNXorFukiD48sosbU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-4Z16s13/eqA3rZ2aOg7inZQ7nMdCkF9ELIlyRnK4RV4=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -194,9 +194,9 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
 .savings-ceiling-line strong{color:#c9d1d9;font-size:11px;white-space:nowrap}
 .savings-ceiling-track{height:8px;overflow:hidden;border-radius:999px;background:#21262d}
 .savings-ceiling-fill{height:100%;border-radius:999px;background:#3fb950;transition:width .2s ease}
-.savings-ceiling-fill.over{background:#d29922}
+.savings-ceiling-fill.over{background:#3fb950}
 .savings-ceiling-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;color:#8b949e;font-size:10px}
-.savings-ceiling-foot .over{color:#d29922;font-weight:700}
+.savings-ceiling-foot .reached,.savings-ceiling-foot .over{color:#3fb950;font-weight:700}
 body.hide-amounts .savings-ceiling-progress{display:none}
 .savings-card-actions{display:grid;grid-template-columns:1fr;gap:7px}
 .savings-edit-btn{width:100%;font-size:12px;padding:8px 10px}
@@ -5719,18 +5719,23 @@ function savingsCeilingProgressHtml(label,amount){
 
   const safeAmount=Math.max(0,Number(amount)||0);
   const rawPercent=rule.ceiling>0?safeAmount/rule.ceiling*100:0;
-  const displayPercent=rawPercent.toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});
-  const width=Math.max(0,Math.min(100,rawPercent));
+  const cappedPercent=Math.min(100,rawPercent);
+  const displayPercent=cappedPercent.toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const width=Math.max(0,cappedPercent);
   const remaining=rule.ceiling-safeAmount;
   const over=remaining<0;
+  const reached=remaining===0;
   const remainingText=over
-    ? `Dépassement : ${euro(Math.abs(remaining))}`
-    : `Reste : ${euro(remaining)}`;
+    ? `+${euro(Math.abs(remaining))} d’intérêts capitalisés`
+    : reached
+      ? 'Plafond atteint ✓'
+      : `Reste : ${euro(remaining)}`;
+  const statusClass=over?'over':(reached?'reached':'');
 
   return `<div class="savings-ceiling-progress">
-    <div class="savings-ceiling-line"><span>Progression vers le plafond</span><strong>${displayPercent} %</strong></div>
+    <div class="savings-ceiling-line"><span>Progression vers le plafond</span><strong>${displayPercent} %${safeAmount>=rule.ceiling?' ✓':''}</strong></div>
     <div class="savings-ceiling-track" role="progressbar" aria-label="Progression vers le plafond ${escapeHtml(rule.label)}" aria-valuenow="${Math.min(100,Math.round(rawPercent*10)/10)}" aria-valuemin="0" aria-valuemax="100"><div class="savings-ceiling-fill ${over?'over':''}" style="width:${width}%"></div></div>
-    <div class="savings-ceiling-foot"><span>Plafond : ${euro(rule.ceiling)}</span><span class="${over?'over':''}">${remainingText}</span></div>
+    <div class="savings-ceiling-foot"><span>Plafond : ${euro(rule.ceiling)}</span><span class="${statusClass}">${remainingText}</span></div>
   </div>`;
 }
 
@@ -5922,6 +5927,10 @@ function formatStockCourse(value){
   return Number(value).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})+' €';
 }
 
+function formatStockValue(value){
+  return Number(value).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+
 function formatStockHistoryDate(date){
   const d=new Date(date+'T12:00:00');
   if(Number.isNaN(d.getTime()))return date;
@@ -5939,7 +5948,7 @@ function renderStockHistoryChart(index,payload){
   const quote=payload?.quotes?.[isin];
 
   if(!isin){
-    panel.innerHTML='<div class="stock-history-empty">Renseigne un ISIN pour afficher l’évolution du cours.</div>';
+    panel.innerHTML='<div class="stock-history-empty">Renseigne un ISIN pour afficher l’évolution de la valeur.</div>';
     return;
   }
   if(!quote){
@@ -5950,18 +5959,21 @@ function renderStockHistoryChart(index,payload){
   const months=getStockHistoryPeriod(index);
   const allPoints=normalizeStockHistory(quote);
   const points=filterStockHistory(allPoints,months);
+  const shares=Math.max(0,Number(meta?.shares)||0);
+  const valuePoints=points.map(point=>({...point,value:point.price*shares}));
   const labels={1:'1M',3:'3M',6:'6M',12:'1A'};
   const buttons=[1,3,6,12].map(m=>`<button type="button" class="stock-history-period-btn ${months===m?'active':''}" onclick="setStockHistoryPeriod(${index},${m})">${labels[m]}</button>`).join('');
 
   if(points.length<2){
     const last=points[0]||allPoints[allPoints.length-1];
+    const lastValue=(last?.price||Number(quote.price)||0)*shares;
     panel.innerHTML=`
       <div class="stock-history-head">
-        <span class="stock-history-title">Évolution du cours</span>
+        <span class="stock-history-title">Évolution de la valeur</span>
         <div class="stock-history-periods">${buttons}</div>
       </div>
       <div class="stock-history-summary">
-        <span class="stock-history-last">${last?formatStockCourse(last.price):formatStockCourse(quote.price)}</span>
+        <span class="stock-history-last">${formatStockValue(lastValue)}</span>
         <span class="stock-history-change neutral">Historique en cours</span>
       </div>
       <div class="stock-history-empty">Un second relevé quotidien est nécessaire pour tracer la courbe.</div>
@@ -5969,18 +5981,18 @@ function renderStockHistoryChart(index,payload){
     return;
   }
 
-  const first=points[0];
-  const last=points[points.length-1];
-  const delta=last.price-first.price;
-  const pct=first.price?delta/first.price*100:0;
+  const first=valuePoints[0];
+  const last=valuePoints[valuePoints.length-1];
+  const delta=last.value-first.value;
+  const pct=first.value?delta/first.value*100:0;
   const cls=delta>0?'positive':delta<0?'negative':'neutral';
   const sign=delta>0?'+':'';
-  const periodText=`${sign}${pct.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})}% · ${sign}${delta.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:4})} €`;
+  const periodText=`${sign}${pct.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})}% · ${sign}${delta.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 
   const w=360,h=92,padL=8,padR=8,padT=8,padB=18;
   const innerW=w-padL-padR,innerH=h-padT-padB;
-  let minVal=Math.min(...points.map(p=>p.price));
-  let maxVal=Math.max(...points.map(p=>p.price));
+  let minVal=Math.min(...valuePoints.map(p=>p.value));
+  let maxVal=Math.max(...valuePoints.map(p=>p.value));
   if(minVal===maxVal){
     const margin=Math.max(.01,Math.abs(minVal)*.01);
     minVal-=margin;maxVal+=margin;
@@ -5989,10 +6001,10 @@ function renderStockHistoryChart(index,payload){
     minVal-=margin;maxVal+=margin;
   }
 
-  const pts=points.map((p,i)=>({
+  const pts=valuePoints.map((p,i)=>({
     ...p,
-    x:padL+(i/(points.length-1))*innerW,
-    y:padT+((maxVal-p.price)/(maxVal-minVal))*innerH
+    x:padL+(i/(valuePoints.length-1))*innerW,
+    y:padT+((maxVal-p.value)/(maxVal-minVal))*innerH
   }));
 
   let pathD=`M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
@@ -6011,15 +6023,15 @@ function renderStockHistoryChart(index,payload){
 
   panel.innerHTML=`
     <div class="stock-history-head">
-      <span class="stock-history-title">Évolution du cours</span>
+      <span class="stock-history-title">Évolution de la valeur</span>
       <div class="stock-history-periods">${buttons}</div>
     </div>
     <div class="stock-history-summary">
-      <span class="stock-history-last">${formatStockCourse(last.price)}</span>
+      <span class="stock-history-last">${formatStockValue(last.value)}</span>
       <span class="stock-history-change ${cls}">${periodText}</span>
     </div>
     <div class="stock-history-chart">
-      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Évolution du cours sur ${labels[months]}">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Évolution de la valeur sur ${labels[months]}">
         ${grid}
         <path class="stock-history-area" d="${areaD}"></path>
         <path class="stock-history-line" d="${pathD}"></path>
@@ -6043,7 +6055,7 @@ function renderStockHistoryChart(index,payload){
       const ratio=Math.max(0,Math.min(1,(clientX-rect.left)/Math.max(1,rect.width)));
       const idx=Math.round(ratio*(pts.length-1));
       const p=pts[idx];
-      tooltip.textContent=`${formatStockHistoryDate(p.date)} · ${formatStockCourse(p.price)}`;
+      tooltip.textContent=`${formatStockHistoryDate(p.date)} · ${formatStockValue(p.value)} · cours ${formatStockCourse(p.price)}`;
       tooltip.style.display='block';
       const chartRect=chart.getBoundingClientRect();
       const x=ratio*chartRect.width;
@@ -9029,12 +9041,41 @@ function recordPatrimoineSnapshot(){
   localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));
 }
 
+function getPatrimoineReferenceMonth(owner=activePatrimoineOwner){
+  const key=`finaryPatrimoineReferenceMonth:${owner||'household'}`;
+  let value='';
+  try{value=localStorage.getItem(key)||'';}catch(_error){}
+  if(/^\d{4}-\d{2}$/.test(value))return value;
+
+  const now=new Date();
+  value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  try{localStorage.setItem(key,value);}catch(_error){}
+  return value;
+}
+
+function getPatrimoineMonthKey(dateValue){
+  const d=dateValue instanceof Date?dateValue:new Date(`${dateValue}T12:00:00`);
+  if(Number.isNaN(d.getTime()))return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
 function updatePatrimoineMonthlyVariation(){
   const el=document.getElementById('patrimoine-variation-value');
   if(!el)return;
 
   const now=new Date();
   const currentNet=calculateNet().net;
+  const currentMonthKey=getPatrimoineMonthKey(now);
+  const referenceMonthKey=getPatrimoineReferenceMonth();
+
+  // Le mois d'activation de cette logique sert de référence : aucune fausse
+  // performance n'est calculée à partir des relevés partiels antérieurs.
+  if(currentMonthKey<=referenceMonthKey){
+    el.textContent='Mois de référence — évolution disponible à partir du mois prochain';
+    el.className='';
+    el.title='Ce mois sert de point de départ pour les prochaines variations mensuelles.';
+    return;
+  }
 
   // Mois civil précédent.
   const previousMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
@@ -12333,11 +12374,16 @@ function formatChartDate(dateStr,full=false){
 function getFilteredChartPoints(){
   const cfg=chartSeriesConfig[currentChartSeries]||chartSeriesConfig.total;
   const start=getChartStartDate(currentChartRange);
+  const referenceMonthKey=getPatrimoineReferenceMonth();
 
   return (patrimoineHistory||[])
     .filter(h=>{
       if(!h || !h.date)return false;
       if((h.owner||'household')!==activePatrimoineOwner)return false;
+
+      // Les relevés antérieurs au mois de référence restent conservés dans
+      // l'historique, mais ils ne doivent pas créer une fausse évolution.
+      if(getPatrimoineMonthKey(h.date)<referenceMonthKey)return false;
 
       const value=Number(h[cfg.field]);
       if(!Number.isFinite(value))return false;
@@ -12375,7 +12421,10 @@ function updateChartControls(){
       '1A':'1 an',
       'ALL':"Tout l'historique"
     };
-    caption.textContent=labels[currentChartRange]||'1 an';
+    const points=getFilteredChartPoints();
+    const referenceMonthKey=getPatrimoineReferenceMonth();
+    const usableMonths=[...new Set(points.map(p=>getPatrimoineMonthKey(p.date)).filter(k=>k>=referenceMonthKey))];
+    caption.textContent=usableMonths.length<2?'Mois de référence':(labels[currentChartRange]||'1 an');
   }
 }
 
@@ -12383,14 +12432,18 @@ function updateChartPerformance(points){
   const el=document.getElementById('chart-performance-value');
   if(!el)return;
 
-  if(points.length<2){
-    el.textContent='—';
+  const referenceMonthKey=getPatrimoineReferenceMonth();
+  const usablePoints=(points||[]).filter(p=>getPatrimoineMonthKey(p.date)>=referenceMonthKey);
+  const distinctMonths=new Set(usablePoints.map(p=>getPatrimoineMonthKey(p.date)).filter(Boolean));
+
+  if(distinctMonths.size<2){
+    el.textContent='Mois de référence';
     el.className='chart-performance-value';
     return;
   }
 
-  const first=points[0].value;
-  const last=points[points.length-1].value;
+  const first=usablePoints[0].value;
+  const last=usablePoints[usablePoints.length-1].value;
   const delta=last-first;
 
   let percentText='';
