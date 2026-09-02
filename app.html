@@ -8772,36 +8772,10 @@ function updatePatrimoineMonthlyVariation(){
 }
 
 function resetPatrimoineChart(){
-  const owner=activePatrimoineOwner||'household';
-  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine pour ce profil ? L'historique de ce profil sera effacé et redémarrera à aujourd'hui.")){
-    // Conserver intégralement l'historique des autres profils.
-    patrimoineHistory=patrimoineHistory.filter(
-      h=>(h?.owner||'household')!==owner
-    );
-
-    // Recréer uniquement le point du jour du profil actuellement affiché.
-    const today=getLocalDateKey();
-    const currentLiquid=calculateLiquidInvestments(owner);
-    const currentFullNet=calculateNet(owner).net;
-    const currentCategories={
-      epargne:getOwnedItems('epargne',owner).reduce((s,i)=>s+(Number(i[1])||0),0),
-      ...Object.fromEntries(
-        ASSET_CATEGORY_DEFINITIONS.map(c=>[
-          c.key,
-          getOwnedItems(c.key,owner).reduce((s,i)=>s+(Number(i[1])||0),0)
-        ])
-      )
-    };
-
-    patrimoineHistory.push({
-      date:today,
-      owner,
-      net:currentLiquid,
-      fullNet:currentFullNet,
-      ...currentCategories
-    });
-
-    patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){
+    patrimoineHistory=[];
+    localStorage.removeItem('finaryPatrimoineHistory');
+    recordPatrimoineSnapshot();
     render();
     save();
   }
