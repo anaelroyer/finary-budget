@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.10 : Patrimoine — réinitialisation du graphique limitée au profil actif -->
 <!-- V26.2.09 : Épargne — progression des livrets vers leurs plafonds réglementaires -->
 <!-- V26.2.08 : Firebase — lecture distante obligatoire avant toute écriture ou reconnexion -->
 <!-- V26.2.07 : Épargne — livrets en cartes, libellés fixes et modification par modale -->
@@ -8772,10 +8773,37 @@ function updatePatrimoineMonthlyVariation(){
 }
 
 function resetPatrimoineChart(){
-  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){
-    patrimoineHistory=[];
-    localStorage.removeItem('finaryPatrimoineHistory');
-    recordPatrimoineSnapshot();
+  const owner=activePatrimoineOwner;
+  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine pour ce profil ? L'historique sera effacé et redémarrera à aujourd'hui.")){
+    // Ne supprimer que l'historique du profil actuellement affiché.
+    patrimoineHistory=patrimoineHistory.filter(
+      h=>(h?.owner||'household')!==owner
+    );
+
+    // Recréer uniquement le point du jour pour ce profil.
+    const today=getLocalDateKey();
+    const currentLiquid=calculateLiquidInvestments(owner);
+    const currentFullNet=calculateNet(owner).net;
+    const currentCategories={
+      epargne:getOwnedItems('epargne',owner).reduce((s,i)=>s+(Number(i[1])||0),0),
+      ...Object.fromEntries(
+        ASSET_CATEGORY_DEFINITIONS.map(c=>[
+          c.key,
+          getOwnedItems(c.key,owner).reduce((s,i)=>s+(Number(i[1])||0),0)
+        ])
+      )
+    };
+
+    patrimoineHistory.push({
+      date:today,
+      owner,
+      net:currentLiquid,
+      fullNet:currentFullNet,
+      ...currentCategories
+    });
+
+    patrimoineHistory.sort((a,b)=>new Date(a.date)-new Date(b.date));
+    localStorage.setItem('finaryPatrimoineHistory',JSON.stringify(patrimoineHistory));
     render();
     save();
   }
