@@ -7,6 +7,7 @@ on:
     # GitHub Actions interprète le cron en UTC ; un contrôle Europe/Paris
     # ci-dessous empêche aussi tout relevé tombant réellement un week-end en France.
     - cron: "17 * * * 1-5"
+
     # Dernier relevé quotidien à 22 h 45 heure de Paris, du lundi au vendredi :
     # 20:45 UTC en heure d'été, 21:45 UTC en heure d'hiver.
     # Les deux sont planifiés ; un contrôle Europe/Paris n'en laisse passer qu'un.
@@ -15,6 +16,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-quotes
+  cancel-in-progress: false
 
 jobs:
   update-quotes:
@@ -34,6 +39,7 @@ jobs:
           PARIS_TIME="$(TZ=Europe/Paris date +%H:%M)"
           PARIS_HOUR="$(TZ=Europe/Paris date +%H)"
           PARIS_DOW="$(TZ=Europe/Paris date +%u)"
+
           echo "Heure de Paris : $PARIS_TIME · jour ISO : $PARIS_DOW"
 
           # Aucun relevé automatique le samedi (6) ni le dimanche (7).
@@ -84,6 +90,7 @@ jobs:
                   "min": 10,
                   "max": 200,
               },
+
               "IE0002XZSHO1": {
                   "primary_url": "https://www.quotrix.de/etf/IE0002XZSHO1/",
                   "primary_source": "Quotrix · WPEA",
@@ -93,6 +100,7 @@ jobs:
                   "min": 1,
                   "max": 20,
               },
+
               "FR0013412020": {
                   "primary_url": "https://www.ls-tc.de/en/etf/1371933",
                   "primary_source": "Lang & Schwarz · PAEEM",
@@ -102,6 +110,7 @@ jobs:
                   "min": 20,
                   "max": 60,
               },
+
               "FR0011550193": {
                   "primary_url": "https://www.boursorama.com/bourse/trackers/cours/1rTETZ/",
                   "primary_source": "Euronext Paris · ETZ via Boursorama",
@@ -122,18 +131,38 @@ jobs:
 
           def fetch(url):
               req = urllib.request.Request(url, headers=HEADERS)
+
               with urllib.request.urlopen(req, timeout=30) as r:
                   return r.read().decode("utf-8", errors="ignore")
 
           def textify(raw):
-              raw = re.sub(r"<script\b[^>]*>.*?</script>", " ", raw, flags=re.I | re.S)
-              raw = re.sub(r"<style\b[^>]*>.*?</style>", " ", raw, flags=re.I | re.S)
+              raw = re.sub(
+                  r"<script\b[^>]*>.*?</script>",
+                  " ",
+                  raw,
+                  flags=re.I | re.S
+              )
+
+              raw = re.sub(
+                  r"<style\b[^>]*>.*?</style>",
+                  " ",
+                  raw,
+                  flags=re.I | re.S
+              )
+
               raw = re.sub(r"<[^>]+>", " ", raw)
               raw = html_lib.unescape(raw)
+
               return re.sub(r"\s+", " ", raw).strip()
 
           def number(s):
-              s = s.strip().replace("\u202f", "").replace("\xa0", "").replace(" ", "")
+              s = (
+                  s.strip()
+                  .replace("\u202f", "")
+                  .replace("\xa0", "")
+                  .replace(" ", "")
+              )
+
               if "," in s and "." in s:
                   if s.rfind(",") > s.rfind("."):
                       s = s.replace(".", "").replace(",", ".")
@@ -141,6 +170,7 @@ jobs:
                       s = s.replace(",", "")
               else:
                   s = s.replace(",", ".")
+
               return float(s)
 
           def valid(v, low, high):
@@ -148,207 +178,417 @@ jobs:
 
           def parse_stuttgart_bid(raw, low, high):
               text = textify(raw)
+
               # Page anglaise : "BID 6.969 ASK 6.97"
               m = re.search(
                   r"\bBID\s+([0-9]+(?:[.,][0-9]+)?)\s+ASK\b",
-                  text, flags=re.I
+                  text,
+                  flags=re.I
               )
+
               if m:
                   v = number(m.group(1))
+
                   if valid(v, low, high):
                       return v, "Bid"
+
               # Secours page allemande éventuelle : "Geld 35,66 Brief"
               m = re.search(
                   r"\bGeld\s+([0-9]+(?:[.,][0-9]+)?)\s+Brief\b",
-                  text, flags=re.I
+                  text,
+                  flags=re.I
               )
+
               if m:
                   v = number(m.group(1))
+
                   if valid(v, low, high):
                       return v, "Bid"
+
               return None, None
 
           def parse_ls_bid(raw, low, high):
               text = textify(raw)
-              # L&S page exposes the quote as:
+
+              # L&S page expose le quote sous la forme :
               # "... Bid 35.1500 € Bid Size ... Ask 35.9750 € ..."
               patterns = [
                   r"\bBid\s+([0-9]+(?:[.,][0-9]+)?)\s*€",
                   r"\bGeld\s+([0-9]+(?:[.,][0-9]+)?)\s*€",
               ]
+
               for pattern in patterns:
                   m = re.search(pattern, text, flags=re.I)
+
                   if m:
                       v = number(m.group(1))
+
                       if valid(v, low, high):
                           return v, "Bid"
+
               return None, None
 
           def parse_quotrix_last(raw, low, high):
               text = textify(raw)
+
               # Quotrix expose normalement le dernier cours sous "Letzter".
               patterns = [
                   r"\bLetzter\s+([0-9]+(?:[.,][0-9]+)?)\b",
                   r"\bLetzter\s+Kurs\s+([0-9]+(?:[.,][0-9]+)?)\b",
               ]
+
               for pattern in patterns:
                   m = re.search(pattern, text, flags=re.I)
+
                   if m:
                       v = number(m.group(1))
+
                       if valid(v, low, high):
                           return v, "Dernier cours"
+
               return None, None
 
           def parse_boursorama_last(raw, low, high):
               text = textify(raw)
+
               patterns = [
                   r"BNPP\s+Easy\s+Stoxx\s+Europe\s+600[^0-9]{0,100}([0-9]+(?:[.,][0-9]+)?)\s*EUR",
                   r"FR0011550193[^0-9]{0,150}([0-9]+(?:[.,][0-9]+)?)\s*EUR",
               ]
+
               for pattern in patterns:
                   m = re.search(pattern, text, flags=re.I)
+
                   if m:
                       v = number(m.group(1))
+
                       if valid(v, low, high):
                           return v, "Euronext Paris"
+
               return None, None
 
           def parse_borsa(raw, low, high):
               text = textify(raw)
+
               m = re.search(
                   r"(?<![\d.,])([0-9]+(?:[.,][0-9]+)?)\s*[+-]\s*[0-9]+(?:[.,][0-9]+)?%\s*Fase\s*:",
-                  text, flags=re.I
+                  text,
+                  flags=re.I
               )
+
               if m:
                   v = number(m.group(1))
+
                   if valid(v, low, high):
                       return v, "ultimo corso"
+
               m = re.search(
                   r"Prezzo di Chiusura\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
-                  text, flags=re.I
+                  text,
+                  flags=re.I
               )
+
               if m:
                   v = number(m.group(1))
+
                   if valid(v, low, high):
                       return v, "prezzo di chiusura"
+
               m = re.search(
                   r"Prezzo di riferimento\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
-                  text, flags=re.I
+                  text,
+                  flags=re.I
               )
+
               if m:
                   v = number(m.group(1))
+
                   if valid(v, low, high):
                       return v, "prezzo di riferimento"
+
               return None, None
 
           def get_price(cfg):
               primary_error = None
+
               try:
                   raw = fetch(cfg["primary_url"])
+
                   if cfg["primary_parser"] == "stuttgart_bid":
-                      price, mode = parse_stuttgart_bid(raw, cfg["min"], cfg["max"])
+                      price, mode = parse_stuttgart_bid(
+                          raw,
+                          cfg["min"],
+                          cfg["max"]
+                      )
+
                   elif cfg["primary_parser"] == "ls_bid":
-                      price, mode = parse_ls_bid(raw, cfg["min"], cfg["max"])
+                      price, mode = parse_ls_bid(
+                          raw,
+                          cfg["min"],
+                          cfg["max"]
+                      )
+
                   elif cfg["primary_parser"] == "boursorama_last":
-                      price, mode = parse_boursorama_last(raw, cfg["min"], cfg["max"])
+                      price, mode = parse_boursorama_last(
+                          raw,
+                          cfg["min"],
+                          cfg["max"]
+                      )
+
                   else:
-                      price, mode = parse_quotrix_last(raw, cfg["min"], cfg["max"])
+                      price, mode = parse_quotrix_last(
+                          raw,
+                          cfg["min"],
+                          cfg["max"]
+                      )
+
                   if price is not None:
-                      return price, mode, cfg["primary_source"], cfg["primary_url"], False
+                      return (
+                          price,
+                          mode,
+                          cfg["primary_source"],
+                          cfg["primary_url"],
+                          False
+                      )
+
                   primary_error = "aucun cours primaire exploitable"
+
               except Exception as e:
                   primary_error = str(e)
 
-              print("  Source principale indisponible :", primary_error)
+              print(
+                  "  Source principale indisponible :",
+                  primary_error
+              )
+
               raw = fetch(cfg["fallback_url"])
-              price, mode = parse_borsa(raw, cfg["min"], cfg["max"])
+
+              price, mode = parse_borsa(
+                  raw,
+                  cfg["min"],
+                  cfg["max"]
+              )
+
               if price is None:
-                  raise RuntimeError("échec source principale + fallback Borsa")
-              return price, mode, cfg["fallback_source"], cfg["fallback_url"], True
+                  raise RuntimeError(
+                      "échec source principale + fallback Borsa"
+                  )
+
+              return (
+                  price,
+                  mode,
+                  cfg["fallback_source"],
+                  cfg["fallback_url"],
+                  True
+              )
 
           path = Path("quotes.json")
-          try:
-              payload = json.loads(path.read_text(encoding="utf-8"))
-          except Exception:
-              payload = {"quotes": {}}
 
-          payload.setdefault("quotes", {})
-          now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          try:
+              payload = json.loads(
+                  path.read_text(encoding="utf-8")
+              )
+
+          except Exception:
+              payload = {
+                  "quotes": {}
+              }
+
+          payload.setdefault(
+              "quotes",
+              {}
+          )
+
+          now = (
+              datetime.now(timezone.utc)
+              .replace(microsecond=0)
+              .isoformat()
+              .replace("+00:00", "Z")
+          )
+
           successes = 0
           failures = []
 
           for isin, cfg in INSTRUMENTS.items():
               try:
-                  price, mode, source, source_url, used_fallback = get_price(cfg)
+                  (
+                      price,
+                      mode,
+                      source,
+                      source_url,
+                      used_fallback
+                  ) = get_price(cfg)
 
-                  previous = payload["quotes"].get(isin, {})
-                  history = previous.get("history", [])
+                  previous = payload["quotes"].get(
+                      isin,
+                      {}
+                  )
+
+                  history = previous.get(
+                      "history",
+                      []
+                  )
+
                   if not isinstance(history, list):
                       history = []
 
                   previous_price = previous.get("price")
-                  previous_updated = str(previous.get("updatedAt", ""))
-                  previous_day = previous_updated[:10] if len(previous_updated) >= 10 else ""
-                  if previous_day and previous_day != now[:10]:
+
+                  previous_updated = str(
+                      previous.get(
+                          "updatedAt",
+                          ""
+                      )
+                  )
+
+                  previous_day = (
+                      previous_updated[:10]
+                      if len(previous_updated) >= 10
+                      else ""
+                  )
+
+                  if (
+                      previous_day
+                      and previous_day != now[:10]
+                  ):
                       try:
                           old_price = float(previous_price)
-                          if old_price > 0 and not any(str(p.get("date", ""))[:10] == previous_day for p in history if isinstance(p, dict)):
+
+                          if (
+                              old_price > 0
+                              and not any(
+                                  str(p.get("date", ""))[:10] == previous_day
+                                  for p in history
+                                  if isinstance(p, dict)
+                              )
+                          ):
                               history.append({
                                   "date": previous_day,
                                   "price": round(old_price, 6),
                                   "updatedAt": previous_updated,
                               })
+
                       except (TypeError, ValueError):
                           pass
 
                   today = now[:10]
-                  daily_point = {"date": today, "price": round(price, 6), "updatedAt": now}
-                  history = [
-                      p for p in history
-                      if isinstance(p, dict) and str(p.get("date", ""))[:10] != today
-                  ]
-                  history.append(daily_point)
-                  history.sort(key=lambda p: str(p.get("date", ""))[:10])
 
-                  cutoff = datetime.now(timezone.utc).date().toordinal() - 366
+                  daily_point = {
+                      "date": today,
+                      "price": round(price, 6),
+                      "updatedAt": now
+                  }
+
+                  history = [
+                      p
+                      for p in history
+                      if (
+                          isinstance(p, dict)
+                          and str(p.get("date", ""))[:10] != today
+                      )
+                  ]
+
+                  history.append(daily_point)
+
+                  history.sort(
+                      key=lambda p: str(
+                          p.get("date", "")
+                      )[:10]
+                  )
+
+                  cutoff = (
+                      datetime.now(timezone.utc)
+                      .date()
+                      .toordinal()
+                      - 366
+                  )
+
                   cleaned_history = []
+
                   for p in history:
                       try:
-                          d = datetime.strptime(str(p.get("date", ""))[:10], "%Y-%m-%d").date()
+                          d = datetime.strptime(
+                              str(p.get("date", ""))[:10],
+                              "%Y-%m-%d"
+                          ).date()
+
                           if d.toordinal() >= cutoff:
                               cleaned_history.append(p)
+
                       except Exception:
                           pass
 
                   payload["quotes"][isin] = {
                       "price": round(price, 6),
                       "currency": "EUR",
-                      "source": source + " · " + mode + (" · fallback" if used_fallback else ""),
+                      "source": (
+                          source
+                          + " · "
+                          + mode
+                          + (
+                              " · fallback"
+                              if used_fallback
+                              else ""
+                          )
+                      ),
                       "sourceUrl": source_url,
                       "updatedAt": now,
                       "history": cleaned_history,
                   }
 
                   successes += 1
-                  print(f"OK {isin} = {price:.6f} EUR · {source} · {mode}" + (" [FALLBACK]" if used_fallback else ""))
+
+                  print(
+                      f"OK {isin} = {price:.6f} EUR · "
+                      f"{source} · {mode}"
+                      + (
+                          " [FALLBACK]"
+                          if used_fallback
+                          else ""
+                      )
+                  )
 
               except Exception as e:
-                  failures.append(f"{isin}: {e}")
-                  print(f"ERREUR {isin}: {e} — ancien cours conservé")
+                  failures.append(
+                      f"{isin}: {e}"
+                  )
+
+                  print(
+                      f"ERREUR {isin}: {e} — ancien cours conservé"
+                  )
 
           if successes:
               payload["updatedAt"] = now
-              path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-          print(f"\nRésultat : {successes}/{len(INSTRUMENTS)} cours récupérés.")
+              path.write_text(
+                  json.dumps(
+                      payload,
+                      ensure_ascii=False,
+                      indent=2
+                  ) + "\n",
+                  encoding="utf-8"
+              )
+
+          print(
+              f"\nRésultat : "
+              f"{successes}/{len(INSTRUMENTS)} cours récupérés."
+          )
+
           if failures:
               print("Échecs :")
+
               for failure in failures:
-                  print(" -", failure)
+                  print(
+                      " -",
+                      failure
+                  )
 
           if successes == 0:
-              raise SystemExit("Aucun cours récupéré.")
+              raise SystemExit(
+                  "Aucun cours récupéré."
+              )
           PY
+
       - name: Enregistrer quotes.json
         if: steps.timing.outputs.run == 'true'
         shell: bash
@@ -360,6 +600,14 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add quotes.json
           git commit -m "Mise à jour automatique des cours et historique"
-          git push
+
+          # main peut avoir reçu une modification pendant que ce workflow tournait.
+          # On récupère la version distante et on rejoue le commit quotes.json
+          # au-dessus pour éviter l'erreur "fetch first".
+          git fetch origin main
+          git rebase origin/main
+
+          git push origin HEAD:main
