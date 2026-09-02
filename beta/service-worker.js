@@ -1,4 +1,4 @@
-const CACHE_NAME = 'budget-patrimoine-beta-v3';
+const CACHE_NAME = 'budget-patrimoine-beta-v5-20260902-sans-marques';
 const APP_SHELL = [
   './app.html',
   './firebase-config.js',
@@ -11,11 +11,9 @@ const APP_SHELL = [
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });
-
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
-
 self.addEventListener('fetch', event => {
   const request=event.request;
   if(request.method!=='GET')return;
@@ -25,8 +23,5 @@ self.addEventListener('fetch', event => {
     event.respondWith(fetch(request).then(response=>{const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put('./app.html',copy));return response;}).catch(()=>caches.match('./app.html')));
     return;
   }
-  event.respondWith(fetch(request).then(response=>{
-    if(response&&response.status===200){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}
-    return response;
-  }).catch(()=>caches.match(request)));
+  event.respondWith(fetch(request).then(response=>{if(response&&response.status===200){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}return response;}).catch(()=>caches.match(request)));
 });

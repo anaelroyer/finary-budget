@@ -4,5 +4,10 @@ service cloud.firestore {
     match /budget_users/{userId} {
       allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
+
+    // La version partagée ne stocke aucun fichier (photo/PDF) dans Firestore.
+    match /budget_files/{document=**} {
+      allow read, write: if false;
+    }
   }
 }
