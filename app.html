@@ -33,7 +33,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-4Z16s13/eqA3rZ2aOg7inZQ7nMdCkF9ELIlyRnK4RV4=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-q7d/R+N2FKY+EUvsN1xBBANX+MJewlNwBupIRliFd3o=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -6768,6 +6768,7 @@ function syncOkxBtcToCryptoData(){
 
 
 function cryptoBtcHistoryHtml(meta){
+  const quantity=Math.max(0,Number(meta?.quantity)||0);
   const points=(Array.isArray(meta.history)?meta.history:[])
     .map(p=>({date:String(p?.date||'').slice(0,10),price:Number(p?.price)}))
     .filter(p=>p.date && Number.isFinite(p.price) && p.price>0)
@@ -6775,37 +6776,40 @@ function cryptoBtcHistoryHtml(meta){
     .slice(-366);
 
   if(points.length<2){
-    return '<div class="stock-history-empty">Historique BTC en cours de constitution.</div>';
+    return '<div class="stock-history-empty">Historique de valeur BTC en cours de constitution.</div>';
   }
 
-  const visible=points.slice(-31);
-  const prices=visible.map(p=>p.price);
-  let min=Math.min(...prices),max=Math.max(...prices);
-  if(max===min){max+=1;min-=1;}
+  const visible=points.slice(-31).map(p=>({...p,value:p.price*quantity}));
+  const values=visible.map(p=>p.value);
+  let min=Math.min(...values),max=Math.max(...values);
+  if(max===min){
+    const margin=Math.max(.01,Math.abs(min)*.01);
+    max+=margin;min-=margin;
+  }
   const w=320,h=94,padL=6,padR=6,padT=8,padB=18;
   const iw=w-padL-padR, ih=h-padT-padB;
   const coords=visible.map((p,i)=>{
     const x=padL+(visible.length===1?iw/2:(i/(visible.length-1))*iw);
-    const y=padT+((max-p.price)/(max-min))*ih;
+    const y=padT+((max-p.value)/(max-min))*ih;
     return {x,y,p};
   });
   const path=coords.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
   const first=visible[0], last=visible[visible.length-1];
-  const diff=last.price-first.price;
-  const pct=first.price?diff/first.price*100:0;
-  const cls=pct>0?'positive':pct<0?'negative':'neutral';
-  const sign=pct>0?'+':'';
+  const diff=last.value-first.value;
+  const pct=first.value?diff/first.value*100:0;
+  const cls=diff>0?'positive':diff<0?'negative':'neutral';
+  const sign=diff>0?'+':'';
 
   return `
     <div class="stock-history-head">
-      <span class="stock-history-title">Évolution BTC · 30 jours</span>
+      <span class="stock-history-title">Évolution de la valeur · 30 jours</span>
     </div>
     <div class="stock-history-summary">
-      <span class="stock-history-last">${formatStockCourse(last.price)}</span>
-      <span class="stock-history-change ${cls}">${sign}${pct.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} %</span>
+      <span class="stock-history-last">${formatStockValue(last.value)}</span>
+      <span class="stock-history-change ${cls}">${sign}${pct.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} % · ${sign}${diff.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</span>
     </div>
     <div class="stock-history-chart">
-      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Évolution du cours Bitcoin">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Évolution de la valeur Bitcoin">
         <path class="stock-history-line" d="${path}"></path>
         <text class="stock-history-axis" x="${padL}" y="${h-4}" text-anchor="start">${formatStockHistoryDate(first.date)}</text>
         <text class="stock-history-axis" x="${w-padR}" y="${h-4}" text-anchor="end">${formatStockHistoryDate(last.date)}</text>
