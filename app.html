@@ -8772,9 +8772,19 @@ function updatePatrimoineMonthlyVariation(){
 }
 
 function resetPatrimoineChart(){
-  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine ? L'historique des points sera effacé et redémarrera à aujourd'hui.")){
-    patrimoineHistory=[];
-    localStorage.removeItem('finaryPatrimoineHistory');
+  if(confirm("Voulez-vous vraiment réinitialiser le graphique d'évolution du patrimoine pour ce profil ? L'historique de ce profil sera effacé et redémarrera à aujourd'hui.")){
+    const owner=activePatrimoineOwner||'household';
+
+    // Supprimer uniquement les points du profil affiché, sans remplacer
+    // le tableau global ni toucher aux données des autres profils.
+    for(let i=patrimoineHistory.length-1;i>=0;i--){
+      if((patrimoineHistory[i]?.owner||'household')===owner){
+        patrimoineHistory.splice(i,1);
+      }
+    }
+
+    // La fonction existante recrée le point du jour. Les historiques
+    // des autres profils sont conservés tels quels.
     recordPatrimoineSnapshot();
     render();
     save();
