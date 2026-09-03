@@ -68,525 +68,540 @@ jobs:
         if: steps.timing.outputs.run == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Récupérer les cours proches de Trade Republic
+      - name: Installer Playwright
+        if: steps.timing.outputs.run == 'true'
+        shell: bash
+        run: |
+          python3 -m pip install --disable-pip-version-check --no-cache-dir "playwright==1.55.0"
+          python3 -m playwright install --with-deps chromium
+
+      - name: Récupérer les cours Euronext
         if: steps.timing.outputs.run == 'true'
         shell: bash
         run: |
           python3 - <<'PY'
+          import asyncio
+          import html as html_lib
           import json
           import re
-          import html as html_lib
           import urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
 
-          INSTRUMENTS = {
-              "IE00B4ND3602": {
-                  "primary_url": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
-                  "primary_source": "Quotrix · Gold",
-                  "primary_parser": "quotrix_last",
-                  "fallback_url": "https://www.borsaitaliana.it/borsa/etc-etn/scheda/IE00B4ND3602-ETFP.html?lang=it",
-                  "fallback_source": "Borsa Italiana · Milan · SGLN",
-                  "min": 10,
-                  "max": 200,
-              },
+          from playwright.async_api import async_playwright
 
+          INSTRUMENTS = {
               "IE0002XZSHO1": {
-                  "primary_url": "https://www.quotrix.de/etf/IE0002XZSHO1/",
-                  "primary_source": "Quotrix · WPEA",
-                  "primary_parser": "quotrix_last",
-                  "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
-                  "fallback_source": "Borsa Italiana · Paris · WPEA",
+                  "name": "WPEA",
+                  "market": "XPAR",
+                  "euronext_url": "https://live.euronext.com/fr/product/etfs/IE0002XZSHO1-XPAR",
+                  "fallbacks": [
+                      {
+                          "url": "https://www.quotrix.de/etf/IE0002XZSHO1/",
+                          "source": "Quotrix · WPEA",
+                          "parser": "quotrix_last",
+                      },
+                      {
+                          "url": "https://www.borsaitaliana.it/borsa/etf/scheda/IE0002XZSHO1-XPAR.html?lang=it",
+                          "source": "Borsa Italiana · Paris · WPEA",
+                          "parser": "borsa",
+                      },
+                  ],
                   "min": 1,
                   "max": 20,
               },
 
               "FR0013412020": {
-                  "primary_url": "https://www.ls-tc.de/en/etf/1371933",
-                  "primary_source": "Lang & Schwarz · PAEEM",
-                  "primary_parser": "ls_bid",
-                  "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
-                  "fallback_source": "Borsa Italiana · Paris · PAEEM",
+                  "name": "PAEEM",
+                  "market": "XPAR",
+                  "euronext_url": "https://live.euronext.com/fr/product/etfs/FR0013412020-XPAR",
+                  "fallbacks": [
+                      {
+                          "url": "https://www.ls-tc.de/en/etf/1371933",
+                          "source": "Lang & Schwarz · PAEEM",
+                          "parser": "ls_bid",
+                      },
+                      {
+                          "url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0013412020-XPAR.html?lang=it",
+                          "source": "Borsa Italiana · Paris · PAEEM",
+                          "parser": "borsa",
+                      },
+                  ],
                   "min": 20,
                   "max": 60,
               },
 
               "FR0011550193": {
-                  "primary_url": "https://www.boursorama.com/bourse/trackers/cours/1rTETZ/",
-                  "primary_source": "Euronext Paris · ETZ via Boursorama",
-                  "primary_parser": "boursorama_last",
-                  "fallback_url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0011550193-XPAR.html?lang=it",
-                  "fallback_source": "Borsa Italiana · Paris · ETZ",
+                  "name": "STOXX Europe 600 ETZ",
+                  "market": "XPAR",
+                  "euronext_url": "https://live.euronext.com/fr/product/etfs/FR0011550193-XPAR",
+                  "fallbacks": [
+                      {
+                          "url": "https://www.boursorama.com/bourse/trackers/cours/1rTETZ/",
+                          "source": "Euronext Paris · ETZ via Boursorama",
+                          "parser": "boursorama_last",
+                      },
+                      {
+                          "url": "https://www.borsaitaliana.it/borsa/etf/scheda/FR0011550193-XPAR.html?lang=it",
+                          "source": "Borsa Italiana · Paris · ETZ",
+                          "parser": "borsa",
+                      },
+                  ],
                   "min": 10,
                   "max": 40,
+              },
+
+              "IE00B4ND3602": {
+                  "name": "iShares Physical Gold ETC",
+                  "market": "ETFP",
+                  "euronext_url": "https://live.euronext.com/fr/product/etfs/IE00B4ND3602-ETFP",
+                  "fallbacks": [
+                      {
+                          "url": "https://www.quotrix.de/etc/IE00B4ND3602/ishares-physical-metals-plc-open-end-zt-1111-o-end-gold/",
+                          "source": "Quotrix · Gold",
+                          "parser": "quotrix_last",
+                      },
+                      {
+                          "url": "https://www.borsaitaliana.it/borsa/etc-etn/scheda/IE00B4ND3602-ETFP.html?lang=it",
+                          "source": "Borsa Italiana · Milan · SGLN",
+                          "parser": "borsa",
+                      },
+                  ],
+                  "min": 10,
+                  "max": 200,
               },
           }
 
           HEADERS = {
               "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-              "Accept-Language": "en-US,en;q=0.9,de;q=0.8,it;q=0.7",
+              "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8,de;q=0.7,it;q=0.6",
               "Cache-Control": "no-cache",
           }
 
           def fetch(url):
               req = urllib.request.Request(url, headers=HEADERS)
-
-              with urllib.request.urlopen(req, timeout=30) as r:
-                  return r.read().decode("utf-8", errors="ignore")
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  return response.read().decode("utf-8", errors="ignore")
 
           def textify(raw):
               raw = re.sub(
                   r"<script\b[^>]*>.*?</script>",
                   " ",
                   raw,
-                  flags=re.I | re.S
+                  flags=re.I | re.S,
               )
-
               raw = re.sub(
                   r"<style\b[^>]*>.*?</style>",
                   " ",
                   raw,
-                  flags=re.I | re.S
+                  flags=re.I | re.S,
               )
-
               raw = re.sub(r"<[^>]+>", " ", raw)
               raw = html_lib.unescape(raw)
-
               return re.sub(r"\s+", " ", raw).strip()
 
-          def number(s):
-              s = (
-                  s.strip()
+          def number(value):
+              value = (
+                  str(value)
+                  .strip()
+                  .replace("€", "")
                   .replace("\u202f", "")
                   .replace("\xa0", "")
                   .replace(" ", "")
               )
 
-              if "," in s and "." in s:
-                  if s.rfind(",") > s.rfind("."):
-                      s = s.replace(".", "").replace(",", ".")
+              if "," in value and "." in value:
+                  if value.rfind(",") > value.rfind("."):
+                      value = value.replace(".", "").replace(",", ".")
                   else:
-                      s = s.replace(",", "")
+                      value = value.replace(",", "")
               else:
-                  s = s.replace(",", ".")
+                  value = value.replace(",", ".")
 
-              return float(s)
+              return float(value)
 
-          def valid(v, low, high):
-              return v is not None and low < v < high
-
-          def parse_stuttgart_bid(raw, low, high):
-              text = textify(raw)
-
-              # Page anglaise : "BID 6.969 ASK 6.97"
-              m = re.search(
-                  r"\bBID\s+([0-9]+(?:[.,][0-9]+)?)\s+ASK\b",
-                  text,
-                  flags=re.I
-              )
-
-              if m:
-                  v = number(m.group(1))
-
-                  if valid(v, low, high):
-                      return v, "Bid"
-
-              # Secours page allemande éventuelle : "Geld 35,66 Brief"
-              m = re.search(
-                  r"\bGeld\s+([0-9]+(?:[.,][0-9]+)?)\s+Brief\b",
-                  text,
-                  flags=re.I
-              )
-
-              if m:
-                  v = number(m.group(1))
-
-                  if valid(v, low, high):
-                      return v, "Bid"
-
-              return None, None
+          def valid(value, low, high):
+              return value is not None and low < value < high
 
           def parse_ls_bid(raw, low, high):
               text = textify(raw)
-
-              # L&S page expose le quote sous la forme :
-              # "... Bid 35.1500 € Bid Size ... Ask 35.9750 € ..."
               patterns = [
                   r"\bBid\s+([0-9]+(?:[.,][0-9]+)?)\s*€",
                   r"\bGeld\s+([0-9]+(?:[.,][0-9]+)?)\s*€",
               ]
 
               for pattern in patterns:
-                  m = re.search(pattern, text, flags=re.I)
-
-                  if m:
-                      v = number(m.group(1))
-
-                      if valid(v, low, high):
-                          return v, "Bid"
+                  match = re.search(pattern, text, flags=re.I)
+                  if match:
+                      value = number(match.group(1))
+                      if valid(value, low, high):
+                          return value, "Bid"
 
               return None, None
 
           def parse_quotrix_last(raw, low, high):
               text = textify(raw)
-
-              # Quotrix expose normalement le dernier cours sous "Letzter".
               patterns = [
                   r"\bLetzter\s+([0-9]+(?:[.,][0-9]+)?)\b",
                   r"\bLetzter\s+Kurs\s+([0-9]+(?:[.,][0-9]+)?)\b",
               ]
 
               for pattern in patterns:
-                  m = re.search(pattern, text, flags=re.I)
-
-                  if m:
-                      v = number(m.group(1))
-
-                      if valid(v, low, high):
-                          return v, "Dernier cours"
+                  match = re.search(pattern, text, flags=re.I)
+                  if match:
+                      value = number(match.group(1))
+                      if valid(value, low, high):
+                          return value, "Dernier cours"
 
               return None, None
 
           def parse_boursorama_last(raw, low, high):
               text = textify(raw)
-
               patterns = [
                   r"BNPP\s+Easy\s+Stoxx\s+Europe\s+600[^0-9]{0,100}([0-9]+(?:[.,][0-9]+)?)\s*EUR",
                   r"FR0011550193[^0-9]{0,150}([0-9]+(?:[.,][0-9]+)?)\s*EUR",
               ]
 
               for pattern in patterns:
-                  m = re.search(pattern, text, flags=re.I)
-
-                  if m:
-                      v = number(m.group(1))
-
-                      if valid(v, low, high):
-                          return v, "Euronext Paris"
+                  match = re.search(pattern, text, flags=re.I)
+                  if match:
+                      value = number(match.group(1))
+                      if valid(value, low, high):
+                          return value, "Euronext Paris"
 
               return None, None
 
           def parse_borsa(raw, low, high):
               text = textify(raw)
 
-              m = re.search(
+              match = re.search(
                   r"(?<![\d.,])([0-9]+(?:[.,][0-9]+)?)\s*[+-]\s*[0-9]+(?:[.,][0-9]+)?%\s*Fase\s*:",
                   text,
-                  flags=re.I
+                  flags=re.I,
               )
 
-              if m:
-                  v = number(m.group(1))
+              if match:
+                  value = number(match.group(1))
+                  if valid(value, low, high):
+                      return value, "ultimo corso"
 
-                  if valid(v, low, high):
-                      return v, "ultimo corso"
-
-              m = re.search(
+              match = re.search(
                   r"Prezzo di Chiusura\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
                   text,
-                  flags=re.I
+                  flags=re.I,
               )
 
-              if m:
-                  v = number(m.group(1))
+              if match:
+                  value = number(match.group(1))
+                  if valid(value, low, high):
+                      return value, "prezzo di chiusura"
 
-                  if valid(v, low, high):
-                      return v, "prezzo di chiusura"
-
-              m = re.search(
+              match = re.search(
                   r"Prezzo di riferimento\s*(?:\||:)?\s*([0-9]+(?:[.,][0-9]+)?)",
                   text,
-                  flags=re.I
+                  flags=re.I,
               )
 
-              if m:
-                  v = number(m.group(1))
-
-                  if valid(v, low, high):
-                      return v, "prezzo di riferimento"
+              if match:
+                  value = number(match.group(1))
+                  if valid(value, low, high):
+                      return value, "prezzo di riferimento"
 
               return None, None
 
-          def get_price(cfg):
-              primary_error = None
+          def parse_fallback(raw, parser, low, high):
+              if parser == "ls_bid":
+                  return parse_ls_bid(raw, low, high)
+              if parser == "quotrix_last":
+                  return parse_quotrix_last(raw, low, high)
+              if parser == "boursorama_last":
+                  return parse_boursorama_last(raw, low, high)
+              if parser == "borsa":
+                  return parse_borsa(raw, low, high)
+              return None, None
 
-              try:
-                  raw = fetch(cfg["primary_url"])
+          async def read_euronext_price(page, isin, cfg):
+              await page.goto(
+                  cfg["euronext_url"],
+                  wait_until="domcontentloaded",
+                  timeout=60_000,
+              )
 
-                  if cfg["primary_parser"] == "stuttgart_bid":
-                      price, mode = parse_stuttgart_bid(
+              # Euronext charge la cotation dynamiquement après le HTML initial.
+              price_node = page.locator("#header-instrument-price").first
+              await price_node.wait_for(state="visible", timeout=45_000)
+
+              raw_price = (await price_node.inner_text()).strip()
+              price = number(raw_price)
+
+              if not valid(price, cfg["min"], cfg["max"]):
+                  raise RuntimeError(
+                      f"cours Euronext hors plage : {raw_price!r}"
+                  )
+
+              page_text = await page.locator("body").inner_text()
+
+              if isin not in page_text:
+                  raise RuntimeError("ISIN absent de la page Euronext rendue")
+
+              return price, "Dernier cours traité"
+
+          def read_fallback(isin, cfg):
+              errors = []
+
+              for fallback in cfg["fallbacks"]:
+                  try:
+                      raw = fetch(fallback["url"])
+                      price, mode = parse_fallback(
                           raw,
+                          fallback["parser"],
                           cfg["min"],
-                          cfg["max"]
+                          cfg["max"],
                       )
 
-                  elif cfg["primary_parser"] == "ls_bid":
-                      price, mode = parse_ls_bid(
-                          raw,
-                          cfg["min"],
-                          cfg["max"]
-                      )
+                      if price is None:
+                          raise RuntimeError("aucun cours exploitable")
 
-                  elif cfg["primary_parser"] == "boursorama_last":
-                      price, mode = parse_boursorama_last(
-                          raw,
-                          cfg["min"],
-                          cfg["max"]
-                      )
-
-                  else:
-                      price, mode = parse_quotrix_last(
-                          raw,
-                          cfg["min"],
-                          cfg["max"]
-                      )
-
-                  if price is not None:
                       return (
                           price,
                           mode,
-                          cfg["primary_source"],
-                          cfg["primary_url"],
-                          False
+                          fallback["source"],
+                          fallback["url"],
                       )
 
-                  primary_error = "aucun cours primaire exploitable"
+                  except Exception as exc:
+                      errors.append(f"{fallback['source']}: {exc}")
+                      print(
+                          f"  Secours indisponible pour {isin} · "
+                          f"{fallback['source']}: {exc}"
+                      )
 
-              except Exception as e:
-                  primary_error = str(e)
+              raise RuntimeError(" ; ".join(errors))
 
-              print(
-                  "  Source principale indisponible :",
-                  primary_error
+          def update_quote(payload, isin, cfg, price, mode, source, source_url, used_fallback, now):
+              previous = payload["quotes"].get(isin, {})
+              history = previous.get("history", [])
+
+              if not isinstance(history, list):
+                  history = []
+
+              previous_price = previous.get("price")
+              previous_updated = str(previous.get("updatedAt", ""))
+              previous_day = (
+                  previous_updated[:10]
+                  if len(previous_updated) >= 10
+                  else ""
               )
 
-              raw = fetch(cfg["fallback_url"])
+              if previous_day and previous_day != now[:10]:
+                  try:
+                      old_price = float(previous_price)
 
-              price, mode = parse_borsa(
-                  raw,
-                  cfg["min"],
-                  cfg["max"]
-              )
+                      if (
+                          old_price > 0
+                          and not any(
+                              str(point.get("date", ""))[:10] == previous_day
+                              for point in history
+                              if isinstance(point, dict)
+                          )
+                      ):
+                          history.append({
+                              "date": previous_day,
+                              "price": round(old_price, 6),
+                              "updatedAt": previous_updated,
+                          })
+                  except (TypeError, ValueError):
+                      pass
 
-              if price is None:
-                  raise RuntimeError(
-                      "échec source principale + fallback Borsa"
+              today = now[:10]
+
+              history = [
+                  point
+                  for point in history
+                  if (
+                      isinstance(point, dict)
+                      and str(point.get("date", ""))[:10] != today
                   )
+              ]
 
-              return (
-                  price,
-                  mode,
-                  cfg["fallback_source"],
-                  cfg["fallback_url"],
-                  True
+              history.append({
+                  "date": today,
+                  "price": round(price, 6),
+                  "updatedAt": now,
+              })
+
+              history.sort(
+                  key=lambda point: str(point.get("date", ""))[:10]
               )
 
-          path = Path("quotes.json")
-
-          try:
-              payload = json.loads(
-                  path.read_text(encoding="utf-8")
+              cutoff = (
+                  datetime.now(timezone.utc)
+                  .date()
+                  .toordinal()
+                  - 366
               )
 
-          except Exception:
-              payload = {
-                  "quotes": {}
+              cleaned_history = []
+
+              for point in history:
+                  try:
+                      day = datetime.strptime(
+                          str(point.get("date", ""))[:10],
+                          "%Y-%m-%d",
+                      ).date()
+
+                      if day.toordinal() >= cutoff:
+                          cleaned_history.append(point)
+                  except Exception:
+                      pass
+
+              payload["quotes"][isin] = {
+                  "price": round(price, 6),
+                  "currency": "EUR",
+                  "market": cfg["market"],
+                  "quoteType": mode,
+                  "source": (
+                      source
+                      + " · "
+                      + mode
+                      + (" · fallback" if used_fallback else "")
+                  ),
+                  "sourceUrl": source_url,
+                  "updatedAt": now,
+                  "history": cleaned_history,
               }
 
-          payload.setdefault(
-              "quotes",
-              {}
-          )
+          async def main():
+              path = Path("quotes.json")
 
-          now = (
-              datetime.now(timezone.utc)
-              .replace(microsecond=0)
-              .isoformat()
-              .replace("+00:00", "Z")
-          )
-
-          successes = 0
-          failures = []
-
-          for isin, cfg in INSTRUMENTS.items():
               try:
-                  (
-                      price,
-                      mode,
-                      source,
-                      source_url,
-                      used_fallback
-                  ) = get_price(cfg)
+                  payload = json.loads(
+                      path.read_text(encoding="utf-8")
+                  )
+              except Exception:
+                  payload = {"quotes": {}}
 
-                  previous = payload["quotes"].get(
-                      isin,
-                      {}
+              payload.setdefault("quotes", {})
+
+              now = (
+                  datetime.now(timezone.utc)
+                  .replace(microsecond=0)
+                  .isoformat()
+                  .replace("+00:00", "Z")
+              )
+
+              successes = 0
+              failures = []
+
+              async with async_playwright() as playwright:
+                  browser = await playwright.chromium.launch(
+                      headless=True,
+                      args=[
+                          "--disable-dev-shm-usage",
+                          "--no-sandbox",
+                      ],
                   )
 
-                  history = previous.get(
-                      "history",
-                      []
-                  )
-
-                  if not isinstance(history, list):
-                      history = []
-
-                  previous_price = previous.get("price")
-
-                  previous_updated = str(
-                      previous.get(
-                          "updatedAt",
-                          ""
-                      )
-                  )
-
-                  previous_day = (
-                      previous_updated[:10]
-                      if len(previous_updated) >= 10
-                      else ""
-                  )
-
-                  if (
-                      previous_day
-                      and previous_day != now[:10]
-                  ):
-                      try:
-                          old_price = float(previous_price)
-
-                          if (
-                              old_price > 0
-                              and not any(
-                                  str(p.get("date", ""))[:10] == previous_day
-                                  for p in history
-                                  if isinstance(p, dict)
-                              )
-                          ):
-                              history.append({
-                                  "date": previous_day,
-                                  "price": round(old_price, 6),
-                                  "updatedAt": previous_updated,
-                              })
-
-                      except (TypeError, ValueError):
-                          pass
-
-                  today = now[:10]
-
-                  daily_point = {
-                      "date": today,
-                      "price": round(price, 6),
-                      "updatedAt": now
-                  }
-
-                  history = [
-                      p
-                      for p in history
-                      if (
-                          isinstance(p, dict)
-                          and str(p.get("date", ""))[:10] != today
-                      )
-                  ]
-
-                  history.append(daily_point)
-
-                  history.sort(
-                      key=lambda p: str(
-                          p.get("date", "")
-                      )[:10]
-                  )
-
-                  cutoff = (
-                      datetime.now(timezone.utc)
-                      .date()
-                      .toordinal()
-                      - 366
-                  )
-
-                  cleaned_history = []
-
-                  for p in history:
-                      try:
-                          d = datetime.strptime(
-                              str(p.get("date", ""))[:10],
-                              "%Y-%m-%d"
-                          ).date()
-
-                          if d.toordinal() >= cutoff:
-                              cleaned_history.append(p)
-
-                      except Exception:
-                          pass
-
-                  payload["quotes"][isin] = {
-                      "price": round(price, 6),
-                      "currency": "EUR",
-                      "source": (
-                          source
-                          + " · "
-                          + mode
-                          + (
-                              " · fallback"
-                              if used_fallback
-                              else ""
-                          )
+                  context = await browser.new_context(
+                      locale="fr-FR",
+                      timezone_id="Europe/Paris",
+                      viewport={"width": 1440, "height": 1000},
+                      user_agent=(
+                          "Mozilla/5.0 (X11; Linux x86_64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/140.0.0.0 Safari/537.36"
                       ),
-                      "sourceUrl": source_url,
-                      "updatedAt": now,
-                      "history": cleaned_history,
-                  }
-
-                  successes += 1
-
-                  print(
-                      f"OK {isin} = {price:.6f} EUR · "
-                      f"{source} · {mode}"
-                      + (
-                          " [FALLBACK]"
-                          if used_fallback
-                          else ""
-                      )
                   )
 
-              except Exception as e:
-                  failures.append(
-                      f"{isin}: {e}"
+                  page = await context.new_page()
+
+                  for isin, cfg in INSTRUMENTS.items():
+                      used_fallback = False
+
+                      try:
+                          try:
+                              price, mode = await read_euronext_price(
+                                  page,
+                                  isin,
+                                  cfg,
+                              )
+                              source = f"Euronext · {cfg['market']}"
+                              source_url = cfg["euronext_url"]
+
+                          except Exception as exc:
+                              print(
+                                  f"  Euronext indisponible pour {isin}: {exc}"
+                              )
+
+                              (
+                                  price,
+                                  mode,
+                                  source,
+                                  source_url,
+                              ) = read_fallback(isin, cfg)
+
+                              used_fallback = True
+
+                          update_quote(
+                              payload,
+                              isin,
+                              cfg,
+                              price,
+                              mode,
+                              source,
+                              source_url,
+                              used_fallback,
+                              now,
+                          )
+
+                          successes += 1
+
+                          print(
+                              f"OK {isin} = {price:.6f} EUR · "
+                              f"{source} · {mode}"
+                              + (
+                                  " [FALLBACK]"
+                                  if used_fallback
+                                  else ""
+                              )
+                          )
+
+                      except Exception as exc:
+                          failures.append(f"{isin}: {exc}")
+                          print(
+                              f"ERREUR {isin}: {exc} — ancien cours conservé"
+                          )
+
+                  await context.close()
+                  await browser.close()
+
+              if successes:
+                  payload["updatedAt"] = now
+
+                  path.write_text(
+                      json.dumps(
+                          payload,
+                          ensure_ascii=False,
+                          indent=2,
+                      ) + "\n",
+                      encoding="utf-8",
                   )
 
-                  print(
-                      f"ERREUR {isin}: {e} — ancien cours conservé"
-                  )
-
-          if successes:
-              payload["updatedAt"] = now
-
-              path.write_text(
-                  json.dumps(
-                      payload,
-                      ensure_ascii=False,
-                      indent=2
-                  ) + "\n",
-                  encoding="utf-8"
+              print(
+                  f"\nRésultat : "
+                  f"{successes}/{len(INSTRUMENTS)} cours récupérés."
               )
 
-          print(
-              f"\nRésultat : "
-              f"{successes}/{len(INSTRUMENTS)} cours récupérés."
-          )
+              if failures:
+                  print("Échecs :")
+                  for failure in failures:
+                      print(" -", failure)
 
-          if failures:
-              print("Échecs :")
+              if successes == 0:
+                  raise SystemExit("Aucun cours récupéré.")
 
-              for failure in failures:
-                  print(
-                      " -",
-                      failure
-                  )
-
-          if successes == 0:
-              raise SystemExit(
-                  "Aucun cours récupéré."
-              )
+          asyncio.run(main())
           PY
 
       - name: Enregistrer quotes.json
@@ -602,7 +617,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add quotes.json
-          git commit -m "Mise à jour automatique des cours et historique"
+          git commit -m "Mise à jour automatique des cours Euronext et historique"
 
           # main peut avoir reçu une modification pendant que ce workflow tournait.
           # On récupère la version distante et on rejoue le commit quotes.json
