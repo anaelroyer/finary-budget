@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- V26.2.10 : PEA — répartition réelle indépendante par profil + libellé non valorisé -->
 <!-- V26.2.09 : Épargne — progression des livrets vers leurs plafonds réglementaires -->
 <!-- V26.2.08 : Firebase — lecture distante obligatoire avant toute écriture ou reconnexion -->
 <!-- V26.2.07 : Épargne — livrets en cartes, libellés fixes et modification par modale -->
@@ -1277,7 +1276,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 
 
 
-/* V26.2.10 — Répartition réelle du PEA en bleu */
+/* V26.1.24 — Allocation Réelle / Cible en bleu */
 .stock-allocation-inline{
   color:#58a6ff!important;
 }
@@ -1702,7 +1701,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
     </div>
 
     <div class="participation-modal-note">
-      La participation est calculée automatiquement à partir du nombre de parts détenues et du nombre total de parts. Si la valeur estimée reste vide, l’actif apparaît comme « non valorisé » et n’est pas inclus dans les totaux chiffrés.
+      La participation est calculée automatiquement à partir du nombre de parts détenues et du nombre total de parts. Si la valeur estimée reste vide, l’actif apparaît comme « Non valorisée » et n’est pas inclus dans les totaux chiffrés.
     </div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" type="button" onclick="closeParticipationModal()">Annuler</button>
@@ -4727,6 +4726,8 @@ function deleteMenuRecipeLink(){
 document.addEventListener('keydown',e=>{
   const settingsModal=document.getElementById('settingsModal');
   if(settingsModal?.classList.contains('active') && e.key==='Escape'){e.preventDefault();closeSettingsModal();return;}
+  const targetModal=document.getElementById('allocationTargetModal');
+  if(targetModal?.classList.contains('active') && e.key==='Escape'){e.preventDefault();closeAllocationTargetModal();return;}
   const modal=document.getElementById('menuRecipeModal');
   const shoppingModal=document.getElementById('menuShoppingModal');
   if(shoppingModal && shoppingModal.classList.contains('active') && e.key==='Escape'){
@@ -6753,21 +6754,23 @@ function submitStockEdit(){
 }
 
 function stockAllocationInlineHtml(item,idx){
-  if(getStockAccount(item)!=='PEA' || !isPeaAllocationEligible(item))return '';
+  if(getStockAccount(item)!=='PEA' || !isAllocationTargetEligible(item))return '';
 
-  const owner=getItemOwner(item,'bourse');
+  ensureV26Data();
+  migrateLegacyAllocationTargets();
+
   const eligible=(data.bourse||[])
     .map((row,index)=>({item:row,index}))
-    .filter(({item:row})=>
-      isPeaAllocationEligible(row) &&
-      getItemOwner(row,'bourse')===owner
-    );
+    .filter(({item})=>isAllocationTargetEligible(item));
 
-  const total=eligible.reduce((sum,{item:row})=>sum+(Number(row?.[1])||0),0);
+  const total=eligible.reduce((sum,{item})=>sum+(Number(item?.[1])||0),0);
   const actual=total>0?((Number(item?.[1])||0)/total*100):0;
+  const target=Number(data.allocationTargets[stockTargetKey(item,idx)])||0;
 
   return `<div class="stock-allocation-inline">
-    <span>Répartition réelle <strong>${actual.toFixed(1)} %</strong></span>
+    <span>Allocation Réelle <strong>${actual.toFixed(1)} %</strong></span>
+    <span>·</span>
+    <span>Cible <strong>${target?target.toFixed(1)+' %':'—'}</strong></span>
   </div>`;
 }
 
@@ -7167,8 +7170,8 @@ function getParticipationCategoryValueLabel(items=getOwnedItems('participations'
   const unvalued=items.length-valued.length;
   const total=valued.reduce((sum,i)=>sum+(Number(i[1])||0),0);
   if(unvalued>0){
-    if(total>0)return `${euro(total)} + ${unvalued} non valorisé${unvalued>1?'s':''}`;
-    return unvalued>1?'non valorisés':'non valorisé';
+    if(total>0)return `${euro(total)} + ${unvalued} non valorisée${unvalued>1?'s':''}`;
+    return unvalued>1?'Non valorisées':'Non valorisée';
   }
   return euro(total);
 }
@@ -7968,7 +7971,7 @@ function render(){
   renderInvoices();
   renderVehicles();
   renderRecurringBudgetSuggestions();
-  renderPeaAllocationSummary();
+  renderAllocationTargetSummary();
 }
 
 function escapeHtml(v){
@@ -8159,7 +8162,7 @@ function openSettingsModal(){
   ensureV26Data();
   renderSettingsArchives();
   renderIgnoredRecurringSettings();
-  renderPeaAllocationSummary();
+  renderAllocationTargetSummary();
   const sync=document.getElementById('settingsSyncState');
   if(sync)sync.textContent=document.getElementById('firebaseStatus')?.textContent||'—';
   document.getElementById('settingsModal')?.classList.add('active');
@@ -8367,72 +8370,89 @@ function promoteRecurringBudget(index){
 }
 
 
-function isPeaAllocationEligible(item){
+function isAllocationTargetEligible(item){
   const meta=getStockMeta(item);
   if(getStockAccount(item)!=='PEA')return false;
   const isin=String(meta.isin||'').trim().toUpperCase();
   const label=normalizeText(item?.[0]||'').trim();
 
   // L'or physique est suivi dans Bourse pour sa valorisation, mais ne fait pas
-  // partie de la répartition du PEA.
+  // partie de l'allocation cible souhaitée.
   if(isin==='IE00B4ND3602')return false;
   if(label.includes('ishares physical gold'))return false;
 
   return true;
 }
 
-
-
-
-
-
-function renderPeaAllocationSummary(){
-  const root=document.getElementById('peaAllocationSummary');if(!root)return;
+function stockTargetKey(item,index){
+  const meta=getStockMeta(item);
+  const base=String(meta.isin||item?.[0]||`ligne-${index}`).trim().toUpperCase();
+  return `${getStockAccount(item)}:${base}`;
+}
+function migrateLegacyAllocationTargets(){
+  ensureV26Data();
+  (data.bourse||[]).forEach((item,index)=>{
+    if(getStockAccount(item)!=='PEA')return;
+    const meta=getStockMeta(item);
+    const legacy=String(meta.isin||item?.[0]||`ligne-${index}`).trim().toUpperCase();
+    const modern=stockTargetKey(item,index);
+    if(data.allocationTargets[modern]===undefined && data.allocationTargets[legacy]!==undefined){
+      data.allocationTargets[modern]=data.allocationTargets[legacy];
+      delete data.allocationTargets[legacy];
+    }
+  });
+}
+function openAllocationTargetModal(){
   ensureV26Data();
   ensureStockAccounts();
-
-  const owner=(typeof activePatrimoineOwner==='string' && activePatrimoineOwner)
-    ? activePatrimoineOwner
-    : 'household';
-
+  migrateLegacyAllocationTargets();
+  delete data.allocationTargets['IE00B4ND3602'];
+  const root=document.getElementById('allocationTargetFields');if(!root)return;
+  root.innerHTML=(data.bourse||[])
+    .map((item,index)=>({item,index}))
+    .filter(({item})=>isAllocationTargetEligible(item))
+    .map(({item,index})=>{
+    const key=stockTargetKey(item,index);
+    const current=Number(data.allocationTargets[key])||0;
+    return `<div class="modal-field"><label>${escapeHtml(item?.[0]||key)}</label>
+      <div style="display:flex;align-items:center;gap:8px"><input type="number" min="0" max="100" step="0.1" value="${current||''}" data-target-key="${escapeHtml(key)}" placeholder="0"><span>%</span></div></div>`;
+  }).join('') || '<div class="muted" style="text-transform:none">Ajoute d’abord des lignes dans Bourse.</div>';
+  document.getElementById('allocationTargetModal')?.classList.add('active');
+}
+function closeAllocationTargetModal(){document.getElementById('allocationTargetModal')?.classList.remove('active');}
+function saveAllocationTargets(){
+  ensureV26Data();
+  delete data.allocationTargets['IE00B4ND3602'];
+  document.querySelectorAll('#allocationTargetFields [data-target-key]').forEach(input=>{
+    const val=Math.max(0,Math.min(100,Number(input.value)||0));
+    if(val>0)data.allocationTargets[input.dataset.targetKey]=val;
+    else delete data.allocationTargets[input.dataset.targetKey];
+  });
+  save();closeAllocationTargetModal();render();
+  if(document.getElementById('settingsModal')?.classList.contains('active'))renderAllocationTargetSummary();
+}
+function renderAllocationTargetSummary(){
+  const root=document.getElementById('allocationTargetSummary');if(!root)return;
+  ensureV26Data();
+  ensureStockAccounts();
+  migrateLegacyAllocationTargets();
   const eligible=(data.bourse||[])
     .map((item,index)=>({item,index}))
-    .filter(({item})=>
-      isPeaAllocationEligible(item) &&
-      getItemOwner(item,'bourse')===owner
-    );
-
-  const total=eligible.reduce((sum,{item})=>sum+(Number(item?.[1])||0),0);
-  const ownerLabel=getPatrimoineOwnerLabel(owner);
-
-  if(!eligible.length || total<=0){
-    root.innerHTML=`<div class="smart-row"><div class="smart-row-main">
-      <div class="smart-row-title">${escapeHtml(ownerLabel)}</div>
-      <div class="smart-row-sub">Aucune ligne PEA valorisée pour ce profil.</div>
-    </div></div>`;
-    return;
-  }
-
-  const rows=eligible
-    .map(({item,index})=>({
-      label:item?.[0]||`Ligne ${index+1}`,
-      amount:Number(item?.[1])||0,
-      actual:(Number(item?.[1])||0)/total*100
-    }))
-    .sort((a,b)=>b.amount-a.amount);
-
-  root.innerHTML=`<div class="smart-row"><div class="smart-row-main">
-    <div class="smart-row-title">${escapeHtml(ownerLabel)}</div>
-    <div class="smart-row-sub">Total PEA · ${euro(total)}</div>
-  </div></div>`+
-  rows.map(r=>`
-    <div class="smart-row"><div class="smart-row-main">
-      <div class="smart-row-title">${escapeHtml(r.label)}</div>
-      <div class="smart-row-sub">${r.actual.toFixed(1)} % du PEA · ${euro(r.amount)}</div>
-      <div class="target-bar"><span style="width:${Math.min(100,Math.max(0,r.actual))}%"></span></div>
-    </div></div>`).join('');
+    .filter(({item})=>isAllocationTargetEligible(item));
+  const total=eligible.reduce((s,{item})=>s+(Number(item?.[1])||0),0);
+  const rows=eligible.map(({item,index})=>{
+    const key=stockTargetKey(item,index),target=Number(data.allocationTargets[key])||0;
+    if(!target)return null;
+    const actual=total>0?(Number(item?.[1])||0)/total*100:0;
+    const diff=actual-target;
+    return {label:item?.[0]||key,target,actual,diff};
+  }).filter(Boolean);
+  if(!rows.length){root.innerHTML='Aucune cible définie.';return;}
+  root.innerHTML=rows.map(r=>`
+    <div class="smart-row"><div class="smart-row-main"><div class="smart-row-title">${escapeHtml(r.label)}</div>
+    <div class="smart-row-sub">Réel ${r.actual.toFixed(1)} % · cible ${r.target.toFixed(1)} % · écart ${r.diff>=0?'+':''}${r.diff.toFixed(1)} pt</div>
+    <div class="target-bar"><span style="width:${Math.min(100,Math.max(0,r.actual))}%"></span></div></div></div>`).join('');
 }
-
 
 function getInvoiceLinkedElementLabel(invoice){
   if(invoice?.vehicleId)return `🚗 ${getGarageVehicleLabel(invoice.vehicleId)}`;
@@ -8842,8 +8862,8 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
 
   const categoryValueText=c=>{
     if(c?.key==='participations'&&Number(c.unvaluedCount)>0){
-      if(Number(c.total)>0)return `${euro(c.total)} + ${c.unvaluedCount} non valorisé${c.unvaluedCount>1?'s':''}`;
-      return c.unvaluedCount>1?'non valorisés':'non valorisé';
+      if(Number(c.total)>0)return `${euro(c.total)} + ${c.unvaluedCount} non valorisée${c.unvaluedCount>1?'s':''}`;
+      return c.unvaluedCount>1?'Non valorisées':'Non valorisée';
     }
     return euro(Number(c?.total)||0);
   };
@@ -8926,7 +8946,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
           ? `<div class="acq-report"><div class="acq-report-title">Historique des acquisitions</div>${m.acquisitions.map(a=>`<div class="acq-report-row"><span>${esc(formatParticipationDate(a.date))}</span><strong>+${Number(a.shares||0).toLocaleString('fr-FR')} parts</strong></div>`).join('')}</div>`
           : '';
         return `<div class="detail-card investment-report-card">
-          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">Participation : ${esc(formatParticipationPercent(m.percentage))} — ${esc(formatParticipationParts(m.ownedShares,m.totalShares))}</div></div><div class="detail-value">${m.valuationKnown?euro(i.amount):'non valorisé'}${m.valuationKnown?'':'<span>non incluse dans les totaux</span>'}</div></div>
+          <div class="detail-head"><div><strong>${esc(i.label)}</strong><div class="detail-sub">Participation : ${esc(formatParticipationPercent(m.percentage))} — ${esc(formatParticipationParts(m.ownedShares,m.totalShares))}</div></div><div class="detail-value">${m.valuationKnown?euro(i.amount):'Non valorisée'}${m.valuationKnown?'':'<span>non incluse dans les totaux</span>'}</div></div>
           <div class="metric-grid compact"><div><span>Parts détenues</span><strong>${esc(formatParticipationParts(m.ownedShares,m.totalShares))}</strong></div><div><span>Exploitation / activité</span><strong>${esc(m.activity||'—')}</strong></div><div><span>Localisation</span><strong>${esc(m.location||'—')}</strong></div></div>
           ${acq}
         </div>`;
@@ -9047,7 +9067,7 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
   model.categories.forEach(c=>{
     const weight=c.key==='dettes'?'':` · ${(Number(c.weight)||0).toLocaleString('fr-FR',{maximumFractionDigits:1})} % des actifs`;
     const categoryValue=c.key==='participations'&&Number(c.unvaluedCount)>0
-      ? (Number(c.total)>0?`${euro(c.total)} + ${c.unvaluedCount} non valorisé${c.unvaluedCount>1?'s':''}`:(c.unvaluedCount>1?'non valorisés':'non valorisé'))
+      ? (Number(c.total)>0?`${euro(c.total)} + ${c.unvaluedCount} non valorisée${c.unvaluedCount>1?'s':''}`:(c.unvaluedCount>1?'Non valorisées':'Non valorisée'))
       : euro(c.total);
     lines.push(`${c.label} : ${categoryValue}${weight} · ${c.count} ligne${c.count>1?'s':''}`);
   });
@@ -9117,7 +9137,7 @@ function buildPatrimoineReportText(model=getPatrimoineReportModel()){
     if(c.key==='participations'){
       c.items.forEach(i=>{
         const m=i.participationMeta||{};
-        lines.push(`• ${i.label} : ${m.valuationKnown?euro(i.amount):'non valorisé (non incluse dans les totaux)'}`);
+        lines.push(`• ${i.label} : ${m.valuationKnown?euro(i.amount):'Non valorisée (non incluse dans les totaux)'}`);
         lines.push(`  Participation : ${formatParticipationPercent(m.percentage)} · ${formatParticipationParts(m.ownedShares,m.totalShares)}`);
         if(m.activity)lines.push(`  Exploitation / activité : ${m.activity}`);
         if(m.location)lines.push(`  Localisation : ${m.location}`);
@@ -13355,6 +13375,20 @@ if(window.visualViewport){
 </div>
 
 
+<div class="modal-overlay" id="allocationTargetModal" onclick="if(event.target===this)closeAllocationTargetModal()">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto">
+    <h3>🎯 Allocation cible — PEA</h3>
+    <div class="muted" style="text-transform:none">Indique le poids cible de chaque ligne. Le total peut être ajusté librement.</div>
+    <div id="allocationTargetFields"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeAllocationTargetModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveAllocationTargets()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+
 <div class="modal-overlay" id="loyaltyCardModal" onclick="if(event.target===this)closeLoyaltyCardModal()">
   <div class="modal" style="max-width:430px;max-height:92vh;overflow-y:auto">
     <h3 id="loyaltyCardModalTitle">Ajouter une carte de fidélité</h3>
@@ -13528,9 +13562,11 @@ if(window.visualViewport){
     </div>
 
     <div class="settings-section">
-      <div style="font-weight:700">📊 Répartition réelle — PEA</div>
-      <div class="muted" style="text-transform:none;margin-top:3px">Répartition automatique du PEA du profil actuellement sélectionné.</div>
-      <div id="peaAllocationSummary" class="muted" style="text-transform:none;margin-top:8px">Aucune ligne PEA valorisée.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="font-weight:700">🎯 Allocation cible — PEA</div>
+        <button class="btn btn-secondary" onclick="openAllocationTargetModal()" style="padding:6px 8px;font-size:10px">Modifier</button>
+      </div>
+      <div id="allocationTargetSummary" class="muted" style="text-transform:none;margin-top:8px">Aucune cible définie.</div>
     </div>
 
     <div class="settings-section">
