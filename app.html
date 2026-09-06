@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
 <!-- V26.2.11 : PEA — exclusion des liquidités Trade Republic du calcul de répartition -->
 <!-- V26.2.10 : PEA — répartition réelle par profil + comptes bancaires plus lisibles + libellé non valorisé -->
 <!-- V26.2.09 : Épargne — progression des livrets vers leurs plafonds réglementaires -->
@@ -35,7 +36,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-HuB6p8hd1nkJOA2DZ9QCZe9eHMzh00QqwJpLRCHAPeU=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-6+RRbk0Ep9S5rZ6WId5tAhgH2mcagHCK8hKTJeRiuWg=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -3778,8 +3779,10 @@ const BUDGET_EXPENSE_CATEGORIES=[
   {id:'maison',label:'🛠️ Maison & travaux'},
   {id:'transport',label:'🚗 Transport'},
   {id:'enfants',label:'🎓 Enfants & éducation'},
+  {id:'animaux',label:'🐾 Animaux'},
   {id:'sante',label:'💊 Santé'},
   {id:'beaute',label:'✂️ Beauté'},
+  {id:'tabac',label:'🚬 Tabac'},
   {id:'restaurants',label:'🍽️ Restaurants & sorties'},
   {id:'loisirs',label:'🛍️ Loisirs & achats'},
   {id:'abonnements',label:'📱 Abonnements & services'},
@@ -3802,8 +3805,10 @@ const BUDGET_KEYWORDS={
   maison:['leroy merlin','castorama','brico depot','bricodepot','bricomarche','mr bricolage','weldom','ikea','maisons du monde','maison du monde','conforama','but ','but.fr','jysk','action','gifi','b&m','centrakor','la foir fouille','foir fouille','manomano','brico cash','lapeyre','point p','chausson materiaux','gedimat','saint maclou','4 murs','alinea','zodio','habitat','homebox'],
   transport:['totalenergies','total access','total ','esso','shell','avia','bp ','dyneff','eni ','agip','station service','carburant','essence','gazole','diesel','sans plomb','sp95','sp98','e10','e85','adblue','norauto','feu vert','midas','speedy','carter cash','road y','euromaster','first stop','allopneus','1001 pneus','vroomly','autodoc','oscaro','mister auto','parking','indigo','effia','vinci autoroutes','ulys','bip&go','peage','sncf','ouigo','blablacar','ratp','bibus','tan nantes','ter bretagne','uber','bolt'],
   enfants:['ecole','college','lycee','cantine','scolarite','fournitures scolaires','papeterie','auto ecole','auto-ecole','permis enfant','permis','pension scolaire','internat','garderie','creche','centre loisirs','centre de loisirs','activite enfant'],
+  animaux:['Saïan','Saian','animal','animaux','animalerie','animaleries','chien','chiens','chiot','chiots','chat','chats','chaton','chatons','veterinaire','vétérinaire','veto','véto','clinique veterinaire','clinique vétérinaire','croquette','croquettes','patee','pâtée','litiere','litière','toilettage','toiletteur','toiletteuse','education canine','éducation canine','educateur canin','éducateur canin','pension canine','pension animale','chenil','refuge animalier','zooplus','maxi zoo','maxizoo','wanimo','zoomalia','ultra premium direct','royal canin','purina','pro plan','hill s','virbac','frontline','seresto'],
   sante:['pharmacie','parapharmacie','doctolib','medecin','dentiste','orthodont','kine','osteopathe','opticien','krys','afflelou','optical center','generale d optique','grandoptical','mutuelle','securite sociale','cpam','ameli'],
   beaute:['sephora','marionnaud','nocibe','yves rocher','coiffeur','barbier','epilation','body minute','institut beaute','beaute','salon coiffure'],
+  tabac:['tabac','bureau de tabac','buraliste','cigarette','cigarettes','cigare','cigares','civette','tabac presse','presse tabac','iqos','e cigarette','cigarette electronique','cigarette électronique','vapoteuse','vapotage','vape shop'],
   restaurants:['mcdonald','mcdo','burger king','kfc','subway','dominos','domino s','pizza hut','buffalo grill','courtepaille','flunch','quick','sushi shop','del arte','bistro regent','hippopotamus','restaurant','brasserie','creperie','pizzeria','uber eats','ubereats','deliveroo','just eat','bar ','cafe ','starbucks','columbus cafe'],
   loisirs:['amazon','amzn','fnac','darty','boulanger','cdiscount','electro depot','apple store','decathlon','intersport','go sport','kiabi','gemo','h&m','zara','celio','jules','cache cache','bonobo','uniqlo','primark','lacoste','armor lux','armor-lux','levis','levi s','courir','foot locker','zalando','veepee','vinted','tissot','yema','cinema','cineville','pathe','ugc','bowling','parc attraction','futuroscope','disneyland','puy du fou','librairie','joueclub','joue club','king jouet','cultura'],
   abonnements:['netflix','spotify','deezer','disney+','disney plus','prime video','amazon prime','canal+','canal plus','youtube premium','apple music','icloud','google one','microsoft 365','office 365','orange','sosh','sfr','red by sfr','red sfr','bouygues telecom','b&you','b and you','free mobile','freebox','box internet','internet','telephone mobile','forfait mobile'],
@@ -3881,7 +3886,7 @@ function detectBudgetCategory(key,label){
   const vehicleMatch=getVehicleKeywords().some(k=>budgetTextHas(text,k));
   const fuelOrStation=[...(BUDGET_KEYWORDS.transport||[]),...(BUDGET_KEYWORDS.courses||[])].some(k=>budgetTextHas(text,k));
   if(vehicleMatch&&fuelOrStation)return 'transport';
-  const priorities=['epargne','credits','impots','sante','beaute','enfants','abonnements','transport','restaurants','maison','logement','courses','loisirs'];
+  const priorities=['epargne','credits','impots','animaux','sante','tabac','beaute','enfants','abonnements','transport','restaurants','maison','logement','courses','loisirs'];
   for(const id of priorities){if((BUDGET_KEYWORDS[id]||[]).some(k=>budgetTextHas(text,k)))return id;}
   return 'autres';
 }
