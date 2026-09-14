@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
 <!-- V26.2.11 : PEA — exclusion des liquidités Trade Republic du calcul de répartition -->
 <!-- V26.2.10 : PEA — répartition réelle par profil + comptes bancaires plus lisibles + libellé non valorisé -->
@@ -9551,15 +9552,25 @@ function closeMonth(){
   const revenusCourants=data.budgetRevenus||[];
   const fixesCourants=data.budgetFixes||[];
   const depensesCourantes=data.budgetDepenses||[];
+  const virementsCourants=data.bankTransfers||[];
 
-  // Règle de clôture Dépenses :
-  // - cochées = réalisées pendant le mois, donc archivées puis supprimées ;
-  // - non cochées = non réalisées, donc reconduites au mois suivant et exclues de l'historique.
+  // Clôture : seules les lignes réellement cochées / effectuées alimentent l'historique.
+  const revenusArchives=revenusCourants.filter(item=>item[2]===true);
+  const fixesArchives=fixesCourants.filter(item=>item[2]===true);
   const depensesArchivees=depensesCourantes.filter(item=>item[2]===true);
   const depensesReconduites=depensesCourantes.filter(item=>item[2]!==true);
+  const virementsArchives=virementsCourants.filter(t=>t.done===true);
 
-  const rev=revenusCourants.reduce((s,i)=>s+(Number(i[1])||0),0);
-  const fixes=fixesCourants.reduce((s,i)=>s+(Number(i[1])||0),0);
+  // Virements reconduits :
+  // - permanent : toujours reconduit, puis remis en attente ;
+  // - occasionnel non effectué : reconduit en attente ;
+  // - occasionnel effectué : archivé puis supprimé.
+  const virementsReconduits=virementsCourants
+    .filter(t=>t.recurrence==='permanent'||t.done!==true)
+    .map(t=>({...t,done:false}));
+
+  const rev=revenusArchives.reduce((s,i)=>s+(Number(i[1])||0),0);
+  const fixes=fixesArchives.reduce((s,i)=>s+(Number(i[1])||0),0);
   const dep=depensesArchivees.reduce((s,i)=>s+(Number(i[1])||0),0);
   const reste=rev-fixes-dep;
 
@@ -9567,7 +9578,7 @@ function closeMonth(){
     revenusCourants.length>0 ||
     fixesCourants.length>0 ||
     depensesCourantes.length>0 ||
-    (data.bankTransfers||[]).length>0;
+    virementsCourants.length>0;
 
   const alreadyClosed=monthHistory.some(m=>
     normalizeText(m.month)===normalizeText(monthLabel)
@@ -9579,24 +9590,32 @@ function closeMonth(){
   }
 
   let message=`Clôturer ${monthLabel} ?\n\n`;
-  message+=`Revenus : ${euro(rev)}\n`;
-  message+=`Frais fixes : ${euro(fixes)}\n`;
-  message+=`Dépenses archivées : ${euro(dep)}\n`;
+  message+=`Entrées cochées : ${euro(rev)}\n`;
+  message+=`Frais fixes cochés : ${euro(fixes)}\n`;
+  message+=`Dépenses cochées : ${euro(dep)}\n`;
+  message+=`Virements effectués : ${virementsArchives.length}\n`;
   message+=`Reste à vivre : ${euro(reste)}\n\n`;
 
   if(depensesReconduites.length){
-    message+=`${depensesReconduites.length} dépense${depensesReconduites.length>1?'s':''} non cochée${depensesReconduites.length>1?'s':''} sera${depensesReconduites.length>1?'ont':''} reconduite${depensesReconduites.length>1?'s':''} au mois suivant et exclue${depensesReconduites.length>1?'s':''} de l'historique.\n\n`;
+    message+=`${depensesReconduites.length} dépense${depensesReconduites.length>1?'s':''} non cochée${depensesReconduites.length>1?'s':''} sera${depensesReconduites.length>1?'ont':''} reconduite${depensesReconduites.length>1?'s':''} au mois suivant et exclue${depensesReconduites.length>1?'s':''} de l'historique.\n`;
   }
+
+  const virementsEnAttente=virementsCourants.filter(t=>t.done!==true).length;
+  if(virementsEnAttente){
+    message+=`${virementsEnAttente} virement${virementsEnAttente>1?'s':''} en attente sera${virementsEnAttente>1?'ont':''} reconduit${virementsEnAttente>1?'s':''} au mois suivant et exclu${virementsEnAttente>1?'s':''} de l'historique.\n`;
+  }
+
+  if(depensesReconduites.length||virementsEnAttente)message+='\n';
 
   if(!hasAnyData){
     message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
   }
 
   message+=`Après clôture :\n`;
-  message+=`• Dépenses : les lignes cochées sont archivées puis supprimées ; seules les lignes non cochées sont reconduites et restent décochées.\n`;
-  message+=`• Frais fixes : toutes les lignes sont conservées et décochées.\n`;
-  message+=`• Entrées : les lignes de salaire et les autres revenus récurrents prévus sont conservés et décochés.\n`;
-  message+=`• Virements : les occasionnels sont supprimés et les permanents reconduits.`;
+  message+=`• Dépenses : les lignes cochées sont archivées puis supprimées ; les non cochées sont reconduites.\n`;
+  message+=`• Frais fixes : seules les lignes cochées sont archivées ; toutes les lignes sont conservées puis décochées.\n`;
+  message+=`• Entrées : seules les lignes cochées sont archivées ; toutes les lignes sont conservées puis décochées.\n`;
+  message+=`• Virements : seuls les virements effectués sont archivés ; les virements en attente sont reconduits. Les permanents sont toujours reconduits et remis en attente.`;
 
   if(!confirm(message))return;
 
@@ -9606,62 +9625,44 @@ function closeMonth(){
     fixes:fixes,
     depenses:dep,
     resteVivre:reste,
-    revenusDetails:revenusCourants.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
-    fixesDetails:fixesCourants.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    revenusDetails:revenusArchives.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    fixesDetails:fixesArchives.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
     depensesDetails:depensesArchivees.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
-    transfersDetails:(data.bankTransfers||[]).map(t=>({
+    transfersDetails:virementsArchives.map(t=>({
       ...JSON.parse(JSON.stringify(t)),
       fromName:getBankAccountName(t.from),
       toName:getBankAccountName(t.to)
     }))
   });
 
-  // Les dépenses non cochées sont les seules reconduites ; elles restent décochées
-  // pour le nouveau mois et ne figurent pas dans l'historique qui vient d'être créé.
+  // Dépenses : seules les non cochées sont reportées au mois suivant.
   data.budgetDepenses=depensesReconduites.map(item=>{
     const next=[...item];
     next[2]=false;
     return next;
   });
 
-  // Les virements occasionnels disparaissent après la clôture.
-  // Les permanents sont reconduits pour le nouveau cycle et repassent en "non effectué".
-  data.bankTransfers=(data.bankTransfers||[])
-    .filter(t=>t.recurrence==='permanent')
-    .map(t=>({...t,done:false}));
+  // Frais fixes : toutes les lignes restent présentes, mais repartent décochées.
+  data.budgetFixes=fixesCourants.map(item=>{
+    const next=[...item];
+    next[2]=false;
+    return next;
+  });
 
-  // Les frais fixes sont tous conservés, mais repartent décochés.
-  if(data.budgetFixes){
-    data.budgetFixes=data.budgetFixes.map(item=>{
-      const next=[...item];
-      next[2]=false;
-      return next;
-    });
-  }
+  // Entrées : toutes les lignes restent présentes, mais repartent décochées.
+  data.budgetRevenus=revenusCourants.map(item=>{
+    const next=[...item];
+    next[2]=false;
+    return next;
+  });
 
-  // Seules les entrées récurrentes personnelles sont reconduites.
-  // Comparaison insensible aux accents et à la casse.
-  const revenusAConserver=new Set([
-    'negatif/positif',
-    'allocations familliales',
-    'papa av enfants'
-  ]);
-
-  data.budgetRevenus=revenusCourants
-    .filter(item=>{
-      const label=normalizeText(item[0]).trim();
-      return revenusAConserver.has(label)||label.startsWith('salaire ');
-    })
-    .map(item=>{
-      const next=[...item];
-      next[2]=false;
-      return next;
-    });
+  // Virements : les occasionnels effectués disparaissent après archivage ;
+  // les occasionnels en attente et tous les permanents sont reconduits décochés.
+  data.bankTransfers=virementsReconduits;
 
   render();
   save();
 }
-
 function normalizeText(str){
   if(!str)return '';
   return String(str)
