@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-Qk8E6ick5ZDtxjjT55pbukLApMTcY5JYAbmhBLWXU7A=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-zHHK5jhnHC9iWvUU1+kdv4tSVZPJlVG1RSrZ1/uFEJU=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2118,6 +2118,17 @@ body > .modal-overlay canvas{
 #v28-patrimoine .vassetrow .vopen{
   display:none!important;
 }
+
+
+/* V28.8.31 — Échéances & alertes réellement ouvrable/repliable */
+.vvehiclealerthead{
+ width:100%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;
+ min-height:42px!important;padding:0!important;border:0!important;background:transparent!important;
+ color:#f4fbff!important;text-align:left!important;cursor:pointer!important
+}
+.vvehiclealerthead b{font-size:14px!important;font-weight:900!important}
+.vvehiclealerthead span{font-size:17px!important;color:#8fcff5!important;font-weight:900!important}
+.vvehiclealertbody{padding-top:9px!important}
 
 </style>
 </head>
@@ -15624,10 +15635,22 @@ function v28SelectVehicle(i){
  b.click();
  setTimeout(()=>{try{renderVehicles?.()}catch(_){};v28RenderMobile()},30);
 }
+
+const v28VehicleOpenSections={alerts:true};
+function v28ToggleVehicleSection(key){
+ v28VehicleOpenSections[key]=!v28VehicleOpenSections[key];
+ v28RenderVehicles();
+}
+
 function v28RenderVehicles(){
  document.getElementById('v28-vehicles').innerHTML=`<div class="vey">Garage</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:10px">Véhicules</h1><button class="vsecondary" onclick="openVehicleModal()">＋ Ajouter</button></div>
  <div class="vpills">${v28VehicleTabs()}</div>
- <div class="vcard"><div class="vhead"><b>🔔 Échéances & alertes</b></div><div class="vmirror">${v28Mirror('vehicle-alerts')}</div></div>
+ <div class="vcard vvehiclealerts">
+ <button class="vvehiclealerthead" type="button" onclick="v28ToggleVehicleSection('alerts')">
+  <b>🔔 Échéances & alertes</b><span>${v28VehicleOpenSections.alerts?'⌃':'⌄'}</span>
+ </button>
+ ${v28VehicleOpenSections.alerts?`<div class="vmirror vvehiclealertbody">${v28Mirror('vehicle-alerts')}</div>`:''}
+ </div>
  <div class="vcard vmirror">${v28Mirror('vehicle-summary-card')}</div>
  <div class="vcard"><div class="vhead"><b>🧾 Factures associées</b><button class="vlink" onclick="openVehicleInvoiceLinkModal()">+ Associer</button></div><div class="vmirror">${v28Mirror('vehicle-invoices')}</div></div>`;
 }
