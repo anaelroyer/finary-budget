@@ -10874,6 +10874,19 @@ body.hide-amounts .tr-cash-balance,body.hide-amounts .tr-cash-compact-card .stoc
 body.hide-amounts .tr-cash-balance::after,body.hide-amounts .tr-cash-compact-card .stock-compact-value strong::after{content:'•••• €';color:#8b949e;position:absolute;left:0;top:0;}
 @media(max-width:360px){.tr-cash-main{grid-template-columns:1fr;}}
 
+
+/* V28.8.36 — mêmes boutons d'ajout dans Budget */
+#v28-budget .vbudgetaddgrid .vsecondary.vbudgetadd{
+  background:linear-gradient(90deg,#4fd0cf 0%,#4ca9f5 100%)!important;
+  color:#03131c!important;
+  border:0!important;
+  min-height:48px!important;
+  border-radius:14px!important;
+  font-weight:900!important;
+  font-size:14px!important;
+  width:100%!important;
+  box-shadow:none!important;
+}
 </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Budget & Patrimoine</div></body></html>`;
 }
 
