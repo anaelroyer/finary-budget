@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.5.1 : Accueil — bouton afficher/masquer les montants -->
+<!-- V28.6.0 : Accueil — menu du jour détaillé + ouverture des recettes -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-wUzC3B+iAn+5wfMUNbM9dMco2h25ULjm+oBbrKi6BG4=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-U9vhLv76VA7/8BTaISr6v3Nw5HqUUKVFdyRCCD1Znhs=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -14601,6 +14601,11 @@ function v28Mirror(id){
  if(!e)return '<div class="vlab">Aucune donnée.</div>';
  return v28StripIds(e.innerHTML).replace(/<details\s+open(\s|>)/gi,'<details$1');
 }
+function v28OpenTodayMeal(i){
+ const target=v28TodayMenuActions?.[i];
+ if(target){target.click();return}
+ v28Go('menus');
+}
 function v28RenderHome(){
  const balances=calculateBankBalances(), accounts=getVisibleBankAccounts();
  const totalCurrent=accounts.reduce((n,a)=>n+(balances[a.id]?.current||0),0);
@@ -14625,28 +14630,60 @@ function v28RenderHome(){
  const p2=Math.min(96,p1+Math.max(4,(100-p1)*.62));
  const p3=Math.min(99,p2+Math.max(2,(100-p2)*.55));
 
- // Menu du jour : lecture du contenu déjà rendu par le moteur historique.
+ // Menu du jour : extraction du vrai menu du jour déjà rendu par l'application.
  let meals=[];
+ const v28TodayMenuActions=[];
  try{
-   const day=(new Date().getDay()+6)%7;
-   const cycle=(data.menuCycle||data.menuWeek||'week1');
-   const candidates=[data.menus?.[cycle]?.[day],data.menus?.[cycle]?.[String(day)],data.menus?.[day],data.menus?.[String(day)]].filter(Boolean);
-   const m=candidates[0];
-   if(m){
-     const add=(label,x)=>{
-       if(!x)return;
-       if(typeof x==='string'){if(x.trim())meals.push([label,x.trim()]);return}
-       const txt=[x.entree,x.plat,x.dessert].filter(Boolean).join(' · ');
-       if(txt)meals.push([label,txt]);
+   const today=new Date().getDay(); // 0 dimanche
+   const roots=[document.getElementById('menuDays'),document.getElementById('menus-container'),document.getElementById('tab-menus')].filter(Boolean);
+   let dayNode=null;
+   const dayNames=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+   for(const root of roots){
+     const nodes=[...root.querySelectorAll('[data-day],.menu-day,.day-card,.menu-day-card,.day')];
+     dayNode=nodes.find(n=>{
+       const d=(n.dataset?.day||n.getAttribute('data-day')||'').toLowerCase();
+       const t=(n.querySelector('h2,h3,h4,.day-title')?.textContent||n.textContent||'').toLowerCase();
+       return d===String(today)||d===dayNames[today]||t.includes(dayNames[today]);
+     });
+     if(dayNode)break;
+   }
+   if(dayNode){
+     const mealNodes=[...dayNode.querySelectorAll('[data-meal],.meal,.menu-meal,.lunch,.dinner')];
+     const pick=(kind,words)=>{
+       let n=mealNodes.find(x=>words.some(w=>((x.dataset?.meal||'')+' '+(x.className||'')+' '+(x.textContent||'')).toLowerCase().includes(w)));
+       if(!n){
+         const all=[...dayNode.querySelectorAll('*')];
+         const label=all.find(x=>words.some(w=>(x.textContent||'').trim().toLowerCase()===w));
+         n=label?.parentElement;
+       }
+       if(!n)return;
+       let title=(n.querySelector('.meal-name,.menu-title,.dish-name,.recipe-name,b,strong')?.textContent||n.textContent||'').trim();
+       title=title.replace(/^(midi|déjeuner|dejeuner|soir|dîner|diner)\s*[:\-–]?\s*/i,'').trim();
+       if(!title)return;
+       const clickable=n.querySelector('button[onclick],a[onclick],button[data-recipe],a[data-recipe],.recipe-link');
+       const idx=v28TodayMenuActions.length;
+       v28TodayMenuActions.push(clickable||null);
+       meals.push([kind,title,idx,!!clickable]);
      };
-     add('Midi',m.midi||m.lunch); add('Soir',m.soir||m.dinner);
+     pick('Midi',['midi','déjeuner','dejeuner','lunch']);
+     pick('Soir',['soir','dîner','diner','dinner']);
    }
  }catch(_){}
- if(!meals.length){
-   const menuText=(document.getElementById('menuDays')?.innerText||'').trim();
-   if(menuText) meals.push(['Aujourd’hui','Consulter le menu prévu']);
+ // Fallback sur la structure de données, si le DOM historique ne fournit pas les deux repas.
+ if(meals.length<2){
+   try{
+     const day=(new Date().getDay()+6)%7;
+     const cycle=(data.menuCycle||data.menuWeek||'week1');
+     const candidates=[data.menus?.[cycle]?.[day],data.menus?.[cycle]?.[String(day)],data.menus?.[day],data.menus?.[String(day)]].filter(Boolean);
+     const m=candidates[0];
+     const add=(label,x)=>{
+       if(!x||meals.some(y=>y[0]===label))return;
+       let txt=typeof x==='string'?x:[x.entree,x.plat,x.dessert].filter(Boolean).join(' · ');
+       if(txt&&txt.trim())meals.push([label,txt.trim(),-1,false]);
+     };
+     if(m){add('Midi',m.midi||m.lunch);add('Soir',m.soir||m.dinner);}
+   }catch(_){}
  }
-
  document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:12px">Aujourd’hui</h1><button class="vsecondary" type="button" onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  <div class="vtopkpis">
    <div class="vtopkpi"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vgreen money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Budget disponible</span></div>
@@ -14671,7 +14708,7 @@ function v28RenderHome(){
  </div>
 
  <div class="vcard"><div class="vhead"><b>🍴 Menu du jour</b><button class="vlink" onclick="v28Go('menus')">Voir la semaine →</button></div>
- ${meals.length?meals.map(([lab,txt])=>`<div class="vmeal"><div class="mi">🍽️</div><div><b>${escapeHtml(txt)}</b><small>${escapeHtml(lab)}</small></div><button class="vlink" onclick="v28Go('menus')">›</button></div>`).join(''):`<div class="vmeal"><div class="mi">🍽️</div><div><b>Aucun menu renseigné aujourd’hui</b><small>Ajoute-le dans Menus</small></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
+ ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmeal"><div class="mi">${lab==='Midi'?'☀️':'🌙'}</div><div><small>${escapeHtml(lab)}</small><b style="display:block;margin-top:3px">${escapeHtml(txt)}</b>${hasRecipe?'<small class="vblue">Recette disponible</small>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmeal"><div class="mi">🍽️</div><div><b>Aucun menu renseigné aujourd’hui</b><small>Ajoute-le dans Menus</small></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
 }
 function v28RenderBudget(){
