@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.8.0 : navigation onglets réparée + swipe horizontal + KPI accueil corrigés -->
+<!-- V28.8.2 : Accueil — vraie courbe d'évolution du patrimoine -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ZRdAuZMDtgPppttcLNj8gT0an8VPV+CfMyY5kODTNQE=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-5dlCjE+x5PN8yhrID+BZx6Tbf7FBY/M/VNKAsCVUXeY=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1599,6 +1599,18 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vaccountbadge.fortuneo{background:#0d3d52;border:1px solid #20b8e5;color:#72ddff}
 .vaccountbadge.credit-agricole{background:#123c32;border:1px solid #37c99a;color:#74f0c5}
 .vaccountbadge.other{background:#202b3b;border:1px solid #536579;color:#c4d0db}
+
+
+/* ===== V28.8.2 vraie courbe patrimoine sur Accueil ===== */
+.vhomecurve{height:150px;position:relative;overflow:hidden;margin-top:4px}
+.vhomecurve svg{display:block;width:100%;height:150px;overflow:visible}
+.vhomecurve .hgrid{stroke:#24394b;stroke-width:1;opacity:.65}
+.vhomecurve .hline{fill:none;stroke:#58a6ff;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.vhomecurve .harea{fill:url(#v28-home-gradient);opacity:.18}
+.vhomecurve .hlabel{fill:#8198aa;font-size:9px}
+.vhomecurve .hlast{fill:#dcecff;font-size:9px;font-weight:800}
+.vhomecurve .hdot{fill:#58a6ff}
+@media(max-width:430px){.vhomecurve,.vhomecurve svg{height:135px}}
 
 </style>
 </head>
@@ -14677,6 +14689,42 @@ function v28OpenTodayMeal(i){
  }
  v28Go('menus');
 }
+function v28RenderHomeCurve(){
+ const host=document.getElementById('v28HomeCurve');if(!host)return;
+ try{
+   const start=new Date();start.setHours(0,0,0,0);start.setMonth(start.getMonth()-6);
+   const ref=getPatrimoineReferenceMonth();
+   const pts=(patrimoineHistory||[])
+     .filter(h=>{
+       if(!h?.date||(h.owner||'household')!==activePatrimoineOwner)return false;
+       if(getPatrimoineMonthKey(h.date)<ref)return false;
+       const d=new Date(`${h.date}T12:00:00`);
+       return d>=start&&Number.isFinite(Number(h.net));
+     })
+     .map(h=>({date:h.date,value:Number(h.net)}))
+     .sort((a,b)=>new Date(a.date)-new Date(b.date));
+   if(pts.length<2){
+     host.innerHTML=`<div class="chart-empty">${pts.length?'Un second relevé est nécessaire pour tracer l’évolution.':'Aucun historique disponible sur 6 mois.'}</div>`;
+     return;
+   }
+   const w=360,h=150,L=43,R=12,T=10,B=25,IW=w-L-R,IH=h-T-B;
+   let min=Math.min(...pts.map(p=>p.value)),max=Math.max(...pts.map(p=>p.value));
+   if(min===max){const m=Math.max(100,Math.abs(min)*.03);min-=m;max+=m}else{const m=(max-min)*.08;min-=m;max+=m}
+   const p=pts.map((d,i)=>({ ...d,x:L+(i/(pts.length-1))*IW,y:T+((max-d.value)/(max-min))*IH }));
+   let line=`M ${p[0].x} ${p[0].y}`;
+   for(let i=0;i<p.length-1;i++){const a=p[i],b=p[i+1],mx=(a.x+b.x)/2;line+=` C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`}
+   const base=h-B,area=`${line} L ${p[p.length-1].x} ${base} L ${p[0].x} ${base} Z`;
+   let grid='';
+   for(let i=0;i<3;i++){const r=i/2,y=T+r*IH,v=max-r*(max-min);grid+=`<line class="hgrid" x1="${L}" y1="${y}" x2="${w-R}" y2="${y}"/><text class="hlabel chart-axis-amount" x="${L-5}" y="${y+3}" text-anchor="end">${formatChartCompactEuro(v)}</text>`}
+   const indexes=[0,Math.round((p.length-1)/2),p.length-1].filter((x,i,a)=>a.indexOf(x)===i);
+   const labels=indexes.map(i=>`<text class="hlabel" x="${p[i].x}" y="${h-7}" text-anchor="${i===0?'start':i===p.length-1?'end':'middle'}">${formatChartDate(p[i].date,false)}</text>`).join('');
+   const last=p[p.length-1];
+   host.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="v28-home-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs>${grid}<path class="harea" d="${area}"/><path class="hline" d="${line}"/>${p.map((x,i)=>`<circle class="hdot" cx="${x.x}" cy="${x.y}" r="${i===p.length-1?4:2}"/>`).join('')}${labels}<text class="hlast chart-axis-amount" x="${w-R}" y="${Math.max(T+9,last.y-8)}" text-anchor="end">${formatChartCompactEuro(last.value)}</text></svg>`;
+ }catch(err){
+   host.innerHTML='<div class="chart-empty">Graphique indisponible.</div>';
+ }
+}
+
 function v28RenderHome(){
  const balances=calculateBankBalances(), accounts=getVisibleBankAccounts();
  const totalCurrent=accounts.reduce((n,a)=>n+(balances[a.id]?.current||0),0);
@@ -14737,7 +14785,7 @@ function v28RenderHome(){
  document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:12px">Aujourd’hui</h1><button class="vsecondary" type="button" onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  <div class="vtopkpis">
    <div class="vtopkpi"><span class="klabel">💳 SOLDE ACTUEL</span><strong class="kvalue vgreen money">${v28Money(totalCurrent)}</strong><span class="ksub">Total de vos comptes</span></div>
-   <div class="vtopkpi"><span class="klabel">↗ PRÉVISIONNEL</span><strong class="kvalue vblue money">${v28Money(totalForecast)}</strong><span class="ksub">Fin de cycle</span></div>
+   <div class="vtopkpi"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vblue money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Budget disponible</span></div>
    <div class="vtopkpi"><span class="klabel">▥ PATRIMOINE NET</span><strong class="kvalue money">${v28Text('net')}</strong><span class="ksub">Vue consolidée</span></div>
  </div>
  <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
@@ -14752,8 +14800,7 @@ function v28RenderHome(){
    </div>
   </div>
   <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">6 mois ›</button></div>
-   <div class="vspark"><i style="height:38%"></i><i style="height:46%"></i><i style="height:52%"></i><i style="height:63%"></i><i style="height:70%"></i><i style="height:88%"></i></div>
-   <div class="vlab" style="margin-top:7px">Avr · Mai · Juin · Juil · Août · Sept</div>
+   <div id="v28HomeCurve" class="vhomecurve"></div>
   </div>
  </div>
 
@@ -14761,6 +14808,7 @@ function v28RenderHome(){
  ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
 
+ setTimeout(v28RenderHomeCurve,0);
 }
 function v28RenderBudget(){
  const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
