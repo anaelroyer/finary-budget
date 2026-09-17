@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-pY/IAOYJdWfKThnTbSehSEBzCy6iTFma81ZtS540tVU=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-Qk8E6ick5ZDtxjjT55pbukLApMTcY5JYAbmhBLWXU7A=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2091,6 +2091,27 @@ body > .modal-overlay canvas{
   font-weight:900;
   white-space:nowrap;
 }
+
+
+/* V28.8.28 — accès rapides aux quatre types d'opérations Budget */
+.vbudgetaddgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 10px}
+.vbudgetaddgrid .vprimary{grid-column:1/-1;margin:0!important;width:100%}
+.vbudgetaddgrid .vbudgetadd{width:100%;min-height:44px;padding:8px 7px;font-size:11px;font-weight:850;line-height:1.15}
+.vbudgetaddgrid .vbudgetadd:last-child{grid-column:1/-1}
+@media(max-width:370px){
+ .vbudgetaddgrid{grid-template-columns:1fr}
+ .vbudgetaddgrid .vprimary,.vbudgetaddgrid .vbudgetadd:last-child{grid-column:auto}
+}
+
+
+/* V28.8.29 — couleurs des récapitulatifs Budget */
+#v28-budget .vbudgetsum{
+  font-weight:950!important;
+  letter-spacing:.1px;
+}
+#v28-budget .vbudgetsum-red{color:#ff5f67!important}
+#v28-budget .vbudgetsum-green{color:#35e59a!important}
+#v28-budget .vbudgetsum-white{color:#f5fbff!important}
 
 </style>
 </head>
@@ -15350,11 +15371,16 @@ function v28RenderBudget(){
  <div class="vhero"><div class="vlab">Reste à vivre estimé</div><div class="vbig vgreen money">${v28Text('budget-reste-vivre')}</div><div class="vlab">Solde actuel — opérations cochées : <b class="money">${v28Text('budget-solde-actuel')}</b></div></div>
  <div class="vactions"><button onclick="openAnnotationsModal()">📝 Notes</button><button onclick="openBankAccountsModal()">🏦 Comptes</button><button onclick="closeMonth()">🔒 Clôturer</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  ${v28Section('accounts','🏦 Soldes par compte','',banks||'<div class="vlab">Aucun compte actif.</div>','<button class="vlink" type="button" onclick="event.preventDefault();event.stopPropagation();openBankAccountsModal()">Gérer</button>')}
- <button class="vprimary" style="margin:8px 0" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
- ${v28Section('expenses','🛒 Dépenses',v28Money(sum('budgetDepenses')),`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetDepenses')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetDepenses','🛒')}</div>`)}
- ${v28Section('fixed','🏠 Frais fixes',v28Money(sum('budgetFixes')),`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetFixes')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetFixes','🏠')}</div>`)}
- ${v28Section('income','📥 Entrées',v28Money(sum('budgetRevenus')),`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetRevenus')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetRevenus','📥')}</div>`)}
- ${v28Section('transfers','⇄ Virements internes',v28Text('bank-transfer-count'),`<div class="vhead"><span></span><button class="vlink" onclick="openBankTransferModal()">+ Ajouter</button></div><div class="vmirror">${v28Mirror('bank-transfers-container')}</div>`)}
+ <div class="vbudgetaddgrid">
+ <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
+ <button class="vsecondary vbudgetadd" onclick="openModal('budgetFixes')">＋ Ajouter un frais fixe</button>
+ <button class="vsecondary vbudgetadd" onclick="openModal('budgetRevenus')">＋ Ajouter une entrée</button>
+ <button class="vsecondary vbudgetadd" onclick="openBankTransferModal()">＋ Ajouter un virement interne</button>
+ </div>
+ ${v28Section('expenses','🛒 Dépenses',`<span class="vbudgetsum vbudgetsum-red">${v28Money(sum('budgetDepenses'))}</span>`,`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetDepenses')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetDepenses','🛒')}</div>`)}
+ ${v28Section('fixed','🏠 Frais fixes',`<span class="vbudgetsum vbudgetsum-red">${v28Money(sum('budgetFixes'))}</span>`,`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetFixes')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetFixes','🏠')}</div>`)}
+ ${v28Section('income','📥 Entrées',`<span class="vbudgetsum vbudgetsum-green">${v28Money(sum('budgetRevenus'))}</span>`,`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetRevenus')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetRevenus','📥')}</div>`)}
+ ${v28Section('transfers','⇄ Virements internes',`<span class="vbudgetsum vbudgetsum-white">${v28Text('bank-transfer-count')}</span>`,`<div class="vhead"><span></span><button class="vlink" onclick="openBankTransferModal()">+ Ajouter</button></div><div class="vmirror">${v28Mirror('bank-transfers-container')}</div>`)}
  ${v28Section('history','🗓 Historique','',`<div class="vmirror">${v28Mirror('history-container')}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="vsecondary" onclick="exportData()">🔐 Exporter</button><button class="vsecondary" onclick="document.getElementById('importFile').click()">⬆ Importer</button></div>`)}
  `;
  setTimeout(()=>{
