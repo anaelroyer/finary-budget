@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-9oUHFgSF/DYZITEYYFEuFEORZlhFYfseos12unGB8DA=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-uY82hYEdofdinNJdyPyaBgwz3sZtmnVrSvtxR4rnOfI=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2032,6 +2032,22 @@ body > .modal-overlay canvas{
 
 /* V28.8.19 — cases profil selon actifs réellement détenus */
 #v28-patrimoine .vkpis{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))!important}
+
+/* V28.8.20 — états de synchronisation cohérents */
+#v28app [id*="sync-status" i],#v28app [class*="sync-status" i]{border-radius:999px!important;padding:5px 9px!important;font-size:11px!important;font-weight:850!important;line-height:1.2!important}
+
+/* V28.8.21 — durée de suivi patrimoine */
+.vrangeselect{width:auto!important;min-width:88px!important;min-height:34px!important;padding:5px 28px 5px 10px!important;border-radius:10px!important;border:1px solid #27475e!important;background:#081522!important;color:#dcecf6!important;font-size:12px!important;font-weight:800!important}
+
+
+/* V28.8.22 — navigation historique du patrimoine */
+.vsnapshotnav{display:grid;grid-template-columns:42px 1fr 42px;gap:8px;align-items:center;margin:10px 0 12px}
+.vsnapshotbtn,.vsnapshotdate{box-sizing:border-box;border:1px solid #27475e!important;background:#0d1a2a!important;color:#edf5fb!important;border-radius:13px!important;min-height:46px!important}
+.vsnapshotbtn{font-size:24px!important;font-weight:900!important}.vsnapshotbtn:disabled{opacity:.28!important}
+.vsnapshotdate{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden}
+.vsnapshotdate span{font-size:10px;color:#89a5b8;font-weight:800;text-transform:uppercase}.vsnapshotdate b{font-size:13px}
+.vsnapshotselect{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer!important}
+.vhistoricalnote{display:flex!important;flex-direction:column!important;gap:5px!important}.vhistoricalnote small{color:#9bb1c1!important;line-height:1.4}
 
 </style>
 </head>
@@ -15112,22 +15128,41 @@ function v28OpenTodayMeal(i){
  }
  v28Go('menus');
 }
+
+const V28_PATRIMOINE_RANGE_KEY='v28PatrimoineRangeMonths';
+function v28GetPatrimoineRange(){
+ const n=Number(localStorage.getItem(V28_PATRIMOINE_RANGE_KEY)??6);
+ return [3,6,12,24,60,0].includes(n)?n:6;
+}
+function v28SetPatrimoineRange(months){
+ localStorage.setItem(V28_PATRIMOINE_RANGE_KEY,String(Number(months)));
+ v28RenderMobile();
+}
+function v28PatrimoineRangeLabel(){
+ const n=v28GetPatrimoineRange();
+ return n===0?'Tout':n===12?'1 an':n===24?'2 ans':n===60?'5 ans':`${n} mois`;
+}
+function v28PatrimoineRangeOptions(){
+ const current=v28GetPatrimoineRange();
+ return `<select class="vrangeselect" aria-label="Durée du suivi du patrimoine" onchange="v28SetPatrimoineRange(this.value)">${[[3,'3 mois'],[6,'6 mois'],[12,'1 an'],[24,'2 ans'],[60,'5 ans'],[0,'Tout']].map(([v,l])=>`<option value="${v}"${current===v?' selected':''}>${l}</option>`).join('')}</select>`;
+}
+
 function v28RenderHomeCurve(owner=activePatrimoineOwner){
  const host=document.getElementById('v28HomeCurve');if(!host)return;
  try{
-   const start=new Date();start.setHours(0,0,0,0);start.setMonth(start.getMonth()-6);
+   const range=v28GetPatrimoineRange();const start=new Date();start.setHours(0,0,0,0);if(range)start.setMonth(start.getMonth()-range);
    const ref=getPatrimoineReferenceMonth();
    const pts=(patrimoineHistory||[])
      .filter(h=>{
-       if(!h?.date||(h.owner||'household')!==activePatrimoineOwner)return false;
+       if(!h?.date||(h.owner||'household')!==owner)return false;
        if(getPatrimoineMonthKey(h.date)<ref)return false;
        const d=new Date(`${h.date}T12:00:00`);
-       return d>=start&&Number.isFinite(Number(h.net));
+       return (!range||d>=start)&&Number.isFinite(Number(h.net));
      })
      .map(h=>({date:h.date,value:Number(h.net)}))
      .sort((a,b)=>new Date(a.date)-new Date(b.date));
    if(pts.length<2){
-     host.innerHTML=`<div class="chart-empty">${pts.length?'Un second relevé est nécessaire pour tracer l’évolution.':'Aucun historique disponible sur 6 mois.'}</div>`;
+     host.innerHTML=`<div class="chart-empty">${pts.length?'Un second relevé est nécessaire pour tracer l’évolution.':`Aucun historique disponible sur ${v28PatrimoineRangeLabel()}.`}</div>`;
      return;
    }
    const w=360,h=150,L=43,R=12,T=10,B=25,IW=w-L-R,IH=h-T-B;
@@ -15378,21 +15413,89 @@ function v28ProfileAssetKpis(owner=activePatrimoineOwner){
  }).join('');
 }
 
+
+function v28OwnedAssetCategoryKeys(owner=activePatrimoineOwner){
+ return ['epargne',...getActiveAssetCategoryKeys()].filter(key=>{
+   try{return (getOwnedItems(key,owner)||[]).length>0}catch(_){return false}
+ });
+}
+function v28HasFinancialAssets(owner=activePatrimoineOwner){
+ return v28OwnedAssetCategoryKeys(owner).some(k=>k!=='immobilier');
+}
+function v28HasPatrimoineHistory(owner=activePatrimoineOwner){
+ try{return Array.isArray(patrimoineHistory)&&patrimoineHistory.some(h=>String(h?.owner||'household')===String(owner||'household'))}
+ catch(_){return false}
+}
+function v28AssetDetailRows(owner=activePatrimoineOwner){
+ return v28OwnedAssetCategoryKeys(owner).map(k=>{
+   const def=ASSET_CATEGORY_MAP[k]||{};
+   const label=k==='epargne'?'Épargne':(def.label||k);
+   const icon=k==='epargne'?'💰':(def.icon||'◆');
+   const total=(getOwnedItems(k,owner)||[]).reduce((s,row)=>s+(Number(Array.isArray(row)?row[1]:0)||0),0);
+   const sub=k==='epargne'?'Livrets, soldes et modifications':k==='bourse'?'Cours, répartition, graphiques et positions':k==='crypto'?'Cours et positions':k==='assurancevie'?'Contrats, valorisations et modifications':'Voir et modifier les montants';
+   return `<div class="vrow vassetrow" onclick="v28OpenAsset('${k}')"><div class="vico">${icon}</div><div><b>${escapeHtml(label)}</b><small>${sub}</small></div><div><div class="vamt money">${v28Money(total)}</div><div class="vopen">›</div></div></div>`;
+ }).join('');
+}
+function v28DebtDetailRow(owner=activePatrimoineOwner){
+ try{
+   const rows=getOwnedItems('dettes',owner)||[];
+   if(!rows.length)return '';
+   const total=rows.reduce((s,row)=>s+(Number(Array.isArray(row)?row[1]:0)||0),0);
+   return `<div class="vrow vassetrow" onclick="v28OpenAsset('dettes')"><div class="vico">🏦</div><div><b>Emprunts</b><small>Capital restant dû et modifications</small></div><div><div class="vamt money">${v28Money(total)}</div><div class="vopen">›</div></div></div>`;
+ }catch(_){return ''}
+}
+
+
+function v28PatrimoineHistoryForOwner(owner=activePatrimoineOwner){
+ try{return (patrimoineHistory||[]).filter(h=>h?.date&&String(h.owner||'household')===String(owner||'household')).sort((a,b)=>new Date(a.date)-new Date(b.date))}
+ catch(_){return []}
+}
+function v28HistoricalSnapshot(){
+ const rows=v28PatrimoineHistoryForOwner(activePatrimoineOwner);
+ const selected=sessionStorage.getItem('v28PatrimoineSnapshotDate')||'';
+ return selected?rows.find(h=>h.date===selected)||null:null;
+}
+function v28SetPatrimoineSnapshot(date){
+ if(date)sessionStorage.setItem('v28PatrimoineSnapshotDate',date);else sessionStorage.removeItem('v28PatrimoineSnapshotDate');
+ v28RenderMobile();
+}
+function v28StepPatrimoineSnapshot(step){
+ const rows=v28PatrimoineHistoryForOwner(activePatrimoineOwner);if(!rows.length)return;
+ const cur=v28HistoricalSnapshot();let i=cur?rows.findIndex(h=>h.date===cur.date):rows.length;
+ i=Math.max(0,Math.min(rows.length-1,i+step));v28SetPatrimoineSnapshot(rows[i].date);
+}
+function v28PatrimoineSnapshotNav(){
+ const rows=v28PatrimoineHistoryForOwner(activePatrimoineOwner);if(!rows.length)return '';
+ const cur=v28HistoricalSnapshot(),idx=cur?rows.findIndex(h=>h.date===cur.date):rows.length;
+ const label=cur?formatChartDate(cur.date,false):'Aujourd’hui';
+ const nextAction=(cur&&idx<rows.length-1)?"v28StepPatrimoineSnapshot(1)":"v28SetPatrimoineSnapshot('')";
+ return `<div class="vsnapshotnav">
+  <button class="vsnapshotbtn" onclick="v28StepPatrimoineSnapshot(-1)" ${idx<=0?'disabled':''}>‹</button>
+  <label class="vsnapshotdate"><span>Patrimoine au</span><b>${escapeHtml(label)}</b>
+   <select class="vsnapshotselect" onchange="v28SetPatrimoineSnapshot(this.value)">
+    <option value=""${!cur?' selected':''}>Aujourd’hui</option>
+    ${rows.slice().reverse().map(h=>`<option value="${h.date}"${cur?.date===h.date?' selected':''}>${formatChartDate(h.date,false)}</option>`).join('')}
+   </select>
+  </label>
+  <button class="vsnapshotbtn" onclick="${nextAction}" ${!cur?'disabled':''}>›</button>
+ </div>`;
+}
+
 function v28RenderPatrimoine(){
  const cats=getActiveAssetCategoryKeys();
  document.getElementById('v28-patrimoine').innerHTML=`<div class="vey">Patrimoine</div><h1 class="vtitle">Vue consolidée</h1>
  <div class="vprofilebar">${v28ProfileButtons()}</div>
- <div class="vhero"><div class="vlab">Patrimoine net · ${escapeHtml(getPatrimoineOwnerLabel(activePatrimoineOwner))}</div><div class="vbig money">${v28Text('net')}</div><div class="vpos">${v28Text('patrimoine-variation-value')}</div></div>
- <div class="vkpis">${v28ProfileAssetKpis(activePatrimoineOwner)}</div>
+ ${v28PatrimoineSnapshotNav()}
+ <div class="vhero"><div class="vlab">Patrimoine net · ${escapeHtml(getPatrimoineOwnerLabel(activePatrimoineOwner))}${v28HistoricalSnapshot()?' · historique':''}</div><div class="vbig money">${v28HistoricalSnapshot()?v28Money(Number(v28HistoricalSnapshot().net)||0):v28Text('net')}</div><div class="vpos">${v28HistoricalSnapshot()?formatChartDate(v28HistoricalSnapshot().date,false):v28Text('patrimoine-variation-value')}</div></div>
+ ${v28HistoricalSnapshot()?`<div class="vcard vhistoricalnote"><b>Vue historique</b><small>Valeur nette enregistrée à cette date. La ventilation détaillée affichée dans l’application correspond aux données actuelles.</small></div>`:`<div class="vkpis">${v28ProfileAssetKpis(activePatrimoineOwner)}</div>`}
  <div class="vactions"><button onclick="printPatrimoineReport()">🖨 Imprimer</button><button onclick="savePatrimoineReportPdf()">📄 PDF</button><button onclick="sharePatrimoineReport()">↗ Partager</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
- <div class="vcard"><div class="vhead"><b>Répartition financière</b><span class="vlab">Hors immobilier & emprunts</span></div>${v28PatrimoineFinancialDonut()}</div>
- <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><span class="vlab">6 mois</span></div><div id="v28PatrimoineCurve" class="vhomecurve vpatcurve"></div></div>
+ ${v28HasFinancialAssets(activePatrimoineOwner)?`<div class="vcard"><div class="vhead"><b>Répartition financière</b><span class="vlab">Hors immobilier & emprunts</span></div>${v28PatrimoineFinancialDonut()}</div>`:''}
+ ${v28HasPatrimoineHistory(activePatrimoineOwner)?`<div class="vcard"><div class="vhead"><b>Évolution patrimoine</b>${v28PatrimoineRangeOptions()}</div><div id="v28PatrimoineCurve" class="vhomecurve vpatcurve"></div></div>`:''}
  <div class="vcard"><div class="vhead"><b>Détail du patrimoine</b><button class="vlink" onclick="document.querySelector('#tab-patrimoine .asset-category-manager-toggle')?.click()">+ Catégorie</button></div>
- <div class="vrow vassetrow" onclick="v28OpenAsset('epargne')"><div class="vico">💰</div><div><b>Épargne</b><small>Livrets, soldes et modifications</small></div><div><div class="vamt money">${v28Text('total-epargne')}</div><div class="vopen">›</div></div></div>
- ${cats.map(k=>`<div class="vrow vassetrow" onclick="v28OpenAsset('${k}')"><div class="vico">${ASSET_CATEGORY_MAP[k]?.icon||'◆'}</div><div><b>${escapeHtml(ASSET_CATEGORY_MAP[k]?.label||k)}</b><small>${k==='bourse'?'Cours, répartition, graphiques et positions':k==='crypto'?'Cours et positions':'Voir et modifier les montants'}</small></div><div><div class="vamt money">${v28Text('total-'+k)}</div><div class="vopen">›</div></div></div>`).join('')}
- <div class="vrow vassetrow" onclick="v28OpenAsset('dettes')"><div class="vico">🏦</div><div><b>Emprunts</b><small>Capital restant dû et modifications</small></div><div><div class="vamt money">${v28Text('total-dettes')}</div><div class="vopen">›</div></div></div>
+ ${v28AssetDetailRows(activePatrimoineOwner)}
+ ${v28DebtDetailRow(activePatrimoineOwner)}
  </div>`;
- setTimeout(v28RenderPatrimoineCurve,0);
+ if(v28HasPatrimoineHistory(activePatrimoineOwner))setTimeout(v28RenderPatrimoineCurve,0);
 }
 function v28VehicleTabs(){
  const legacy=document.getElementById('vehicle-tabs');
