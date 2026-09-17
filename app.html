@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-4EHnROE4b/aegYdQy/HVdLnBrXj8lTgnyXC5R2OMugo=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-JI7yxKut0z89bhqtdecEqB1Elhe5KgTkF+CDjtnJXHo=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1699,6 +1699,76 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vfinanciallegend>div>b{white-space:nowrap}
 @media(max-width:430px){
  .vfinancialdonut{width:138px!important;height:138px!important;min-width:138px}
+}
+
+
+/* V28.8.12 — camembert identique Accueil/Patrimoine + navigation mobile */
+.vdonutgrid{
+  grid-template-columns:150px minmax(0,1fr)!important;
+  column-gap:28px!important;
+  row-gap:12px;
+}
+.vhomefinancialpie{margin-top:10px}
+.vhomefinancialpie .vdonutgrid{width:100%}
+.vfinanciallegend>div{font-size:10px!important;margin:8px 0!important}
+.vfinanciallegend .vlegenddot{margin-right:7px}
+
+.vbottom{column-gap:2px;padding-left:5px;padding-right:5px}
+.vbottom button{
+  font-size:9.5px!important;
+  letter-spacing:-.15px;
+  overflow:hidden;
+  text-overflow:clip;
+}
+@media(max-width:430px){
+  .vdonutgrid{
+    grid-template-columns:138px minmax(0,1fr)!important;
+    column-gap:24px!important;
+  }
+  .vbottom{column-gap:1px;padding-left:3px;padding-right:3px}
+  .vbottom button{font-size:9px!important;padding-left:1px;padding-right:1px}
+  .vbottom button span{font-size:21px!important}
+}
+
+
+/* V28.8.13 — vue mobile identique sur ordinateur */
+#v28app{
+  width:100%!important;
+  max-width:470px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.vbottom{
+  width:100%!important;
+  max-width:470px!important;
+  left:50%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
+}
+
+/* Annule les dimensions spécifiques PC : mêmes cartes et graphiques que mobile */
+@media(min-width:601px){
+  #v28app{
+    width:100%!important;
+    max-width:470px!important;
+  }
+  .vbottom{
+    width:100%!important;
+    max-width:470px!important;
+  }
+  .vhomegrid-stack .vhomecurve,
+  .vhomegrid-stack .vhomecurve svg,
+  .vpatcurve,
+  .vpatcurve svg{
+    height:175px!important;
+  }
+  .vbottom button{
+    min-height:68px;
+    font-size:9.5px!important;
+  }
+  .vbottom button span{
+    font-size:21px!important;
+  }
 }
 
 </style>
@@ -14778,7 +14848,7 @@ function v28OpenTodayMeal(i){
  }
  v28Go('menus');
 }
-function v28RenderHomeCurve(){
+function v28RenderHomeCurve(owner=activePatrimoineOwner){
  const host=document.getElementById('v28HomeCurve');if(!host)return;
  try{
    const start=new Date();start.setHours(0,0,0,0);start.setMonth(start.getMonth()-6);
@@ -14830,13 +14900,13 @@ function v28RenderHome(){
 
  // Patrimoine financier = épargne + investissements, volontairement hors immobilier et emprunts.
  let sav=0, inv=0;
- try{ sav=Number(String(v28Text('savings')).replace(/[^\d,.-]/g,'').replace(/\s/g,'').replace(',','.'))||0 }catch(_){}
- try{ inv=Number(String(v28Text('investments')).replace(/[^\d,.-]/g,'').replace(/\s/g,'').replace(',','.'))||0 }catch(_){}
+ try{
+   sav=getOwnedItems('epargne','household').reduce((s,i)=>s+(Number(i?.[1])||0),0);
+   inv=ASSET_CATEGORY_DEFINITIONS
+     .filter(c=>c.key!=='immobilier')
+     .reduce((sum,c)=>sum+getOwnedItems(c.key,'household').reduce((s,i)=>s+(Number(i?.[1])||0),0),0);
+ }catch(_){}
  const financial=Math.max(0,sav+inv);
- const ps=financial?sav/financial*100:50;
- const p1=Math.max(12,Math.min(88,ps));
- const p2=Math.min(96,p1+Math.max(4,(100-p1)*.62));
- const p3=Math.min(99,p2+Math.max(2,(100-p2)*.55));
 
  // Menu du jour : utilise exactement le modèle de données du module Menus.
  let meals=[];
@@ -14875,7 +14945,7 @@ function v28RenderHome(){
  <div class="vtopkpis">
    <div class="vtopkpi"><span class="klabel">💳 SOLDE ACTUEL</span><strong class="kvalue vgreen money">${v28Money(totalCurrent)}</strong><span class="ksub">Total de vos comptes</span></div>
    <div class="vtopkpi"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vblue money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Budget disponible</span></div>
-   <div class="vtopkpi"><span class="klabel">▥ PATRIMOINE NET</span><strong class="kvalue money">${v28Text('net')}</strong><span class="ksub">Vue consolidée</span></div>
+   <div class="vtopkpi"><span class="klabel">▥ PATRIMOINE NET</span><strong class="kvalue money">${v28Money(calculateNet('household').net)}</strong><span class="ksub">Anaël & Laurène</span></div>
  </div>
  <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
 
@@ -14884,9 +14954,7 @@ function v28RenderHome(){
  <div class="vhomegrid vhomegrid-stack">
   <div class="vcard"><div class="vhead"><b>Patrimoine <span class="vlab">(hors immo/emprunts)</span></b><button class="vlink" onclick="v28Go('patrimoine')">›</button></div>
    <div class="vfinvalue money">${v28Money(financial)}</div>
-   <div class="vfinrow"><div class="vminiDonut" style="--p1:${p1}%;--p2:${p2}%;--p3:${p3}%"><b class="money">${v28Money(financial)}</b></div>
-    <div class="vfinlegend"><div><span>Épargne</span><b class="money">${v28Money(sav)}</b></div><div><span>Investissements</span><b class="money">${v28Money(inv)}</b></div></div>
-   </div>
+   <div class="vhomefinancialpie">${v28PatrimoineFinancialDonut('household')}</div>
   </div>
   <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">6 mois ›</button></div>
    <div id="v28HomeCurve" class="vhomecurve"></div>
@@ -14897,7 +14965,7 @@ function v28RenderHome(){
  ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
 
- setTimeout(v28RenderHomeCurve,0);
+ setTimeout(()=>v28RenderHomeCurve('household'),0);
 }
 function v28RenderBudget(){
  const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
@@ -14964,10 +15032,10 @@ function v28CloseAsset(){
  document.body.style.overflow='';
 }
 
-function v28PatrimoineFinancialDonut(){
+function v28PatrimoineFinancialDonut(owner=activePatrimoineOwner){
  let parts=[];
  try{
-   const sumKey=key=>getOwnedItems(key,activePatrimoineOwner).reduce((sum,item)=>sum+(Number(item?.[1])||0),0);
+   const sumKey=key=>getOwnedItems(key,owner).reduce((sum,item)=>sum+(Number(item?.[1])||0),0);
    const saving=sumKey('epargne');
    if(saving>0)parts.push({key:'epargne',label:'Épargne',value:saving,color:'#45d0c7'});
 
