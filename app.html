@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-JI7yxKut0z89bhqtdecEqB1Elhe5KgTkF+CDjtnJXHo=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ARI/uHi2KZOQjZjXiVECksflCcpepeGc4S7EvEvhPGs=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1793,6 +1793,24 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 #v28-home #v28HomeCurve{
   width:100%!important;
 }
+
+
+/* V28.8.15 — camembert en anneau, sans répétition du montant total */
+.vfinancialdonut:after{
+  display:block!important;
+  content:"";
+  position:absolute;
+  inset:27%;
+  border-radius:50%;
+  background:#0f1d2b;
+  z-index:1;
+  pointer-events:none;
+}
+
+
+/* V28.8.16 — modales historiques accessibles depuis l'interface V28 */
+body > .modal-overlay{z-index:30000}
+body > .modal-overlay.active{display:flex!important}
 
 </style>
 </head>
@@ -6052,6 +6070,7 @@ let patrimoineAmountKey='',patrimoineAmountIndex=-1;
 const patrimoineKeys=getPatrimoineKeys();
 
 function openPatrimoineAmountModal(key,index){
+ try{v28EnsureLegacyModalsVisible()}catch(_){}
   if(!patrimoineKeys.includes(key)||!data[key]||!data[key][index])return;
   patrimoineAmountKey=key;
   patrimoineAmountIndex=index;
@@ -6105,6 +6124,7 @@ function submitPatrimoineAmount(){
 let activeSavingsEditIndex=-1;
 
 function openSavingsEditModal(index=-1){
+ try{v28EnsureLegacyModalsVisible()}catch(_){}
   const editing=Number.isInteger(index)&&index>=0&&Array.isArray(data.epargne?.[index]);
   if(editing&&getItemOwner(data.epargne[index],'epargne')!==activePatrimoineOwner)return;
   activeSavingsEditIndex=editing?index:-1;
@@ -15024,12 +15044,18 @@ function v28RenderBudget(){
  },0);
 
 }
+function v28EnsureLegacyModalsVisible(){
+ document.querySelectorAll('.wrap .modal-overlay').forEach(modal=>{
+   if(modal.parentNode!==document.body)document.body.appendChild(modal);
+ });
+}
 function v28ProfileButtons(){
  return PATRIMOINE_OWNERS.map(o=>`<button class="${o.id===activePatrimoineOwner?'on':''}" onclick="setPatrimoineOwner('${o.id}');setTimeout(v28RenderMobile,0)">${escapeHtml(getPatrimoineOwnerLabel(o.id))}</button>`).join('')+
  `<button onclick="renamePatrimoineProfiles()">✎ Renommer</button>`;
 }
 let v28PortalCard=null,v28PortalParent=null,v28PortalNext=null;
 function v28OpenAsset(key){
+ v28EnsureLegacyModalsVisible();
  const card=document.querySelector(`#tab-patrimoine [data-asset-accordion="${key}"]`);
  if(!card)return;
  v28CloseAsset();
@@ -15168,6 +15194,7 @@ function v28RenderMenus(){
  <div class="vcard vmirror"><div class="vhead"><b>${v28Text('menuPeriodTitle')}</b></div>${v28Mirror('menuDays')}</div>`;
 }
 function v28RenderMobile(){
+ v28EnsureLegacyModalsVisible();
  const jobs=[
   ['home',v28RenderHome],['budget',v28RenderBudget],['patrimoine',v28RenderPatrimoine],
   ['vehicles',v28RenderVehicles],['factures',v28RenderFactures],
