@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.8.7 : une seule pastille banque par ligne Budget -->
+<!-- V28.8.10 : KPIs Patrimoine Epargne / Bourse / Crypto -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-pZVl6CdlqPNSgoOEtC6yO1CpwLOcRmAU/q32xIkKxHw=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-0hKmD2/NhoQ+zpJmk1O/bdAVHtgQOutyflsI75KY/l0=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1625,6 +1625,55 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 @media(max-width:430px){
  .vhomegrid-stack .vhomecurve,.vhomegrid-stack .vhomecurve svg{height:175px}
 }
+
+
+/* V28.8.8 — onglets plus confortables + accueil élargi sur écran large */
+.vbottom{min-height:76px}
+.vbottom button{min-height:68px;padding:9px 2px 8px;font-size:11px;line-height:1.15}
+.vbottom button span{font-size:22px;line-height:25px;margin-bottom:3px}
+
+@media (max-width:600px){
+  #v28app{max-width:470px}
+}
+
+@media (min-width:601px){
+  #v28app{
+    width:min(820px,calc(100vw - 32px));
+    max-width:820px;
+  }
+  .vbottom{
+    width:min(820px,calc(100vw - 32px));
+    max-width:820px;
+    left:50%;
+    right:auto;
+    transform:translateX(-50%);
+  }
+  .vbottom button{min-height:72px;font-size:12px}
+  .vbottom button span{font-size:24px}
+
+  .vhomegrid.vhomegrid-stack{
+    grid-template-columns:minmax(0,1fr);
+    width:100%;
+  }
+  .vhomegrid-stack .vcard{width:100%;min-width:0}
+  .vhomegrid-stack .vhomecurve,
+  .vhomegrid-stack .vhomecurve svg{
+    width:100% !important;
+    height:220px;
+  }
+}
+
+
+/* V28.8.9 — Patrimoine : répartition financière hors immo/emprunts + courbe */
+.vfinancialdonut{position:relative}
+.vfinancialdonut:after{
+ content:"";position:absolute;inset:22%;border-radius:50%;
+ background:#111923;
+}
+.vfinancialdonut b{position:relative;z-index:2}
+.vlegenddot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.vpatcurve,.vpatcurve svg{width:100%!important;height:190px}
+@media(min-width:601px){.vpatcurve,.vpatcurve svg{height:220px}}
 
 </style>
 </head>
@@ -14888,19 +14937,64 @@ function v28CloseAsset(){
  if(portal)portal.classList.remove('on');
  document.body.style.overflow='';
 }
+
+function v28PatrimoineFinancialDonut(){
+ let parts=[];
+ try{
+   const savingEl=document.getElementById('total-epargne');
+   const saving=parseEuroText(savingEl?.textContent||'0');
+   if(saving>0)parts.push({label:'Épargne',value:saving});
+   getActiveInvestmentCategoryKeys().forEach(k=>{
+     if(k==='immobilier')return;
+     const value=parseEuroText(document.getElementById('total-'+k)?.textContent||'0');
+     if(value>0)parts.push({label:ASSET_CATEGORY_MAP[k]?.label||k,value});
+   });
+ }catch(_){}
+ const total=parts.reduce((s,p)=>s+p.value,0);
+ if(!total)return `<div class="chart-empty">Aucun actif financier à répartir.</div>`;
+
+ let acc=0;
+ const palette=['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#f778ba','#8b949e'];
+ const stops=parts.map((p,i)=>{
+   const a=acc/total*100;acc+=p.value;const b=acc/total*100;
+   return `${palette[i%palette.length]} ${a}% ${b}%`;
+ }).join(',');
+ return `<div class="vdonutgrid">
+   <div class="vdonut vfinancialdonut" style="background:conic-gradient(${stops})"><b class="money">${v28Money(total)}</b></div>
+   <div class="vlegend">${parts.map((p,i)=>`<div><span><i class="vlegenddot" style="background:${palette[i%palette.length]}"></i>${escapeHtml(p.label)}</span><b class="money">${v28Money(p.value)}</b></div>`).join('')}</div>
+ </div>`;
+}
+
+function v28RenderPatrimoineCurve(){
+ const host=document.getElementById('v28PatrimoineCurve');if(!host)return;
+ // Reuse exactly the same history/curve renderer as Accueil via a temporary host swap.
+ const home=document.getElementById('v28HomeCurve');
+ try{
+   if(home){
+     v28RenderHomeCurve();
+     host.innerHTML=home.innerHTML;
+   }else{
+     const tmp=document.createElement('div');tmp.id='v28HomeCurve';tmp.style.display='none';
+     document.body.appendChild(tmp);v28RenderHomeCurve();host.innerHTML=tmp.innerHTML;tmp.remove();
+   }
+ }catch(_){host.innerHTML='<div class="chart-empty">Graphique indisponible.</div>'}
+}
+
 function v28RenderPatrimoine(){
  const cats=getActiveAssetCategoryKeys();
  document.getElementById('v28-patrimoine').innerHTML=`<div class="vey">Patrimoine</div><h1 class="vtitle">Vue consolidée</h1>
  <div class="vprofilebar">${v28ProfileButtons()}</div>
  <div class="vhero"><div class="vlab">Patrimoine net · ${escapeHtml(getPatrimoineOwnerLabel(activePatrimoineOwner))}</div><div class="vbig money">${v28Text('net')}</div><div class="vpos">${v28Text('patrimoine-variation-value')}</div></div>
- <div class="vkpis"><div class="vkpi"><span>ACTIFS</span><b class="money">${v28Text('assets')}</b></div><div class="vkpi"><span>ÉPARGNE</span><b class="money">${v28Text('savings')}</b></div><div class="vkpi"><span>EMPRUNTS</span><b class="money">${v28Text('debts')}</b></div></div>
+ <div class="vkpis"><div class="vkpi"><span>ÉPARGNE</span><b class="money">${v28Text('total-epargne')}</b></div><div class="vkpi"><span>BOURSE</span><b class="money">${v28Text('total-bourse')}</b></div><div class="vkpi"><span>CRYPTO</span><b class="money">${v28Text('total-crypto')}</b></div></div>
  <div class="vactions"><button onclick="printPatrimoineReport()">🖨 Imprimer</button><button onclick="savePatrimoineReportPdf()">📄 PDF</button><button onclick="sharePatrimoineReport()">↗ Partager</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
- <div class="vcard"><div class="vhead"><b>Répartition</b></div><div class="vdonutgrid"><div class="vdonut"><b class="money">${v28Text('net')}</b></div><div class="vlegend"><div><span>Actifs</span><b class="money">${v28Text('assets')}</b></div><div><span>Épargne</span><b class="money">${v28Text('savings')}</b></div><div><span>Investissements</span><b class="money">${v28Text('investments')}</b></div><div><span>Emprunts</span><b class="money">${v28Text('debts')}</b></div></div></div></div>
+ <div class="vcard"><div class="vhead"><b>Répartition financière</b><span class="vlab">Hors immobilier & emprunts</span></div>${v28PatrimoineFinancialDonut()}</div>
+ <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><span class="vlab">6 mois</span></div><div id="v28PatrimoineCurve" class="vhomecurve vpatcurve"></div></div>
  <div class="vcard"><div class="vhead"><b>Détail du patrimoine</b><button class="vlink" onclick="document.querySelector('#tab-patrimoine .asset-category-manager-toggle')?.click()">+ Catégorie</button></div>
  <div class="vrow vassetrow" onclick="v28OpenAsset('epargne')"><div class="vico">💰</div><div><b>Épargne</b><small>Livrets, soldes et modifications</small></div><div><div class="vamt money">${v28Text('total-epargne')}</div><div class="vopen">›</div></div></div>
  ${cats.map(k=>`<div class="vrow vassetrow" onclick="v28OpenAsset('${k}')"><div class="vico">${ASSET_CATEGORY_MAP[k]?.icon||'◆'}</div><div><b>${escapeHtml(ASSET_CATEGORY_MAP[k]?.label||k)}</b><small>${k==='bourse'?'Cours, répartition, graphiques et positions':k==='crypto'?'Cours et positions':'Voir et modifier les montants'}</small></div><div><div class="vamt money">${v28Text('total-'+k)}</div><div class="vopen">›</div></div></div>`).join('')}
  <div class="vrow vassetrow" onclick="v28OpenAsset('dettes')"><div class="vico">🏦</div><div><b>Emprunts</b><small>Capital restant dû et modifications</small></div><div><div class="vamt money">${v28Text('total-dettes')}</div><div class="vopen">›</div></div></div>
  </div>`;
+ setTimeout(v28RenderPatrimoineCurve,0);
 }
 function v28VehicleTabs(){
  const legacy=document.getElementById('vehicle-tabs');
