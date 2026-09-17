@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-GRzibdYbxLKrLa1pAhAiz0iZcfnzpxiAxkyRryhUuTc=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-WOLbXEYYUQw/pQ9oPawr/4ejKui4tqyqGizm0ibB4TI=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2139,6 +2139,68 @@ body > .modal-overlay canvas{
 }
 .vsectiontoggle b{font-size:14px!important;font-weight:900!important}
 .vsectiontoggle span{font-size:16px!important;color:#8fcff5!important;font-weight:900!important}
+
+
+/* V28.8.33 — les blocs hérités utilisent désormais le DOM réel de l'app de base */
+.v28portal{width:100%;min-width:0}
+.v28portal > *{max-width:100%}
+#v28app .v28portal .card{margin:0!important}
+
+
+/* V28.8.34 — comportement original, formulaires et contrôles restylés V28 */
+#v28app .v28portal input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+#v28app .v28portal select,
+#v28app .v28portal textarea{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-height:44px!important;
+  padding:10px 12px!important;
+  border:1px solid #27475e!important;
+  border-radius:12px!important;
+  background:#081522!important;
+  color:#f4fbff!important;
+  box-shadow:none!important;
+  font:inherit!important;
+}
+#v28app .v28portal textarea{min-height:88px!important;resize:vertical}
+#v28app .v28portal input::placeholder,
+#v28app .v28portal textarea::placeholder{color:#718b9d!important}
+#v28app .v28portal label{
+  color:#a9bfd0!important;
+  font-weight:800!important;
+}
+#v28app .v28portal button,
+#v28app .v28portal .btn{
+  min-height:40px;
+  border-radius:11px!important;
+}
+#v28app .v28portal button[type="submit"],
+#v28app .v28portal .btn-primary,
+#v28app .v28portal .primary{
+  background:#16b8c7!important;
+  border-color:#16b8c7!important;
+  color:#031017!important;
+  font-weight:900!important;
+}
+#v28app .v28portal .btn-secondary,
+#v28app .v28portal .secondary{
+  background:#13283a!important;
+  border-color:#27475e!important;
+  color:#edf5fb!important;
+}
+#v28app .v28portal fieldset{
+  border:1px solid #1d3449!important;
+  border-radius:14px!important;
+  background:#0d1a2a!important;
+}
+#v28app .v28portal table{
+  width:100%!important;
+  max-width:100%!important;
+}
+#v28app .v28portal input[type="checkbox"],
+#v28app .v28portal input[type="radio"]{
+  accent-color:#16b8c7;
+}
 
 </style>
 </head>
@@ -15206,10 +15268,28 @@ function v28BudgetRows(key,icon){
  <div class="vamt money" onclick="openBudgetEditModal('${key}',${i})">${v28Money(item[1])}</div>
  <button class="vdel" onclick="del('${key}',${i});setTimeout(v28RenderMobile,0)">×</button></div>`).join('');
 }
+const v28PortalHomes=new Map();
+function v28RestorePortals(){
+ document.querySelectorAll('#v28app [data-v28-portal-id]').forEach(portal=>{
+   const id=portal.dataset.v28PortalId, node=portal.firstElementChild, home=v28PortalHomes.get(id);
+   if(node&&home?.parent){
+     if(home.next&&home.next.parentNode===home.parent)home.parent.insertBefore(node,home.next);
+     else home.parent.appendChild(node);
+   }
+   portal.replaceChildren();
+ });
+}
 function v28Mirror(id){
  const e=document.getElementById(id);
  if(!e)return '<div class="vlab">Aucune donnée.</div>';
- return v28StripIds(e.innerHTML).replace(/<details\s+open(\s|>)/gi,'<details$1');
+ if(!v28PortalHomes.has(id))v28PortalHomes.set(id,{parent:e.parentNode,next:e.nextSibling});
+ return `<div class="v28portal" data-v28-portal-id="${escapeHtml(id)}"></div>`;
+}
+function v28MountPortals(){
+ document.querySelectorAll('#v28app [data-v28-portal-id]').forEach(portal=>{
+   const id=portal.dataset.v28PortalId, node=document.getElementById(id);
+   if(node&&node!==portal&&node.parentNode!==portal)portal.appendChild(node);
+ });
 }
 function v28OpenTodayMeal(i){
  const m=v28TodayMenuActions?.[i];
@@ -15704,6 +15784,7 @@ function v28InstallMirrorBridge(){
 }
 
 function v28RenderMobile(){
+ v28RestorePortals();
  v28InstallMirrorBridge();
  v28EnsureLegacyModalsVisible();
  const jobs=[
@@ -15712,6 +15793,7 @@ function v28RenderMobile(){
   ['loyalty',v28RenderLoyalty],['menus',v28RenderMenus]
  ];
  jobs.forEach(([name,fn])=>{try{fn()}catch(e){console.error('V28 render '+name,e)}});
+ v28MountPortals();
 }
 const v28LegacyRender=render;
 render=function(){v28LegacyRender();setTimeout(v28RenderMobile,0)};
