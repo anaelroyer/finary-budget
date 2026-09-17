@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.7.0 : Accueil mobile — ordre KPI, vrai graphique patrimoine, vrai menu du jour -->
+<!-- V28.7.2 : Budget bouton dépense repositionné + accueil évolution restaurée -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-QSB1sioRQoCNuSuSMjbBLoD5CTCUJw9RhHi52Jpu0TE=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-gca6IGB30ZERORAehE/hrFexOkYQ75OoRwnRvuQLT0Y=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1592,6 +1592,13 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vmealcard .micon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#10283a;font-size:20px}
 .vmealcard .mtime{font-size:8px;color:#91a7b9;font-weight:900;text-transform:uppercase}.vmealcard .mname{font-size:10px;font-weight:950;margin-top:3px;line-height:1.3}.vmealcard .mrecipe{font-size:8px;color:#49a7ff;margin-top:4px}
 @media(max-width:430px){#v28-home .vhomegrid{grid-template-columns:1fr}.vlegacychart{height:125px}.vlegacychart canvas,.vlegacychart svg{height:125px!important}}
+
+
+/* ===== V28.7.1 Budget : repérage immédiat des comptes ===== */
+.vaccountbadge{display:inline-flex;align-items:center;max-width:100%;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:7px;font-weight:950;letter-spacing:.01em;white-space:nowrap}
+.vaccountbadge.fortuneo{background:#0d3d52;border:1px solid #20b8e5;color:#72ddff}
+.vaccountbadge.credit-agricole{background:#123c32;border:1px solid #37c99a;color:#74f0c5}
+.vaccountbadge.other{background:#202b3b;border:1px solid #536579;color:#c4d0db}
 
 </style>
 </head>
@@ -14596,12 +14603,27 @@ function v28ToggleSection(k,el){v28OpenSections[k]=!!el.open}
 function v28Section(k,title,total,body,action=''){
  return `<details class="vcollapse" ${v28OpenSections[k]?'open':''} ontoggle="v28ToggleSection('${k}',this)"><summary><span>${title}</span><span class="vtotal money">${total||''}</span>${action}</summary><div class="vcbody">${body}</div></details>`;
 }
+function v28AccountLabel(item){
+ const raw=String(item?.accountName||item?.account||item?.bankName||item?.bank||item?.compte||item?.[4]||'').trim();
+ if(!raw)return '';
+ const low=raw.toLowerCase();
+ if(low.includes('fortuneo'))return 'Fortuneo';
+ if(low.includes('crédit agricole')||low.includes('credit agricole'))return 'Crédit Agricole';
+ const acct=(typeof getBankAccountById==='function'?getBankAccountById(raw):null);
+ return acct?.name||raw;
+}
+function v28AccountBadge(item){
+ const label=v28AccountLabel(item);if(!label)return '';
+ const low=label.toLowerCase();
+ const cls=low.includes('fortuneo')?'fortuneo':(low.includes('agricole')?'credit-agricole':'other');
+ return `<span class="vaccountbadge ${cls}">🏦 ${escapeHtml(label)}</span>`;
+}
 function v28BudgetRows(key,icon){
  const rows=(data[key]||[]).map((item,i)=>({item,i})).sort((a,b)=>Number(!!a.item[2])-Number(!!b.item[2]));
  if(!rows.length)return '<div class="vlab">Aucune ligne.</div>';
  return rows.map(({item,i})=>`<div class="vrow vbudgetrow ${item[2]?'paid':''}">
  <input class="vcheck" type="checkbox" ${item[2]?'checked':''} onchange="togglePaid('${key}',${i});v28RenderMobile()">
- <div onclick="openBudgetEditModal('${key}',${i})"><b>${escapeHtml(item[0]||'Sans libellé')}</b><small>${escapeHtml(getBankAccountName(item[3]||'ca'))} · ${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</small></div>
+ <div onclick="openBudgetEditModal('${key}',${i})"><b>${escapeHtml(item[0]||'Sans libellé')}</b>${v28AccountBadge(x)}<small>${escapeHtml(getBankAccountName(item[3]||'ca'))} · ${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</small></div>
  <div class="vamt money" onclick="openBudgetEditModal('${key}',${i})">${v28Money(item[1])}</div>
  <button class="vdel" onclick="del('${key}',${i});setTimeout(v28RenderMobile,0)">×</button></div>`).join('');
 }
@@ -14692,32 +14714,15 @@ function v28RenderHome(){
     <div class="vfinlegend"><div><span>Épargne</span><b class="money">${v28Money(sav)}</b></div><div><span>Investissements</span><b class="money">${v28Money(inv)}</b></div></div>
    </div>
   </div>
-  <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">Voir détail →</button></div>
-   <div id="v28HomePatrimoineChart" class="vlegacychart"></div>
+  <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">6 mois ›</button></div>
+   <div class="vspark"><i style="height:38%"></i><i style="height:46%"></i><i style="height:52%"></i><i style="height:63%"></i><i style="height:70%"></i><i style="height:88%"></i></div>
+   <div class="vlab" style="margin-top:7px">Avr · Mai · Juin · Juil · Août · Sept</div>
   </div>
  </div>
 
  <div class="vcard"><div class="vhead"><b>🍴 Menu du jour</b><button class="vlink" onclick="v28Go('menus')">Voir la semaine →</button></div>
  ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
- setTimeout(()=>{
-   const host=document.getElementById('v28HomePatrimoineChart'); if(!host)return;
-   const candidates=[
-     document.getElementById('patrimoineEvolutionChart'),
-     document.getElementById('patrimoine-evolution-chart'),
-     document.getElementById('evolutionChart'),
-     document.querySelector('#tab-patrimoine canvas')
-   ].filter(Boolean);
-   const src=candidates[0];
-   if(src&&src.tagName==='CANVAS'){
-     const c=document.createElement('canvas');c.width=src.width||600;c.height=src.height||260;host.replaceChildren(c);
-     try{c.getContext('2d').drawImage(src,0,0,c.width,c.height)}catch(_){}
-   }else{
-     const box=document.querySelector('#tab-patrimoine .chart-container,#tab-patrimoine .evolution-chart');
-     if(box)host.innerHTML=v28StripIds(box.innerHTML);
-     else host.innerHTML='<div class="vlab" style="padding:18px">Évolution disponible dans Patrimoine.</div>';
-   }
- },80);
 
 }
 function v28RenderBudget(){
@@ -14726,15 +14731,33 @@ function v28RenderBudget(){
  const sum=k=>(data[k]||[]).reduce((n,x)=>n+(Number(x?.[1])||0),0);
  document.getElementById('v28-budget').innerHTML=`<div class="vey">Finances</div><h1 class="vtitle">Budget</h1>
  <div class="vhero"><div class="vlab">Reste à vivre estimé</div><div class="vbig vgreen money">${v28Text('budget-reste-vivre')}</div><div class="vlab">Solde actuel — opérations cochées : <b class="money">${v28Text('budget-solde-actuel')}</b></div></div>
- <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
  <div class="vactions"><button onclick="openAnnotationsModal()">📝 Notes</button><button onclick="openBankAccountsModal()">🏦 Comptes</button><button onclick="closeMonth()">🔒 Clôturer</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  ${v28Section('accounts','🏦 Soldes par compte','',banks||'<div class="vlab">Aucun compte actif.</div>','<button class="vlink" type="button" onclick="event.preventDefault();event.stopPropagation();openBankAccountsModal()">Gérer</button>')}
+ <button class="vprimary" style="margin:8px 0" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
  ${v28Section('expenses','🛒 Dépenses',v28Money(sum('budgetDepenses')),`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetDepenses')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetDepenses','🛒')}</div>`)}
  ${v28Section('fixed','🏠 Frais fixes',v28Money(sum('budgetFixes')),`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetFixes')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetFixes','🏠')}</div>`)}
  ${v28Section('income','📥 Entrées',v28Money(sum('budgetRevenus')),`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetRevenus')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetRevenus','📥')}</div>`)}
  ${v28Section('transfers','⇄ Virements internes',v28Text('bank-transfer-count'),`<div class="vhead"><span></span><button class="vlink" onclick="openBankTransferModal()">+ Ajouter</button></div><div class="vmirror">${v28Mirror('bank-transfers-container')}</div>`)}
  ${v28Section('history','🗓 Historique','',`<div class="vmirror">${v28Mirror('history-container')}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="vsecondary" onclick="exportData()">🔐 Exporter</button><button class="vsecondary" onclick="document.getElementById('importFile').click()">⬆ Importer</button></div>`)}
  `;
+ setTimeout(()=>{
+   const root=document.getElementById('v28-budget');if(!root)return;
+   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+   nodes.forEach(n=>{
+     const t=(n.nodeValue||'').trim(),low=t.toLowerCase();
+     let cls='',label='';
+     if(low==='fortuneo'||low.includes('fortuneo')){cls='fortuneo';label='Fortuneo'}
+     else if(low==='crédit agricole'||low==='credit agricole'||low.includes('crédit agricole')||low.includes('credit agricole')){cls='credit-agricole';label='Crédit Agricole'}
+     if(!cls||n.parentElement?.classList.contains('vaccountbadge'))return;
+     // Only decorate compact account-only labels; do not replace whole operation descriptions.
+     if(t.length<=28){
+       const span=document.createElement('span');span.className='vaccountbadge '+cls;span.textContent='🏦 '+label;
+       n.parentElement.replaceChild(span,n);
+     }
+   });
+ },0);
+
 }
 function v28ProfileButtons(){
  return PATRIMOINE_OWNERS.map(o=>`<button class="${o.id===activePatrimoineOwner?'on':''}" onclick="setPatrimoineOwner('${o.id}');setTimeout(v28RenderMobile,0)">${escapeHtml(getPatrimoineOwnerLabel(o.id))}</button>`).join('')+
