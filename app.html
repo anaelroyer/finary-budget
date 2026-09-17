@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.2.0 : nouvelle interface active sur tout écran, logique V26.2.14 conservée -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -38,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-X1Jmd7O2mSFl5LVeZx3nwSQ60eq0uA3H7fOBtdmwy0I=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-J9V6zU+piIwUz65fl85YXxFPxAuGaDPX5fCUJUI3U7Q=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1483,6 +1484,43 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
   .asset-image-button{width:44px;height:44px}
   .asset-image-button .asset-provider-logo,.asset-image-button .asset-image-placeholder{width:42px!important;height:42px!important}
 }
+
+/* ===== V28.1 — vraie couche de présentation mobile ===== */
+#v28app{display:none}
+@media(min-width:0px){
+ body{margin:0!important;padding:0 0 76px!important;background:#07111f!important;color:#edf5fb!important}
+ body>.wrap{display:none!important}
+ #v28app{display:block;max-width:470px;min-height:100dvh;margin:auto;padding:14px 12px 86px;background:radial-gradient(circle at 100% -8%,rgba(73,167,255,.14),transparent 27%),#07111f}
+ #v28app *{box-sizing:border-box}
+ .vpage{display:none}.vpage.on{display:block;animation:v28in .18s ease}@keyframes v28in{from{opacity:.3;transform:translateY(4px)}}
+ .vey{font-size:8px;font-weight:900;letter-spacing:1.5px;color:#4ddbd2;text-transform:uppercase}.vtitle{font-size:25px;letter-spacing:-.8px;margin:4px 0 12px}
+ .vhero,.vcard{background:linear-gradient(145deg,#0d1a2a,#0b1826);border:1px solid #1d3449;border-radius:18px;padding:13px;margin-bottom:8px;box-shadow:0 10px 30px #0002}
+ .vhero{background:linear-gradient(135deg,#103044,#0d2928);border-color:#205265;padding:16px}
+ .vlab{font-size:8px;color:#91a7b9}.vbig{font-size:29px;font-weight:950;letter-spacing:-1px;margin:3px 0}.vpos{color:#45d483;font-size:8px;font-weight:900}
+ .vkpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px}.vkpi{min-width:0;background:#0d1a2a;border:1px solid #1d3449;border-radius:14px;padding:10px 7px}.vkpi span{display:block;font-size:7px;color:#7f94a8;margin-bottom:4px}.vkpi b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .vgreen{color:#45d483!important}.vorange{color:#ffb657!important}.vred{color:#ff6b6b!important}.vblue{color:#49a7ff!important}
+ .vprimary{width:100%;border:0;border-radius:15px;padding:14px;background:linear-gradient(135deg,#4ddbd2,#49a7ff);color:#06111e;font-weight:950;font-size:12px;margin-bottom:8px}
+ .vsecondary{border:1px solid #1d3449;background:#102235;color:#e7f0f7;border-radius:11px;padding:8px 10px;font-size:8px;font-weight:900}
+ .vhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;gap:8px}.vhead b{font-size:12px}.vlink{border:0;background:none;color:#49a7ff;font-size:8px;font-weight:900}
+ .vrow{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid #172a3b}.vrow:last-child{border:0}.vico{width:33px;height:33px;border-radius:11px;background:#12283b;display:grid;place-items:center}.vrow b{font-size:10px}.vrow small{display:block;color:#7f94a8;font-size:8px;margin-top:2px}.vamt{font-size:9px;font-weight:900}
+ .vprogress{height:7px;background:#172a3b;border-radius:99px;overflow:hidden;margin:8px 0}.vprogress i{display:block;height:100%;background:linear-gradient(90deg,#4ddbd2,#49a7ff);border-radius:99px}
+ .vsegment{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:#091522;border:1px solid #1d3449;border-radius:12px;padding:3px;margin-bottom:8px}.vsegment button{border:0;background:transparent;color:#7f94a8;padding:8px 2px;border-radius:9px;font-size:8px;font-weight:900}.vsegment button.on{background:#15334c;color:white}
+ .vactions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}.vactions button{min-width:0;border:1px solid #1d3449;background:#0d1a2a;color:#dce8f2;border-radius:11px;padding:8px 2px;font-size:7px;font-weight:900}
+ .vbank{background:#0a1623;border:1px solid #1d3449;border-radius:14px;padding:10px;margin-top:7px}.vbankname{font-size:10px;font-weight:900;margin-bottom:7px}.vbankgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.vbankbox{border-radius:11px;padding:8px;background:#0e1d2d;border:1px solid #1c3448}.vbankbox span{display:block;font-size:7px;color:#7f94a8}.vbankbox b{font-size:13px;display:block;margin-top:3px}.vbankbox:last-child b{color:#45d483}
+ .vlist .vrow{cursor:pointer}.vcheck{width:19px;height:19px;accent-color:#45d483}.vdel{width:28px;height:28px;border-radius:9px;border:1px solid #66313a;background:#2b1720;color:#ff6b6b}
+ .vbudgetrow{grid-template-columns:24px minmax(0,1fr) auto 28px}.vbudgetrow.paid{opacity:.55}
+ .vpills{display:flex;gap:5px;overflow:auto;margin-bottom:8px;scrollbar-width:none}.vpill{flex:none;border:1px solid #1d3449;background:#0d1a2a;color:#8da1b4;border-radius:999px;padding:7px 10px;font-size:8px;font-weight:900}.vpill.on{background:#153b58;color:#fff}
+ .vdonutgrid{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:center}.vdonut{width:106px;height:106px;border-radius:50%;background:conic-gradient(#49a7ff 0 73%,#45d483 73% 88%,#a88cff 88% 95%,#ffb657 95%);display:grid;place-items:center;position:relative}.vdonut:after{content:"";position:absolute;width:66px;height:66px;background:#0d1a2a;border-radius:50%}.vdonut b{z-index:1;font-size:9px}.vlegend div{display:flex;justify-content:space-between;font-size:8px;color:#91a7b9;margin:6px 0}.vlegend b{color:#fff}
+ .vstats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}.vstat{text-align:center;background:#0d1a2a;border:1px solid #1d3449;border-radius:13px;padding:9px}.vstat b{font-size:15px}.vstat span{display:block;font-size:7px;color:#7f94a8;margin-top:3px}
+ .vmirror .card,.vmirror .vehicle-entry,.vmirror .invoice-card,.vmirror .loyalty-card,.vmirror .menu-day{background:#0a1623!important;border:1px solid #1d3449!important;border-radius:14px!important;box-shadow:none!important;color:#edf5fb!important}
+ .vmirror .btn{border-radius:10px!important}.vmirror input,.vmirror select,.vmirror textarea{background:#081522!important;border-color:#1d3449!important;color:#fff!important}
+ .vmirror .invoice-card{padding:10px!important;margin:7px 0!important}.vmirror .loyalty-list{gap:7px!important}.vmirror .menu-days{gap:7px!important}
+ .vbottom{position:fixed;z-index:19000;bottom:0;left:50%;transform:translateX(-50%);width:min(470px,100%);display:grid;grid-template-columns:repeat(7,1fr);padding:6px 2px max(7px,env(safe-area-inset-bottom));background:#07111ff2;border-top:1px solid #1d3449;backdrop-filter:blur(15px)}
+ .vbottom button{min-width:0;border:0;background:none;color:#6f8497;font-size:6.2px;font-weight:900;padding:1px 0;white-space:nowrap}.vbottom button span{display:block;font-size:15px;line-height:20px}.vbottom button.on{color:#4ddbd2}
+ .vfab{position:fixed;z-index:18999;right:max(14px,calc((100vw - 470px)/2 + 14px));bottom:73px;width:47px;height:47px;border:0;border-radius:15px;background:linear-gradient(135deg,#4ddbd2,#49a7ff);font-size:23px;color:#06111e;font-weight:950;box-shadow:0 10px 30px #49a7ff45}
+ body.hide-amounts #v28app .money{color:transparent!important;position:relative}body.hide-amounts #v28app .money:after{content:"***";color:#dce8f2;position:absolute;left:0}
+}
+
 </style>
 </head>
 <body>
@@ -2107,6 +2145,27 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 </div>
 
 
+
+
+<div id="v28app">
+ <section id="v28-home" class="vpage on"></section>
+ <section id="v28-budget" class="vpage"></section>
+ <section id="v28-patrimoine" class="vpage"></section>
+ <section id="v28-vehicles" class="vpage"></section>
+ <section id="v28-factures" class="vpage"></section>
+ <section id="v28-loyalty" class="vpage"></section>
+ <section id="v28-menus" class="vpage"></section>
+</div>
+<button class="vfab" type="button" onclick="openModal('budgetDepenses')" aria-label="Ajouter une dépense">+</button>
+<nav class="vbottom" aria-label="Navigation mobile">
+ <button data-vtab="home" class="on" onclick="v28Go('home')"><span>⌂</span>Accueil</button>
+ <button data-vtab="budget" onclick="v28Go('budget')"><span>▥</span>Budget</button>
+ <button data-vtab="patrimoine" onclick="v28Go('patrimoine')"><span>◕</span>Patrimoine</button>
+ <button data-vtab="vehicles" onclick="v28Go('vehicles')"><span>🚗</span>Véhicules</button>
+ <button data-vtab="factures" onclick="v28Go('factures')"><span>▤</span>Factures</button>
+ <button data-vtab="loyalty" onclick="v28Go('loyalty')"><span>♧</span>Fidélité</button>
+ <button data-vtab="menus" onclick="v28Go('menus')"><span>☷</span>Menus</button>
+</nav>
 
 <div class="wrap">
   <div class="nav-tabs">
@@ -9091,6 +9150,7 @@ function buildPatrimoineReportHtml(model=getPatrimoineReportModel()){
 
   <div class="footer">Rapport généré par Budget & Patrimoine</div>
 </main>
+
 </body>
 </html>`;
 }
@@ -14444,5 +14504,94 @@ document.addEventListener('keydown',e=>{
     <div class="asset-image-note">L’image est automatiquement réduite pour rester légère avant d’être synchronisée avec les autres appareils.</div>
   </div>
 </div>
+<script>
+/* ===== V28.1 mobile presentation ===== */
+let v28Active='home';
+function v28Money(v){try{return euro(Number(v)||0)}catch(_){return (Number(v)||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}}
+function v28Text(id){return document.getElementById(id)?.textContent?.trim()||'—'}
+function v28StripIds(html){return String(html||'').replace(/\sid="[^"]*"/g,'')}
+function v28Go(t){
+ v28Active=t;
+ document.querySelectorAll('#v28app .vpage').forEach(x=>x.classList.toggle('on',x.id==='v28-'+t));
+ document.querySelectorAll('.vbottom button').forEach(x=>x.classList.toggle('on',x.dataset.vtab===t));
+ if(t!=='home')switchTab(t);
+ v28RenderMobile();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function v28BudgetRows(key,icon){
+ const rows=(data[key]||[]).map((item,i)=>({item,i})).sort((a,b)=>Number(!!a.item[2])-Number(!!b.item[2]));
+ if(!rows.length)return '<div class="vlab">Aucune ligne.</div>';
+ return rows.map(({item,i})=>`<div class="vrow vbudgetrow ${item[2]?'paid':''}">
+ <input class="vcheck" type="checkbox" ${item[2]?'checked':''} onchange="togglePaid('${key}',${i});v28RenderMobile()">
+ <div onclick="openBudgetEditModal('${key}',${i})"><b>${escapeHtml(item[0]||'Sans libellé')}</b><small>${escapeHtml(getBankAccountName(item[3]||'ca'))} · ${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</small></div>
+ <div class="vamt money" onclick="openBudgetEditModal('${key}',${i})">${v28Money(item[1])}</div>
+ <button class="vdel" onclick="del('${key}',${i});setTimeout(v28RenderMobile,0)">×</button></div>`).join('');
+}
+function v28Mirror(id){
+ const e=document.getElementById(id);return e?v28StripIds(e.innerHTML):'<div class="vlab">Aucune donnée.</div>';
+}
+function v28RenderHome(){
+ const balances=calculateBankBalances(), accounts=getVisibleBankAccounts();
+ const totalCurrent=accounts.reduce((n,a)=>n+(balances[a.id]?.current||0),0);
+ const bankHtml=accounts.slice(0,3).map(a=>{const b=balances[a.id]||{};return `<div class="vrow"><div class="vico">🏦</div><div><b>${escapeHtml(a.name)}</b><small>Actuel ${v28Money(b.current)} · Prévision ${v28Money(b.forecast)}</small></div><div class="vamt ${b.forecast<0?'vred':'vgreen'} money">${v28Money(b.forecast)}</div></div>`}).join('');
+ document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><h1 class="vtitle">Aujourd’hui</h1>
+ <div class="vkpis"><div class="vkpi"><span>RESTE À VIVRE</span><b class="vgreen money">${v28Text('budget-reste-vivre')}</b></div><div class="vkpi"><span>PATRIMOINE NET</span><b class="money">${v28Text('net')}</b></div><div class="vkpi"><span>SOLDE ACTUEL</span><b class="vblue money">${v28Money(totalCurrent)}</b></div></div>
+ <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
+ <div class="vhero"><div class="vlab">Patrimoine net estimé</div><div class="vbig money">${v28Text('net')}</div><div class="vpos">${v28Text('patrimoine-variation-value')==='—'?'Vue consolidée des actifs et emprunts':'Variation '+v28Text('patrimoine-variation-value')}</div></div>
+ <div class="vcard"><div class="vhead"><b>Comptes</b><button class="vlink" onclick="v28Go('budget')">Budget →</button></div>${bankHtml||'<div class="vlab">Aucun compte actif.</div>'}</div>`;
+}
+function v28RenderBudget(){
+ const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
+ const banks=accounts.map(a=>{const b=balances[a.id]||{current:0,forecast:0};return `<div class="vbank"><div class="vbankname">🏦 ${escapeHtml(a.name)}</div><div class="vbankgrid"><div class="vbankbox"><span>SOLDE ACTUEL</span><b class="money">${v28Money(b.current)}</b></div><div class="vbankbox"><span>PRÉVISION FIN DE CYCLE</span><b class="money ${b.forecast<0?'vred':''}">${v28Money(b.forecast)}</b></div></div>${b.forecast<0?`<div class="vlab vred" style="margin-top:6px">⚠ Prévision négative de ${v28Money(Math.abs(b.forecast))}</div>`:''}</div>`}).join('');
+ document.getElementById('v28-budget').innerHTML=`<div class="vey">Finances</div><h1 class="vtitle">Budget</h1>
+ <div class="vhero"><div class="vlab">Reste à vivre estimé</div><div class="vbig vgreen money">${v28Text('budget-reste-vivre')}</div><div class="vlab">Solde actuel — opérations cochées : <b class="money">${v28Text('budget-solde-actuel')}</b></div></div>
+ <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
+ <div class="vactions"><button onclick="openAnnotationsModal()">📝 Notes</button><button onclick="openBankAccountsModal()">🏦 Comptes</button><button onclick="closeMonth()">🔒 Clôturer</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
+ <div class="vcard"><div class="vhead"><b>Soldes par compte</b><button class="vlink" onclick="openBankAccountsModal()">Gérer</button></div>${banks}</div>
+ <div class="vcard"><div class="vhead"><b>🛒 Dépenses</b><button class="vlink" onclick="openModal('budgetDepenses')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetDepenses','🛒')}</div></div>
+ <div class="vcard"><div class="vhead"><b>🏠 Frais fixes</b><button class="vlink" onclick="openModal('budgetFixes')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetFixes','🏠')}</div></div>
+ <div class="vcard"><div class="vhead"><b>📥 Entrées</b><button class="vlink" onclick="openModal('budgetRevenus')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetRevenus','📥')}</div></div>
+ <div class="vcard"><div class="vhead"><b>⇄ Virements internes</b><button class="vlink" onclick="openBankTransferModal()">+ Ajouter</button></div><div class="vmirror">${v28Mirror('bank-transfers-container')}</div></div>
+ <div class="vcard"><div class="vhead"><b>🗓 Historique</b></div><div class="vmirror">${v28Mirror('history-container')}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="vsecondary" onclick="exportData()">🔐 Exporter</button><button class="vsecondary" onclick="document.getElementById('importFile').click()">⬆ Importer</button></div></div>`;
+}
+function v28RenderPatrimoine(){
+ document.getElementById('v28-patrimoine').innerHTML=`<div class="vey">Patrimoine</div><h1 class="vtitle">Vue consolidée</h1>
+ <div class="vhero"><div class="vlab">Patrimoine net</div><div class="vbig money">${v28Text('net')}</div><div class="vpos">${v28Text('patrimoine-variation-value')}</div></div>
+ <div class="vkpis"><div class="vkpi"><span>ACTIFS</span><b class="money">${v28Text('assets')}</b></div><div class="vkpi"><span>ÉPARGNE</span><b class="money">${v28Text('savings')}</b></div><div class="vkpi"><span>EMPRUNTS</span><b class="money">${v28Text('debts')}</b></div></div>
+ <div class="vactions"><button onclick="printPatrimoineReport()">🖨 Imprimer</button><button onclick="savePatrimoineReportPdf()">📄 PDF</button><button onclick="sharePatrimoineReport()">↗ Partager</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
+ <div class="vcard"><div class="vhead"><b>Répartition</b></div><div class="vdonutgrid"><div class="vdonut"><b class="money">${v28Text('net')}</b></div><div class="vlegend"><div><span>Actifs</span><b class="money">${v28Text('assets')}</b></div><div><span>Épargne</span><b class="money">${v28Text('savings')}</b></div><div><span>Investissements</span><b class="money">${v28Text('investments')}</b></div><div><span>Emprunts</span><b class="money">${v28Text('debts')}</b></div></div></div></div>
+ <div class="vcard"><div class="vhead"><b>Détail des actifs</b><button class="vlink" onclick="document.querySelector('#tab-patrimoine .asset-category-manager-toggle')?.click()">+ Catégorie</button></div>
+ <div class="vrow" onclick="document.querySelector('[data-asset-accordion=epargne] .asset-accordion-header')?.click()"><div class="vico">💰</div><div><b>Épargne</b><small>Livrets et disponibilités</small></div><div class="vamt money">${v28Text('total-epargne')}</div></div>
+ ${getActiveAssetCategoryKeys().map(k=>`<div class="vrow" onclick="document.querySelector('[data-asset-accordion=${k}] .asset-accordion-header')?.click()"><div class="vico">${ASSET_CATEGORY_MAP[k]?.icon||'◆'}</div><div><b>${escapeHtml(ASSET_CATEGORY_MAP[k]?.label||k)}</b><small>Ouvrir / modifier</small></div><div class="vamt money">${v28Text('total-'+k)}</div></div>`).join('')}
+ <div class="vrow" onclick="document.querySelector('[data-asset-accordion=dettes] .asset-accordion-header')?.click()"><div class="vico">🏦</div><div><b>Emprunts</b><small>Capital restant dû</small></div><div class="vamt money">${v28Text('total-dettes')}</div></div></div>
+ <div class="vcard vmirror"><div class="vhead"><b>Profils patrimoine</b></div>${v28Mirror('patrimoineProfileTabs')}</div>`;
+}
+function v28RenderVehicles(){
+ document.getElementById('v28-vehicles').innerHTML=`<div class="vey">Garage</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:10px">Véhicules</h1><button class="vsecondary" onclick="openVehicleModal()">＋ Ajouter</button></div>
+ <div class="vmirror vpills">${v28Mirror('vehicle-tabs')}</div><div class="vcard vmirror">${v28Mirror('vehicle-summary-card')}</div>
+ <div class="vcard"><div class="vhead"><b>🔔 Échéances & alertes</b></div><div class="vmirror">${v28Mirror('vehicle-alerts')}</div></div>
+ <div class="vcard"><div class="vhead"><b>🧾 Factures associées</b><button class="vlink" onclick="openVehicleInvoiceLinkModal()">+ Associer</button></div><div class="vmirror">${v28Mirror('vehicle-invoices')}</div></div>`;
+}
+function v28RenderFactures(){
+ document.getElementById('v28-factures').innerHTML=`<div class="vey">Documents</div><h1 class="vtitle">Factures</h1><button class="vprimary" onclick="openInvoiceModal()">＋ Ajouter un achat / une facture</button>
+ <div class="vcard vmirror">${v28Mirror('invoice-summary-alert')}</div><div class="vcard"><div class="vhead"><b>⏳ Garanties à surveiller</b></div><div class="vmirror">${v28Mirror('warranty-watch')}</div></div>
+ <div class="vcard"><div class="vhead"><b>Toutes les factures</b></div><div class="vmirror">${v28Mirror('invoices-container')}</div></div>`;
+}
+function v28RenderLoyalty(){
+ document.getElementById('v28-loyalty').innerHTML=`<div class="vey">Portefeuille</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:10px">Fidélité</h1><button class="vsecondary" onclick="openLoyaltyCardModal()">＋ Ajouter</button></div>
+ <div class="vcard vmirror"><div class="vhead"><b>${v28Text('loyaltyCount')}</b></div>${v28Mirror('loyaltyCards')}</div>`;
+}
+function v28RenderMenus(){
+ document.getElementById('v28-menus').innerHTML=`<div class="vey">Maison</div><h1 class="vtitle">Menus</h1>
+ <div class="vactions"><button onclick="document.getElementById('v28-menus').querySelector('.menu-week')?.scrollIntoView({behavior:'smooth'})">Semaine 1</button><button onclick="document.getElementById('v28-menus').querySelectorAll('.menu-week')[1]?.scrollIntoView({behavior:'smooth'})">Semaine 2</button><button onclick="resetCurrentMenus()">↺ Vider</button><button onclick="save()">💾 Sauver</button></div>
+ <div class="vcard vmirror"><div class="vhead"><b>${v28Text('menuPeriodTitle')}</b></div>${v28Mirror('menuDays')}</div>`;
+}
+function v28RenderMobile(){
+ try{v28RenderHome();v28RenderBudget();v28RenderPatrimoine();v28RenderVehicles();v28RenderFactures();v28RenderLoyalty();v28RenderMenus()}catch(e){console.error('V28 render',e)}
+}
+const v28LegacyRender=render;
+render=function(){v28LegacyRender();setTimeout(v28RenderMobile,0)};
+document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{v28Go('home');v28RenderMobile()},250));
+</script>
 </body>
 </html>
