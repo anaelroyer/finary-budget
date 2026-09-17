@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-uY82hYEdofdinNJdyPyaBgwz3sZtmnVrSvtxR4rnOfI=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-Uv8SoxEGacB2bb0CxFzD1k/ski5hfHz1b3eStpNerC8=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2048,6 +2048,33 @@ body > .modal-overlay canvas{
 .vsnapshotdate span{font-size:10px;color:#89a5b8;font-weight:800;text-transform:uppercase}.vsnapshotdate b{font-size:13px}
 .vsnapshotselect{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer!important}
 .vhistoricalnote{display:flex!important;flex-direction:column!important;gap:5px!important}.vhistoricalnote small{color:#9bb1c1!important;line-height:1.4}
+
+
+/* V28.8.23 — total financier visible dans Patrimoine uniquement */
+#v28-patrimoine .vfinancialtotal{
+  margin-top:5px;
+  font-size:22px;
+  line-height:1.05;
+  font-weight:950;
+  letter-spacing:-.35px;
+  color:#f4f9fc;
+}
+
+
+/* V28.8.24 — lecture tactile/souris point par point des courbes patrimoine */
+.vhomecurve,.vpatcurve{position:relative!important;touch-action:pan-y}
+.vhomecurve svg,.vpatcurve svg{touch-action:none;cursor:crosshair}
+.vchartfocus{pointer-events:none}
+.vchartcross{stroke:rgba(220,239,250,.48);stroke-width:1;stroke-dasharray:3 3}
+.vchartdot{fill:#eaf8ff;stroke:#32aef4;stroke-width:3}
+.vcharttip{
+ position:absolute;top:8px;z-index:5;transform:translateX(-50%);
+ display:none;min-width:92px;padding:7px 9px;border-radius:10px;
+ background:rgba(4,16,27,.94);border:1px solid #31536b;
+ box-shadow:0 8px 24px rgba(0,0,0,.28);pointer-events:none;text-align:center
+}
+.vcharttip.show{display:flex;flex-direction:column;gap:1px}
+.vcharttip b{font-size:13px;color:#f4fbff}.vcharttip span{font-size:10px;color:#9db4c4}
 
 </style>
 </head>
@@ -15178,6 +15205,39 @@ function v28RenderHomeCurve(owner=activePatrimoineOwner){
    const labels=indexes.map(i=>`<text class="hlabel" x="${p[i].x}" y="${h-7}" text-anchor="${i===0?'start':i===p.length-1?'end':'middle'}">${formatChartDate(p[i].date,false)}</text>`).join('');
    const last=p[p.length-1];
    host.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="v28-home-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs>${grid}<path class="harea" d="${area}"/><path class="hline" d="${line}"/>${p.map((x,i)=>`<circle class="hdot" cx="${x.x}" cy="${x.y}" r="${i===p.length-1?4:2}"/>`).join('')}${labels}<text class="hlast chart-axis-amount" x="${w-R}" y="${Math.max(T+9,last.y-8)}" text-anchor="end">${formatChartCompactEuro(last.value)}</text></svg>`;
+   const svg=host.querySelector('svg');
+   if(svg){
+     const ns='http://www.w3.org/2000/svg';
+     const focus=document.createElementNS(ns,'g');
+     focus.setAttribute('class','vchartfocus');
+     focus.innerHTML='<line class="vchartcross" y1="'+T+'" y2="'+base+'"/><circle class="vchartdot" r="5"/>';
+     svg.appendChild(focus);
+     const tip=document.createElement('div');
+     tip.className='vcharttip';
+     host.appendChild(tip);
+     const showPoint=(clientX)=>{
+       const rect=svg.getBoundingClientRect();
+       if(!rect.width)return;
+       const vx=(clientX-rect.left)*(w/rect.width);
+       let best=p[0],dist=Math.abs(p[0].x-vx);
+       for(let i=1;i<p.length;i++){const dd=Math.abs(p[i].x-vx);if(dd<dist){dist=dd;best=p[i]}}
+       focus.style.display='';
+       const line=focus.querySelector('line'),dot=focus.querySelector('circle');
+       line.setAttribute('x1',best.x);line.setAttribute('x2',best.x);
+       dot.setAttribute('cx',best.x);dot.setAttribute('cy',best.y);
+       tip.innerHTML='<b>'+formatChartCompactEuro(best.value)+'</b><span>'+formatChartDate(best.date,false)+'</span>';
+       tip.classList.add('show');
+       const px=(best.x/w)*100;
+       tip.style.left=Math.max(12,Math.min(88,px))+'%';
+     };
+     const hidePoint=()=>{focus.style.display='none';tip.classList.remove('show')};
+     svg.addEventListener('pointerdown',e=>{svg.setPointerCapture?.(e.pointerId);showPoint(e.clientX)});
+     svg.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.buttons)showPoint(e.clientX)});
+     svg.addEventListener('pointerup',e=>{showPoint(e.clientX)});
+     svg.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')hidePoint()});
+     svg.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+   }
+
  }catch(err){
    host.innerHTML='<div class="chart-empty">Graphique indisponible.</div>';
  }
@@ -15481,6 +15541,18 @@ function v28PatrimoineSnapshotNav(){
  </div>`;
 }
 
+
+function v28FinancialTotal(owner=activePatrimoineOwner){
+ let total=0;
+ try{
+   total+=(getOwnedItems('epargne',owner)||[]).reduce((s,row)=>s+(Number(Array.isArray(row)?row[1]:0)||0),0);
+   getActiveInvestmentCategoryKeys().filter(k=>k!=='immobilier').forEach(k=>{
+     total+=(getOwnedItems(k,owner)||[]).reduce((s,row)=>s+(Number(Array.isArray(row)?row[1]:0)||0),0);
+   });
+ }catch(_){}
+ return total;
+}
+
 function v28RenderPatrimoine(){
  const cats=getActiveAssetCategoryKeys();
  document.getElementById('v28-patrimoine').innerHTML=`<div class="vey">Patrimoine</div><h1 class="vtitle">Vue consolidée</h1>
@@ -15489,7 +15561,7 @@ function v28RenderPatrimoine(){
  <div class="vhero"><div class="vlab">Patrimoine net · ${escapeHtml(getPatrimoineOwnerLabel(activePatrimoineOwner))}${v28HistoricalSnapshot()?' · historique':''}</div><div class="vbig money">${v28HistoricalSnapshot()?v28Money(Number(v28HistoricalSnapshot().net)||0):v28Text('net')}</div><div class="vpos">${v28HistoricalSnapshot()?formatChartDate(v28HistoricalSnapshot().date,false):v28Text('patrimoine-variation-value')}</div></div>
  ${v28HistoricalSnapshot()?`<div class="vcard vhistoricalnote"><b>Vue historique</b><small>Valeur nette enregistrée à cette date. La ventilation détaillée affichée dans l’application correspond aux données actuelles.</small></div>`:`<div class="vkpis">${v28ProfileAssetKpis(activePatrimoineOwner)}</div>`}
  <div class="vactions"><button onclick="printPatrimoineReport()">🖨 Imprimer</button><button onclick="savePatrimoineReportPdf()">📄 PDF</button><button onclick="sharePatrimoineReport()">↗ Partager</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
- ${v28HasFinancialAssets(activePatrimoineOwner)?`<div class="vcard"><div class="vhead"><b>Répartition financière</b><span class="vlab">Hors immobilier & emprunts</span></div>${v28PatrimoineFinancialDonut()}</div>`:''}
+ ${v28HasFinancialAssets(activePatrimoineOwner)?`<div class="vcard"><div class="vhead"><div><b>Répartition financière</b><div class="vfinancialtotal money">${v28Money(v28FinancialTotal(activePatrimoineOwner))}</div></div><span class="vlab">Hors immobilier & emprunts</span></div>${v28PatrimoineFinancialDonut()}</div>`:''}
  ${v28HasPatrimoineHistory(activePatrimoineOwner)?`<div class="vcard"><div class="vhead"><b>Évolution patrimoine</b>${v28PatrimoineRangeOptions()}</div><div id="v28PatrimoineCurve" class="vhomecurve vpatcurve"></div></div>`:''}
  <div class="vcard"><div class="vhead"><b>Détail du patrimoine</b><button class="vlink" onclick="document.querySelector('#tab-patrimoine .asset-category-manager-toggle')?.click()">+ Catégorie</button></div>
  ${v28AssetDetailRows(activePatrimoineOwner)}
