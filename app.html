@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.7.2 : Budget bouton dépense repositionné + accueil évolution restaurée -->
+<!-- V28.8.0 : navigation onglets réparée + swipe horizontal + KPI accueil corrigés -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-gca6IGB30ZERORAehE/hrFexOkYQ75OoRwnRvuQLT0Y=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ZRdAuZMDtgPppttcLNj8gT0an8VPV+CfMyY5kODTNQE=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2237,7 +2237,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 </div>
 <div id="v28AssetPortal"><div class="vportalhead"><button class="vback" type="button" onclick="v28CloseAsset()">‹</button><div class="vportaltitle" id="v28AssetPortalTitle">Patrimoine</div></div><div id="v28AssetPortalBody"></div></div>
 <nav class="vbottom" aria-label="Navigation mobile">
- <button data-vtab="home" class="on" onclick="v28Go('home')"><span>⌂</span>Accueil</button>
+ <button data-vtab="home" class="on" data-v28="menus" onclick="v28Go('menus')"><span>⌂</span>Accueil</button>
  <button data-vtab="budget" onclick="v28Go('budget')"><span>▥</span>Budget</button>
  <button data-vtab="patrimoine" onclick="v28Go('patrimoine')"><span>◕</span>Patrimoine</button>
  <button data-vtab="vehicles" onclick="v28Go('vehicles')"><span>🚗</span>Véhicules</button>
@@ -14589,16 +14589,53 @@ let v28Active='home';
 function v28Money(v){try{return euro(Number(v)||0)}catch(_){return (Number(v)||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}}
 function v28Text(id){return document.getElementById(id)?.textContent?.trim()||'—'}
 function v28StripIds(html){return String(html||'').replace(/\sid="[^"]*"/g,'')}
-function v28Go(t){
- v28CloseAsset();
- v28Active=t;
- document.querySelectorAll('#v28app .vpage').forEach(x=>x.classList.toggle('on',x.id==='v28-'+t));
- document.querySelectorAll('.vbottom button').forEach(x=>x.classList.toggle('on',x.dataset.vtab===t));
- if(t!=='home')switchTab(t);
- v28RenderMobile();
- window.scrollTo({top:0,behavior:'smooth'});
+const V28_TAB_ORDER=['home','budget','patrimoine','vehicles','factures','loyalty','menus'];
+let v28SwipeStartX=0,v28SwipeStartY=0,v28SwipeTracking=false;
+function v28SwipeBlocked(el){
+ return !!el?.closest('input,textarea,select,button,a,canvas,.vprofilebar,.vpills,.vscroll,#v28AssetPortal,.modal,[contenteditable="true"]');
 }
-const v28OpenSections={accounts:true,expenses:false,fixed:false,income:false,transfers:false,history:false};
+document.addEventListener('touchstart',e=>{
+ if(e.touches.length!==1||v28SwipeBlocked(e.target)){v28SwipeTracking=false;return}
+ v28SwipeStartX=e.touches[0].clientX;v28SwipeStartY=e.touches[0].clientY;v28SwipeTracking=true;
+},{passive:true});
+document.addEventListener('touchend',e=>{
+ if(!v28SwipeTracking||!e.changedTouches.length)return;
+ v28SwipeTracking=false;
+ const dx=e.changedTouches[0].clientX-v28SwipeStartX,dy=e.changedTouches[0].clientY-v28SwipeStartY;
+ if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.25)return;
+ const i=V28_TAB_ORDER.indexOf(v28Active);if(i<0)return;
+ const next=dx<0?i+1:i-1;
+ if(next>=0&&next<V28_TAB_ORDER.length)v28Go(V28_TAB_ORDER[next]);
+},{passive:true});
+
+let v28MouseX=0,v28MouseY=0,v28MouseTrack=false;
+document.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch'||e.button!==0||v28SwipeBlocked(e.target))return;
+ v28MouseX=e.clientX;v28MouseY=e.clientY;v28MouseTrack=true;
+});
+document.addEventListener('pointerup',e=>{
+ if(!v28MouseTrack)return;v28MouseTrack=false;
+ const dx=e.clientX-v28MouseX,dy=e.clientY-v28MouseY;
+ if(Math.abs(dx)<80||Math.abs(dx)<Math.abs(dy)*1.25)return;
+ const i=V28_TAB_ORDER.indexOf(v28Active),next=dx<0?i+1:i-1;
+ if(next>=0&&next<V28_TAB_ORDER.length)v28Go(V28_TAB_ORDER[next]);
+});
+
+function v28Go(t){
+ try{v28CloseAsset()}catch(_){}
+ v28Active=t;
+ document.querySelectorAll('#v28app .vpage').forEach(p=>p.classList.toggle('active',p.id==='v28-'+t));
+ document.querySelectorAll('.vbottom [data-v28]').forEach(b=>b.classList.toggle('on',b.dataset.v28===t));
+ try{
+   if(t!=='home'){
+     const legacy=t==='loyalty'?'loyalty':t;
+     if(document.getElementById('tab-'+legacy))switchTab(legacy);
+   }
+ }catch(_){}
+ setTimeout(v28RenderMobile,0);
+ window.scrollTo({top:0,behavior:'auto'});
+}
+
 function v28ToggleSection(k,el){v28OpenSections[k]=!!el.open}
 function v28Section(k,title,total,body,action=''){
  return `<details class="vcollapse" ${v28OpenSections[k]?'open':''} ontoggle="v28ToggleSection('${k}',this)"><summary><span>${title}</span><span class="vtotal money">${total||''}</span>${action}</summary><div class="vcbody">${body}</div></details>`;
@@ -14700,7 +14737,7 @@ function v28RenderHome(){
  document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:12px">Aujourd’hui</h1><button class="vsecondary" type="button" onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  <div class="vtopkpis">
    <div class="vtopkpi"><span class="klabel">💳 SOLDE ACTUEL</span><strong class="kvalue vgreen money">${v28Money(totalCurrent)}</strong><span class="ksub">Total de vos comptes</span></div>
-   <div class="vtopkpi"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vblue money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Budget disponible</span></div>
+   <div class="vtopkpi"><span class="klabel">↗ PRÉVISIONNEL</span><strong class="kvalue vblue money">${v28Money(totalForecast)}</strong><span class="ksub">Fin de cycle</span></div>
    <div class="vtopkpi"><span class="klabel">▥ PATRIMOINE NET</span><strong class="kvalue money">${v28Text('net')}</strong><span class="ksub">Vue consolidée</span></div>
  </div>
  <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
