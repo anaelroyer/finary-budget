@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-Uv8SoxEGacB2bb0CxFzD1k/ski5hfHz1b3eStpNerC8=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-zyK/yN+ArIlX1ZInDNz7bStfzOMrvFa9SInQKnF2fa4=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -15174,8 +15174,8 @@ function v28PatrimoineRangeOptions(){
  return `<select class="vrangeselect" aria-label="Durée du suivi du patrimoine" onchange="v28SetPatrimoineRange(this.value)">${[[3,'3 mois'],[6,'6 mois'],[12,'1 an'],[24,'2 ans'],[60,'5 ans'],[0,'Tout']].map(([v,l])=>`<option value="${v}"${current===v?' selected':''}>${l}</option>`).join('')}</select>`;
 }
 
-function v28RenderHomeCurve(owner=activePatrimoineOwner){
- const host=document.getElementById('v28HomeCurve');if(!host)return;
+function v28RenderHomeCurve(owner=activePatrimoineOwner,hostId='v28HomeCurve'){
+ const host=document.getElementById(hostId);if(!host)return;
  try{
    const range=v28GetPatrimoineRange();const start=new Date();start.setHours(0,0,0,0);if(range)start.setMonth(start.getMonth()-range);
    const ref=getPatrimoineReferenceMonth();
@@ -15192,7 +15192,7 @@ function v28RenderHomeCurve(owner=activePatrimoineOwner){
      host.innerHTML=`<div class="chart-empty">${pts.length?'Un second relevé est nécessaire pour tracer l’évolution.':`Aucun historique disponible sur ${v28PatrimoineRangeLabel()}.`}</div>`;
      return;
    }
-   const w=360,h=150,L=43,R=12,T=10,B=25,IW=w-L-R,IH=h-T-B;
+   const w=360,h=150,L=43,R=12,T=10,B=25,IW=w-L-R,IH=h-T-B;const gradientId=hostId==='v28PatrimoineCurve'?'v28-patrimoine-gradient':'v28-home-gradient';
    let min=Math.min(...pts.map(p=>p.value)),max=Math.max(...pts.map(p=>p.value));
    if(min===max){const m=Math.max(100,Math.abs(min)*.03);min-=m;max+=m}else{const m=(max-min)*.08;min-=m;max+=m}
    const p=pts.map((d,i)=>({ ...d,x:L+(i/(pts.length-1))*IW,y:T+((max-d.value)/(max-min))*IH }));
@@ -15204,7 +15204,7 @@ function v28RenderHomeCurve(owner=activePatrimoineOwner){
    const indexes=[0,Math.round((p.length-1)/2),p.length-1].filter((x,i,a)=>a.indexOf(x)===i);
    const labels=indexes.map(i=>`<text class="hlabel" x="${p[i].x}" y="${h-7}" text-anchor="${i===0?'start':i===p.length-1?'end':'middle'}">${formatChartDate(p[i].date,false)}</text>`).join('');
    const last=p[p.length-1];
-   host.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="v28-home-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs>${grid}<path class="harea" d="${area}"/><path class="hline" d="${line}"/>${p.map((x,i)=>`<circle class="hdot" cx="${x.x}" cy="${x.y}" r="${i===p.length-1?4:2}"/>`).join('')}${labels}<text class="hlast chart-axis-amount" x="${w-R}" y="${Math.max(T+9,last.y-8)}" text-anchor="end">${formatChartCompactEuro(last.value)}</text></svg>`;
+   host.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient></defs>${grid}<path class="harea" d="${area}"/><path class="hline" d="${line}"/>${p.map((x,i)=>`<circle class="hdot" cx="${x.x}" cy="${x.y}" r="${i===p.length-1?4:2}"/>`).join('')}${labels}<text class="hlast chart-axis-amount" x="${w-R}" y="${Math.max(T+9,last.y-8)}" text-anchor="end">${formatChartCompactEuro(last.value)}</text></svg>`;
    const svg=host.querySelector('svg');
    if(svg){
      const ns='http://www.w3.org/2000/svg';
@@ -15441,18 +15441,7 @@ function v28PatrimoineFinancialDonut(owner=activePatrimoineOwner){
 }
 
 function v28RenderPatrimoineCurve(){
- const host=document.getElementById('v28PatrimoineCurve');if(!host)return;
- // Reuse exactly the same history/curve renderer as Accueil via a temporary host swap.
- const home=document.getElementById('v28HomeCurve');
- try{
-   if(home){
-     v28RenderHomeCurve();
-     host.innerHTML=home.innerHTML;
-   }else{
-     const tmp=document.createElement('div');tmp.id='v28HomeCurve';tmp.style.display='none';
-     document.body.appendChild(tmp);v28RenderHomeCurve();host.innerHTML=tmp.innerHTML;tmp.remove();
-   }
- }catch(_){host.innerHTML='<div class="chart-empty">Graphique indisponible.</div>'}
+ v28RenderHomeCurve(activePatrimoineOwner,'v28PatrimoineCurve');
 }
 
 
