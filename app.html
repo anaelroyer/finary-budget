@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.6.1 : Accueil — menu du jour simplifié, extraction directe des plats -->
+<!-- V28.7.0 : Accueil mobile — ordre KPI, vrai graphique patrimoine, vrai menu du jour -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-9JtrLSWdu14n6VROwnoOodAfLL76uF/6BuSd4Pobb2s=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-QSB1sioRQoCNuSuSMjbBLoD5CTCUJw9RhHi52Jpu0TE=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1583,6 +1583,15 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vmirror details:not([open])>*:not(summary){display:none!important}
 .vmirror select{max-width:100%!important;min-height:42px!important;font-size:14px!important}
 .vmirror button,.vmirror .btn{min-height:40px}
+
+
+/* ===== V28.7 Accueil mobile ===== */
+.vlegacychart{position:relative;height:145px;overflow:hidden;border-radius:12px;background:#091522}
+.vlegacychart canvas,.vlegacychart svg{max-width:100%!important;width:100%!important;height:145px!important}
+.vmealcard{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid #1d3449;border-radius:14px;background:#091522;margin-top:7px}
+.vmealcard .micon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#10283a;font-size:20px}
+.vmealcard .mtime{font-size:8px;color:#91a7b9;font-weight:900;text-transform:uppercase}.vmealcard .mname{font-size:10px;font-weight:950;margin-top:3px;line-height:1.3}.vmealcard .mrecipe{font-size:8px;color:#49a7ff;margin-top:4px}
+@media(max-width:430px){#v28-home .vhomegrid{grid-template-columns:1fr}.vlegacychart{height:125px}.vlegacychart canvas,.vlegacychart svg{height:125px!important}}
 
 </style>
 </head>
@@ -14603,8 +14612,9 @@ function v28Mirror(id){
 }
 function v28OpenTodayMeal(i){
  const m=v28TodayMenuActions?.[i];
- if(m?.recipeId){
-   try{openMenuRecipe(m.recipeId);return}catch(_){}
+ if(m){
+   if(m.hasRecipe){openMenuRecipe(m.cycleKey,m.mealKey);return}
+   v28Go('menus');return;
  }
  v28Go('menus');
 }
@@ -14632,34 +14642,44 @@ function v28RenderHome(){
  const p2=Math.min(96,p1+Math.max(4,(100-p1)*.62));
  const p3=Math.min(99,p2+Math.max(2,(100-p2)*.55));
 
- // Menu du jour : lecture directe des données, sans analyser tout le texte de la page Menus.
+ // Menu du jour : utilise exactement le modèle de données du module Menus.
  let meals=[];
  const v28TodayMenuActions=[];
  try{
-   const jsDay=(new Date().getDay()+6)%7; // lundi=0
-   const cycle=data.menuCycle||data.menuWeek||'week1';
-   const m=data.menus?.[cycle]?.[jsDay] ?? data.menus?.[cycle]?.[String(jsDay)] ?? data.menus?.[jsDay] ?? data.menus?.[String(jsDay)];
-   const cleanMeal=(label,x)=>{
-     if(!x)return;
-     let title='', recipeId=null;
-     if(typeof x==='string') title=x;
-     else {
-       title=x.plat||x.dish||x.name||x.title||'';
-       recipeId=x.recipeId||x.recipe||x.recetteId||null;
-     }
-     title=String(title||'').trim();
-     if(!title)return;
-     const idx=v28TodayMenuActions.length;
-     v28TodayMenuActions.push({recipeId,title});
-     meals.push([label,title,idx,!!recipeId]);
-   };
-   if(m){ cleanMeal('Midi',m.midi||m.lunch); cleanMeal('Soir',m.soir||m.dinner); }
+   ensureMenusData();
+   const today=new Date(); today.setHours(0,0,0,0);
+   const firstKey=data.menus.cycleStart;
+   const starts=[firstKey,menuLocalDateKey(menuAddDays(menuDateFromKey(firstKey),7))];
+   let cycleKey='',offset=-1;
+   for(const sk of starts){
+     const sd=menuDateFromKey(sk); sd.setHours(0,0,0,0);
+     const diff=Math.round((today-sd)/86400000);
+     if(diff>=0&&diff<=7){cycleKey=sk;offset=diff;break}
+   }
+   if(cycleKey&&offset>=0){
+     const raw=data.menus.weeks?.[cycleKey]?.meals||{};
+     const addMeal=(label,meal)=>{
+       const courseVals=MENU_COURSES.map(course=>{
+         const key=menuMealKey(offset,meal,course.key);
+         return {course:course.key,value:String(raw[key]||'').trim(),key};
+       }).filter(x=>x.value);
+       if(!courseVals.length)return;
+       // Sur l'accueil on privilégie le plat; à défaut entrée puis dessert.
+       const chosen=courseVals.find(x=>x.course==='plat')||courseVals[0];
+       const idx=v28TodayMenuActions.length;
+       const hasRecipe=!!getMenuRecipeUrl(chosen.value);
+       v28TodayMenuActions.push({cycleKey,mealKey:chosen.key,title:chosen.value,hasRecipe});
+       meals.push([label,chosen.value,idx,hasRecipe]);
+     };
+     if(offset!==0)addMeal('Midi','midi');
+     if(offset!==7)addMeal('Soir','soir');
+   }
  }catch(_){}
  document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:12px">Aujourd’hui</h1><button class="vsecondary" type="button" onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  <div class="vtopkpis">
-   <div class="vtopkpi"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vgreen money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Budget disponible</span></div>
+   <div class="vtopkpi"><span class="klabel">💳 SOLDE ACTUEL</span><strong class="kvalue vgreen money">${v28Money(totalCurrent)}</strong><span class="ksub">Total de vos comptes</span></div>
+   <div class="vtopkpi"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vblue money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Budget disponible</span></div>
    <div class="vtopkpi"><span class="klabel">▥ PATRIMOINE NET</span><strong class="kvalue money">${v28Text('net')}</strong><span class="ksub">Vue consolidée</span></div>
-   <div class="vtopkpi"><span class="klabel">💳 SOLDE ACTUEL</span><strong class="kvalue vblue money">${v28Money(totalCurrent)}</strong><span class="ksub">Prévision : <b class="money">${v28Money(totalForecast)}</b></span></div>
  </div>
  <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
 
@@ -14672,15 +14692,33 @@ function v28RenderHome(){
     <div class="vfinlegend"><div><span>Épargne</span><b class="money">${v28Money(sav)}</b></div><div><span>Investissements</span><b class="money">${v28Money(inv)}</b></div></div>
    </div>
   </div>
-  <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">6 mois ›</button></div>
-   <div class="vspark"><i style="height:38%"></i><i style="height:46%"></i><i style="height:52%"></i><i style="height:63%"></i><i style="height:70%"></i><i style="height:88%"></i></div>
-   <div class="vlab" style="margin-top:7px">Avr · Mai · Juin · Juil · Août · Sept</div>
+  <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">Voir détail →</button></div>
+   <div id="v28HomePatrimoineChart" class="vlegacychart"></div>
   </div>
  </div>
 
  <div class="vcard"><div class="vhead"><b>🍴 Menu du jour</b><button class="vlink" onclick="v28Go('menus')">Voir la semaine →</button></div>
- ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmeal"><div class="mi">${lab==='Midi'?'☀️':'🌙'}</div><div><small>${escapeHtml(lab)}</small><b style="display:block;margin-top:3px">${escapeHtml(txt)}</b>${hasRecipe?'<small class="vblue">Recette disponible</small>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmeal"><div class="mi">🍽️</div><div><b>Aucun menu renseigné aujourd’hui</b><small>Ajoute-le dans Menus</small></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
+ ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
+ setTimeout(()=>{
+   const host=document.getElementById('v28HomePatrimoineChart'); if(!host)return;
+   const candidates=[
+     document.getElementById('patrimoineEvolutionChart'),
+     document.getElementById('patrimoine-evolution-chart'),
+     document.getElementById('evolutionChart'),
+     document.querySelector('#tab-patrimoine canvas')
+   ].filter(Boolean);
+   const src=candidates[0];
+   if(src&&src.tagName==='CANVAS'){
+     const c=document.createElement('canvas');c.width=src.width||600;c.height=src.height||260;host.replaceChildren(c);
+     try{c.getContext('2d').drawImage(src,0,0,c.width,c.height)}catch(_){}
+   }else{
+     const box=document.querySelector('#tab-patrimoine .chart-container,#tab-patrimoine .evolution-chart');
+     if(box)host.innerHTML=v28StripIds(box.innerHTML);
+     else host.innerHTML='<div class="vlab" style="padding:18px">Évolution disponible dans Patrimoine.</div>';
+   }
+ },80);
+
 }
 function v28RenderBudget(){
  const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
