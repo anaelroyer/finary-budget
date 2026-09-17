@@ -1,6 +1,6 @@
 /* Budget & Patrimoine — Service Worker — Security v3
    Cache renforcé des ressources statiques et bibliothèques externes. */
-const CACHE_NAME = 'budget-patrimoine-v28-8-10-20260917';
+const CACHE_NAME = 'budget-patrimoine-v28-8-11-20260917';
 
 const APP_SHELL = [
   './app.html',

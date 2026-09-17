@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.8.10 : KPIs Patrimoine Epargne / Bourse / Crypto -->
+<!-- V28.8.11 : camembert financier détaillé sans total central -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
 <!-- V26.2.12 : Budget — catégories Tabac et Animaux + auto-classement -->
@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-0hKmD2/NhoQ+zpJmk1O/bdAVHtgQOutyflsI75KY/l0=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-UWiy5Zll5FU9EtC6RImeskurjVq1pym8/LX2MfiAgb0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-4EHnROE4b/aegYdQy/HVdLnBrXj8lTgnyXC5R2OMugo=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1674,6 +1674,32 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 .vlegenddot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
 .vpatcurve,.vpatcurve svg{width:100%!important;height:190px}
 @media(min-width:601px){.vpatcurve,.vpatcurve svg{height:220px}}
+
+
+/* V28.8.11 — Patrimoine : vrai camembert financier détaillé */
+.vfinancialdonut{
+  width:150px!important;
+  height:150px!important;
+  min-width:150px;
+  aspect-ratio:1/1;
+  border-radius:50%;
+  position:relative;
+  display:block;
+}
+.vfinancialdonut:after{display:none!important}
+.vfinanciallegend{width:100%}
+.vfinanciallegend>div{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:5px 0;
+}
+.vfinanciallegend>div>span{display:flex;align-items:center;min-width:0}
+.vfinanciallegend>div>b{white-space:nowrap}
+@media(max-width:430px){
+ .vfinancialdonut{width:138px!important;height:138px!important;min-width:138px}
+}
 
 </style>
 </head>
@@ -14941,27 +14967,42 @@ function v28CloseAsset(){
 function v28PatrimoineFinancialDonut(){
  let parts=[];
  try{
-   const savingEl=document.getElementById('total-epargne');
-   const saving=parseEuroText(savingEl?.textContent||'0');
-   if(saving>0)parts.push({label:'Épargne',value:saving});
+   const sumKey=key=>getOwnedItems(key,activePatrimoineOwner).reduce((sum,item)=>sum+(Number(item?.[1])||0),0);
+   const saving=sumKey('epargne');
+   if(saving>0)parts.push({key:'epargne',label:'Épargne',value:saving,color:'#45d0c7'});
+
    getActiveInvestmentCategoryKeys().forEach(k=>{
      if(k==='immobilier')return;
-     const value=parseEuroText(document.getElementById('total-'+k)?.textContent||'0');
-     if(value>0)parts.push({label:ASSET_CATEGORY_MAP[k]?.label||k,value});
+     const value=sumKey(k);
+     if(value>0)parts.push({
+       key:k,
+       label:ASSET_CATEGORY_MAP[k]?.label||k,
+       value,
+       color:ASSET_CATEGORY_MAP[k]?.color||''
+     });
    });
- }catch(_){}
- const total=parts.reduce((s,p)=>s+p.value,0);
+ }catch(e){console.error('V28 patrimoine donut',e)}
+
+ const total=parts.reduce((sum,p)=>sum+p.value,0);
  if(!total)return `<div class="chart-empty">Aucun actif financier à répartir.</div>`;
 
+ const fallback=['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#f778ba','#8b949e'];
  let acc=0;
- const palette=['#58a6ff','#3fb950','#d29922','#bc8cff','#39c5cf','#f778ba','#8b949e'];
  const stops=parts.map((p,i)=>{
    const a=acc/total*100;acc+=p.value;const b=acc/total*100;
-   return `${palette[i%palette.length]} ${a}% ${b}%`;
+   const color=p.color||fallback[i%fallback.length];
+   p.displayColor=color;
+   return `${color} ${a}% ${b}%`;
  }).join(',');
+
  return `<div class="vdonutgrid">
-   <div class="vdonut vfinancialdonut" style="background:conic-gradient(${stops})"><b class="money">${v28Money(total)}</b></div>
-   <div class="vlegend">${parts.map((p,i)=>`<div><span><i class="vlegenddot" style="background:${palette[i%palette.length]}"></i>${escapeHtml(p.label)}</span><b class="money">${v28Money(p.value)}</b></div>`).join('')}</div>
+   <div class="vdonut vfinancialdonut" style="background:conic-gradient(${stops})" aria-label="Répartition des actifs financiers"></div>
+   <div class="vlegend vfinanciallegend">
+     ${parts.map(p=>`<div>
+       <span><i class="vlegenddot" style="background:${p.displayColor}"></i>${escapeHtml(p.label)}</span>
+       <b class="money">${v28Money(p.value)}</b>
+     </div>`).join('')}
+   </div>
  </div>`;
 }
 
