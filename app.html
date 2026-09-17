@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ARI/uHi2KZOQjZjXiVECksflCcpepeGc4S7EvEvhPGs=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-9oUHFgSF/DYZITEYYFEuFEORZlhFYfseos12unGB8DA=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1811,6 +1811,227 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 /* V28.8.16 — modales historiques accessibles depuis l'interface V28 */
 body > .modal-overlay{z-index:30000}
 body > .modal-overlay.active{display:flex!important}
+
+
+/* V28.8.17 — les formulaires Patrimoine restent visuellement dans V28 */
+body > #savingsEditModal,
+body > #patrimoineAmountModal,
+body > #participationModal,
+body > #participationAcquisitionModal,
+body > #peaOpeningModal,
+body > #stockEditModal,
+body > #loanModal{
+  background:rgba(3,10,18,.82)!important;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:14px!important;
+}
+body > #savingsEditModal .modal,
+body > #patrimoineAmountModal .modal,
+body > #participationModal .modal,
+body > #participationAcquisitionModal .modal,
+body > #peaOpeningModal .modal,
+body > #stockEditModal .modal,
+body > #loanModal .modal{
+  width:100%!important;
+  max-width:442px!important;
+  max-height:calc(100dvh - 28px)!important;
+  overflow:auto!important;
+  background:#0d1a2a!important;
+  border:1px solid #1d3449!important;
+  border-radius:20px!important;
+  padding:18px!important;
+  gap:14px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.55)!important;
+  color:#edf5fb!important;
+}
+body > #savingsEditModal .modal h3,
+body > #patrimoineAmountModal .modal h3,
+body > #participationModal .modal h3,
+body > #participationAcquisitionModal .modal h3,
+body > #peaOpeningModal .modal h3,
+body > #stockEditModal .modal h3,
+body > #loanModal .modal h3{
+  margin:0 0 2px!important;
+  font-size:20px!important;
+  font-weight:950!important;
+  color:#f5fbff!important;
+}
+body > #savingsEditModal .modal-field label,
+body > #patrimoineAmountModal .modal-field label,
+body > #participationModal .modal-field label,
+body > #participationAcquisitionModal .modal-field label,
+body > #peaOpeningModal .modal-field label,
+body > #stockEditModal .modal-field label,
+body > #loanModal .modal-field label{
+  color:#a9bfd0!important;
+  font-size:12px!important;
+  font-weight:800!important;
+}
+body > #savingsEditModal input,
+body > #patrimoineAmountModal input,
+body > #participationModal input,
+body > #participationModal select,
+body > #participationAcquisitionModal input,
+body > #peaOpeningModal input,
+body > #stockEditModal input,
+body > #stockEditModal select,
+body > #loanModal input,
+body > #loanModal select{
+  min-height:48px!important;
+  background:#081522!important;
+  color:#fff!important;
+  border:1px solid #27475e!important;
+  border-radius:13px!important;
+}
+body > #savingsEditModal .modal-buttons,
+body > #patrimoineAmountModal .modal-buttons,
+body > #participationModal .modal-buttons,
+body > #participationAcquisitionModal .modal-buttons,
+body > #peaOpeningModal .modal-buttons,
+body > #stockEditModal .modal-buttons,
+body > #loanModal .modal-buttons{
+  position:sticky;
+  bottom:-18px;
+  background:#0d1a2a;
+  padding:10px 0 2px!important;
+  z-index:2;
+}
+body > #savingsEditModal .btn,
+body > #patrimoineAmountModal .btn,
+body > #participationModal .btn,
+body > #participationAcquisitionModal .btn,
+body > #peaOpeningModal .btn,
+body > #stockEditModal .btn,
+body > #loanModal .btn{
+  min-height:46px!important;
+  border-radius:13px!important;
+  font-weight:900!important;
+}
+body > #savingsEditModal .btn-primary,
+body > #patrimoineAmountModal .btn-primary,
+body > #participationModal .btn-primary,
+body > #participationAcquisitionModal .btn-primary,
+body > #peaOpeningModal .btn-primary,
+body > #stockEditModal .btn-primary,
+body > #loanModal .btn-primary{
+  background:#16b8c7!important;
+  border-color:#16b8c7!important;
+  color:#031017!important;
+}
+body > #savingsEditModal .btn-secondary,
+body > #patrimoineAmountModal .btn-secondary,
+body > #participationModal .btn-secondary,
+body > #participationAcquisitionModal .btn-secondary,
+body > #peaOpeningModal .btn-secondary,
+body > #stockEditModal .btn-secondary,
+body > #loanModal .btn-secondary{
+  background:#13283a!important;
+  border-color:#27475e!important;
+  color:#edf5fb!important;
+}
+body > #savingsEditModal .savings-modal-note{color:#89a5b8!important}
+
+
+/* V28.8.18 — habillage V28 universel de TOUS les formulaires/modales historiques */
+body > .modal-overlay{
+  z-index:30000!important;
+  background:rgba(3,10,18,.84)!important;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:14px!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+body > .modal-overlay.active{display:flex!important}
+body > .modal-overlay > .modal,
+body > .modal-overlay > .modal-card,
+body > .modal-overlay > [role="dialog"]{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:442px!important;
+  max-height:calc(100dvh - 28px)!important;
+  overflow:auto!important;
+  background:#0d1a2a!important;
+  border:1px solid #1d3449!important;
+  border-radius:20px!important;
+  padding:18px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.55)!important;
+  color:#edf5fb!important;
+}
+body > .modal-overlay h2,
+body > .modal-overlay h3{
+  color:#f5fbff!important;
+  font-weight:950!important;
+}
+body > .modal-overlay label,
+body > .modal-overlay .field-label,
+body > .modal-overlay .modal-field label{
+  color:#a9bfd0!important;
+  font-weight:800!important;
+}
+body > .modal-overlay input:not([type="checkbox"]):not([type="radio"]),
+body > .modal-overlay select,
+body > .modal-overlay textarea{
+  box-sizing:border-box!important;
+  width:100%;
+  min-height:46px!important;
+  background:#081522!important;
+  color:#fff!important;
+  border:1px solid #27475e!important;
+  border-radius:13px!important;
+}
+body > .modal-overlay textarea{min-height:90px!important}
+body > .modal-overlay input::placeholder,
+body > .modal-overlay textarea::placeholder{color:#6f8a9d!important}
+body > .modal-overlay .modal-buttons,
+body > .modal-overlay .modal-actions,
+body > .modal-overlay .form-actions{
+  position:sticky;
+  bottom:-18px;
+  z-index:2;
+  background:#0d1a2a!important;
+  padding-top:10px!important;
+  padding-bottom:2px!important;
+}
+body > .modal-overlay .btn,
+body > .modal-overlay button{
+  min-height:44px;
+  border-radius:13px;
+}
+body > .modal-overlay .btn-primary,
+body > .modal-overlay button[type="submit"]{
+  background:#16b8c7!important;
+  border-color:#16b8c7!important;
+  color:#031017!important;
+  font-weight:900!important;
+}
+body > .modal-overlay .btn-secondary{
+  background:#13283a!important;
+  border-color:#27475e!important;
+  color:#edf5fb!important;
+}
+body > .modal-overlay table{
+  width:100%!important;
+  max-width:100%!important;
+}
+body > .modal-overlay img,
+body > .modal-overlay canvas{
+  max-width:100%!important;
+}
+@media(max-width:470px){
+  body > .modal-overlay{padding:10px!important}
+  body > .modal-overlay > .modal,
+  body > .modal-overlay > .modal-card,
+  body > .modal-overlay > [role="dialog"]{
+    max-height:calc(100dvh - 20px)!important;
+    border-radius:18px!important;
+    padding:16px!important;
+  }
+}
+
+/* V28.8.19 — cases profil selon actifs réellement détenus */
+#v28-patrimoine .vkpis{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))!important}
 
 </style>
 </head>
@@ -15045,7 +15266,8 @@ function v28RenderBudget(){
 
 }
 function v28EnsureLegacyModalsVisible(){
- document.querySelectorAll('.wrap .modal-overlay').forEach(modal=>{
+ document.querySelectorAll('.modal-overlay').forEach(modal=>{
+   if(modal.closest('#v28app'))return;
    if(modal.parentNode!==document.body)document.body.appendChild(modal);
  });
 }
@@ -15138,12 +15360,30 @@ function v28RenderPatrimoineCurve(){
  }catch(_){host.innerHTML='<div class="chart-empty">Graphique indisponible.</div>'}
 }
 
+
+function v28ProfileAssetKpis(owner=activePatrimoineOwner){
+ const defs=[
+  {key:'epargne',label:'ÉPARGNE'},
+  {key:'assurancevie',label:'ASSURANCE-VIE'},
+  {key:'bourse',label:'BOURSE'},
+  {key:'crypto',label:'CRYPTO'},
+  {key:'scpi',label:'SCPI'}
+ ];
+ return defs.map(def=>{
+   let rows=[];
+   try{rows=getOwnedItems(def.key,owner)||[]}catch(_){}
+   const total=rows.reduce((sum,row)=>sum+(Number(Array.isArray(row)?row[1]:0)||0),0);
+   if(!rows.length && !(total>0))return '';
+   return `<div class="vkpi"><span>${def.label}</span><b class="money">${v28Money(total)}</b></div>`;
+ }).join('');
+}
+
 function v28RenderPatrimoine(){
  const cats=getActiveAssetCategoryKeys();
  document.getElementById('v28-patrimoine').innerHTML=`<div class="vey">Patrimoine</div><h1 class="vtitle">Vue consolidée</h1>
  <div class="vprofilebar">${v28ProfileButtons()}</div>
  <div class="vhero"><div class="vlab">Patrimoine net · ${escapeHtml(getPatrimoineOwnerLabel(activePatrimoineOwner))}</div><div class="vbig money">${v28Text('net')}</div><div class="vpos">${v28Text('patrimoine-variation-value')}</div></div>
- <div class="vkpis"><div class="vkpi"><span>ÉPARGNE</span><b class="money">${v28Text('total-epargne')}</b></div><div class="vkpi"><span>BOURSE</span><b class="money">${v28Text('total-bourse')}</b></div><div class="vkpi"><span>CRYPTO</span><b class="money">${v28Text('total-crypto')}</b></div></div>
+ <div class="vkpis">${v28ProfileAssetKpis(activePatrimoineOwner)}</div>
  <div class="vactions"><button onclick="printPatrimoineReport()">🖨 Imprimer</button><button onclick="savePatrimoineReportPdf()">📄 PDF</button><button onclick="sharePatrimoineReport()">↗ Partager</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
  <div class="vcard"><div class="vhead"><b>Répartition financière</b><span class="vlab">Hors immobilier & emprunts</span></div>${v28PatrimoineFinancialDonut()}</div>
  <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><span class="vlab">6 mois</span></div><div id="v28PatrimoineCurve" class="vhomecurve vpatcurve"></div></div>
