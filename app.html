@@ -2236,7 +2236,7 @@ body > .modal-overlay canvas{
 
 
 /* V28.8.42 — état de l'application */
-.v28-sync-status{position:relative;left:auto;top:auto;transform:none;z-index:auto;width:max-content;max-width:calc(100% - 28px);margin:10px auto 6px;box-sizing:border-box;padding:6px 11px;border:1px solid #29485d;border-radius:999px;background:rgba(8,21,34,.96);color:#d8e6ef;font-size:10px;font-weight:850;line-height:1.2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+.v28-sync-status{position:relative;left:auto;top:auto;transform:none;z-index:auto;width:max-content;max-width:calc(100% - 28px);margin:10px auto 8px;box-sizing:border-box;padding:6px 11px;border:1px solid #29485d;border-radius:999px;background:rgba(8,21,34,.96);color:#d8e6ef;font-size:10px;font-weight:850;line-height:1.2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 18px rgba(0,0,0,.22)}
 .v28-sync-status.sync-ok{color:#4fe08a;border-color:rgba(79,224,138,.38)}
 .v28-sync-status.sync-pending{color:#f0bd58;border-color:rgba(240,189,88,.38)}
 .v28-sync-status.sync-offline{color:#ff7373;border-color:rgba(255,115,115,.38)}
@@ -2868,6 +2868,7 @@ body > .modal-overlay canvas{
 
 
 <div id="v28app">
+<div id="v28FirebaseStatus" class="v28-sync-status sync-pending">Synchronisation…</div>
  <section id="v28-home" class="vpage on"></section>
  <section id="v28-budget" class="vpage"></section>
  <section id="v28-patrimoine" class="vpage"></section>
@@ -2877,7 +2878,6 @@ body > .modal-overlay canvas{
  <section id="v28-menus" class="vpage"></section>
 </div>
 <div id="v28AssetPortal"><div class="vportalhead"><button class="vback" type="button" onclick="v28CloseAsset()">‹</button><div class="vportaltitle" id="v28AssetPortalTitle">Patrimoine</div></div><div id="v28AssetPortalBody"></div></div>
-<div id="v28FirebaseStatus" class="v28-sync-status sync-pending">Synchronisation…</div>
 <nav class="vbottom" aria-label="Navigation mobile">
  <button data-vtab="home" class="on" onclick="v28Go('home')"><span>⌂</span>Accueil</button>
  <button data-vtab="budget" onclick="v28Go('budget')"><span>▥</span>Budget</button>
