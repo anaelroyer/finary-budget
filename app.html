@@ -39,7 +39,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-/anwmhQzV0Z/Gi5Ddvs7IsrzZSYMHbkcgs6ukOAbsmg=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ZVEuzbhuWrvow/kJ4YgPt0+OXd4OFDiItbL61CJV/xg=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ZVEuzbhuWrvow/kJ4YgPt0+OXd4OFDiItbL61CJV/xg=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2234,6 +2234,13 @@ body > .modal-overlay canvas{
   color:#91a9ba!important;
 }
 
+
+/* V28.8.42 — état de l'application */
+.v28-sync-status{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);z-index:9998;max-width:min(430px,calc(100vw - 28px));box-sizing:border-box;padding:6px 11px;border:1px solid #29485d;border-radius:999px;background:rgba(8,21,34,.96);color:#d8e6ef;font-size:10px;font-weight:850;line-height:1.2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+.v28-sync-status.sync-ok{color:#4fe08a;border-color:rgba(79,224,138,.38)}
+.v28-sync-status.sync-pending{color:#f0bd58;border-color:rgba(240,189,88,.38)}
+.v28-sync-status.sync-offline{color:#ff7373;border-color:rgba(255,115,115,.38)}
+
 </style>
 </head>
 <body>
@@ -2870,6 +2877,7 @@ body > .modal-overlay canvas{
  <section id="v28-menus" class="vpage"></section>
 </div>
 <div id="v28AssetPortal"><div class="vportalhead"><button class="vback" type="button" onclick="v28CloseAsset()">‹</button><div class="vportaltitle" id="v28AssetPortalTitle">Patrimoine</div></div><div id="v28AssetPortalBody"></div></div>
+<div id="v28FirebaseStatus" class="v28-sync-status sync-pending">Synchronisation…</div>
 <nav class="vbottom" aria-label="Navigation mobile">
  <button data-vtab="home" class="on" onclick="v28Go('home')"><span>⌂</span>Accueil</button>
  <button data-vtab="budget" onclick="v28Go('budget')"><span>▥</span>Budget</button>
@@ -3490,11 +3498,12 @@ function prefillRememberedAuthEmail(){
 }
 
 function setFirebaseStatus(message,state=''){
-  const el=document.getElementById('firebaseStatus');
-  if(!el)return;
-  el.textContent=message;
-  el.classList.remove('sync-ok','sync-pending','sync-offline');
-  if(state)el.classList.add(state);
+  const targets=[document.getElementById('firebaseStatus'),document.getElementById('v28FirebaseStatus')].filter(Boolean);
+  targets.forEach(el=>{
+    el.textContent=message;
+    el.classList.remove('sync-ok','sync-pending','sync-offline');
+    if(state)el.classList.add(state);
+  });
 }
 
 function setAuthMessage(message,type=''){
