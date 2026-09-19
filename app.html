@@ -2,7 +2,7 @@
 <!-- V28.9.40 : Prévisions — revenus récurrents filtrés dans le calcul + décomposition visible -->
 <!-- V28.9.38 : Prévisions annuelles — déduction du reste à vivre cible + correctif CSP -->
 <!-- V28.9.31 : Soldes par compte — couleurs positif/négatif + variation orange dans Budget -->
-<!-- V28.9.41 : Virements investissement — destinations uniques pour tous les actifs du foyer -->
+<!-- V28.9.43 : Virements d’épargne — compte source vers actif patrimonial, sans compte bancaire destinataire -->
 <!-- V28.9.37 : Prévisions — reste à vivre cible modifiable et épargne pilotée par objectif -->
 <!-- V28.9.9 : Prévisions — ajout des baisses permanentes ou temporaires de revenu -->
 <!-- V28.9.2 : Prévisions — crédit immobilier lissé selon tableaux d’amortissement -->
@@ -46,9 +46,10 @@
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
+<!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-yTd531AbHVRXv8Q0U0IheiQszp608Wwp87RP5wxLRnI=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-kpQr9rOobBLcFIzy04lE+3M5s1Bh6XcEFsNStua9Nvw='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-c0bmIlTCIkOcc+0NEluaTFIIqGk+Qp0Qyy3v3SxBWh0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-8K+OmtJhJWRqRXm/9AmK69kxdUhh/ybMZ2MW3zRciPY='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2289,6 +2290,9 @@ body > .modal-overlay canvas{
 #v28-budget .vbudget-accounts-focus .vbudget-cycle-delta{display:inline-flex;align-items:center;margin-top:7px;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:950;line-height:1;border:1px solid rgba(255,182,87,.38);background:rgba(255,182,87,.10);color:#ffb657!important}
 #v28-budget .vbudget-accounts-focus .vbudget-cycle-delta.neg:before{content:'↘ ';margin-right:2px}
 #v28-budget .vbudget-accounts-focus .vbudget-cycle-delta.pos:before{content:'↗ ';margin-right:2px}
+#v28-budget .vbudget-accounts-focus .vbudget-cycle-movements{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+#v28-budget .vbudget-accounts-focus .vbudget-cycle-credit{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:950;line-height:1;border:1px solid rgba(63,185,120,.38);background:rgba(63,185,120,.10);color:#3fb978!important}
+#v28-budget .vbudget-accounts-focus .vbudget-cycle-credit:before{content:'↗ ';margin-right:2px}
 @media(max-width:370px){#v28-budget .vbudget-accounts-focus .vbankbox b{font-size:17px!important}}
 </style>
 <style>
@@ -2415,7 +2419,7 @@ body > .modal-overlay canvas{
       <label>Depuis</label>
       <select id="bankTransferFrom" class="bank-select"></select>
     </div>
-    <div class="modal-field">
+    <div class="modal-field" id="bankTransferToField">
       <label>Vers</label>
       <select id="bankTransferTo" class="bank-select"></select>
     </div>
@@ -2444,7 +2448,7 @@ body > .modal-overlay canvas{
       </div>
       <div style="font-size:11px;color:#8b949e;line-height:1.4;margin-top:-4px;margin-bottom:10px;">Le montant affecté peut être inférieur au virement total. Exemple : virement Trade Republic 250 €, dont 200 € vers le PEA.</div>
     </div>
-    <div style="font-size:11px;color:#8b949e;line-height:1.4;">Le virement modifie les soldes des deux comptes mais ne compte ni comme dépense ni comme entrée. S’il est marqué « Épargne / investissement », Prévisions l’identifie comme une affectation patrimoniale et évite de le traiter comme une charge.</div>
+    <div style="font-size:11px;color:#8b949e;line-height:1.4;">Un virement interne classique déplace le montant entre deux comptes. Pour « Épargne / investissement », seul le compte source est débité dans Budget et la destination patrimoniale sert aux Prévisions ; le solde réel du Patrimoine reste manuel.</div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeBankTransferModal()">Annuler</button>
       <button class="btn btn-primary" id="bankTransferSubmitBtn" style="flex:1" onclick="submitBankTransfer()">Ajouter</button>
@@ -6270,13 +6274,14 @@ function populateBankTransferInvestmentTargets(selected=''){
 function toggleBankTransferInvestmentFields(){
   const isInvestment=document.getElementById('bankTransferPurpose')?.value==='investment';
   const box=document.getElementById('bankTransferInvestmentFields');if(box)box.style.display=isInvestment?'block':'none';
+  const toField=document.getElementById('bankTransferToField');if(toField)toField.style.display=isInvestment?'none':'block';
 }
 
 function openBankTransferModal(index=-1){
   ensureBankingData();
   const active=(data.bankAccounts||[]).filter(a=>a.active!==false);
-  if(active.length<2){
-    alert('Il faut au moins deux comptes actifs pour créer un virement interne.');
+  if(active.length<1){
+    alert('Il faut au moins un compte actif pour créer un virement.');
     return;
   }
 
@@ -6289,7 +6294,7 @@ function openBankTransferModal(index=-1){
   document.getElementById('bankTransferAmount').value=t?.amount??'';
 
   populateBankSelect(document.getElementById('bankTransferFrom'),t?.from||active[0].id);
-  populateBankSelect(document.getElementById('bankTransferTo'),t?.to||active[1].id);
+  populateBankSelect(document.getElementById('bankTransferTo'),t?.to||(active[1]?.id||active[0].id));
   document.getElementById('bankTransferRecurrence').value=t?.recurrence==='permanent'?'permanent':'occasional';
   document.getElementById('bankTransferPurpose').value=t?.purpose==='investment'?'investment':'internal';
   populateBankTransferInvestmentTargets(t?.investmentTarget||'');
@@ -6309,17 +6314,18 @@ function submitBankTransfer(){
   const label=document.getElementById('bankTransferLabel').value.trim();
   const amount=Number(document.getElementById('bankTransferAmount').value);
   const from=document.getElementById('bankTransferFrom').value;
-  const to=document.getElementById('bankTransferTo').value;
+  const selectedTo=document.getElementById('bankTransferTo').value;
   const recurrence=document.getElementById('bankTransferRecurrence').value==='permanent'?'permanent':'occasional';
   const purpose=document.getElementById('bankTransferPurpose').value==='investment'?'investment':'internal';
   const investmentTarget=purpose==='investment'?document.getElementById('bankTransferInvestmentTarget').value:'';
   const investmentAmount=purpose==='investment'?Number(document.getElementById('bankTransferInvestmentAmount').value):0;
+  const to=purpose==='investment'?'':selectedTo;
 
   if(!Number.isFinite(amount)||amount<=0){
     alert('Saisis un montant supérieur à 0.');
     return;
   }
-  if(from===to){
+  if(purpose==='internal'&&from===to){
     alert('Le compte de départ et le compte d’arrivée doivent être différents.');
     return;
   }
@@ -6378,7 +6384,7 @@ function renderBankTransfers(){
       <input type="checkbox" ${t.done?'checked':''} onchange="toggleBankTransferDone(${index})" title="Virement effectué">
       <div class="transfer-main" onclick="openBankTransferModal(${index})">
         <div class="transfer-label">${escapeHtml(t.label||'Virement interne')}</div>
-        <div class="transfer-route">${escapeHtml(getBankAccountName(t.from))} → ${escapeHtml(getBankAccountName(t.to))}</div>
+        <div class="transfer-route">${escapeHtml(getBankAccountName(t.from))} → ${t.purpose==='investment'?escapeHtml((getBankTransferInvestmentTargets().find(a=>a.id===t.investmentTarget)?.label)||'Destination patrimoniale'):escapeHtml(getBankAccountName(t.to))}</div>
         <div class="transfer-cycle ${t.recurrence==='permanent'?'permanent':''}">${t.recurrence==='permanent'?'Permanent':'Occasionnel'}${t.purpose==='investment'?' · Épargne / investissement':''}</div>
       </div>
       <div class="transfer-amount" onclick="openBankTransferModal(${index})">${euro(Number(t.amount)||0)}</div>
@@ -6414,10 +6420,10 @@ function calculateBankBalances(){
   (data.bankTransfers||[]).forEach(t=>{
     const amount=Number(t.amount)||0;
     ensure(t.from).forecast-=amount;
-    ensure(t.to).forecast+=amount;
+    if(t.purpose!=='investment'&&t.to)ensure(t.to).forecast+=amount;
     if(t.done){
       ensure(t.from).current-=amount;
-      ensure(t.to).current+=amount;
+      if(t.purpose!=='investment'&&t.to)ensure(t.to).current+=amount;
     }
   });
 
@@ -15654,6 +15660,11 @@ function v28ForecastInvestmentTransferMonthly(assetId,owner='',key='',assetValue
 function v28ForecastProgrammedInvestmentTransfers(){
  return (data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent').reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
 }
+function v28ForecastInternalTransfersMonthly(){
+ // Déduit le virement d'épargne complet du budget disponible.
+ // investmentAmount reste réservé à la ventilation de la projection patrimoniale.
+ return (data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent').reduce((sum,t)=>sum+Math.max(0,Number(t.amount)||0),0);
+}
 function v28ForecastInvestmentAssets(){
  const f=v28EnsureForecastData(),owners=v28ForecastInvestmentOwners(),defs=[{key:'epargne',label:'Épargne',defaultRate:.02},...ASSET_CATEGORY_DEFINITIONS.filter(c=>!['immobilier','vehicules','collection','autres'].includes(c.key)).map(c=>({...c,defaultRate:({bourse:.06,assurancevie:.04,scpi:.045,crypto:0,per:.05,crowdfunding:.05,privateequity:.06,participations:0,metaux:.02,partssociales:.02}[c.key]??.03)}))],rows=[];
  owners.forEach(owner=>defs.forEach(def=>(getOwnedItems(def.key,owner)||[]).forEach((item,index)=>{const value=Math.max(0,Number(item?.[1])||0);if(!value)return;const label=String(item?.[0]||def.label),id=[owner,def.key,index,normalizeBudgetText(label)].join('|'),cfg=f.investmentSettings[id]||{};rows.push({id,owner,ownerLabel:getPatrimoineOwnerLabel(owner),key:def.key,label,value,rate:Number.isFinite(Number(cfg.rate))?Number(cfg.rate):def.defaultRate,monthly:Number.isFinite(Number(cfg.monthly))?Math.max(0,Number(cfg.monthly)):null,explicitMonthly:Number.isFinite(Number(cfg.monthly))});})));
@@ -15703,8 +15714,8 @@ function v28ForecastAnnualHtml(rows){
  const groups={};rows.forEach(r=>{const y=r.key.slice(0,4);(groups[y]||(groups[y]=[])).push(r)});
  const livingTarget=v28ForecastRequiredLiving();
  return Object.entries(groups).map(([y,rs])=>{
-  const income=rs.reduce((s,r)=>s+r.income,0),fixed=rs.reduce((s,r)=>s+r.fixed,0),loans=rs.reduce((s,r)=>s+r.loans,0),variable=rs.reduce((s,r)=>s+r.variable,0),events=rs.reduce((s,r)=>s+r.eventImpact,0),available=rs.reduce((s,r)=>s+r.capacity,0),living=rs.length*livingTarget,savings=rs.reduce((s,r)=>s+Math.max(0,r.capacity-livingTarget),0),open=!!v28ForecastOpenYears[y];
-  return `<div class="vforecast-year"><div class="vforecast-year-head" onclick="v28ToggleForecastYear('${y}')"><div><b>${y}</b><small class="vlab">${rs.length} mois projetés</small></div><div style="text-align:right"><strong class="${savings>=0?'vgreen':'vred'} money">${savings>0?'+ ':''}${v28Money(savings)}</strong><small class="vlab">capacité d’épargne</small><span class="vchev">⌄</span></div></div><div class="vforecast-year-kpis"><div class="vforecast-year-kpi"><span>Revenus</span><b class="vgreen money">${v28Money(income)}</b></div><div class="vforecast-year-kpi"><span>Charges + crédits</span><b class="money">${v28Money(fixed+loans+variable)}</b></div><div class="vforecast-year-kpi"><span>Capacité disponible</span><b class="${available>=0?'vgreen':'vred'} money">${v28Money(available)}</b></div><div class="vforecast-year-kpi"><span>Reste à vivre cible</span><b class="money">− ${v28Money(living)}</b><small class="vlab">${v28Money(livingTarget)}/mois</small></div><div class="vforecast-year-kpi"><span>Capacité d’épargne</span><b class="vgreen money">${v28Money(savings)}</b></div><div class="vforecast-year-kpi"><span>Événements</span><b class="${events>=0?'vgreen':'vred'} money">${events>=0?'+ ':''}${v28Money(events)}</b></div></div>${open?rs.map(r=>{const monthSavings=Math.max(0,r.capacity-livingTarget),livingKept=Math.min(Math.max(0,r.capacity),livingTarget);return `<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong></div><div class="vforecast-month-detail"><span>Revenus</span><strong class="vgreen money">+ ${v28Money(r.income)}</strong><span>Frais fixes</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(r.loans)}</strong><span>Variables</span><strong class="vred money">− ${v28Money(r.variable)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}<span>Capacité disponible</span><strong class="${r.capacity>=0?'vgreen':'vred'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong><span>Reste à vivre cible</span><strong class="money">− ${v28Money(livingTarget)}</strong><span>Capacité d’épargne</span><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong>${r.capacity<livingTarget?`<span>Reste à vivre réellement couvert</span><strong class="${r.capacity<0?'vred':''} money">${v28Money(livingKept)}</strong>`:''}</div></div>`}).join(''):''}</div>`
+  const income=rs.reduce((s,r)=>s+r.income,0),fixed=rs.reduce((s,r)=>s+r.fixed,0),loans=rs.reduce((s,r)=>s+r.loans,0),variable=rs.reduce((s,r)=>s+r.variable,0),transfers=rs.reduce((s,r)=>s+(r.transfers||0),0),events=rs.reduce((s,r)=>s+r.eventImpact,0),available=rs.reduce((s,r)=>s+r.capacity,0),living=rs.length*livingTarget,savings=rs.reduce((s,r)=>s+Math.max(0,r.capacity-livingTarget),0),open=!!v28ForecastOpenYears[y];
+  return `<div class="vforecast-year"><div class="vforecast-year-head" onclick="v28ToggleForecastYear('${y}')"><div><b>${y}</b><small class="vlab">${rs.length} mois projetés</small></div><div style="text-align:right"><strong class="${savings>=0?'vgreen':'vred'} money">${savings>0?'+ ':''}${v28Money(savings)}</strong><small class="vlab">capacité d’épargne</small><span class="vchev">⌄</span></div></div><div class="vforecast-year-kpis"><div class="vforecast-year-kpi"><span>Revenus</span><b class="vgreen money">${v28Money(income)}</b></div><div class="vforecast-year-kpi"><span>Charges + crédits + virements</span><b class="money">${v28Money(fixed+loans+variable+transfers)}</b></div><div class="vforecast-year-kpi"><span>Capacité disponible</span><b class="${available>=0?'vgreen':'vred'} money">${v28Money(available)}</b></div><div class="vforecast-year-kpi"><span>Reste à vivre cible</span><b class="money">− ${v28Money(living)}</b><small class="vlab">${v28Money(livingTarget)}/mois</small></div><div class="vforecast-year-kpi"><span>Capacité d’épargne</span><b class="vgreen money">${v28Money(savings)}</b></div><div class="vforecast-year-kpi"><span>Événements</span><b class="${events>=0?'vgreen':'vred'} money">${events>=0?'+ ':''}${v28Money(events)}</b></div></div>${open?rs.map(r=>{const monthSavings=Math.max(0,r.capacity-livingTarget),livingKept=Math.min(Math.max(0,r.capacity),livingTarget);return `<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong></div><div class="vforecast-month-detail"><span>Revenus</span><strong class="vgreen money">+ ${v28Money(r.income)}</strong><span>Frais fixes</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(r.loans)}</strong><span>Variables</span><strong class="vred money">− ${v28Money(r.variable)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(r.transfers||0)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}<span>Capacité disponible</span><strong class="${r.capacity>=0?'vgreen':'vred'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong><span>Reste à vivre cible</span><strong class="money">− ${v28Money(livingTarget)}</strong><span>Capacité d’épargne</span><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong>${r.capacity<livingTarget?`<span>Reste à vivre réellement couvert</span><strong class="${r.capacity<0?'vred':''} money">${v28Money(livingKept)}</strong>`:''}</div></div>`}).join(''):''}</div>`
  }).join('')
 }
 function v28ForecastFreedomEstimate(){const goal=v28ForecastFreedomGoal(),assets=v28ForecastInvestmentAssets();let capital=assets.reduce((s,a)=>s+a.value,0);if(capital>=goal)return {months:0,date:new Date()};const start=new Date();start.setDate(1);for(let i=0;i<600;i++){assets.forEach(a=>{const mr=Math.pow(1+Math.max(-.99,a.rate),1/12)-1;const key=v28ForecastMonthKey(v28ForecastAddMonths(start,i));const extra=(v28EnsureForecastData().events||[]).reduce((sum,ev)=>sum+v28ForecastInvestmentEventForMonth(ev,key,a.id),0);a._sim=(a._sim??a.value)*(1+mr)+a.monthly+extra});capital=assets.reduce((s,a)=>s+(a._sim??a.value),0);if(capital>=goal)return {months:i+1,date:v28ForecastAddMonths(start,i+1)}}return null}
@@ -15801,9 +15812,16 @@ function v28RenderHome(){
 
  setTimeout(()=>v28RenderHomeCurve('household'),0);
 }
+function v28PendingBankMovements(accountId){
+ let debit=0,credit=0;
+ const addBudget=(key,sign)=>{(data[key]||[]).forEach(item=>{if(item?.[2])return;if(String(item?.[3]||'ca')!==String(accountId))return;const amount=Math.max(0,Number(item?.[1])||0);if(sign>0)credit+=amount;else debit+=amount})};
+ addBudget('budgetRevenus',1);addBudget('budgetFixes',-1);addBudget('budgetDepenses',-1);
+ (data.bankTransfers||[]).forEach(t=>{if(!t||t.done)return;const amount=Math.max(0,Number(t.amount)||0);if(String(t.from||'')===String(accountId))debit+=amount;if(t.purpose!=='investment'&&String(t.to||'')===String(accountId))credit+=amount});
+ return {debit,credit};
+}
 function v28RenderBudget(){
  const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
- const banks=accounts.map(a=>{const b=balances[a.id]||{current:0,forecast:0},delta=(Number(b.forecast)||0)-(Number(b.current)||0);return `<div class="vbank"><div class="vbankname">🏦 ${escapeHtml(a.name)}</div><div class="vbankgrid"><div class="vbankbox"><span>SOLDE ACTUEL</span><b class="money ${b.current<0?'vred':'vgreen'}">${v28Money(b.current)}</b></div><div class="vbankbox"><span>PRÉVISION FIN DE CYCLE</span><b class="money ${b.forecast<0?'vred':'vgreen'}">${v28Money(b.forecast)}</b></div></div><div class="vbudget-cycle-delta ${delta<0?'neg':'pos'}">${delta>=0?'+':''}${v28Money(delta)}</div></div>`}).join('');
+ const banks=accounts.map(a=>{const b=balances[a.id]||{current:0,forecast:0},pending=v28PendingBankMovements(a.id);return `<div class="vbank"><div class="vbankname">🏦 ${escapeHtml(a.name)}</div><div class="vbankgrid"><div class="vbankbox"><span>SOLDE ACTUEL</span><b class="money ${b.current<0?'vred':'vgreen'}">${v28Money(b.current)}</b></div><div class="vbankbox"><span>PRÉVISION FIN DE CYCLE</span><b class="money ${b.forecast<0?'vred':'vgreen'}">${v28Money(b.forecast)}</b></div></div><div class="vbudget-cycle-movements">${pending.debit>0?`<div class="vbudget-cycle-delta neg">-${v28Money(pending.debit)}</div>`:''}${pending.credit>0?`<div class="vbudget-cycle-credit">+${v28Money(pending.credit)}</div>`:''}</div></div>`}).join('');
  const sum=k=>(data[k]||[]).reduce((n,x)=>n+(Number(x?.[1])||0),0);
  const budgetCurrent=accounts.reduce((n,a)=>n+(Number(balances[a.id]?.current)||0),0), budgetForecast=accounts.reduce((n,a)=>n+(Number(balances[a.id]?.forecast)||0),0), budgetRemaining=budgetForecast-budgetCurrent;
  document.getElementById('v28-budget').innerHTML=`<div class="vey">Finances</div><h1 class="vtitle">Budget</h1>
@@ -16251,12 +16269,12 @@ function v28ForecastEventImpact(ev,key){
 }
 function v28ForecastProjection(months=v28ForecastHorizon){
  v28EnsureForecastData(); const start=new Date();start.setDate(1);start.setHours(0,0,0,0);
- const income=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0),fixed=v28ForecastFixedWithoutLoans(),variable=v28ForecastVariableTotal(),rows=[];
+ const income=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0),fixed=v28ForecastFixedWithoutLoans(),variable=v28ForecastVariableTotal(),transfers=v28ForecastInternalTransfersMonthly(),rows=[];
  for(let i=0;i<months;i++){
    const d=v28ForecastAddMonths(start,i),key=v28ForecastMonthKey(d); let eventImpact=0; const events=[];
    data.forecast.events.forEach(ev=>{if(ev.status==='project'&&!v28EnsureForecastData().includeProjects)return;const impact=v28ForecastEventImpact(ev,key);if(impact){eventImpact+=impact;events.push({...ev,impact})}});
-   const loans=v28ForecastLoanPaymentForMonth(key),capacity=income-fixed-loans-variable+eventImpact;
-   rows.push({key,income,fixed,loans,variable,eventImpact,capacity,closing:capacity,events,loanRows:v28ForecastLoanRowsForMonth(key)});
+   const loans=v28ForecastLoanPaymentForMonth(key),capacity=income-fixed-loans-variable-transfers+eventImpact;
+   rows.push({key,income,fixed,loans,variable,transfers,eventImpact,capacity,closing:capacity,events,loanRows:v28ForecastLoanRowsForMonth(key)});
  }
  return rows;
 }
@@ -16308,10 +16326,10 @@ function v28ForecastEventStatusHtml(ev){
 }
 function v28ForecastUpcomingAlerts(){const now=new Date();now.setHours(0,0,0,0);return v28EnsureForecastData().events.map(ev=>{const d=new Date(ev.date+'T12:00:00'),days=Math.ceil((d-now)/86400000);return {...ev,days}}).filter(ev=>ev.days>=0&&ev.alertDays>0&&ev.days<=ev.alertDays).sort((a,b)=>a.days-b.days)}
 function v28RenderForecast(){
- const host=document.getElementById('v28-forecast');if(!host)return;const f=v28EnsureForecastData(),rows=v28ForecastProjection(),avg=v28ForecastVariableAverages(),events=v28ForecastActiveEvents().sort((a,b)=>String(a.date).localeCompare(String(b.date))),archived=v28ForecastArchivedEvents(),alerts=v28ForecastUpcomingAlerts(),first=rows[0],periodCapacity=rows.reduce((s,r)=>s+r.capacity,0),avgCapacity=rows.length?periodCapacity/rows.length:0,currentKey=v28ForecastMonthKey(new Date()),currentLoans=v28ForecastLoanPaymentForMonth(currentKey),monthlyBase=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0)-v28ForecastFixedWithoutLoans()-currentLoans-v28ForecastVariableTotal();
+ const host=document.getElementById('v28-forecast');if(!host)return;const f=v28EnsureForecastData(),rows=v28ForecastProjection(),avg=v28ForecastVariableAverages(),events=v28ForecastActiveEvents().sort((a,b)=>String(a.date).localeCompare(String(b.date))),archived=v28ForecastArchivedEvents(),alerts=v28ForecastUpcomingAlerts(),first=rows[0],periodCapacity=rows.reduce((s,r)=>s+r.capacity,0),avgCapacity=rows.length?periodCapacity/rows.length:0,currentKey=v28ForecastMonthKey(new Date()),currentLoans=v28ForecastLoanPaymentForMonth(currentKey),monthlyBase=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0)-v28ForecastFixedWithoutLoans()-currentLoans-v28ForecastVariableTotal()-v28ForecastInternalTransfersMonthly();
  const typeOpts=[['income_once','Entrée exceptionnelle'],['expense_once','Dépense exceptionnelle'],['income_change','Hausse de revenu (+)'],['income_decrease','Baisse de revenu (−)'],['fixed_change','Changement de charge'],['variable_change','Hausse dépense variable (+)'],['savings','Épargne / investissement']];
  host.innerHTML=`<button class="vforecast-back" onclick="v28Go('home')">‹ Retour à l’accueil</button><div class="vey">Planification</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:8px">Prévisions long terme</h1><button class="vsecondary" onclick="v28ToggleForecastForm()">＋ Événement</button></div>
- <div class="vforecast-card vforecast-hero"><div class="vlab">CE MOIS · CAPACITÉ DISPONIBLE</div><div class="vbig ${first?.capacity<0?'vred':'vgreen'} money">${first?.capacity>=0?'+ ':''}${v28Money(first?.capacity||0)}</div><div class="vforecast-target-help" style="margin:4px 0 9px">Revenus − charges fixes − emprunts − courses / essence / tabac / animaux ± événements.</div><div class="vforecast-month-detail" style="margin:0 0 10px"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(first?.income||0)}</strong><span>Frais fixes hors crédits</span><strong class="vred money">− ${v28Money(first?.fixed||0)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(first?.loans||0)}</strong><span>Variables moyennes</span><strong class="vred money">− ${v28Money(first?.variable||0)}</strong>${first?.eventImpact?`<span>Événements</span><strong class="${first.eventImpact>=0?'vgreen':'vred'} money">${first.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(first.eventImpact))}</strong>`:''}<span><b>Capacité disponible</b></span><strong class="${(first?.capacity||0)>=0?'vgreen':'vred'} money">${(first?.capacity||0)>=0?'+ ':''}${v28Money(first?.capacity||0)}</strong></div><div class="vforecast-grid"><div class="vforecast-stat"><span>CAPACITÉ D’ÉPARGNE</span><b class="${Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving())>0?'vgreen':''} money">${v28Money(Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving()))}/mois</b><small class="vlab">Disponible − reste à vivre cible</small></div><div class="vforecast-stat" onclick="v28SetForecastRequiredLiving(event)" style="cursor:pointer"><span>RESTE À VIVRE CIBLE ✎</span><b class="${(first?.capacity||0)>=v28ForecastRequiredLiving()?'vgreen':((first?.capacity||0)<0?'vred':'')} money">${v28Money((first?.capacity||0)>=v28ForecastRequiredLiving()?v28ForecastRequiredLiving():(first?.capacity||0))}</b><small class="vlab">Objectif ${v28Money(v28ForecastRequiredLiving())}/mois · toucher pour modifier</small></div></div><div class="vforecast-grid" style="margin-top:7px"><div class="vforecast-stat"><span>MOYENNE ${v28ForecastHorizon===12?'12 MOIS':v28ForecastHorizon===36?'3 ANS':v28ForecastHorizon===60?'5 ANS':'10 ANS'}</span><b class="${avgCapacity<0?'vred':'vgreen'} money">${avgCapacity>=0?'+ ':''}${v28Money(avgCapacity)}/mois</b></div><div class="vforecast-stat"><span>CRÉDITS ACTUELS</span><b class="money">${v28Money(currentLoans)}/mois</b></div><div class="vforecast-stat"><span>VARIABLE MOYEN</span><b class="money">${v28Money(v28ForecastVariableTotal())}</b></div></div></div>
+ <div class="vforecast-card vforecast-hero"><div class="vlab">CE MOIS · CAPACITÉ DISPONIBLE</div><div class="vbig ${first?.capacity<0?'vred':'vgreen'} money">${first?.capacity>=0?'+ ':''}${v28Money(first?.capacity||0)}</div><div class="vforecast-target-help" style="margin:4px 0 9px">Revenus − emprunts − frais fixes − variables moyennes − virements internes ± événements.</div><div class="vforecast-month-detail" style="margin:0 0 10px"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(first?.income||0)}</strong><span>Frais fixes hors crédits</span><strong class="vred money">− ${v28Money(first?.fixed||0)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(first?.loans||0)}</strong><span>Variables moyennes</span><strong class="vred money">− ${v28Money(first?.variable||0)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(first?.transfers||0)}</strong>${first?.eventImpact?`<span>Événements</span><strong class="${first.eventImpact>=0?'vgreen':'vred'} money">${first.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(first.eventImpact))}</strong>`:''}<span><b>Capacité disponible</b></span><strong class="${(first?.capacity||0)>=0?'vgreen':'vred'} money">${(first?.capacity||0)>=0?'+ ':''}${v28Money(first?.capacity||0)}</strong></div><div class="vforecast-grid"><div class="vforecast-stat"><span>CAPACITÉ D’ÉPARGNE</span><b class="${Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving())>0?'vgreen':''} money">${v28Money(Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving()))}/mois</b><small class="vlab">Disponible après virements − reste à vivre cible</small></div><div class="vforecast-stat" onclick="v28SetForecastRequiredLiving(event)" style="cursor:pointer"><span>RESTE À VIVRE CIBLE ✎</span><b class="${(first?.capacity||0)>=v28ForecastRequiredLiving()?'vgreen':((first?.capacity||0)<0?'vred':'')} money">${v28Money((first?.capacity||0)>=v28ForecastRequiredLiving()?v28ForecastRequiredLiving():(first?.capacity||0))}</b><small class="vlab">Objectif ${v28Money(v28ForecastRequiredLiving())}/mois · toucher pour modifier</small></div></div><div class="vforecast-grid" style="margin-top:7px"><div class="vforecast-stat"><span>MOYENNE ${v28ForecastHorizon===12?'12 MOIS':v28ForecastHorizon===36?'3 ANS':v28ForecastHorizon===60?'5 ANS':'10 ANS'}</span><b class="${avgCapacity<0?'vred':'vgreen'} money">${avgCapacity>=0?'+ ':''}${v28Money(avgCapacity)}/mois</b></div><div class="vforecast-stat"><span>CRÉDITS ACTUELS</span><b class="money">${v28Money(currentLoans)}/mois</b></div><div class="vforecast-stat"><span>VARIABLE MOYEN</span><b class="money">${v28Money(v28ForecastVariableTotal())}</b></div></div></div>
  <div class="vforecast-card"><div class="vhead vforecast-collapse ${v28ForecastBlocks.chart?'open':''}" onclick="v28ToggleForecastBlock('chart')"><b>Évolution de la capacité disponible</b><span class="vchev">⌄</span></div>${v28ForecastBlocks.chart?`<div class="vforecast-segment">${[[12,'1 an'],[36,'3 ans'],[60,'5 ans'],[120,'10 ans']].map(([n,l])=>`<button class="${v28ForecastHorizon===n?'on':''}" onclick="event.stopPropagation();v28SetForecastHorizon(${n})">${l}</button>`).join('')}</div>${v28ForecastChart(rows)}`:''}</div>
  ${alerts.length?`<div class="vforecast-card"><div class="vhead"><b>🔔 Alertes</b><span class="vlab">À venir</span></div>${alerts.map(ev=>`<div class="vforecast-alert"><b>${escapeHtml(ev.label)}</b> · ${ev.days===0?'aujourd’hui':`dans ${ev.days} j`} · ${v28Money(ev.amount)}</div>`).join('')}</div>`:''}
  ${v28ForecastInvestmentCard()}
