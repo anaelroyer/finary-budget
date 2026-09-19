@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.9.39 : Prévisions — revenus récurrents filtrés dans le calcul + décomposition visible -->
+<!-- V28.9.40 : Prévisions — revenus récurrents filtrés dans le calcul + décomposition visible -->
 <!-- V28.9.38 : Prévisions annuelles — déduction du reste à vivre cible + correctif CSP -->
 <!-- V28.9.31 : Soldes par compte — couleurs positif/négatif + variation orange dans Budget -->
 <!-- V28.9.37 : Prévisions — reste à vivre cible modifiable et épargne pilotée par objectif -->
@@ -47,7 +47,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-T0x/OItH8tM1qUEe2AbUDhywJAGYlyom3QaB8J/XTmM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ISW7Lqee8iC3C53egikUJyrVb1WZmT2YNowpQwK0fRo='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-zfpE9WIIk0eb1TiMYPdfhvgq5mA1Zqc09M5J5fob+Po=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-j/3/UOUg/lpBjE+qhYbuDATt6gFK4jxCCPch587YJDg='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2425,7 +2425,25 @@ body > .modal-overlay canvas{
         <option value="permanent">Permanent — reconduit chaque mois</option>
       </select>
     </div>
-    <div style="font-size:11px;color:#8b949e;line-height:1.4;">Le virement modifie les soldes des deux comptes mais ne compte ni comme dépense ni comme entrée. Un virement permanent est reconduit au cycle suivant jusqu'à sa suppression manuelle.</div>
+    <div class="modal-field">
+      <label>Nature du virement</label>
+      <select id="bankTransferPurpose" class="bank-select" onchange="toggleBankTransferInvestmentFields()">
+        <option value="internal">Virement interne classique</option>
+        <option value="investment">Épargne / investissement</option>
+      </select>
+    </div>
+    <div id="bankTransferInvestmentFields" style="display:none">
+      <div class="modal-field">
+        <label>Destination patrimoniale</label>
+        <select id="bankTransferInvestmentTarget" class="bank-select"></select>
+      </div>
+      <div class="modal-field">
+        <label>Montant affecté à cette destination (€)</label>
+        <input type="number" id="bankTransferInvestmentAmount" placeholder="Ex : 200" inputmode="decimal">
+      </div>
+      <div style="font-size:11px;color:#8b949e;line-height:1.4;margin-top:-4px;margin-bottom:10px;">Le montant affecté peut être inférieur au virement total. Exemple : virement Trade Republic 250 €, dont 200 € vers le PEA.</div>
+    </div>
+    <div style="font-size:11px;color:#8b949e;line-height:1.4;">Le virement modifie les soldes des deux comptes mais ne compte ni comme dépense ni comme entrée. S’il est marqué « Épargne / investissement », Prévisions l’identifie comme une affectation patrimoniale et évite de le traiter comme une charge.</div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeBankTransferModal()">Annuler</button>
       <button class="btn btn-primary" id="bankTransferSubmitBtn" style="flex:1" onclick="submitBankTransfer()">Ajouter</button>
@@ -4628,7 +4646,10 @@ function ensureBankingData(){
     .filter(t=>t&&typeof t==='object')
     .map(t=>({
       ...t,
-      recurrence:t.recurrence==='permanent'?'permanent':'occasional'
+      recurrence:t.recurrence==='permanent'?'permanent':'occasional',
+      purpose:t.purpose==='investment'?'investment':'internal',
+      investmentTarget:String(t.investmentTarget||''),
+      investmentAmount:Math.max(0,Number(t.investmentAmount)||0)
     }));
 
   // Les anciens virements internes gardent le comportement historique : occasionnels.
@@ -6224,6 +6245,20 @@ function addBankAccount(){
 
 let bankTransferEditIndex=-1;
 
+function getBankTransferInvestmentTargets(){
+  try{return v28ForecastInvestmentAssets().map(a=>({id:a.id,label:`${a.label} — ${a.ownerLabel}`}))}catch(_){return []}
+}
+function populateBankTransferInvestmentTargets(selected=''){
+  const sel=document.getElementById('bankTransferInvestmentTarget');if(!sel)return;
+  const rows=getBankTransferInvestmentTargets();
+  sel.innerHTML='<option value="">Choisir une destination…</option>'+rows.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.label)}</option>`).join('');
+  if(selected&&rows.some(a=>a.id===selected))sel.value=selected;
+}
+function toggleBankTransferInvestmentFields(){
+  const isInvestment=document.getElementById('bankTransferPurpose')?.value==='investment';
+  const box=document.getElementById('bankTransferInvestmentFields');if(box)box.style.display=isInvestment?'block':'none';
+}
+
 function openBankTransferModal(index=-1){
   ensureBankingData();
   const active=(data.bankAccounts||[]).filter(a=>a.active!==false);
@@ -6243,6 +6278,10 @@ function openBankTransferModal(index=-1){
   populateBankSelect(document.getElementById('bankTransferFrom'),t?.from||active[0].id);
   populateBankSelect(document.getElementById('bankTransferTo'),t?.to||active[1].id);
   document.getElementById('bankTransferRecurrence').value=t?.recurrence==='permanent'?'permanent':'occasional';
+  document.getElementById('bankTransferPurpose').value=t?.purpose==='investment'?'investment':'internal';
+  populateBankTransferInvestmentTargets(t?.investmentTarget||'');
+  document.getElementById('bankTransferInvestmentAmount').value=t?.investmentAmount??'';
+  toggleBankTransferInvestmentFields();
 
   document.getElementById('bankTransferModal').classList.add('active');
   setTimeout(()=>document.getElementById('bankTransferLabel').focus(),50);
@@ -6259,6 +6298,9 @@ function submitBankTransfer(){
   const from=document.getElementById('bankTransferFrom').value;
   const to=document.getElementById('bankTransferTo').value;
   const recurrence=document.getElementById('bankTransferRecurrence').value==='permanent'?'permanent':'occasional';
+  const purpose=document.getElementById('bankTransferPurpose').value==='investment'?'investment':'internal';
+  const investmentTarget=purpose==='investment'?document.getElementById('bankTransferInvestmentTarget').value:'';
+  const investmentAmount=purpose==='investment'?Number(document.getElementById('bankTransferInvestmentAmount').value):0;
 
   if(!Number.isFinite(amount)||amount<=0){
     alert('Saisis un montant supérieur à 0.');
@@ -6268,12 +6310,16 @@ function submitBankTransfer(){
     alert('Le compte de départ et le compte d’arrivée doivent être différents.');
     return;
   }
+  if(purpose==='investment'){
+    if(!investmentTarget){alert('Choisis la destination patrimoniale.');return}
+    if(!Number.isFinite(investmentAmount)||investmentAmount<=0||investmentAmount>amount){alert('Le montant affecté doit être supérieur à 0 et inférieur ou égal au virement total.');return}
+  }
 
   if(bankTransferEditIndex>=0&&data.bankTransfers[bankTransferEditIndex]){
     const done=Boolean(data.bankTransfers[bankTransferEditIndex].done);
-    data.bankTransfers[bankTransferEditIndex]={label:label||'Virement interne',amount,from,to,done,recurrence};
+    data.bankTransfers[bankTransferEditIndex]={label:label||'Virement interne',amount,from,to,done,recurrence,purpose,investmentTarget,investmentAmount:purpose==='investment'?investmentAmount:0};
   }else{
-    data.bankTransfers.unshift({label:label||'Virement interne',amount,from,to,done:false,recurrence});
+    data.bankTransfers.unshift({label:label||'Virement interne',amount,from,to,done:false,recurrence,purpose,investmentTarget,investmentAmount:purpose==='investment'?investmentAmount:0});
   }
 
   closeBankTransferModal();
@@ -6320,7 +6366,7 @@ function renderBankTransfers(){
       <div class="transfer-main" onclick="openBankTransferModal(${index})">
         <div class="transfer-label">${escapeHtml(t.label||'Virement interne')}</div>
         <div class="transfer-route">${escapeHtml(getBankAccountName(t.from))} → ${escapeHtml(getBankAccountName(t.to))}</div>
-        <div class="transfer-cycle ${t.recurrence==='permanent'?'permanent':''}">${t.recurrence==='permanent'?'Permanent':'Occasionnel'}</div>
+        <div class="transfer-cycle ${t.recurrence==='permanent'?'permanent':''}">${t.recurrence==='permanent'?'Permanent':'Occasionnel'}${t.purpose==='investment'?' · Épargne / investissement':''}</div>
       </div>
       <div class="transfer-amount" onclick="openBankTransferModal(${index})">${euro(Number(t.amount)||0)}</div>
       <button class="btn-del" onclick="deleteBankTransfer(${index})" title="Archiver">×</button>
@@ -15583,14 +15629,23 @@ function v28ForecastInvestmentOwners(){
  PATRIMOINE_OWNERS.forEach(o=>{const n=normalizeBudgetText(getPatrimoineOwnerLabel(o.id));if(/anael|laurene/.test(n)&&!ids.includes(o.id))ids.push(o.id)});
  return ids;
 }
+function v28ForecastInvestmentTransferMonthly(assetId){
+ return (data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent'&&t.investmentTarget===assetId).reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
+}
+function v28ForecastProgrammedInvestmentTransfers(){
+ return (data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent').reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
+}
 function v28ForecastInvestmentAssets(){
  const f=v28EnsureForecastData(),owners=v28ForecastInvestmentOwners(),defs=[{key:'epargne',label:'Épargne',defaultRate:.02},...ASSET_CATEGORY_DEFINITIONS.filter(c=>!['immobilier','vehicules','collection','autres'].includes(c.key)).map(c=>({...c,defaultRate:({bourse:.06,assurancevie:.04,scpi:.045,crypto:0,per:.05,crowdfunding:.05,privateequity:.06,participations:0,metaux:.02,partssociales:.02}[c.key]??.03)}))],rows=[];
  owners.forEach(owner=>defs.forEach(def=>(getOwnedItems(def.key,owner)||[]).forEach((item,index)=>{const value=Math.max(0,Number(item?.[1])||0);if(!value)return;const label=String(item?.[0]||def.label),id=[owner,def.key,index,normalizeBudgetText(label)].join('|'),cfg=f.investmentSettings[id]||{};rows.push({id,owner,ownerLabel:getPatrimoineOwnerLabel(owner),key:def.key,label,value,rate:Number.isFinite(Number(cfg.rate))?Number(cfg.rate):def.defaultRate,monthly:Number.isFinite(Number(cfg.monthly))?Math.max(0,Number(cfg.monthly)):null,explicitMonthly:Number.isFinite(Number(cfg.monthly))});})));
- // Un versement PEA/Bourse détecté dans Budget n'est affecté qu'une seule fois, puis réparti entre les lignes Bourse au prorata du capital.
- const bourse=rows.filter(x=>x.key==='bourse'),explicit=bourse.filter(x=>x.explicitMonthly),implicit=bourse.filter(x=>!x.explicitMonthly);let inferred=0;
- const budgetSave=(data.budgetDepenses||[]).filter(x=>getItemBudgetCategory('budgetDepenses',x)==='epargne');const pea=budgetSave.find(x=>/pea|bourse|trade republic|etf/.test(normalizeBudgetText(x?.[0]||'')));if(pea)inferred=Math.max(0,Number(pea?.[1])||0);
- const remaining=Math.max(0,inferred-explicit.reduce((s,x)=>s+(x.monthly||0),0)),weight=implicit.reduce((s,x)=>s+x.value,0);implicit.forEach(x=>x.monthly=weight?remaining*x.value/weight:0);
- rows.filter(x=>x.key!=='bourse'&&!x.explicitMonthly).forEach(x=>x.monthly=v28ForecastInferMonthlyInvestment(x.label,x.key));
+ // Priorité aux virements internes marqués Épargne / investissement : ils alimentent directement la destination patrimoniale choisie.
+ rows.forEach(x=>{if(x.explicitMonthly)return;const linked=v28ForecastInvestmentTransferMonthly(x.id);if(linked>0)x.monthly=linked});
+ // Compatibilité avec les anciennes saisies : seulement si aucune destination n'est reliée par virement interne.
+ const bourse=rows.filter(x=>x.key==='bourse'),explicit=bourse.filter(x=>x.explicitMonthly||v28ForecastInvestmentTransferMonthly(x.id)>0),implicit=bourse.filter(x=>!x.explicitMonthly&&v28ForecastInvestmentTransferMonthly(x.id)<=0);let inferred=0;
+ if(!bourse.some(x=>v28ForecastInvestmentTransferMonthly(x.id)>0)){const budgetSave=(data.budgetDepenses||[]).filter(x=>getItemBudgetCategory('budgetDepenses',x)==='epargne');const pea=budgetSave.find(x=>/pea|bourse|trade republic|etf/.test(normalizeBudgetText(x?.[0]||'')));if(pea)inferred=Math.max(0,Number(pea?.[1])||0)}
+ const remaining=Math.max(0,inferred-explicit.reduce((s,x)=>s+(x.monthly||0),0)),weight=implicit.reduce((s,x)=>s+x.value,0);implicit.forEach(x=>{if(x.monthly==null)x.monthly=weight?remaining*x.value/weight:0});
+ rows.filter(x=>x.key!=='bourse'&&!x.explicitMonthly&&v28ForecastInvestmentTransferMonthly(x.id)<=0).forEach(x=>x.monthly=v28ForecastInferMonthlyInvestment(x.label,x.key));
+ rows.forEach(x=>{if(x.monthly==null)x.monthly=0});
  return rows;
 }
 function v28ForecastInferMonthlyInvestment(label,key){
