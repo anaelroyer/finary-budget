@@ -46,12 +46,12 @@
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
-<!-- V28.9.52 : Accueil/Prévisions — capacité = épargne totale potentielle ; Projection 10 ans et Liberté limitées à Anaël & Laurène. -->
+<!-- V28.9.54 : Accueil épuré — suppression des 3 KPI redondants et du graphique Évolution patrimoine. -->
 <!-- V28.9.45 : Prévisions — distingue épargne programmée, épargne supplémentaire et épargne totale potentielle. -->
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-c0bmIlTCIkOcc+0NEluaTFIIqGk+Qp0Qyy3v3SxBWh0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-QLi8GeJgyqJgklvW/8PZXbSiO64XWdHmfrx0hzKR6Fg='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-c0bmIlTCIkOcc+0NEluaTFIIqGk+Qp0Qyy3v3SxBWh0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-v+3ZHerP2qRwXRG/vUUsqflJJ7Ppp1l4tqMc5nHtsR4='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -15652,7 +15652,22 @@ function v28RenderHomeCurve(owner=activePatrimoineOwner,hostId='v28HomeCurve'){
 function v28ForecastCurrentFinancialCapital(){return v28ForecastInvestmentAssets().reduce((sum,a)=>sum+(Number(a.value)||0),0)}
 function v28ForecastFreedomGoal(){const n=Number(localStorage.getItem('v28ForecastFreedomGoal'));return Number.isFinite(n)&&n>0?n:300000}
 function v28SetForecastFreedomGoal(event){if(event){event.preventDefault();event.stopPropagation()}const current=v28ForecastFreedomGoal();const raw=prompt('Objectif Liberté (€) :',String(Math.round(current)));if(raw===null)return;const n=Number(String(raw).replace(/\s/g,'').replace(',','.'));if(!Number.isFinite(n)||n<=0){alert('Montant invalide.');return}localStorage.setItem('v28ForecastFreedomGoal',String(n));v28RenderHome()}
-function v28ForecastInvestmentOwners(){ return ['household','profile1']; }
+function v28ForecastInvestmentOwners(){
+ // Ne pas dépendre de la position technique des profils : on retient explicitement Anaël/Laurène
+ // d'après leurs libellés, et on exclut les profils enfants (Ewan, Louane, Aëdan).
+ ensurePatrimoineProfileLabels();
+ const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+ const adults=PATRIMOINE_OWNERS.filter(o=>{
+   const label=norm(getPatrimoineOwnerLabel(o.id));
+   return label.includes('anael')||label.includes('laurene');
+ }).map(o=>o.id);
+ // Le profil Foyer contient historiquement les actifs du couple ; on le conserve,
+ // sauf s'il a été explicitement renommé au nom d'un enfant.
+ const householdLabel=norm(getPatrimoineOwnerLabel('household'));
+ const childHousehold=['ewan','louane','aedan'].some(n=>householdLabel.includes(n));
+ if(!childHousehold&&!adults.includes('household'))adults.unshift('household');
+ return [...new Set(adults)];
+}
 function v28ForecastInvestmentTransferMonthly(assetId,owner='',key='',assetValue=0,groupRows=[]){
  const transfers=(data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent');
  const direct=transfers.filter(t=>t.investmentTarget===assetId).reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
@@ -15665,7 +15680,7 @@ function v28ForecastInvestmentTransferMonthly(assetId,owner='',key='',assetValue
  return direct+share;
 }
 function v28ForecastProgrammedInvestmentTransfers(){
- const adultOwners=new Set(['household','profile1']);
+ const adultOwners=new Set(v28ForecastInvestmentOwners());
  return (data.bankTransfers||[]).filter(t=>{
    if(!t||t.purpose!=='investment'||t.recurrence!=='permanent')return false;
    const target=String(t.investmentTarget||'');
@@ -15804,11 +15819,6 @@ function v28RenderHome(){
    }
  }catch(_){}
  document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:12px">Aujourd’hui</h1><button class="vsecondary" type="button" onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
- <div class="vtopkpis">
-   <div class="vtopkpi" role="button" tabindex="0" onclick="v28Go('budget')"><span class="klabel">💳 SOLDE ACTUEL</span><strong class="kvalue ${totalCurrent>=0?'vgreen':'vred'} money">${v28Money(totalCurrent)}</strong><span class="ksub">Voir les comptes ›</span></div>
-   <div class="vtopkpi" role="button" tabindex="0" onclick="v28Go('budget')"><span class="klabel">🐷 RESTE À VIVRE</span><strong class="kvalue vblue money">${v28Text('budget-reste-vivre')}</strong><span class="ksub">Voir le budget ›</span></div>
-   <div class="vtopkpi" role="button" tabindex="0" onclick="v28Go('patrimoine')"><span class="klabel">▥ PATRIMOINE NET</span><strong class="kvalue ${calculateNet('household').net>=0?'vgreen':'vred'} money">${v28Money(calculateNet('household').net)}</strong><span class="ksub">Voir patrimoine ›</span></div>
- </div>
  <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
 
  <div class="vcard vaccounts-home"><div class="vhead"><b>💳 Mes comptes</b><button class="vlink" onclick="v28Go('budget')">Voir tout →</button></div>${bankHtml||'<div class="vlab">Aucun compte actif.</div>'}</div>
@@ -15821,16 +15831,12 @@ function v28RenderHome(){
    <div class="vfinvalue money">${v28Money(financial)}</div>
    <div class="vhomefinancialpie">${v28PatrimoineFinancialDonut('household')}</div>
   </div>
-  <div class="vcard"><div class="vhead"><b>Évolution patrimoine</b><button class="vlink" onclick="v28Go('patrimoine')">6 mois ›</button></div>
-   <div id="v28HomeCurve" class="vhomecurve"></div>
-  </div>
  </div>
 
  <div class="vcard"><div class="vhead"><b>🍴 Menu du jour</b><button class="vlink" onclick="v28Go('menus')">Voir la semaine →</button></div>
  ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
 
- setTimeout(()=>v28RenderHomeCurve('household'),0);
 }
 function v28PendingBankMovements(accountId){
  let debit=0,credit=0;
