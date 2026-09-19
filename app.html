@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V28.9.29 : Navigation Patrimoine accueil + Soldes par compte renforcé dans Budget -->
+<!-- V28.9.30 : Soldes par compte — couleurs positif/négatif + variation orange dans Budget -->
 <!-- V28.9.25 : Accueil — bloc Mes comptes renforcé visuellement -->
 <!-- V28.9.9 : Prévisions — ajout des baisses permanentes ou temporaires de revenu -->
 <!-- V28.9.2 : Prévisions — crédit immobilier lissé selon tableaux d’amortissement -->
@@ -45,7 +45,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-T0x/OItH8tM1qUEe2AbUDhywJAGYlyom3QaB8J/XTmM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-1u3APBkRrlfdSRyPRIn5JMwQf8ym0QCbJ10nTHpoI6o='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-T0x/OItH8tM1qUEe2AbUDhywJAGYlyom3QaB8J/XTmM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-11Jj4U9OYHMLLrh59RP8Eu0BQbYWcwL8NmlSEvow5Cs='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2278,7 +2278,11 @@ body > .modal-overlay canvas{
 #v28-budget .vbudget-accounts-focus .vbankbox{min-height:66px!important;padding:11px 10px!important;background:rgba(17,45,65,.92)!important;border:1px solid #356b88!important;border-radius:11px!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
 #v28-budget .vbudget-accounts-focus .vbankbox span{font-size:8px!important;font-weight:800!important;color:#a9c7d8!important}
 #v28-budget .vbudget-accounts-focus .vbankbox b{font-size:19px!important;line-height:1.2!important;margin-top:3px!important;color:#fff!important}
-#v28-budget .vbudget-accounts-focus .vbankbox:last-child b{color:#4de0d1!important}
+#v28-budget .vbudget-accounts-focus .vbankbox b.vgreen{color:#45d483!important}
+#v28-budget .vbudget-accounts-focus .vbankbox b.vred{color:#ff6b6b!important}
+#v28-budget .vbudget-accounts-focus .vbudget-cycle-delta{display:inline-flex;align-items:center;margin-top:7px;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:950;line-height:1;border:1px solid rgba(255,182,87,.38);background:rgba(255,182,87,.10);color:#ffb657!important}
+#v28-budget .vbudget-accounts-focus .vbudget-cycle-delta.neg:before{content:'↘ ';margin-right:2px}
+#v28-budget .vbudget-accounts-focus .vbudget-cycle-delta.pos:before{content:'↗ ';margin-right:2px}
 @media(max-width:370px){#v28-budget .vbudget-accounts-focus .vbankbox b{font-size:17px!important}}
 </style>
 <style>
@@ -15707,7 +15711,7 @@ function v28RenderHome(){
 }
 function v28RenderBudget(){
  const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
- const banks=accounts.map(a=>{const b=balances[a.id]||{current:0,forecast:0};return `<div class="vbank"><div class="vbankname">🏦 ${escapeHtml(a.name)}</div><div class="vbankgrid"><div class="vbankbox"><span>SOLDE ACTUEL</span><b class="money">${v28Money(b.current)}</b></div><div class="vbankbox"><span>PRÉVISION FIN DE CYCLE</span><b class="money ${b.forecast<0?'vred':''}">${v28Money(b.forecast)}</b></div></div>${b.forecast<0?`<div class="vlab vred" style="margin-top:6px">⚠ Prévision négative de ${v28Money(Math.abs(b.forecast))}</div>`:''}</div>`}).join('');
+ const banks=accounts.map(a=>{const b=balances[a.id]||{current:0,forecast:0},delta=(Number(b.forecast)||0)-(Number(b.current)||0);return `<div class="vbank"><div class="vbankname">🏦 ${escapeHtml(a.name)}</div><div class="vbankgrid"><div class="vbankbox"><span>SOLDE ACTUEL</span><b class="money ${b.current<0?'vred':'vgreen'}">${v28Money(b.current)}</b></div><div class="vbankbox"><span>PRÉVISION FIN DE CYCLE</span><b class="money ${b.forecast<0?'vred':'vgreen'}">${v28Money(b.forecast)}</b></div></div><div class="vbudget-cycle-delta ${delta<0?'neg':'pos'}">${delta>=0?'+':''}${v28Money(delta)}</div></div>`}).join('');
  const sum=k=>(data[k]||[]).reduce((n,x)=>n+(Number(x?.[1])||0),0);
  document.getElementById('v28-budget').innerHTML=`<div class="vey">Finances</div><h1 class="vtitle">Budget</h1>
  <div class="vhero"><div class="vlab">Reste à vivre estimé</div><div class="vbig vgreen money">${v28Text('budget-reste-vivre')}</div><div class="vlab">Solde actuel — opérations cochées : <b class="money">${v28Text('budget-solde-actuel')}</b></div></div>
