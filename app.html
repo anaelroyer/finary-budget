@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.0 : Prévisions long terme — projection mensuelle, moyennes historiques et événements futurs -->
 <!-- V28.8.11 : camembert financier détaillé sans total central -->
 <!-- V26.2.14 : Correctif CSP — hash du script principal mis à jour après clôture mensuelle -->
 <!-- V26.2.13 : Budget — clôture mensuelle fiabilisée (cochés archivés, non cochés reconduits) -->
@@ -39,7 +40,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-ZVEuzbhuWrvow/kJ4YgPt0+OXd4OFDiItbL61CJV/xg=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-HOWyfJZwULR51Avvw8lL2R00LMQ6W2t3Vt5CV9qzWCM=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2242,6 +2243,20 @@ body > .modal-overlay canvas{
 .v28-sync-status.sync-offline{color:#ff7373;border-color:rgba(255,115,115,.38)}
 
 </style>
+<style>
+/* V28.9.0 — Prévisions long terme */
+#v28-forecast .vforecast-back{display:inline-flex;align-items:center;gap:5px;border:0;background:none;color:#49a7ff;font-size:10px;font-weight:900;padding:3px 0 10px}
+.vforecast-card{background:linear-gradient(145deg,#0d1a2a,#0b1826);border:1px solid #1d3449;border-radius:18px;padding:13px;margin-bottom:8px}
+.vforecast-hero{background:linear-gradient(135deg,#102f44,#102b2b);border-color:#245a67}
+.vforecast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.vforecast-stat{background:#091724;border:1px solid #1c354a;border-radius:12px;padding:9px;min-width:0}.vforecast-stat span{display:block;font-size:7px;color:#8ca3b6;margin-bottom:4px}.vforecast-stat b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vforecast-chart{width:100%;height:180px;margin-top:8px}.vforecast-chart svg{display:block;width:100%;height:180px;overflow:visible}.vforecast-gridline{stroke:#254056;stroke-width:1;opacity:.65}.vforecast-line{fill:none;stroke:#4ddbd2;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.vforecast-area{fill:#4ddbd2;opacity:.08}.vforecast-axis{fill:#7f94a8;font-size:8px}.vforecast-zero{stroke:#ffb657;stroke-width:1;stroke-dasharray:4 4;opacity:.7}
+.vforecast-segment{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin:8px 0}.vforecast-segment::-webkit-scrollbar{display:none}.vforecast-segment button{flex:0 0 auto;border:1px solid #1d3449;background:#0a1724;color:#8da4b7;border-radius:999px;padding:6px 9px;font-size:8px;font-weight:900}.vforecast-segment button.on{background:#15364b;border-color:#49a7ff;color:#fff}
+.vforecast-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:9px 0;border-bottom:1px solid #173248}.vforecast-row:last-child{border-bottom:0}.vforecast-row b{font-size:10px}.vforecast-row small{display:block;color:#8299ad;font-size:8px;margin-top:2px}.vforecast-amount{font-size:10px;font-weight:950;white-space:nowrap}.vforecast-pill{display:inline-flex;align-items:center;border:1px solid #24455d;background:#102337;border-radius:999px;padding:2px 6px;font-size:7px;color:#9db4c7;margin-top:4px}
+.vforecast-form{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vforecast-form .full{grid-column:1/-1}.vforecast-form label{display:block;font-size:7px;color:#8ca3b6;font-weight:900;text-transform:uppercase;margin-bottom:4px}.vforecast-form input,.vforecast-form select{width:100%;background:#081522;border:1px solid #244056;color:#edf5fb;border-radius:10px;padding:9px;font-size:11px;outline:none}.vforecast-form input:focus,.vforecast-form select:focus{border-color:#49a7ff}.vforecast-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+.vforecast-month{border:1px solid #1d3449;background:#091724;border-radius:13px;padding:10px;margin-top:7px}.vforecast-month-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.vforecast-month-head b{font-size:11px}.vforecast-month-head strong{font-size:12px}.vforecast-month-detail{display:grid;grid-template-columns:1fr auto;gap:4px 8px;margin-top:8px;font-size:8px;color:#91a7b9}.vforecast-month-detail strong{text-align:right;color:#dce8f2}.vforecast-alert{border:1px solid rgba(255,182,87,.35);background:rgba(255,182,87,.08);border-radius:11px;padding:9px;margin-top:7px;font-size:9px;color:#ffcb88}.vforecast-empty{color:#8299ad;font-size:9px;padding:8px 0;text-align:center}
+.vforecast-home{cursor:pointer}.vforecast-home .vforecast-home-line{display:flex;justify-content:space-between;align-items:center;gap:8px}.vforecast-home .vforecast-home-line b{font-size:12px}.vforecast-home .vforecast-home-sub{font-size:8px;color:#8da4b7;margin-top:5px;line-height:1.45}
+@media(max-width:360px){.vforecast-grid{grid-template-columns:1fr}.vforecast-form{grid-template-columns:1fr}.vforecast-form .full{grid-column:auto}}
+</style>
 </head>
 <body>
 <!-- AUTHENTIFICATION PERSONNELLE -->
@@ -2876,6 +2891,7 @@ body > .modal-overlay canvas{
  <section id="v28-factures" class="vpage"></section>
  <section id="v28-loyalty" class="vpage"></section>
  <section id="v28-menus" class="vpage"></section>
+ <section id="v28-forecast" class="vpage"></section>
 </div>
 <div id="v28AssetPortal"><div class="vportalhead"><button class="vback" type="button" onclick="v28CloseAsset()">‹</button><div class="vportaltitle" id="v28AssetPortalTitle">Patrimoine</div></div><div id="v28AssetPortalBody"></div></div>
 <nav class="vbottom" aria-label="Navigation mobile">
@@ -15505,6 +15521,8 @@ function v28RenderHome(){
   </div>
  </div>
 
+ <button class="vcard vforecast-home" type="button" onclick="v28Go('forecast')" style="width:100%;text-align:left;color:inherit"><div class="vforecast-home-line"><b>📅 Prévisions long terme</b><span class="vlink">Ouvrir →</span></div><div class="vforecast-home-sub">Projection mensuelle du solde, dépenses moyennes issues de l’historique et événements futurs.</div></button>
+
  <div class="vcard"><div class="vhead"><b>🍴 Menu du jour</b><button class="vlink" onclick="v28Go('menus')">Voir la semaine →</button></div>
  ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
  </div>`;
@@ -15826,6 +15844,86 @@ function v28InstallMirrorBridge(){
  root.addEventListener('change',refresh,true);
 }
 
+
+/* ===== V28.9.0 — Prévisions long terme ===== */
+let v28ForecastHorizon=36;
+let v28ForecastFormOpen=false;
+function v28EnsureForecastData(){
+ if(!data.forecast||typeof data.forecast!=='object')data.forecast={};
+ if(!Array.isArray(data.forecast.events))data.forecast.events=[];
+ if(!Number.isFinite(Number(data.forecast.averageMonths)))data.forecast.averageMonths=6;
+ if(!data.forecast.variableOverrides||typeof data.forecast.variableOverrides!=='object')data.forecast.variableOverrides={};
+ return data.forecast;
+}
+function v28ForecastMonthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+function v28ForecastDateFromKey(key){const [y,m]=String(key||'').split('-').map(Number);return new Date(y||new Date().getFullYear(),Math.max(0,(m||1)-1),1)}
+function v28ForecastMonthLabel(key){try{return v28ForecastDateFromKey(key).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}).replace('.','')}catch(_){return key}}
+function v28ForecastLongMonth(key){try{return v28ForecastDateFromKey(key).toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}catch(_){return key}}
+function v28ForecastAddMonths(d,n){return new Date(d.getFullYear(),d.getMonth()+n,1)}
+function v28ForecastCurrentBalance(){try{const b=calculateBankBalances(),a=getVisibleBankAccounts();return a.reduce((n,x)=>n+(Number(b[x.id]?.current)||0),0)}catch(_){return 0}}
+function v28ForecastRecurring(key){return (data[key]||[]).reduce((n,x)=>n+(Number(x?.[1])||0),0)}
+function v28ForecastVariableCategories(){return new Set(['courses','maison','transport','enfants','animaux','sante','beaute','tabac','restaurants','loisirs','autres'])}
+function v28ForecastVariableAverages(){
+ const f=v28EnsureForecastData(),count=Math.max(1,Math.min(24,Number(f.averageMonths)||6));
+ const months=(monthHistory||[]).slice(0,count), allowed=v28ForecastVariableCategories(), sums={};
+ months.forEach(m=>(m.depensesDetails||[]).forEach(item=>{const cat=getItemBudgetCategory('budgetDepenses',item);if(allowed.has(cat))sums[cat]=(sums[cat]||0)+(Number(item?.[1])||0)}));
+ const divisor=Math.max(1,months.length), rows=[];
+ Object.keys(sums).forEach(cat=>{const auto=sums[cat]/divisor,ov=f.variableOverrides[cat];rows.push({cat,label:getBudgetCategoryLabel('budgetDepenses',cat),auto,value:Number.isFinite(Number(ov))?Number(ov):auto,overridden:Number.isFinite(Number(ov))})});
+ return rows.sort((a,b)=>b.value-a.value);
+}
+function v28ForecastVariableTotal(){return v28ForecastVariableAverages().reduce((s,x)=>s+x.value,0)}
+function v28ForecastEventImpact(ev,key){
+ if(!ev||!ev.date)return 0; const start=String(ev.date).slice(0,7); if(key<start)return 0;
+ const permanent=ev.recurrence==='permanent'; if(!permanent&&key!==start)return 0;
+ const a=Math.abs(Number(ev.amount)||0); const t=ev.type||'expense_once';
+ if(t==='income_once'||t==='income_change')return a;
+ return -a;
+}
+function v28ForecastProjection(months=v28ForecastHorizon){
+ v28EnsureForecastData(); const start=new Date();start.setDate(1);start.setHours(0,0,0,0);
+ const income=v28ForecastRecurring('budgetRevenus'),fixed=v28ForecastRecurring('budgetFixes'),variable=v28ForecastVariableTotal(); let balance=v28ForecastCurrentBalance(); const rows=[];
+ for(let i=0;i<months;i++){
+   const d=v28ForecastAddMonths(start,i),key=v28ForecastMonthKey(d); let eventImpact=0; const events=[];
+   data.forecast.events.forEach(ev=>{const impact=v28ForecastEventImpact(ev,key);if(impact){eventImpact+=impact;events.push({...ev,impact})}});
+   const opening=balance,closing=opening+income-fixed-variable+eventImpact; rows.push({key,opening,income,fixed,variable,eventImpact,closing,events});balance=closing;
+ }
+ return rows;
+}
+function v28ForecastChart(rows){
+ if(!rows.length)return '<div class="vforecast-empty">Aucune projection.</div>';
+ const w=420,h=170,pl=38,pr=8,pt=10,pb=24,vals=rows.map(r=>r.closing),min=Math.min(0,...vals),max=Math.max(0,...vals),span=Math.max(1,max-min),iw=w-pl-pr,ih=h-pt-pb;
+ const pts=rows.map((r,i)=>({x:pl+(rows.length===1?iw/2:i*iw/(rows.length-1)),y:pt+(max-r.closing)/span*ih,v:r.closing,key:r.key}));
+ const path=pts.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '), area=`${path} L${pts[pts.length-1].x.toFixed(1)},${(h-pb).toFixed(1)} L${pts[0].x.toFixed(1)},${(h-pb).toFixed(1)} Z`,zero=pt+(max/span)*ih;
+ const grid=[0,.25,.5,.75,1].map(t=>{const y=pt+t*ih,v=max-t*span;return `<line class="vforecast-gridline" x1="${pl}" y1="${y}" x2="${w-pr}" y2="${y}"></line><text class="vforecast-axis" x="${pl-4}" y="${y+3}" text-anchor="end">${Math.round(v/1000)}k</text>`}).join('');
+ return `<div class="vforecast-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${grid}${min<0&&max>0?`<line class="vforecast-zero" x1="${pl}" y1="${zero}" x2="${w-pr}" y2="${zero}"></line>`:''}<path class="vforecast-area" d="${area}"></path><path class="vforecast-line" d="${path}"></path><text class="vforecast-axis" x="${pl}" y="${h-5}">${v28ForecastMonthLabel(rows[0].key)}</text><text class="vforecast-axis" x="${w-pr}" y="${h-5}" text-anchor="end">${v28ForecastMonthLabel(rows[rows.length-1].key)}</text></svg></div>`;
+}
+function v28SetForecastHorizon(n){v28ForecastHorizon=Number(n)||36;v28RenderForecast()}
+function v28SetForecastAverageMonths(n){v28EnsureForecastData().averageMonths=Number(n)||6;save();v28RenderForecast()}
+function v28ForecastOverride(cat){const row=v28ForecastVariableAverages().find(x=>x.cat===cat);const raw=prompt(`Montant mensuel retenu pour ${row?.label||cat} (€)`,String(Math.round((row?.value||0)*100)/100));if(raw===null)return;const n=Number(String(raw).replace(',','.'));if(!Number.isFinite(n)||n<0)return alert('Montant invalide.');v28EnsureForecastData().variableOverrides[cat]=n;save();v28RenderForecast()}
+function v28ForecastResetOverride(cat){delete v28EnsureForecastData().variableOverrides[cat];save();v28RenderForecast()}
+function v28ToggleForecastForm(){v28ForecastFormOpen=!v28ForecastFormOpen;v28RenderForecast()}
+function v28SaveForecastEvent(){
+ const label=String(document.getElementById('vforecast-label')?.value||'').trim(),type=document.getElementById('vforecast-type')?.value||'expense_once',date=document.getElementById('vforecast-date')?.value||'',amount=Number(String(document.getElementById('vforecast-amount')?.value||'').replace(',','.')),alertDays=Math.max(0,Number(document.getElementById('vforecast-alert')?.value)||0);
+ if(!label||!date||!Number.isFinite(amount)||amount<=0)return alert('Renseigne un libellé, une date et un montant supérieur à 0.');
+ const recurrence=(type==='income_change'||type==='fixed_change'||type==='variable_change')?'permanent':'once';
+ v28EnsureForecastData().events.push({id:makeLocalId('forecast'),label,type,date,amount,recurrence,alertDays,createdAt:new Date().toISOString()});save();v28ForecastFormOpen=false;v28RenderForecast();
+}
+function v28DeleteForecastEvent(id){if(!confirm('Supprimer cet événement prévisionnel ?'))return;const f=v28EnsureForecastData();f.events=f.events.filter(x=>String(x.id)!==String(id));save();v28RenderForecast()}
+function v28ForecastTypeLabel(t){return ({income_once:'Entrée exceptionnelle',expense_once:'Dépense exceptionnelle',income_change:'Hausse / changement de revenu',fixed_change:'Hausse / changement de charge',variable_change:'Évolution dépense variable',savings:'Épargne / investissement'})[t]||'Événement'}
+function v28ForecastUpcomingAlerts(){const now=new Date();now.setHours(0,0,0,0);return v28EnsureForecastData().events.map(ev=>{const d=new Date(ev.date+'T12:00:00'),days=Math.ceil((d-now)/86400000);return {...ev,days}}).filter(ev=>ev.days>=0&&ev.alertDays>0&&ev.days<=ev.alertDays).sort((a,b)=>a.days-b.days)}
+function v28RenderForecast(){
+ const host=document.getElementById('v28-forecast');if(!host)return;const f=v28EnsureForecastData(),rows=v28ForecastProjection(),avg=v28ForecastVariableAverages(),events=[...f.events].sort((a,b)=>String(a.date).localeCompare(String(b.date))),alerts=v28ForecastUpcomingAlerts(),last=rows[rows.length-1],monthlyBase=v28ForecastRecurring('budgetRevenus')-v28ForecastRecurring('budgetFixes')-v28ForecastVariableTotal();
+ const typeOpts=[['income_once','Entrée exceptionnelle'],['expense_once','Dépense exceptionnelle'],['income_change','Changement de revenu (+)'],['fixed_change','Changement de charge (+)'],['variable_change','Hausse dépense variable (+)'],['savings','Épargne / investissement']];
+ host.innerHTML=`<button class="vforecast-back" onclick="v28Go('home')">‹ Retour à l’accueil</button><div class="vey">Planification</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:8px">Prévisions long terme</h1><button class="vsecondary" onclick="v28ToggleForecastForm()">＋ Événement</button></div>
+ <div class="vforecast-card vforecast-hero"><div class="vlab">Solde prévisionnel à ${v28ForecastHorizon===12?'1 an':v28ForecastHorizon===36?'3 ans':v28ForecastHorizon===60?'5 ans':'10 ans'}</div><div class="vbig ${last?.closing<0?'vred':'vgreen'} money">${v28Money(last?.closing||0)}</div><div class="vforecast-grid"><div class="vforecast-stat"><span>SOLDE DE DÉPART</span><b class="money">${v28Money(v28ForecastCurrentBalance())}</b></div><div class="vforecast-stat"><span>BASE MENSUELLE</span><b class="${monthlyBase>=0?'vgreen':'vred'} money">${monthlyBase>=0?'+ ':''}${v28Money(monthlyBase)}</b></div><div class="vforecast-stat"><span>VARIABLE MOYEN</span><b class="money">${v28Money(v28ForecastVariableTotal())}</b></div></div></div>
+ <div class="vforecast-card"><div class="vhead"><b>Évolution du solde</b><span class="vlab">Report mois par mois</span></div><div class="vforecast-segment">${[[12,'1 an'],[36,'3 ans'],[60,'5 ans'],[120,'10 ans']].map(([n,l])=>`<button class="${v28ForecastHorizon===n?'on':''}" onclick="v28SetForecastHorizon(${n})">${l}</button>`).join('')}</div>${v28ForecastChart(rows)}</div>
+ ${alerts.length?`<div class="vforecast-card"><div class="vhead"><b>🔔 Alertes</b><span class="vlab">À venir</span></div>${alerts.map(ev=>`<div class="vforecast-alert"><b>${escapeHtml(ev.label)}</b> · ${ev.days===0?'aujourd’hui':`dans ${ev.days} j`} · ${v28Money(ev.amount)}</div>`).join('')}</div>`:''}
+ ${v28ForecastFormOpen?`<div class="vforecast-card"><div class="vhead"><b>Nouvel événement</b><button class="vlink" onclick="v28ToggleForecastForm()">Fermer</button></div><div class="vforecast-form"><div class="full"><label>Libellé</label><input id="vforecast-label" placeholder="Ex. hausse forfait Internet"></div><div><label>Type</label><select id="vforecast-type">${typeOpts.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></div><div><label>Date d’effet</label><input id="vforecast-date" type="date"></div><div><label>Montant / variation €</label><input id="vforecast-amount" type="number" min="0" step="0.01" inputmode="decimal"></div><div><label>Alerte avant (jours)</label><input id="vforecast-alert" type="number" min="0" value="30"></div></div><div class="vforecast-actions"><button class="vsecondary" onclick="v28ToggleForecastForm()">Annuler</button><button class="vprimary" style="margin:0;padding:10px" onclick="v28SaveForecastEvent()">Enregistrer</button></div></div>`:''}
+ <div class="vforecast-card"><div class="vhead"><div><b>Dépenses variables moyennes</b><div class="vlab">Historique des ${f.averageMonths} derniers mois clôturés</div></div></div><div class="vforecast-segment">${[3,6,12].map(n=>`<button class="${Number(f.averageMonths)===n?'on':''}" onclick="v28SetForecastAverageMonths(${n})">${n} mois</button>`).join('')}</div>${avg.length?avg.map(x=>`<div class="vforecast-row"><div><b>${escapeHtml(x.label)}</b><small>${x.overridden?`Valeur manuelle · moyenne calculée ${v28Money(x.auto)}`:`Moyenne automatique sur ${Math.min(f.averageMonths,monthHistory.length)} mois`}</small>${x.overridden?'<span class="vforecast-pill">Manuel</span>':'<span class="vforecast-pill">Historique</span>'}</div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(x.value)}/mois</div><button class="vlink" onclick="v28ForecastOverride('${x.cat}')">Modifier</button>${x.overridden?`<button class="vlink" onclick="v28ForecastResetOverride('${x.cat}')">Auto</button>`:''}</div></div>`).join(''):'<div class="vforecast-empty">Pas encore assez d’historique clôturé pour calculer les dépenses variables.</div>'}</div>
+ <div class="vforecast-card"><div class="vhead"><b>Événements futurs</b><button class="vlink" onclick="v28ToggleForecastForm()">+ Ajouter</button></div>${events.length?events.map(ev=>`<div class="vforecast-row"><div><b>${escapeHtml(ev.label)}</b><small>${new Date(ev.date+'T12:00:00').toLocaleDateString('fr-FR')} · ${escapeHtml(v28ForecastTypeLabel(ev.type))}</small><span class="vforecast-pill">${ev.recurrence==='permanent'?'Permanent':'Ponctuel'}${ev.alertDays?` · alerte J-${ev.alertDays}`:''}</span></div><div style="text-align:right"><div class="vforecast-amount ${['income_once','income_change'].includes(ev.type)?'vgreen':'vred'} money">${['income_once','income_change'].includes(ev.type)?'+ ':'− '}${v28Money(ev.amount)}</div><button class="vlink" style="color:#ff6b6b" onclick="v28DeleteForecastEvent('${ev.id}')">Supprimer</button></div></div>`).join(''):'<div class="vforecast-empty">Aucun événement futur enregistré.</div>'}</div>
+ <div class="vforecast-card"><div class="vhead"><b>Détail des prochains mois</b><span class="vlab">12 mois</span></div>${rows.slice(0,12).map(r=>`<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${r.closing<0?'vred':'vgreen'} money">${v28Money(r.closing)}</strong></div><div class="vforecast-month-detail"><span>Solde début</span><strong class="money">${v28Money(r.opening)}</strong><span>Revenus</span><strong class="vgreen money">+ ${v28Money(r.income)}</strong><span>Frais fixes</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Dépenses variables moyennes</span><strong class="vred money">− ${v28Money(r.variable)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}</div>${r.events.map(ev=>`<div class="vforecast-pill">${escapeHtml(ev.label)} · ${ev.impact>=0?'+':'−'}${v28Money(Math.abs(ev.impact))}</div>`).join('')}</div>`).join('')}</div>`;
+}
+
 function v28RenderMobile(){
  v28RestorePortals();
  v28InstallMirrorBridge();
@@ -15833,7 +15931,7 @@ function v28RenderMobile(){
  const jobs=[
   ['home',v28RenderHome],['budget',v28RenderBudget],['patrimoine',v28RenderPatrimoine],
   ['vehicles',v28RenderVehicles],['factures',v28RenderFactures],
-  ['loyalty',v28RenderLoyalty],['menus',v28RenderMenus]
+  ['loyalty',v28RenderLoyalty],['menus',v28RenderMenus],['forecast',v28RenderForecast]
  ];
  jobs.forEach(([name,fn])=>{try{fn()}catch(e){console.error('V28 render '+name,e)}});
  v28MountPortals();
