@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.2 : Prévisions — crédit immobilier lissé selon tableaux d’amortissement -->
 <!-- V28.9.1 : Prévisions — capacité d’épargne mensuelle + emprunts Patrimoine -->
 <!-- V28.9.0 : Prévisions long terme — projection mensuelle, moyennes historiques et événements futurs -->
 <!-- V28.8.11 : camembert financier détaillé sans total central -->
@@ -41,7 +42,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-nq4hfd5wZrvVgtI0bilbYQNWoqKmzGSvKygDiRdvdBo=' 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-wRd2jbecGEuKYw0jie5mcui4HpgKpNCX2siXxghEdg0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-Dushh/FPM+oi7XaUB4/Kg9eWmWqEI3mIjylWaLz9Mx8='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -15288,7 +15289,7 @@ function v28Go(t){
  v28Active=t;
  document.querySelectorAll('#v28app .vpage').forEach(x=>x.classList.toggle('on',x.id==='v28-'+t));
  document.querySelectorAll('.vbottom button').forEach(x=>x.classList.toggle('on',x.dataset.vtab===t));
- try{if(t!=='home')switchTab(t)}catch(_){}
+ try{if(!['home','forecast'].includes(t))switchTab(t)}catch(_){}
  v28RenderMobile();
  window.scrollTo({top:0,behavior:'auto'});
 }
@@ -15866,16 +15867,48 @@ function v28ForecastRecurring(key){return (data[key]||[]).reduce((n,x)=>n+(Numbe
 function v28ForecastHouseholdLoans(){
  return (Array.isArray(data.dettes)?data.dettes:[]).filter(item=>getItemOwner(item,'dettes')==='household').map(item=>({item,meta:getLoanMeta(item),label:String(item?.[0]||'Emprunt'),current:Number(item?.[1])||0})).filter(x=>x.meta.monthlyPayment>0&&x.current>0);
 }
+const V28_IMMO_INITIAL_AMOUNTS=[45000,20000,82175,36330];
+function v28ForecastIsMortgageLoan(x){
+ const initial=Number(x?.meta?.initialAmount)||0,label=normalizeBudgetText(x?.label||'');
+ return V28_IMMO_INITIAL_AMOUNTS.some(v=>Math.abs(initial-v)<1)||(/immob|habitat|maison|residence/.test(label)&&initial>30000);
+}
+function v28ForecastMortgageLoans(){return v28ForecastHouseholdLoans().filter(v28ForecastIsMortgageLoan)}
+function v28ForecastOtherLoans(){return v28ForecastHouseholdLoans().filter(x=>!v28ForecastIsMortgageLoan(x))}
+/* Échéancier immobilier réel issu des 4 tableaux d’amortissement Crédit Agricole fournis.
+   Les quatre prêts restent distincts dans Patrimoine mais sont regroupés ici car ils forment
+   un seul prélèvement lissé. */
+function v28ForecastMortgagePaymentForMonth(key){
+ if(!v28ForecastMortgageLoans().length)return 0;
+ if(key<'2026-09')return 779.47;
+ if(key<='2031-09')return 779.47;
+ if(key==='2031-10')return 779.53;
+ if(key<='2034-09')return 779.47;
+ if(key==='2034-10')return 778.85;
+ if(key<='2039-02')return 775.43;
+ if(key==='2039-03')return 774.52;
+ if(key<='2041-07')return 275.23;
+ if(key==='2041-08')return 274.87;
+ return 0;
+}
+function v28ForecastLoanActiveForMonth(x,key){
+ const start=String(x.meta.startDate||'').slice(0,7),end=String(x.meta.endDate||'').slice(0,7);
+ return (!start||key>=start)&&(!end||key<=end);
+}
 function v28ForecastLoanPaymentForMonth(key){
- return v28ForecastHouseholdLoans().reduce((sum,x)=>{const start=String(x.meta.startDate||'').slice(0,7),end=String(x.meta.endDate||'').slice(0,7);if(start&&key<start)return sum;if(end&&key>end)return sum;return sum+x.meta.monthlyPayment},0);
+ const other=v28ForecastOtherLoans().reduce((sum,x)=>sum+(v28ForecastLoanActiveForMonth(x,key)?x.meta.monthlyPayment:0),0);
+ return other+v28ForecastMortgagePaymentForMonth(key);
 }
 function v28ForecastLoanRowsForMonth(key){
- return v28ForecastHouseholdLoans().filter(x=>{const start=String(x.meta.startDate||'').slice(0,7),end=String(x.meta.endDate||'').slice(0,7);return (!start||key>=start)&&(!end||key<=end)});
+ const rows=[];const mortgage=v28ForecastMortgagePaymentForMonth(key);
+ if(mortgage>0)rows.push({label:'Crédit immobilier – Résidence principale',meta:{monthlyPayment:mortgage,endDate:'2041-08-10'},mortgageGroup:true});
+ v28ForecastOtherLoans().filter(x=>v28ForecastLoanActiveForMonth(x,key)).forEach(x=>rows.push(x));
+ return rows;
 }
 function v28ForecastFixedWithoutLoans(){
- const loans=v28ForecastHouseholdLoans(),used=new Set();
- return (data.budgetFixes||[]).reduce((sum,item,idx)=>{const amount=Number(item?.[1])||0,cat=getItemBudgetCategory('budgetFixes',item),label=normalizeBudgetText(item?.[0]||'');let match=-1;
-   loans.forEach((loan,j)=>{if(match>=0||used.has(j))return;const lp=Number(loan.meta.monthlyPayment)||0,ll=normalizeBudgetText(loan.label);const amountMatch=Math.abs(lp-amount)<0.02;const words=ll.split(' ').filter(w=>w.length>=4);const labelMatch=words.some(w=>label.includes(w));if(amountMatch&&(cat==='credits'||labelMatch))match=j});
+ const loans=v28ForecastOtherLoans(),used=new Set(),currentKey=v28ForecastMonthKey(new Date()),mortgageNow=v28ForecastMortgagePaymentForMonth(currentKey);let mortgageMatched=false;
+ return (data.budgetFixes||[]).reduce((sum,item)=>{const amount=Number(item?.[1])||0,cat=getItemBudgetCategory('budgetFixes',item),label=normalizeBudgetText(item?.[0]||'');
+   if(!mortgageMatched&&mortgageNow>0&&Math.abs(amount-mortgageNow)<0.02&&(cat==='credits'||/immob|habitat|maison|credit/.test(label))){mortgageMatched=true;return sum}
+   let match=-1;loans.forEach((loan,j)=>{if(match>=0||used.has(j))return;const lp=Number(loan.meta.monthlyPayment)||0,ll=normalizeBudgetText(loan.label),amountMatch=Math.abs(lp-amount)<0.02,words=ll.split(' ').filter(w=>w.length>=4),labelMatch=words.some(w=>label.includes(w));if(amountMatch&&(cat==='credits'||labelMatch))match=j});
    if(match>=0){used.add(match);return sum}return sum+amount;
  },0);
 }
@@ -15937,7 +15970,7 @@ function v28RenderForecast(){
  <div class="vforecast-card"><div class="vhead"><b>Évolution de la capacité d’épargne</b><span class="vlab">Chaque mois est indépendant</span></div><div class="vforecast-segment">${[[12,'1 an'],[36,'3 ans'],[60,'5 ans'],[120,'10 ans']].map(([n,l])=>`<button class="${v28ForecastHorizon===n?'on':''}" onclick="v28SetForecastHorizon(${n})">${l}</button>`).join('')}</div>${v28ForecastChart(rows)}</div>
  ${alerts.length?`<div class="vforecast-card"><div class="vhead"><b>🔔 Alertes</b><span class="vlab">À venir</span></div>${alerts.map(ev=>`<div class="vforecast-alert"><b>${escapeHtml(ev.label)}</b> · ${ev.days===0?'aujourd’hui':`dans ${ev.days} j`} · ${v28Money(ev.amount)}</div>`).join('')}</div>`:''}
  ${v28ForecastFormOpen?`<div class="vforecast-card"><div class="vhead"><b>Nouvel événement</b><button class="vlink" onclick="v28ToggleForecastForm()">Fermer</button></div><div class="vforecast-form"><div class="full"><label>Libellé</label><input id="vforecast-label" placeholder="Ex. hausse forfait Internet"></div><div><label>Type</label><select id="vforecast-type">${typeOpts.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></div><div><label>Date d’effet</label><input id="vforecast-date" type="date"></div><div><label>Montant / variation €</label><input id="vforecast-amount" type="number" min="0" step="0.01" inputmode="decimal"></div><div><label>Alerte avant (jours)</label><input id="vforecast-alert" type="number" min="0" value="30"></div></div><div class="vforecast-actions"><button class="vsecondary" onclick="v28ToggleForecastForm()">Annuler</button><button class="vprimary" style="margin:0;padding:10px" onclick="v28SaveForecastEvent()">Enregistrer</button></div></div>`:''}
- <div class="vforecast-card"><div class="vhead"><div><b>Emprunts intégrés automatiquement</b><div class="vlab">Patrimoine › Emprunts · mensualités jusqu’à leur date de fin</div></div></div>${v28ForecastHouseholdLoans().length?v28ForecastHouseholdLoans().map(x=>`<div class="vforecast-row"><div><b>${escapeHtml(x.label)}</b><small>Fin ${formatLoanDate(x.meta.endDate)}</small><span class="vforecast-pill">Patrimoine</span></div><div class="vforecast-amount money">${v28Money(x.meta.monthlyPayment)}/mois</div></div>`).join(''):'<div class="vforecast-empty">Aucun emprunt avec mensualité renseignée.</div>'}</div>
+ <div class="vforecast-card"><div class="vhead"><div><b>Emprunts intégrés automatiquement</b><div class="vlab">Patrimoine › Emprunts · échéancier réel pour le financement immobilier</div></div></div>${v28ForecastMortgageLoans().length?`<div class="vforecast-row"><div><b>Crédit immobilier – Résidence principale</b><small>4 prêts regroupés · prélèvement lissé selon les tableaux d’amortissement</small><span class="vforecast-pill">Échéancier réel</span></div><div class="vforecast-amount money">${v28Money(v28ForecastMortgagePaymentForMonth(currentKey))}/mois</div></div>`:''}${v28ForecastOtherLoans().length?v28ForecastOtherLoans().map(x=>`<div class="vforecast-row"><div><b>${escapeHtml(x.label)}</b><small>${x.meta.startDate?`Début ${formatLoanDate(x.meta.startDate)} · `:''}Fin ${formatLoanDate(x.meta.endDate)}</small><span class="vforecast-pill">Patrimoine</span></div><div class="vforecast-amount money">${v28Money(x.meta.monthlyPayment)}/mois</div></div>`).join(''):''}${!v28ForecastMortgageLoans().length&&!v28ForecastOtherLoans().length?'<div class="vforecast-empty">Aucun emprunt avec mensualité renseignée.</div>':''}</div>
  <div class="vforecast-card"><div class="vhead"><div><b>Dépenses variables moyennes</b><div class="vlab">Historique des ${f.averageMonths} derniers mois clôturés</div></div></div><div class="vforecast-segment">${[3,6,12].map(n=>`<button class="${Number(f.averageMonths)===n?'on':''}" onclick="v28SetForecastAverageMonths(${n})">${n} mois</button>`).join('')}</div>${avg.length?avg.map(x=>`<div class="vforecast-row"><div><b>${escapeHtml(x.label)}</b><small>${x.overridden?`Valeur manuelle · moyenne calculée ${v28Money(x.auto)}`:`Moyenne automatique sur ${Math.min(f.averageMonths,monthHistory.length)} mois`}</small>${x.overridden?'<span class="vforecast-pill">Manuel</span>':'<span class="vforecast-pill">Historique</span>'}</div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(x.value)}/mois</div><button class="vlink" onclick="v28ForecastOverride('${x.cat}')">Modifier</button>${x.overridden?`<button class="vlink" onclick="v28ForecastResetOverride('${x.cat}')">Auto</button>`:''}</div></div>`).join(''):'<div class="vforecast-empty">Pas encore assez d’historique clôturé pour calculer les dépenses variables.</div>'}</div>
  <div class="vforecast-card"><div class="vhead"><b>Événements futurs</b><button class="vlink" onclick="v28ToggleForecastForm()">+ Ajouter</button></div>${events.length?events.map(ev=>`<div class="vforecast-row"><div><b>${escapeHtml(ev.label)}</b><small>${new Date(ev.date+'T12:00:00').toLocaleDateString('fr-FR')} · ${escapeHtml(v28ForecastTypeLabel(ev.type))}</small><span class="vforecast-pill">${ev.recurrence==='permanent'?'Permanent':'Ponctuel'}${ev.alertDays?` · alerte J-${ev.alertDays}`:''}</span></div><div style="text-align:right"><div class="vforecast-amount ${['income_once','income_change'].includes(ev.type)?'vgreen':'vred'} money">${['income_once','income_change'].includes(ev.type)?'+ ':'− '}${v28Money(ev.amount)}</div><button class="vlink" style="color:#ff6b6b" onclick="v28DeleteForecastEvent('${ev.id}')">Supprimer</button></div></div>`).join(''):'<div class="vforecast-empty">Aucun événement futur enregistré.</div>'}</div>
  <div class="vforecast-card"><div class="vhead"><b>Détail des prochains mois</b><span class="vlab">12 mois</span></div>${rows.slice(0,12).map(r=>`<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${r.capacity<0?'vred':'vgreen'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong></div><div class="vforecast-month-detail"><span>Revenus</span><strong class="vgreen money">+ ${v28Money(r.income)}</strong><span>Frais fixes hors crédits</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(r.loans)}</strong><span>Dépenses variables moyennes</span><strong class="vred money">− ${v28Money(r.variable)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}<span>Capacité d’épargne</span><strong class="${r.capacity>=0?'vgreen':'vred'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong></div>${r.loanRows.map(x=>`<div class="vforecast-pill">💳 ${escapeHtml(x.label)} · −${v28Money(x.meta.monthlyPayment)}${String(x.meta.endDate||'').slice(0,7)===r.key?' · fin ce mois':''}</div>`).join('')}${r.events.map(ev=>`<div class="vforecast-pill">${escapeHtml(ev.label)} · ${ev.impact>=0?'+':'−'}${v28Money(Math.abs(ev.impact))}</div>`).join('')}</div>`).join('')}</div>`;
