@@ -1,4 +1,4 @@
-const CACHE_NAME='finary-budget-v28-9-19';
+const CACHE_NAME='finary-budget-v28-9-20';
 const CORE=['./','./app.html','./manifest.webmanifest','./forecast-beach.webp'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE).catch(()=>{})));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim();});
