@@ -2,6 +2,7 @@
 <!-- V28.9.40 : Prévisions — revenus récurrents filtrés dans le calcul + décomposition visible -->
 <!-- V28.9.38 : Prévisions annuelles — déduction du reste à vivre cible + correctif CSP -->
 <!-- V28.9.31 : Soldes par compte — couleurs positif/négatif + variation orange dans Budget -->
+<!-- V28.9.41 : Virements investissement — destinations uniques pour tous les actifs du foyer -->
 <!-- V28.9.37 : Prévisions — reste à vivre cible modifiable et épargne pilotée par objectif -->
 <!-- V28.9.9 : Prévisions — ajout des baisses permanentes ou temporaires de revenu -->
 <!-- V28.9.2 : Prévisions — crédit immobilier lissé selon tableaux d’amortissement -->
@@ -47,7 +48,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-zfpE9WIIk0eb1TiMYPdfhvgq5mA1Zqc09M5J5fob+Po=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-j/3/UOUg/lpBjE+qhYbuDATt6gFK4jxCCPch587YJDg='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-yTd531AbHVRXv8Q0U0IheiQszp608Wwp87RP5wxLRnI=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-kpQr9rOobBLcFIzy04lE+3M5s1Bh6XcEFsNStua9Nvw='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -6246,13 +6247,25 @@ function addBankAccount(){
 let bankTransferEditIndex=-1;
 
 function getBankTransferInvestmentTargets(){
-  try{return v28ForecastInvestmentAssets().map(a=>({id:a.id,label:`${a.label} — ${a.ownerLabel}`}))}catch(_){return []}
+  try{
+    const financialKeys=['epargne',...ASSET_CATEGORY_DEFINITIONS.filter(c=>!['immobilier','vehicules','collection','autres'].includes(c.key)).map(c=>c.key)],rows=[];
+    PATRIMOINE_OWNERS.forEach(owner=>financialKeys.forEach(key=>{
+      const items=getOwnedItems(key,owner.id)||[];
+      if(!items.length)return;
+      const ownerLabel=getPatrimoineOwnerLabel(owner.id);
+      const cat=key==='epargne'?'Livret':key==='bourse'?'PEA':key==='assurancevie'?'Assurance vie':(ASSET_CATEGORY_MAP[key]?.shortLabel||ASSET_CATEGORY_MAP[key]?.label||key);
+      const label=key==='bourse'&&owner.id==='household'?'PEA':`${cat} ${ownerLabel}`;
+      rows.push({id:`group|${owner.id}|${key}`,label});
+    }));
+    return rows;
+  }catch(_){return []}
 }
 function populateBankTransferInvestmentTargets(selected=''){
   const sel=document.getElementById('bankTransferInvestmentTarget');if(!sel)return;
   const rows=getBankTransferInvestmentTargets();
   sel.innerHTML='<option value="">Choisir une destination…</option>'+rows.map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.label)}</option>`).join('');
   if(selected&&rows.some(a=>a.id===selected))sel.value=selected;
+  else if(selected){const legacy=v28ForecastInvestmentAssets().find(a=>a.id===selected);if(legacy){const opt=document.createElement('option');opt.value=selected;opt.textContent=`Ancienne destination · ${legacy.label} — ${legacy.ownerLabel}`;sel.appendChild(opt);sel.value=selected}}
 }
 function toggleBankTransferInvestmentFields(){
   const isInvestment=document.getElementById('bankTransferPurpose')?.value==='investment';
@@ -15625,12 +15638,18 @@ function v28ForecastCurrentFinancialCapital(){return v28ForecastInvestmentAssets
 function v28ForecastFreedomGoal(){const n=Number(localStorage.getItem('v28ForecastFreedomGoal'));return Number.isFinite(n)&&n>0?n:300000}
 function v28SetForecastFreedomGoal(event){if(event){event.preventDefault();event.stopPropagation()}const current=v28ForecastFreedomGoal();const raw=prompt('Objectif Liberté (€) :',String(Math.round(current)));if(raw===null)return;const n=Number(String(raw).replace(/\s/g,'').replace(',','.'));if(!Number.isFinite(n)||n<=0){alert('Montant invalide.');return}localStorage.setItem('v28ForecastFreedomGoal',String(n));v28RenderHome()}
 function v28ForecastInvestmentOwners(){
- const ids=['household'];
- PATRIMOINE_OWNERS.forEach(o=>{const n=normalizeBudgetText(getPatrimoineOwnerLabel(o.id));if(/anael|laurene/.test(n)&&!ids.includes(o.id))ids.push(o.id)});
- return ids;
+ return PATRIMOINE_OWNERS.map(o=>o.id);
 }
-function v28ForecastInvestmentTransferMonthly(assetId){
- return (data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent'&&t.investmentTarget===assetId).reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
+function v28ForecastInvestmentTransferMonthly(assetId,owner='',key='',assetValue=0,groupRows=[]){
+ const transfers=(data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent');
+ const direct=transfers.filter(t=>t.investmentTarget===assetId).reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
+ if(!owner||!key)return direct;
+ const groupId=`group|${owner}|${key}`;
+ const grouped=transfers.filter(t=>t.investmentTarget===groupId).reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
+ if(grouped<=0)return direct;
+ const peers=(groupRows||[]).filter(x=>x.owner===owner&&x.key===key),weight=peers.reduce((s,x)=>s+Math.max(0,Number(x.value)||0),0);
+ const share=weight>0?grouped*Math.max(0,Number(assetValue)||0)/weight:grouped/Math.max(1,peers.length);
+ return direct+share;
 }
 function v28ForecastProgrammedInvestmentTransfers(){
  return (data.bankTransfers||[]).filter(t=>t&&t.purpose==='investment'&&t.recurrence==='permanent').reduce((sum,t)=>sum+Math.max(0,Number(t.investmentAmount)||0),0);
@@ -15639,12 +15658,12 @@ function v28ForecastInvestmentAssets(){
  const f=v28EnsureForecastData(),owners=v28ForecastInvestmentOwners(),defs=[{key:'epargne',label:'Épargne',defaultRate:.02},...ASSET_CATEGORY_DEFINITIONS.filter(c=>!['immobilier','vehicules','collection','autres'].includes(c.key)).map(c=>({...c,defaultRate:({bourse:.06,assurancevie:.04,scpi:.045,crypto:0,per:.05,crowdfunding:.05,privateequity:.06,participations:0,metaux:.02,partssociales:.02}[c.key]??.03)}))],rows=[];
  owners.forEach(owner=>defs.forEach(def=>(getOwnedItems(def.key,owner)||[]).forEach((item,index)=>{const value=Math.max(0,Number(item?.[1])||0);if(!value)return;const label=String(item?.[0]||def.label),id=[owner,def.key,index,normalizeBudgetText(label)].join('|'),cfg=f.investmentSettings[id]||{};rows.push({id,owner,ownerLabel:getPatrimoineOwnerLabel(owner),key:def.key,label,value,rate:Number.isFinite(Number(cfg.rate))?Number(cfg.rate):def.defaultRate,monthly:Number.isFinite(Number(cfg.monthly))?Math.max(0,Number(cfg.monthly)):null,explicitMonthly:Number.isFinite(Number(cfg.monthly))});})));
  // Priorité aux virements internes marqués Épargne / investissement : ils alimentent directement la destination patrimoniale choisie.
- rows.forEach(x=>{if(x.explicitMonthly)return;const linked=v28ForecastInvestmentTransferMonthly(x.id);if(linked>0)x.monthly=linked});
+ rows.forEach(x=>{if(x.explicitMonthly)return;const linked=v28ForecastInvestmentTransferMonthly(x.id,x.owner,x.key,x.value,rows);if(linked>0)x.monthly=linked});
  // Compatibilité avec les anciennes saisies : seulement si aucune destination n'est reliée par virement interne.
- const bourse=rows.filter(x=>x.key==='bourse'),explicit=bourse.filter(x=>x.explicitMonthly||v28ForecastInvestmentTransferMonthly(x.id)>0),implicit=bourse.filter(x=>!x.explicitMonthly&&v28ForecastInvestmentTransferMonthly(x.id)<=0);let inferred=0;
- if(!bourse.some(x=>v28ForecastInvestmentTransferMonthly(x.id)>0)){const budgetSave=(data.budgetDepenses||[]).filter(x=>getItemBudgetCategory('budgetDepenses',x)==='epargne');const pea=budgetSave.find(x=>/pea|bourse|trade republic|etf/.test(normalizeBudgetText(x?.[0]||'')));if(pea)inferred=Math.max(0,Number(pea?.[1])||0)}
+ const bourse=rows.filter(x=>x.key==='bourse'),explicit=bourse.filter(x=>x.explicitMonthly||v28ForecastInvestmentTransferMonthly(x.id,x.owner,x.key,x.value,rows)>0),implicit=bourse.filter(x=>!x.explicitMonthly&&v28ForecastInvestmentTransferMonthly(x.id,x.owner,x.key,x.value,rows)<=0);let inferred=0;
+ if(!bourse.some(x=>v28ForecastInvestmentTransferMonthly(x.id,x.owner,x.key,x.value,rows)>0)){const budgetSave=(data.budgetDepenses||[]).filter(x=>getItemBudgetCategory('budgetDepenses',x)==='epargne');const pea=budgetSave.find(x=>/pea|bourse|trade republic|etf/.test(normalizeBudgetText(x?.[0]||'')));if(pea)inferred=Math.max(0,Number(pea?.[1])||0)}
  const remaining=Math.max(0,inferred-explicit.reduce((s,x)=>s+(x.monthly||0),0)),weight=implicit.reduce((s,x)=>s+x.value,0);implicit.forEach(x=>{if(x.monthly==null)x.monthly=weight?remaining*x.value/weight:0});
- rows.filter(x=>x.key!=='bourse'&&!x.explicitMonthly&&v28ForecastInvestmentTransferMonthly(x.id)<=0).forEach(x=>x.monthly=v28ForecastInferMonthlyInvestment(x.label,x.key));
+ rows.filter(x=>x.key!=='bourse'&&!x.explicitMonthly&&v28ForecastInvestmentTransferMonthly(x.id,x.owner,x.key,x.value,rows)<=0).forEach(x=>x.monthly=v28ForecastInferMonthlyInvestment(x.label,x.key));
  rows.forEach(x=>{if(x.monthly==null)x.monthly=0});
  return rows;
 }
