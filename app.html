@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.26 : Navigation Patrimoine accueil + Soldes par compte renforcé dans Budget -->
 <!-- V28.9.25 : Accueil — bloc Mes comptes renforcé visuellement -->
 <!-- V28.9.9 : Prévisions — ajout des baisses permanentes ou temporaires de revenu -->
 <!-- V28.9.2 : Prévisions — crédit immobilier lissé selon tableaux d’amortissement -->
@@ -44,7 +45,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I==' 'sha256-hbIhaQDMHzoiOU+5O4fjTNYggTZhhoz95JCD43bofRQ==' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0==' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA==' 'sha256-KkZZVUBfEr8bbrxfZMtnHD7bsrbw5jsMhy1EYWV6HDI=='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-T0x/OItH8tM1qUEe2AbUDhywJAGYlyom3QaB8J/XTmM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-1u3APBkRrlfdSRyPRIn5JMwQf8ym0QCbJ10nTHpoI6o='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -11024,6 +11025,18 @@ body.hide-amounts .tr-cash-balance,body.hide-amounts .tr-cash-compact-card .stoc
 body.hide-amounts .tr-cash-balance::after,body.hide-amounts .tr-cash-compact-card .stock-compact-value strong::after{content:'•••• €';color:#8b949e;position:absolute;left:0;top:0;}
 @media(max-width:360px){.tr-cash-main{grid-template-columns:1fr;}}
 
+
+/* V28.9.26 — mise en avant Soldes par compte */
+#v28-budget .vbudget-accounts-focus{position:relative;margin:10px 0 12px;border-radius:16px;filter:drop-shadow(0 8px 20px #0007)}
+#v28-budget .vbudget-accounts-focus:before{content:"";position:absolute;z-index:2;left:1px;right:1px;top:1px;height:3px;border-radius:16px 16px 0 0;background:linear-gradient(90deg,#4ddbd2,#49a7ff);pointer-events:none}
+#v28-budget .vbudget-accounts-focus .vcollapse{border:1px solid #2d7899!important;background:linear-gradient(145deg,#0d2233 0%,#0a1725 58%,#0c1d2d 100%)!important;box-shadow:0 0 0 1px #4ddbd212 inset}
+#v28-budget .vbudget-accounts-focus .vcollapse>summary{padding-top:14px!important;border-bottom-color:#23506a!important}
+#v28-budget .vbudget-accounts-focus .vcollapse>summary>span:first-child{font-size:14px!important;font-weight:900!important;color:#f4fbff!important}
+#v28-budget .vbudget-accounts-focus .vbank{border-color:#285a75;background:#0b1b2a;box-shadow:0 5px 14px #0004}
+#v28-budget .vbudget-accounts-focus .vbankname{font-size:12px;color:#f4fbff}
+#v28-budget .vbudget-accounts-focus .vbankbox{background:#102438;border-color:#28506b;padding:10px}
+#v28-budget .vbudget-accounts-focus .vbankbox span{font-size:8px;color:#9bb2c8}
+#v28-budget .vbudget-accounts-focus .vbankbox b{font-size:15px}
 </style></head><body><h1>Historique Budget — ${escapeHtml(model.month)}</h1><div class="sub">Budget & Patrimoine</div><div class="summary"><div class="stat"><span>Entrées</span><strong>${euro(model.revenus)}</strong></div><div class="stat"><span>Frais fixes</span><strong>${euro(model.fixes)}</strong></div><div class="stat"><span>Dépenses</span><strong>${euro(model.depenses)}</strong></div><div class="stat"><span>Reste à vivre</span><strong>${euro(model.resteVivre)}</strong></div></div>${section('📥 Entrées',model.revenusDetails,'budgetRevenus')}${section('🏠 Frais fixes',model.fixesDetails,'budgetFixes')}${section('🛒 Dépenses',model.depensesDetails,'budgetDepenses')}<section><h2>⇄ Virements internes</h2><table>${transfers||'<tr><td class="empty" colspan="2">Aucun élément</td></tr>'}</table></section><div class="footer">Budget & Patrimoine</div></body></html>`;
 }
 
@@ -15662,7 +15675,7 @@ function v28RenderHome(){
  <button class="vcard vforecast-home" type="button" onclick="v28Go('forecast')" style="width:100%;text-align:left;color:inherit"><div class="vforecast-home-line"><b>📅 Prévisions long terme</b><span class="vlink">Ouvrir →</span></div><div class="vforecast-home-kpis"><div class="vforecast-home-kpi"><span>🐷 CAPACITÉ D’ÉPARGNE</span><strong class="vgreen money">${v28Money((v28ForecastProjection(1)[0]||{}).capacity||0)}</strong><small>/ mois</small></div><div class="vforecast-home-kpi"><span>📈 PROJECTION 10 ANS</span><strong class="vblue money">${v28Money(v28ForecastInvestmentProjection(10))}</strong><small>investissements · estim.</small></div><div class="vforecast-home-kpi objective" onclick="v28SetForecastFreedomGoal(event)"><span>🌴 LIBERTÉ</span><strong class="vgreen money">${v28Money(v28ForecastFreedomGoal())}</strong><small>toucher pour modifier</small></div></div></button>
 
  <div class="vhomegrid vhomegrid-stack">
-  <div class="vcard vhome-patrimoine-bg"><div class="vhead"><b>Patrimoine <span class="vlab">(hors immo/emprunts)</span></b><button class="vlink" onclick="v28Go('patrimoine')">›</button></div>
+  <div class="vcard vhome-patrimoine-bg" role="button" tabindex="0" onclick="v28Go('patrimoine')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();v28Go('patrimoine')}" style="cursor:pointer"><div class="vhead"><b>Patrimoine <span class="vlab">(hors immo/emprunts)</span></b><button class="vlink" onclick="event.stopPropagation();v28Go('patrimoine')">›</button></div>
    <div class="vfinvalue money">${v28Money(financial)}</div>
    <div class="vhomefinancialpie">${v28PatrimoineFinancialDonut('household')}</div>
   </div>
@@ -15684,7 +15697,7 @@ function v28RenderBudget(){
  document.getElementById('v28-budget').innerHTML=`<div class="vey">Finances</div><h1 class="vtitle">Budget</h1>
  <div class="vhero"><div class="vlab">Reste à vivre estimé</div><div class="vbig vgreen money">${v28Text('budget-reste-vivre')}</div><div class="vlab">Solde actuel — opérations cochées : <b class="money">${v28Text('budget-solde-actuel')}</b></div></div>
  <div class="vactions"><button onclick="openAnnotationsModal()">📝 Notes</button><button onclick="openBankAccountsModal()">🏦 Comptes</button><button onclick="closeMonth()">🔒 Clôturer</button><button onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
- ${v28Section('accounts','🏦 Soldes par compte','',banks||'<div class="vlab">Aucun compte actif.</div>','<button class="vlink" type="button" onclick="event.preventDefault();event.stopPropagation();openBankAccountsModal()">Gérer</button>')}
+ <div class="vbudget-accounts-focus">${v28Section('accounts','🏦 Soldes par compte','',banks||'<div class="vlab">Aucun compte actif.</div>','<button class="vlink" type="button" onclick="event.preventDefault();event.stopPropagation();openBankAccountsModal()">Gérer</button>')}</div>
  <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
  ${v28Section('expenses','🛒 Dépenses',`<span class="vbudgetsum vbudgetsum-red">${v28Money(sum('budgetDepenses'))}</span>`,`<div class="vhead"><span></span><button class="vlink" onclick="openModal('budgetDepenses')">+ Ajouter</button></div><div class="vlist">${v28BudgetRows('budgetDepenses','🛒')}</div>`)}
  <button class="vprimary" style="width:100%;margin-bottom:8px" onclick="openModal('budgetFixes')">＋ Ajouter un frais fixe</button>
