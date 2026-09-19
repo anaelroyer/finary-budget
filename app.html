@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- V28.9.31 : Soldes par compte — couleurs positif/négatif + variation orange dans Budget -->
-<!-- V28.9.25 : Accueil — bloc Mes comptes renforcé visuellement -->
+<!-- V28.9.32 : Accueil — Mes comptes sans liseré + recette Menu du jour corrigée -->
 <!-- V28.9.9 : Prévisions — ajout des baisses permanentes ou temporaires de revenu -->
 <!-- V28.9.2 : Prévisions — crédit immobilier lissé selon tableaux d’amortissement -->
 <!-- V28.9.1 : Prévisions — capacité d’épargne mensuelle + emprunts Patrimoine -->
@@ -45,7 +45,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-T0x/OItH8tM1qUEe2AbUDhywJAGYlyom3QaB8J/XTmM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-cg8Ha4zzzVs2vtJwDMtcfGTlhcrC/tE5QpkseFIVmQg='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-T0x/OItH8tM1qUEe2AbUDhywJAGYlyom3QaB8J/XTmM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-f23KjBIt+1mc9YA2aEHv4/ftRZ3POO4YPLV103peIho='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -1536,7 +1536,7 @@ button.vehicle-alert-stat:active{transform:scale(.97)}
 #v28-home .vtopkpi .ksub{font-size:8px;color:#8299ad;display:block;margin-top:5px}
 #v28-home .vhomeaccount{display:grid;grid-template-columns:minmax(90px,1.15fr) 1fr 1.1fr;gap:8px;align-items:center;padding:11px 0;border-bottom:1px solid #173248}
 #v28-home .vaccounts-home{position:relative;overflow:hidden;border:1px solid #2d7899;background:linear-gradient(145deg,#0d2233 0%,#0a1725 58%,#0c1d2d 100%);box-shadow:0 8px 24px #0006,0 0 0 1px #4ddbd212 inset}
-#v28-home .vaccounts-home:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,#4ddbd2,#49a7ff);opacity:.95}
+#v28-home .vaccounts-home:before{display:none!important}
 #v28-home .vaccounts-home>.vhead{margin:-2px -2px 5px;padding:7px 2px 9px;border-bottom:1px solid #23506a}
 #v28-home .vaccounts-home>.vhead>b{font-size:12px;color:#f4fbff;letter-spacing:.1px}
 #v28-home .vaccounts-home .vhomeaccount{padding:13px 4px}
@@ -15476,6 +15476,7 @@ function v28MountPortals(){
    if(node&&node!==portal&&node.parentNode!==portal)portal.appendChild(node);
  });
 }
+let v28TodayMenuActions=[];
 function v28OpenTodayMeal(i){
  const m=v28TodayMenuActions?.[i];
  if(m){
@@ -15656,7 +15657,7 @@ function v28RenderHome(){
 
  // Menu du jour : utilise exactement le modèle de données du module Menus.
  let meals=[];
- const v28TodayMenuActions=[];
+ v28TodayMenuActions=[];
  try{
    ensureMenusData();
    const today=new Date(); today.setHours(0,0,0,0);
