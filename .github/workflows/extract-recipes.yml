@@ -3,6 +3,8 @@ name: Extraire les ingrédients des recettes
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "7 * * * *"
 
 permissions:
   contents: read
@@ -23,6 +25,8 @@ jobs:
         run: node google-firestore-token.mjs
 
       - name: Lire les recettes et synchroniser les ingrédients
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - <<'PY'
           import hashlib
@@ -441,6 +445,16 @@ jobs:
           current=request_json(doc_url,headers=fs_headers)
           fields=current.get("fields",{})
 
+          request_state=fs_to_python(
+              fields.get("recipeSyncRequest",{"mapValue":{"fields":{}}})
+          ) or {}
+          request_status=str(request_state.get("status") or "").strip().lower()
+          manual_run=os.environ.get("GITHUB_EVENT_NAME","")=="workflow_dispatch"
+
+          if not manual_run and request_status!="pending":
+              print("Aucune recette en attente : arrêt immédiat du workflow.")
+              raise SystemExit(0)
+
           data_raw=fields.get("data",{}).get("stringValue","")
           if not data_raw:
               raise RuntimeError("Champ data Firebase absent")
@@ -464,8 +478,24 @@ jobs:
                   key="u"+format(h,"x")
                   wanted[key]={"url":url,"label":label}
 
+          def mark_request_done(message=""):
+              if request_status!="pending":
+                  return
+              done=dict(request_state)
+              done["status"]="done"
+              done["completedAt"]=now_iso()
+              if message:
+                  done["message"]=str(message)[:300]
+              request_json(
+                  doc_url+"?updateMask.fieldPaths=recipeSyncRequest",
+                  headers=fs_headers,
+                  data={"fields":{"recipeSyncRequest":python_to_fs(done)}},
+                  method="PATCH",
+              )
+
           if not wanted:
               print("Aucune recette avec URL à analyser.")
+              mark_request_done("Aucune recette avec URL à analyser")
               raise SystemExit(0)
 
           out={}
@@ -524,14 +554,24 @@ jobs:
               changed=True
 
           if not changed:
-              print("Aucune mise à jour à écrire.")
+              print("Aucune mise à jour de recette à écrire.")
+              mark_request_done("Recettes déjà à jour")
               raise SystemExit(0)
 
+          patch_fields={"recipeData":python_to_fs(out)}
           patch_url=doc_url+"?updateMask.fieldPaths=recipeData"
+          if request_status=="pending":
+              done=dict(request_state)
+              done["status"]="done"
+              done["completedAt"]=now_iso()
+              done["message"]=f"{len(out)} recette(s) vérifiée(s)"
+              patch_fields["recipeSyncRequest"]=python_to_fs(done)
+              patch_url+="&updateMask.fieldPaths=recipeSyncRequest"
+
           request_json(
               patch_url,
               headers=fs_headers,
-              data={"fields":{"recipeData":python_to_fs(out)}},
+              data={"fields":patch_fields},
               method="PATCH",
           )
           print(f"Firebase mis à jour : {len(out)} recette(s).")
