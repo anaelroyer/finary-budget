@@ -47,8 +47,7 @@
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
-<!-- V28.9.63 : Prévisions — Bourse agrégée par enveloppe PEA / CTO avec capital actuel et versement mensuel. -->
-<!-- V28.9.62 : Prévisions — simplification Bourse : affichage agrégé PEA / CTO sans détail des ETF. -->
+<!-- V28.9.64 : Prévisions — Bourse regroupée par enveloppe PEA / CTO avec capital actuel et versement mensuel, sans supprimer les rendus des onglets. -->
 <!-- V28.9.61 : Prévisions — affiche toujours le report du mois précédent, avec état en attente de clôture ou montant confirmé. -->
 <!-- V28.9.60 : Menus — demande d’extraction de recette enregistrée dans Firestore pour traitement horaire à la demande. -->
 <!-- V28.9.59 : Budget — résumé du cycle harmonisé avec les pastilles débit orange / crédit vert des soldes par compte. -->
@@ -58,7 +57,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-SDpJs189BJjPeF+rmfq4CsDpUGtpgVH6886Z6rsb4Qs=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-0cglPRGwHyPSapAilqdV0cVWlR6GbOrcoA4voV+zBks='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-SDpJs189BJjPeF+rmfq4CsDpUGtpgVH6886Z6rsb4Qs=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-3j9TXoDGoupXXEn4lLChdnC9jBtwHSGMrnlvraLytSg='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -15935,22 +15934,103 @@ function v28HomeWatchHtml(){const items=v28HomeWatchItems();if(!items.length)ret
 function v28ForecastInvestmentCard(){
  const assets=v28ForecastInvestmentAssets(),p10=v28ForecastInvestmentProjection(10),base=v28ForecastCurrentFinancialCapital(),monthly=assets.reduce((s,a)=>s+a.monthly,0),contrib=v28ForecastInvestmentContributions(10),gains=p10-base-contrib,open=!!v28ForecastBlocks.investments,goal=v28ForecastFreedomGoal(),pct=Math.max(0,Math.min(100,base/goal*100)),eta=v28ForecastFreedomEstimate(),groups={};
  assets.forEach(a=>(groups[a.key]||(groups[a.key]=[])).push(a));
- const renderGroup=([key,list])=>{
-  const groupLabel=key==='bourse'?'Bourse':(ASSET_CATEGORY_MAP[key]?.label||key);
-  const groupMonthly=list.reduce((s,a)=>s+a.monthly,0);
-  let rows='';
-  if(key==='bourse'){
-   const envelopes=['PEA','CTO'].map(account=>{
-    const items=list.filter(a=>(a.account||'PEA')===account);
-    return {account,monthly:items.reduce((s,a)=>s+(Number(a.monthly)||0),0),value:items.reduce((s,a)=>s+(Number(a.value)||0),0)};
-   });
-   rows=envelopes.map(e=>`<div class="vforecast-row"><div><b>${e.account}</b><small>Capital actuel</small></div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(e.value)}</div><span class="vlink">${v28Money(e.monthly)}/mois</span></div></div>`).join('');
-  }else{
-   rows=list.map(a=>`<div class="vforecast-row vforecast-invest-edit" onclick="v28OpenInvestmentEditor('${escapeHtml(a.id).replace(/'/g,'&#39;')}')"><div><b>${escapeHtml(a.label)}</b><small>${escapeHtml(a.ownerLabel)}</small></div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(a.value)}</div><span class="vlink">${v28Money(a.monthly)}/mois · ${(a.rate*100).toLocaleString('fr-FR',{maximumFractionDigits:2})}%/an</span></div></div>`).join('');
-  }
-  return `<div class="vforecast-group"><div class="vforecast-group-title"><span>${escapeHtml(groupLabel)}</span><span class="money">${v28Money(groupMonthly)}/mois</span></div>${rows}</div>`;
- };
- return `<div class="vforecast-card"><div class="vhead vforecast-collapse ${open?'open':''}" onclick="v28ToggleForecastBlock('investments')"><div><b>Projection des investissements</b><div class="vlab">Anaël & Laurène</div></div><div style="text-align:right"><strong class="vblue money">${v28Money(p10)}</strong><div class="vchev">⌄</div></div></div>${open?`<div class="vinvest-summary"><div><span>Capital actuel</span><b class="money">${v28Money(base)}</b></div><div><span>Versements sur 10 ans</span><b class="vblue money">${v28Money(contrib)}</b></div><div><span>Gains estimés</span><b class="${gains>=0?'vgreen':'vred'} money">${gains>=0?'+ ':''}${v28Money(gains)}</b></div><div><span>Projection 10 ans</span><b class="vblue money">${v28Money(p10)}</b></div></div><div class="vlab" style="margin:2px 0 8px">${v28Money(base)} + ${v28Money(contrib)} + ${v28Money(gains)} = <b class="money">${v28Money(p10)}</b></div><div class="vfreedom-box"><div class="vfreedom-main"><div><span class="vlab">🌴 OBJECTIF LIBERTÉ</span><strong class="money">${v28Money(base)} / ${v28Money(goal)}</strong></div><div class="vfreedom-pct">${pct.toLocaleString('fr-FR',{maximumFractionDigits:1})}%</div></div><div class="vforecast-progress"><i style="width:${pct}%"></i></div><div class="vfreedom-meta">${eta?`Date estimée : ${eta.months===0?'objectif atteint':eta.date.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`:'Objectif non atteint sur l’horizon de simulation'} · <button class="vlink" onclick="event.stopPropagation();v28SetForecastFreedomGoal(event)">Modifier l’objectif</button></div></div>${Object.entries(groups).map(renderGroup).join('')}`:''}</div>`;
+ const groupsHtml=Object.entries(groups).map(([key,list])=>{
+   const groupLabel=key==='bourse'?'PEA / Bourse':(ASSET_CATEGORY_MAP[key]?.label||key);
+   const groupMonthly=list.reduce((s,a)=>s+(Number(a.monthly)||0),0);
+   let rowsHtml='';
+   if(key==='bourse'){
+     const envelopes=['PEA','CTO'].map(account=>{
+       const items=list.filter(a=>String(a.account||'PEA')===account);
+       return {
+         account,
+         value:items.reduce((s,a)=>s+(Number(a.value)||0),0),
+         monthly:items.reduce((s,a)=>s+(Number(a.monthly)||0),0)
+       };
+     }).filter(e=>e.value>0||e.monthly>0);
+     rowsHtml=envelopes.map(e=>`<div class="vforecast-row"><div><b>${e.account}</b><small>Capital actuel</small></div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(e.value)}</div><span class="vlink">${v28Money(e.monthly)}/mois</span></div></div>`).join('');
+   }else{
+     rowsHtml=list.map(a=>`<div class="vforecast-row vforecast-invest-edit" onclick="v28OpenInvestmentEditor('${escapeHtml(a.id).replace(/'/g,'&#39;')}')"><div><b>${escapeHtml(a.label)}</b><small>${escapeHtml(a.ownerLabel)}</small></div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(a.value)}</div><span class="vlink">${v28Money(a.monthly)}/mois · ${(a.rate*100).toLocaleString('fr-FR',{maximumFractionDigits:2})}%/an</span></div></div>`).join('');
+   }
+   return `<div class="vforecast-group"><div class="vforecast-group-title"><span>${escapeHtml(groupLabel)}</span><span class="money">${v28Money(groupMonthly)}/mois</span></div>${rowsHtml}</div>`;
+ }).join('');
+ return `<div class="vforecast-card"><div class="vhead vforecast-collapse ${open?'open':''}" onclick="v28ToggleForecastBlock('investments')"><div><b>Projection des investissements</b><div class="vlab">Anaël & Laurène</div></div><div style="text-align:right"><strong class="vblue money">${v28Money(p10)}</strong><div class="vchev">⌄</div></div></div>${open?`<div class="vinvest-summary"><div><span>Capital actuel</span><b class="money">${v28Money(base)}</b></div><div><span>Versements sur 10 ans</span><b class="vblue money">${v28Money(contrib)}</b></div><div><span>Gains estimés</span><b class="${gains>=0?'vgreen':'vred'} money">${gains>=0?'+ ':''}${v28Money(gains)}</b></div><div><span>Projection 10 ans</span><b class="vblue money">${v28Money(p10)}</b></div></div><div class="vlab" style="margin:2px 0 8px">${v28Money(base)} + ${v28Money(contrib)} + ${v28Money(gains)} = <b class="money">${v28Money(p10)}</b></div><div class="vfreedom-box"><div class="vfreedom-main"><div><span class="vlab">🌴 OBJECTIF LIBERTÉ</span><strong class="money">${v28Money(base)} / ${v28Money(goal)}</strong></div><div class="vfreedom-pct">${pct.toLocaleString('fr-FR',{maximumFractionDigits:1})}%</div></div><div class="vforecast-progress"><i style="width:${pct}%"></i></div><div class="vfreedom-meta">${eta?`Date estimée : ${eta.months===0?'objectif atteint':eta.date.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`:'Objectif non atteint sur l’horizon de simulation'} · <button class="vlink" onclick="event.stopPropagation();v28SetForecastFreedomGoal(event)">Modifier l’objectif</button></div></div>${groupsHtml}`:''}</div>`;
+}
+function v28RenderHome(){
+ const balances=calculateBankBalances(), accounts=getVisibleBankAccounts();
+ const totalCurrent=accounts.reduce((n,a)=>n+(balances[a.id]?.current||0),0);
+ const totalForecast=accounts.reduce((n,a)=>n+(balances[a.id]?.forecast||0),0);
+
+ const bankHtml=accounts.map(a=>{
+   const b=balances[a.id]||{current:0,forecast:0}, pending=v28PendingBankMovements(a.id);
+   return `<div class="vhomeaccount">
+     <div><div class="aname">🏦 ${escapeHtml(a.name)}</div><div class="atype">Compte bancaire</div></div>
+     <div class="vbalancebox"><span>SOLDE ACTUEL</span><b class="vgreen money">${v28Money(b.current)}</b></div>
+     <div class="vbalancebox"><span>PRÉVISION</span><b class="money">${v28Money(b.forecast)}</b><div class="vhome-cycle-movements">${pending.debit>0?`<em class="vhome-cycle-debit">-${v28Money(pending.debit)}</em>`:''}${pending.credit>0?`<em class="vhome-cycle-credit">+${v28Money(pending.credit)}</em>`:''}</div></div>
+   </div>`;
+ }).join('');
+
+ // Patrimoine financier = épargne + investissements, volontairement hors immobilier et emprunts.
+ let sav=0, inv=0;
+ try{
+   sav=getOwnedItems('epargne','household').reduce((s,i)=>s+(Number(i?.[1])||0),0);
+   inv=ASSET_CATEGORY_DEFINITIONS
+     .filter(c=>c.key!=='immobilier')
+     .reduce((sum,c)=>sum+getOwnedItems(c.key,'household').reduce((s,i)=>s+(Number(i?.[1])||0),0),0);
+ }catch(_){}
+ const financial=Math.max(0,sav+inv);
+
+ // Menu du jour : utilise exactement le modèle de données du module Menus.
+ let meals=[];
+ v28TodayMenuActions=[];
+ try{
+   ensureMenusData();
+   const today=new Date(); today.setHours(0,0,0,0);
+   const firstKey=data.menus.cycleStart;
+   const starts=[firstKey,menuLocalDateKey(menuAddDays(menuDateFromKey(firstKey),7))];
+   let cycleKey='',offset=-1;
+   for(const sk of starts){
+     const sd=menuDateFromKey(sk); sd.setHours(0,0,0,0);
+     const diff=Math.round((today-sd)/86400000);
+     if(diff>=0&&diff<=7){cycleKey=sk;offset=diff;break}
+   }
+   if(cycleKey&&offset>=0){
+     const raw=data.menus.weeks?.[cycleKey]?.meals||{};
+     const addMeal=(label,meal)=>{
+       const courseVals=MENU_COURSES.map(course=>{
+         const key=menuMealKey(offset,meal,course.key);
+         return {course:course.key,value:String(raw[key]||'').trim(),key};
+       }).filter(x=>x.value);
+       if(!courseVals.length)return;
+       // Sur l'accueil on privilégie le plat; à défaut entrée puis dessert.
+       const chosen=courseVals.find(x=>x.course==='plat')||courseVals[0];
+       const idx=v28TodayMenuActions.length;
+       const hasRecipe=!!getMenuRecipeUrl(chosen.value);
+       v28TodayMenuActions.push({cycleKey,mealKey:chosen.key,title:chosen.value,hasRecipe});
+       meals.push([label,chosen.value,idx,hasRecipe]);
+     };
+     if(offset!==0)addMeal('Midi','midi');
+     if(offset!==7)addMeal('Soir','soir');
+   }
+ }catch(_){}
+ document.getElementById('v28-home').innerHTML=`<div class="vey">Tableau de bord</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:12px">Aujourd’hui</h1><button class="vsecondary" type="button" onclick="toggleHideAmounts();v28RenderMobile()">👁 Montants</button></div>
+ <button class="vprimary" onclick="openModal('budgetDepenses')">＋ Ajouter une dépense</button>
+
+ <div class="vcard vaccounts-home"><div class="vhead"><b>💳 Mes comptes</b><button class="vlink" onclick="v28Go('budget')">Voir tout →</button></div>${bankHtml||'<div class="vlab">Aucun compte actif.</div>'}</div>
+ ${v28HomeWatchHtml()}
+
+ <button class="vcard vforecast-home" type="button" onclick="v28Go('forecast')" style="width:100%;text-align:left;color:inherit"><div class="vforecast-home-line"><b>📅 Prévisions long terme</b><span class="vlink">Ouvrir →</span></div><div class="vforecast-home-kpis"><div class="vforecast-home-kpi"><span>🐷 CAPACITÉ D’ÉPARGNE</span><strong class="vgreen money">${v28Money(v28ForecastTotalPotentialSavings(v28ForecastProjection(1)[0]||{}))}</strong><small>/ mois</small></div><div class="vforecast-home-kpi"><span>📈 PROJECTION 10 ANS</span><strong class="vblue money">${v28Money(v28ForecastInvestmentProjection(10))}</strong><small>investissements · estim.</small></div><div class="vforecast-home-kpi objective" onclick="v28SetForecastFreedomGoal(event)"><span>🌴 LIBERTÉ</span><strong class="vgreen money">${(v28ForecastCurrentFinancialCapital()/v28ForecastFreedomGoal()*100).toLocaleString('fr-FR',{maximumFractionDigits:1})}%</strong><small>${v28Money(v28ForecastCurrentFinancialCapital())} / ${v28Money(v28ForecastFreedomGoal())}</small></div></div></button>
+
+ <div class="vhomegrid vhomegrid-stack">
+  <div class="vcard vhome-patrimoine-bg" role="button" tabindex="0" onclick="v28Go('patrimoine')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();v28Go('patrimoine')}" style="cursor:pointer"><div class="vhead"><b>Patrimoine <span class="vlab">(hors immo/emprunts)</span></b><button class="vlink" onclick="event.stopPropagation();v28Go('patrimoine')">›</button></div>
+   <div class="vfinvalue money">${v28Money(financial)}</div>
+   <div class="vhomefinancialpie">${v28PatrimoineFinancialDonut('household')}</div>
+  </div>
+ </div>
+
+ <div class="vcard"><div class="vhead"><b>🍴 Menu du jour</b><button class="vlink" onclick="v28Go('menus')">Voir la semaine →</button></div>
+ ${meals.length?meals.map(([lab,txt,idx,hasRecipe])=>`<div class="vmealcard"><div class="micon">${lab==='Midi'?'☀️':'🌙'}</div><div><div class="mtime">${escapeHtml(lab)}</div><div class="mname">${escapeHtml(txt)}</div>${hasRecipe?'<div class="mrecipe">📄 Recette disponible</div>':''}</div><button class="vlink" onclick="v28OpenTodayMeal(${idx})">${hasRecipe?'Recette ›':'›'}</button></div>`).join(''):`<div class="vmealcard"><div class="micon">🍽️</div><div><div class="mname">Aucun menu renseigné aujourd’hui</div><div class="mtime">Ajoute-le dans Menus</div></div><button class="vlink" onclick="v28Go('menus')">＋</button></div>`}
+ </div>`;
+
 }
 function v28PendingBankMovements(accountId){
  let debit=0,credit=0;
