@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.75 : Menus — correction du focus des champs : la vue mobile ne se reconstruit plus au clic dans un champ de saisie. -->
 <!-- V28.9.74 : Patrimoine — taux d’endettement bancaire automatique dans Emprunts, hors véranda familiale et Permis à 1 € du fils. -->
 <!-- V28.9.73 : Prévisions — dépenses variables moyennes lissées systématiquement sur 6 mois. -->
 <!-- V28.9.72 : Emprunts — CRD automatique du crédit véhicule selon l’échéancier contractuel 19 800 € / 4,29 % / 72 mois / 312,40 € hors assurance. Véranda inchangée en manuel. -->
@@ -69,7 +70,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-2N7iQv8U/B8GcAxCsuw4hbF2GgJ/F0pQ5jivRspJ9k0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-SuTt91WYDnXm0B/ES87zibfef0+nistkm1DWVlccroU='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-2N7iQv8U/B8GcAxCsuw4hbF2GgJ/F0pQ5jivRspJ9k0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-pqo0rOEatEvkBqrz6HPd050EsiV/II5Dy538GpYuVMQ='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -16674,7 +16675,10 @@ function v28InstallMirrorBridge(){
  v28MirrorBridgeInstalled=true;
  const refresh=e=>{
    if(!e.target?.closest?.('.vmirror'))return;
-   if(e.type==='click' && !e.target.closest('button,a,input,[onclick],summary'))return;
+   // Ne jamais reconstruire la vue lorsqu'on clique dans un champ :
+   // cela remplaçait l'input du menu après 120 ms et faisait perdre le focus.
+   if(e.type==='click' && e.target.closest('input,textarea,select'))return;
+   if(e.type==='click' && !e.target.closest('button,a,[onclick],summary'))return;
    setTimeout(()=>{try{v28RenderMobile()}catch(err){console.error('V28 mirror refresh',err)}},120);
  };
  root.addEventListener('click',refresh,true);
