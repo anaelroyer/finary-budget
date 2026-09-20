@@ -47,6 +47,7 @@
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
+<!-- V28.9.66 : Budget/Prévisions — frais fixes personnalisables mois par mois, récurrents chaque année. -->
 <!-- V28.9.65 : Prévisions — PEA / CTO restent agrégés, avec rendement moyen affiché et réglage des % par ligne dans une fenêtre dédiée. -->
 <!-- V28.9.64 : Prévisions — Bourse regroupée par enveloppe PEA / CTO avec capital actuel et versement mensuel, sans supprimer les rendus des onglets. -->
 <!-- V28.9.61 : Prévisions — affiche toujours le report du mois précédent, avec état en attente de clôture ou montant confirmé. -->
@@ -58,7 +59,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-SDpJs189BJjPeF+rmfq4CsDpUGtpgVH6886Z6rsb4Qs=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-IOw6emUOOxL5QGNlAdNXhgraK++9P+DFYb777vMoiPI='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-VQ/tHpUjq8cNtuYmKaesLbJ0PF5CayU7Qs+AtH7LvZM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-k5LQ0/nvZRoIUxGtfbO4NtPEDlWnnEqT0XONNLFOTxs='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2407,6 +2408,31 @@ body > .modal-overlay canvas{
     </div>
   </div>
 </div>
+
+<!-- MODAL MENSUALITÉS FRAIS FIXE -->
+<div class="modal-overlay" id="fixedMonthlyModal">
+  <div class="modal" style="max-width:520px;">
+    <h3 id="fixedMonthlyTitle">Mensualités du frais fixe</h3>
+    <div id="fixedMonthlyHint" class="budget-category-hint" style="margin:-4px 0 12px;"></div>
+    <div id="fixedMonthlyGrid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"></div>
+    <div id="fixedMonthlySummary" style="margin-top:12px;padding:10px 12px;border:1px solid rgba(139,148,158,.25);border-radius:10px;font-size:13px;color:#c9d1d9;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <button class="btn btn-secondary" type="button" onclick="resetFixedMonthlyScheduleToBase()">Même montant toute l’année</button>
+      <button class="btn btn-secondary" type="button" onclick="editFixedMonthlyBaseDetails()">Modifier libellé / compte</button>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeFixedMonthlyModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveFixedMonthlySchedule()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<style>
+#fixedMonthlyGrid .fixed-month-cell{display:flex;flex-direction:column;gap:4px;padding:8px;border:1px solid rgba(139,148,158,.2);border-radius:10px;background:rgba(13,17,23,.35)}
+#fixedMonthlyGrid .fixed-month-cell label{font-size:11px;color:#8b949e;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+#fixedMonthlyGrid .fixed-month-cell input{width:100%;box-sizing:border-box}
+#fixedMonthlyGrid .fixed-month-cell.current{border-color:rgba(88,166,255,.55);background:rgba(88,166,255,.08)}
+@media(max-width:520px){#fixedMonthlyGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style>
 
 <!-- MODAL GESTION DES COMPTES BANCAIRES -->
 <div class="modal-overlay" id="bankAccountsModal">
@@ -6476,6 +6502,106 @@ function getMonthlyBalanceCarryoverAmount(){
     .reduce((s,item)=>s+(Number(item?.[1])||0),0);
 }
 
+const FIXED_MONTH_LABELS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+let fixedMonthlyEditIndex=-1;
+
+function getFixedMonthlyScheduleMeta(item){
+  if(!Array.isArray(item))return null;
+  const meta=item?.[6];
+  if(!meta||typeof meta!=='object'||meta.type!=='fixed_monthly_schedule'||!Array.isArray(meta.amounts)||meta.amounts.length!==12)return null;
+  const amounts=meta.amounts.map(v=>Number(v));
+  if(amounts.some(v=>!Number.isFinite(v)||v<0))return null;
+  return {...meta,amounts};
+}
+
+function fixedMonthIndex(monthRef=new Date()){
+  if(monthRef instanceof Date&&!Number.isNaN(monthRef.getTime()))return monthRef.getMonth();
+  const raw=String(monthRef||'').trim();
+  const m=raw.match(/^\d{4}-(\d{2})/);
+  if(m){const n=Number(m[1]);if(n>=1&&n<=12)return n-1;}
+  const d=new Date(raw);
+  return Number.isNaN(d.getTime())?new Date().getMonth():d.getMonth();
+}
+
+function getFixedMonthlyAmounts(item){
+  const base=Math.max(0,Number(item?.[1])||0);
+  const meta=getFixedMonthlyScheduleMeta(item);
+  return meta?meta.amounts.slice():Array(12).fill(base);
+}
+
+function getFixedAmountForMonth(item,monthRef=new Date()){
+  const amounts=getFixedMonthlyAmounts(item);
+  return Number(amounts[fixedMonthIndex(monthRef)])||0;
+}
+
+function hasFixedMonthlySchedule(item){
+  return !!getFixedMonthlyScheduleMeta(item);
+}
+
+function fixedMonthlyScheduleShortLabel(item){
+  const meta=getFixedMonthlyScheduleMeta(item);
+  if(!meta)return '';
+  const unique=[...new Set(meta.amounts.map(v=>Math.round(v*100)/100))];
+  return unique.length>1?'Montants variables selon le mois':'Montant identique sur 12 mois';
+}
+
+function openFixedMonthlyModal(index){
+  if(!data.budgetFixes?.[index])return;
+  fixedMonthlyEditIndex=index;
+  const item=data.budgetFixes[index],amounts=getFixedMonthlyAmounts(item),currentMonth=new Date().getMonth();
+  const title=document.getElementById('fixedMonthlyTitle'),hint=document.getElementById('fixedMonthlyHint'),grid=document.getElementById('fixedMonthlyGrid');
+  if(title)title.textContent=String(item[0]||'Frais fixe');
+  if(hint)hint.textContent='Définis le montant prélevé pour chaque mois. Ce calendrier se répète chaque année.';
+  if(grid)grid.innerHTML=FIXED_MONTH_LABELS.map((label,i)=>`<div class="fixed-month-cell ${i===currentMonth?'current':''}"><label for="fixedMonthAmount${i}">${label}</label><input id="fixedMonthAmount${i}" type="number" min="0" step="0.01" inputmode="decimal" value="${Math.round((Number(amounts[i])||0)*100)/100}" oninput="updateFixedMonthlySummary()"></div>`).join('');
+  updateFixedMonthlySummary();
+  document.getElementById('fixedMonthlyModal')?.classList.add('active');
+}
+
+function closeFixedMonthlyModal(){
+  document.getElementById('fixedMonthlyModal')?.classList.remove('active');
+  fixedMonthlyEditIndex=-1;
+}
+
+function readFixedMonthlyInputs(){
+  return FIXED_MONTH_LABELS.map((_,i)=>{
+    const raw=String(document.getElementById(`fixedMonthAmount${i}`)?.value??'').replace(',','.');
+    const n=Number(raw);
+    return Number.isFinite(n)&&n>=0?Math.round(n*100)/100:NaN;
+  });
+}
+
+function updateFixedMonthlySummary(){
+  const el=document.getElementById('fixedMonthlySummary');if(!el)return;
+  const amounts=readFixedMonthlyInputs();
+  if(amounts.some(v=>!Number.isFinite(v))){el.textContent='Renseigne un montant valide pour chaque mois.';return;}
+  const annual=amounts.reduce((s,v)=>s+v,0),avg=annual/12;
+  el.innerHTML=`Total annuel : <b>${euro(annual)}</b> · moyenne : <b>${euro(avg)}/mois</b>`;
+}
+
+function resetFixedMonthlyScheduleToBase(){
+  const item=data.budgetFixes?.[fixedMonthlyEditIndex];if(!item)return;
+  const base=Math.max(0,Number(item[1])||0);
+  FIXED_MONTH_LABELS.forEach((_,i)=>{const input=document.getElementById(`fixedMonthAmount${i}`);if(input)input.value=String(Math.round(base*100)/100);});
+  updateFixedMonthlySummary();
+}
+
+function saveFixedMonthlySchedule(){
+  const item=data.budgetFixes?.[fixedMonthlyEditIndex];if(!item)return;
+  const amounts=readFixedMonthlyInputs();
+  if(amounts.some(v=>!Number.isFinite(v))){alert('Renseigne un montant valide pour chacun des 12 mois.');return;}
+  item[6]={type:'fixed_monthly_schedule',amounts};
+  closeFixedMonthlyModal();
+  render();
+  save();
+  try{v28RenderMobile()}catch(_){}
+}
+
+function editFixedMonthlyBaseDetails(){
+  const index=fixedMonthlyEditIndex;if(index<0)return;
+  closeFixedMonthlyModal();
+  openBudgetEditModal('budgetFixes',index);
+}
+
 function calculateBankBalances(){
   const result={};
   getVisibleBankAccounts().forEach(a=>{
@@ -6489,7 +6615,7 @@ function calculateBankBalances(){
 
   const applyBudget=(key,sign)=>{
     (data[key]||[]).forEach(item=>{
-      const amount=Number(item[1])||0;
+      const amount=key==='budgetFixes'?getFixedAmountForMonth(item,new Date()):(Number(item[1])||0);
 
       // Le report Négatif/Positif est affiché comme une seule ligne,
       // mais sa ventilation réelle par compte est conservée en métadonnée.
@@ -6582,7 +6708,7 @@ function openModal(key){
   document.getElementById('modalCurrent').style.display='none';
 
   document.getElementById('modalLabelTitle').textContent='Libellé';
-  document.getElementById('modalAmountTitle').textContent='Montant (€)';
+  document.getElementById('modalAmountTitle').textContent=key==='budgetFixes'?'Montant standard (€)':'Montant (€)';
 
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
@@ -6625,10 +6751,10 @@ function openBudgetEditModal(key,index){
   currentBox.style.display='block';
 
   document.getElementById('modalCurrentLabel').textContent=item[0] || 'Sans libellé';
-  document.getElementById('modalCurrentAmount').textContent='Montant actuel : '+euro(Number(item[1]) || 0);
+  document.getElementById('modalCurrentAmount').textContent=(key==='budgetFixes'&&hasFixedMonthlySchedule(item)?'Montant standard : ':'Montant actuel : ')+euro(Number(item[1]) || 0);
 
   document.getElementById('modalLabelTitle').textContent='Libellé';
-  document.getElementById('modalAmountTitle').textContent='Nouveau montant (€)';
+  document.getElementById('modalAmountTitle').textContent=key==='budgetFixes'?'Montant standard (€)':'Nouveau montant (€)';
 
   const labelInput=document.getElementById('modalLabel');
   const amountInput=document.getElementById('modalAmount');
@@ -9003,13 +9129,13 @@ function render(){
             title="Cocher / décocher"
           >
 
-          <div class="budget-line-label" title="Cliquer pour modifier">
+          <div class="budget-line-label" title="${key==='budgetFixes'?'Cliquer pour régler les mensualités':'Cliquer pour modifier'}">
             <div class="budget-line-main">${escapeHtml(item[0] || 'Sans libellé')}</div>
-            <div class="budget-line-meta"><span class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</span><span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span></div>
+            <div class="budget-line-meta"><span class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</span><span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span>${key==='budgetFixes'&&hasFixedMonthlySchedule(item)?'<span class="budget-category-badge auto">12 mois personnalisés</span>':''}</div>
           </div>
 
-          <div class="budget-line-amount" title="Cliquer pour modifier">
-            ${euro(Number(item[1]) || 0)}
+          <div class="budget-line-amount" title="${key==='budgetFixes'?'Montant du mois en cours':'Cliquer pour modifier'}">
+            ${euro(key==='budgetFixes'?getFixedAmountForMonth(item,new Date()):(Number(item[1]) || 0))}
           </div>
 
           <button
@@ -9022,7 +9148,8 @@ function render(){
         `;
 
         row.onclick=()=>{
-          openBudgetEditModal(key,idx);
+          if(key==='budgetFixes')openFixedMonthlyModal(idx);
+          else openBudgetEditModal(key,idx);
         };
 
       }else{
@@ -10481,7 +10608,7 @@ function updateTotals(){
   });
 
   const rev=(data.budgetRevenus||[]).reduce((s,i)=>s+(i[1]||0),0);
-  const fixes=(data.budgetFixes||[]).reduce((s,i)=>s+(i[1]||0),0);
+  const fixes=(data.budgetFixes||[]).reduce((s,i)=>s+getFixedAmountForMonth(i,new Date()),0);
   const dep=(data.budgetDepenses||[]).reduce((s,i)=>s+(i[1]||0),0);
   const rv=rev-fixes-dep;
 
@@ -10665,7 +10792,7 @@ function closeMonth(){
     .map(t=>({...t,done:false}));
 
   const rev=revenusArchives.reduce((s,i)=>s+(Number(i[1])||0),0);
-  const fixes=fixesArchives.reduce((s,i)=>s+(Number(i[1])||0),0);
+  const fixes=fixesArchives.reduce((s,i)=>s+getFixedAmountForMonth(i,now),0);
   const dep=depensesArchivees.reduce((s,i)=>s+(Number(i[1])||0),0);
   const reste=rev-fixes-dep;
 
@@ -10722,7 +10849,7 @@ function closeMonth(){
     depenses:dep,
     resteVivre:reste,
     revenusDetails:revenusArchives.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
-    fixesDetails:fixesArchives.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
+    fixesDetails:fixesArchives.map(item=>{const copy=JSON.parse(JSON.stringify(item));copy[1]=getFixedAmountForMonth(item,now);if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
     depensesDetails:depensesArchivees.map(item=>{const copy=JSON.parse(JSON.stringify(item));if(copy[3])copy[4]=getBankAccountName(copy[3]);return copy;}),
     transfersDetails:virementsArchives.map(t=>({
       ...JSON.parse(JSON.stringify(t)),
@@ -15656,11 +15783,11 @@ function v28AccountBadge(item){
 function v28BudgetRows(key,icon){
  const rows=(data[key]||[]).map((item,i)=>({item,i})).sort((a,b)=>Number(!!a.item[2])-Number(!!b.item[2]));
  if(!rows.length)return '<div class="vlab">Aucune ligne.</div>';
- return rows.map(({item,i})=>`<div class="vrow vbudgetrow ${item[2]?'paid':''}">
+ return rows.map(({item,i})=>{const isFixed=key==='budgetFixes',amount=isFixed?getFixedAmountForMonth(item,new Date()):(Number(item?.[1])||0),open=isFixed?`openFixedMonthlyModal(${i})`:`openBudgetEditModal('${key}',${i})`,schedule=isFixed&&hasFixedMonthlySchedule(item)?' · 12 mois personnalisés':'';return `<div class="vrow vbudgetrow ${item[2]?'paid':''}">
  <input class="vcheck" type="checkbox" ${item[2]?'checked':''} onchange="togglePaid('${key}',${i});v28RenderMobile()">
- <div onclick="openBudgetEditModal('${key}',${i})"><b>${escapeHtml(item[0]||'Sans libellé')}</b><small>${v28AccountBadge(item)} <span>${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span></small></div>
- <div class="vamt money" onclick="openBudgetEditModal('${key}',${i})">${v28Money(item[1])}</div>
- <button class="vdel" onclick="del('${key}',${i});setTimeout(v28RenderMobile,0)">×</button></div>`).join('');
+ <div onclick="${open}"><b>${escapeHtml(item[0]||'Sans libellé')}</b><small>${v28AccountBadge(item)} <span>${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span>${schedule}</small></div>
+ <div class="vamt money" onclick="${open}">${v28Money(amount)}</div>
+ <button class="vdel" onclick="del('${key}',${i});setTimeout(v28RenderMobile,0)">×</button></div>`}).join('');
 }
 const v28PortalHomes=new Map();
 function v28RestorePortals(){
@@ -16061,7 +16188,7 @@ function v28RenderHome(){
 }
 function v28PendingBankMovements(accountId){
  let debit=0,credit=0;
- const addBudget=(key,sign)=>{(data[key]||[]).forEach(item=>{if(item?.[2])return;if(String(item?.[3]||'ca')!==String(accountId))return;const amount=Math.max(0,Number(item?.[1])||0);if(sign>0)credit+=amount;else debit+=amount})};
+ const addBudget=(key,sign)=>{(data[key]||[]).forEach(item=>{if(item?.[2])return;if(String(item?.[3]||'ca')!==String(accountId))return;const raw=key==='budgetFixes'?getFixedAmountForMonth(item,new Date()):(Number(item?.[1])||0),amount=Math.max(0,raw);if(sign>0)credit+=amount;else debit+=amount})};
  addBudget('budgetRevenus',1);addBudget('budgetFixes',-1);addBudget('budgetDepenses',-1);
  (data.bankTransfers||[]).forEach(t=>{if(!t||t.done)return;const amount=Math.max(0,Number(t.amount)||0);if(String(t.from||'')===String(accountId))debit+=amount;if(t.purpose!=='investment'&&String(t.to||'')===String(accountId))credit+=amount});
  return {debit,credit};
@@ -16069,7 +16196,7 @@ function v28PendingBankMovements(accountId){
 function v28RenderBudget(){
  const balances=calculateBankBalances(),accounts=getVisibleBankAccounts();
  const banks=accounts.map(a=>{const b=balances[a.id]||{current:0,forecast:0},pending=v28PendingBankMovements(a.id);return `<div class="vbank"><div class="vbankname">🏦 ${escapeHtml(a.name)}</div><div class="vbankgrid"><div class="vbankbox"><span>SOLDE ACTUEL</span><b class="money ${b.current<0?'vred':'vgreen'}">${v28Money(b.current)}</b></div><div class="vbankbox"><span>PRÉVISION FIN DE CYCLE</span><b class="money ${b.forecast<0?'vred':'vgreen'}">${v28Money(b.forecast)}</b></div></div><div class="vbudget-cycle-movements">${pending.debit>0?`<div class="vbudget-cycle-delta neg">-${v28Money(pending.debit)}</div>`:''}${pending.credit>0?`<div class="vbudget-cycle-credit">+${v28Money(pending.credit)}</div>`:''}</div></div>`}).join('');
- const sum=k=>(data[k]||[]).reduce((n,x)=>n+(Number(x?.[1])||0),0);
+ const sum=k=>(data[k]||[]).reduce((n,x)=>n+(k==='budgetFixes'?getFixedAmountForMonth(x,new Date()):(Number(x?.[1])||0)),0);
  const budgetCurrent=accounts.reduce((n,a)=>n+(Number(balances[a.id]?.current)||0),0), budgetForecast=accounts.reduce((n,a)=>n+(Number(balances[a.id]?.forecast)||0),0);
  const pendingTotals=accounts.reduce((acc,a)=>{const pending=v28PendingBankMovements(a.id);acc.debit+=Number(pending?.debit)||0;acc.credit+=Number(pending?.credit)||0;return acc},{debit:0,credit:0});
  document.getElementById('v28-budget').innerHTML=`<div class="vey">Finances</div><h1 class="vtitle">Budget</h1>
@@ -16451,20 +16578,20 @@ function v28ForecastLoanRowsForMonth(key){
  v28ForecastOtherLoans().filter(x=>v28ForecastLoanActiveForMonth(x,key)).forEach(x=>rows.push(x));
  return rows;
 }
-function v28ForecastFixedRowsWithoutLoans(){
- const loans=v28ForecastOtherLoans(),used=new Set(),currentKey=v28ForecastMonthKey(new Date()),mortgageNow=v28ForecastMortgagePaymentForMonth(currentKey);let mortgageMatched=false,rows=[];
- (data.budgetFixes||[]).forEach((item,index)=>{const amount=Number(item?.[1])||0,cat=getItemBudgetCategory('budgetFixes',item),label=normalizeBudgetText(item?.[0]||'');
-   if(!mortgageMatched&&mortgageNow>0&&Math.abs(amount-mortgageNow)<0.02&&(cat==='credits'||/immob|habitat|maison|credit/.test(label))){mortgageMatched=true;return}
-   let match=-1;loans.forEach((loan,j)=>{if(match>=0||used.has(j))return;const lp=Number(loan.meta.monthlyPayment)||0,ll=normalizeBudgetText(loan.label),amountMatch=Math.abs(lp-amount)<0.02,words=ll.split(' ').filter(w=>w.length>=4),labelMatch=words.some(w=>label.includes(w));if(amountMatch&&(cat==='credits'||labelMatch))match=j});
+function v28ForecastFixedRowsWithoutLoans(key=v28ForecastMonthKey(new Date())){
+ const loans=v28ForecastOtherLoans(),used=new Set(),mortgage=v28ForecastMortgagePaymentForMonth(key);let mortgageMatched=false,rows=[];
+ (data.budgetFixes||[]).forEach((item,index)=>{const amount=getFixedAmountForMonth(item,key),cat=getItemBudgetCategory('budgetFixes',item),label=normalizeBudgetText(item?.[0]||'');
+   if(!mortgageMatched&&mortgage>0&&Math.abs(amount-mortgage)<0.02&&(cat==='credits'||/immob|habitat|maison|credit/.test(label))){mortgageMatched=true;return}
+   let match=-1;loans.forEach((loan,j)=>{if(match>=0||used.has(j)||!v28ForecastLoanActiveForMonth(loan,key))return;const lp=Number(loan.meta.monthlyPayment)||0,ll=normalizeBudgetText(loan.label),amountMatch=Math.abs(lp-amount)<0.02,words=ll.split(' ').filter(w=>w.length>=4),labelMatch=words.some(w=>label.includes(w));if(amountMatch&&(cat==='credits'||labelMatch))match=j});
    if(match>=0){used.add(match);return}
-   rows.push({index,label:String(item?.[0]||'Frais fixe'),amount,cat});
+   rows.push({index,label:String(item?.[0]||'Frais fixe'),amount,cat,scheduled:hasFixedMonthlySchedule(item)});
  });
  return rows;
 }
-function v28ForecastFixedWithoutLoans(){return v28ForecastFixedRowsWithoutLoans().reduce((sum,x)=>sum+x.amount,0)}
+function v28ForecastFixedWithoutLoans(key=v28ForecastMonthKey(new Date())){return v28ForecastFixedRowsWithoutLoans(key).reduce((sum,x)=>sum+x.amount,0)}
 let v28ForecastFixedOpen=false;
 function v28ToggleForecastFixedLines(){v28ForecastFixedOpen=!v28ForecastFixedOpen;v28RenderForecast()}
-function v28ForecastFixedLinesHtml(){const rows=v28ForecastFixedRowsWithoutLoans();if(!rows.length)return '<div class="vforecast-empty">Aucun frais fixe hors crédits.</div>';return `<div class="vforecast-lines">${rows.map(x=>`<div class="vforecast-lineitem"><div><b>${escapeHtml(x.label)}</b><small>${escapeHtml(getBudgetCategoryLabel('budgetFixes',x.cat)||'Frais fixe')}</small></div><strong class="money">${v28Money(x.amount)}</strong></div>`).join('')}<div class="vforecast-row"><div><b>Total</b></div><div class="vforecast-amount money">${v28Money(rows.reduce((s,x)=>s+x.amount,0))}/mois</div></div></div>`}
+function v28ForecastFixedLinesHtml(key=v28ForecastMonthKey(new Date())){const rows=v28ForecastFixedRowsWithoutLoans(key);if(!rows.length)return '<div class="vforecast-empty">Aucun frais fixe hors crédits.</div>';return `<div class="vforecast-lines">${rows.map(x=>`<div class="vforecast-lineitem"><div><b>${escapeHtml(x.label)}</b><small>${escapeHtml(getBudgetCategoryLabel('budgetFixes',x.cat)||'Frais fixe')}${x.scheduled?' · montant de '+escapeHtml(v28ForecastMonthLabel(key)):''}</small></div><strong class="money">${v28Money(x.amount)}</strong></div>`).join('')}<div class="vforecast-row"><div><b>Total</b></div><div class="vforecast-amount money">${v28Money(rows.reduce((s,x)=>s+x.amount,0))}</div></div></div>`}
 function v28ForecastVariableCategories(){return new Set(['courses','transport','tabac','animaux'])}
 function v28ForecastIsFuelExpense(item,cat){
  if(cat!=='transport')return true;
@@ -16521,9 +16648,9 @@ function v28ForecastEventImpact(ev,key){
 }
 function v28ForecastProjection(months=v28ForecastHorizon){
  v28EnsureForecastData(); const start=v28ForecastAddMonths(new Date(),v28ForecastMonthOffset);start.setDate(1);start.setHours(0,0,0,0);
- const recurringIncome=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0),fixed=v28ForecastFixedWithoutLoans(),variable=v28ForecastVariableTotal(),transfers=v28ForecastInternalTransfersMonthly(),rows=[];
+ const recurringIncome=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0),variable=v28ForecastVariableTotal(),transfers=v28ForecastInternalTransfersMonthly(),rows=[];
  for(let i=0;i<months;i++){
-   const d=v28ForecastAddMonths(start,i),key=v28ForecastMonthKey(d); let eventImpact=0; const events=[];
+   const d=v28ForecastAddMonths(start,i),key=v28ForecastMonthKey(d),fixed=v28ForecastFixedWithoutLoans(key); let eventImpact=0; const events=[];
    data.forecast.events.forEach(ev=>{if(ev.status==='project'&&!v28EnsureForecastData().includeProjects)return;const impact=v28ForecastEventImpact(ev,key);if(impact){eventImpact+=impact;events.push({...ev,impact})}});
    // Négatif/Positif est un report de solde, pas un revenu mensuel récurrent :
    // il n'agit que sur le mois cible issu de la clôture précédente.
@@ -16583,7 +16710,7 @@ function v28ForecastEventStatusHtml(ev){
 }
 function v28ForecastUpcomingAlerts(){const now=new Date();now.setHours(0,0,0,0);return v28EnsureForecastData().events.map(ev=>{const d=new Date(ev.date+'T12:00:00'),days=Math.ceil((d-now)/86400000);return {...ev,days}}).filter(ev=>ev.days>=0&&ev.alertDays>0&&ev.days<=ev.alertDays).sort((a,b)=>a.days-b.days)}
 function v28RenderForecast(){
- const host=document.getElementById('v28-forecast');if(!host)return;const f=v28EnsureForecastData(),editEvent=v28ForecastEditEventId?f.events.find(x=>String(x.id)===String(v28ForecastEditEventId)):null,rows=v28ForecastProjection(),avg=v28ForecastVariableAverages(),events=v28ForecastActiveEvents().sort((a,b)=>String(a.date).localeCompare(String(b.date))),archived=v28ForecastArchivedEvents(),alerts=v28ForecastUpcomingAlerts(),first=rows[0],periodCapacity=rows.reduce((s,r)=>s+r.capacity,0),avgCapacity=rows.length?periodCapacity/rows.length:0,currentKey=v28ForecastMonthKey(new Date()),selectedKey=first?.key||currentKey,currentLoans=first?.loans||0,monthlyBase=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0)-v28ForecastFixedWithoutLoans()-currentLoans-v28ForecastVariableTotal()-v28ForecastInternalTransfersMonthly();
+ const host=document.getElementById('v28-forecast');if(!host)return;const f=v28EnsureForecastData(),editEvent=v28ForecastEditEventId?f.events.find(x=>String(x.id)===String(v28ForecastEditEventId)):null,rows=v28ForecastProjection(),avg=v28ForecastVariableAverages(),events=v28ForecastActiveEvents().sort((a,b)=>String(a.date).localeCompare(String(b.date))),archived=v28ForecastArchivedEvents(),alerts=v28ForecastUpcomingAlerts(),first=rows[0],periodCapacity=rows.reduce((s,r)=>s+r.capacity,0),avgCapacity=rows.length?periodCapacity/rows.length:0,currentKey=v28ForecastMonthKey(new Date()),selectedKey=first?.key||currentKey,currentLoans=first?.loans||0,monthlyBase=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0)-v28ForecastFixedWithoutLoans(selectedKey)-currentLoans-v28ForecastVariableTotal()-v28ForecastInternalTransfersMonthly();
  const typeOpts=[['income_once','Entrée exceptionnelle'],['expense_once','Dépense exceptionnelle'],['income_change','Hausse de revenu (+)'],['income_decrease','Baisse de revenu (−)'],['fixed_change','Changement de charge'],['variable_change','Hausse dépense variable (+)'],['savings','Épargne / investissement']];
  host.innerHTML=`<button class="vforecast-back" onclick="v28Go('home')">‹ Retour à l’accueil</button><div class="vey">Planification</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:8px">Prévisions long terme</h1><button class="vsecondary" onclick="v28ToggleForecastForm()">＋ Événement</button></div>
  <div class="vforecast-card vforecast-hero"><div class="vforecast-month-nav"><button type="button" onclick="v28ForecastNavigateMonth(-1)" aria-label="Mois précédent">‹</button><div><b>${escapeHtml(v28ForecastLongMonth(selectedKey).toUpperCase())}</b><small>ÉPARGNE TOTALE POTENTIELLE</small></div><button type="button" onclick="v28ForecastNavigateMonth(1)" aria-label="Mois suivant">›</button></div>${v28ForecastMonthOffset!==0?`<button class="vforecast-today" type="button" onclick="v28ForecastToday()">Aujourd’hui</button>`:''}<div class="vbig ${(v28ForecastTotalPotentialSavings(first))>0?'vgreen':''} money">${v28Money(v28ForecastTotalPotentialSavings(first))}/mois</div><div class="vforecast-target-help" style="margin:4px 0 9px">Revenus récurrents + report du mois précédent − emprunts − frais fixes − variables moyennes − virements internes ± événements.</div><div class="vforecast-month-detail" style="margin:0 0 10px"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(first?.recurringIncome??first?.income??0)}</strong>${v28ForecastCarryoverLineHtml(selectedKey,first?.carryover||0)}<span>Frais fixes hors crédits</span><strong class="vred money">− ${v28Money(first?.fixed||0)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(first?.loans||0)}</strong><span>Variables moyennes</span><strong class="vred money">− ${v28Money(first?.variable||0)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(first?.transfers||0)}</strong>${first?.eventImpact?`<span>Événements</span><strong class="${first.eventImpact>=0?'vgreen':'vred'} money">${first.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(first.eventImpact))}</strong>`:''}<span><b>Capacité disponible</b></span><strong class="${(first?.capacity||0)>=0?'vgreen':'vred'} money">${(first?.capacity||0)>=0?'+ ':''}${v28Money(first?.capacity||0)}</strong></div><div class="vforecast-grid"><div class="vforecast-stat"><span>ÉPARGNE PROGRAMMÉE</span><b class="${v28ForecastProgrammedInvestmentTransfers()>0?'vgreen':''} money">${v28Money(v28ForecastProgrammedInvestmentTransfers())}/mois</b><small class="vlab">Actifs Anaël & Laurène</small></div><div class="vforecast-stat"><span>ÉPARGNE SUPPLÉMENTAIRE</span><b class="${Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving())>0?'vgreen':''} money">${v28Money(Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving()))}/mois</b><small class="vlab">Disponible hors épargne du couple</small></div><div class="vforecast-stat"><span>ÉPARGNE TOTALE POTENTIELLE</span><b class="${(v28ForecastTotalPotentialSavings(first))>0?'vgreen':''} money">${v28Money(v28ForecastTotalPotentialSavings(first))}/mois</b><small class="vlab">Programmée + supplémentaire</small></div></div><div class="vforecast-grid" style="margin-top:7px"><div class="vforecast-stat" onclick="v28SetForecastRequiredLiving(event)" style="cursor:pointer"><span>RESTE À VIVRE CIBLE ✎</span><b class="${(first?.capacity||0)>=v28ForecastRequiredLiving()?'vgreen':((first?.capacity||0)<0?'vred':'')} money">${v28Money((first?.capacity||0)>=v28ForecastRequiredLiving()?v28ForecastRequiredLiving():(first?.capacity||0))}</b><small class="vlab">Objectif ${v28Money(v28ForecastRequiredLiving())}/mois · toucher pour modifier</small></div><div class="vforecast-stat"><span>CRÉDITS ACTUELS</span><b class="money">${v28Money(currentLoans)}/mois</b></div><div class="vforecast-stat"><span>VARIABLE MOYEN</span><b class="money">${v28Money(v28ForecastVariableTotal())}</b></div></div></div>
@@ -16592,7 +16719,7 @@ function v28RenderForecast(){
  ${v28ForecastInvestmentCard()}
  ${v28ForecastSourcesCard('income')}
  ${v28ForecastSourcesCard('loans')}
- <div class="vforecast-card"><div class="vhead vforecast-collapse ${v28ForecastBlocks.fixed?'open':''}" onclick="v28ToggleForecastBlock('fixed')"><div><b>Frais fixes hors crédits</b><div class="vlab">Lignes actuellement prises en compte dans la projection</div></div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(v28ForecastFixedWithoutLoans())}/mois</div><span class="vchev">⌄</span></div></div>${v28ForecastBlocks.fixed?v28ForecastFixedLinesHtml():''}</div>
+ <div class="vforecast-card"><div class="vhead vforecast-collapse ${v28ForecastBlocks.fixed?'open':''}" onclick="v28ToggleForecastBlock('fixed')"><div><b>Frais fixes hors crédits</b><div class="vlab">Montants prévus pour ${escapeHtml(v28ForecastLongMonth(selectedKey))}</div></div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(v28ForecastFixedWithoutLoans(selectedKey))}</div><span class="vchev">⌄</span></div></div>${v28ForecastBlocks.fixed?v28ForecastFixedLinesHtml(selectedKey):''}</div>
  ${v28ForecastFormOpen?`<div class="vforecast-modal" onclick="if(event.target===this)v28ToggleForecastForm()"><div class="vforecast-modal-panel"><div class="vhead"><b>${editEvent?'Modifier l’événement':'Nouvel événement'}</b><button class="vlink" onclick="v28ToggleForecastForm()">Fermer</button></div><div class="vforecast-form"><div class="full"><label>Libellé</label><input id="vforecast-label" placeholder="Ex. hausse salaire Anaël" value="${escapeHtml(editEvent?.label||'')}"></div><div><label>Type</label><select id="vforecast-type" onchange="v28ForecastEventTypeChanged()">${typeOpts.map(x=>`<option value="${x[0]}" ${editEvent?.type===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select></div><div><label>Statut</label><select id="vforecast-status"><option value="certain" ${editEvent?.status!=='project'?'selected':''}>Certain</option><option value="project" ${editEvent?.status==='project'?'selected':''}>Projet / à décider</option></select></div><div><label>Récurrence</label><select id="vforecast-recurrence"><option value="once" ${(editEvent?.recurrence||'once')==='once'?'selected':''}>Ponctuel</option><option value="period" ${editEvent?.recurrence==='period'?'selected':''}>Chaque mois sur une période</option><option value="permanent" ${editEvent?.recurrence==='permanent'?'selected':''}>Permanent à partir de la date de début</option></select></div><div class="full" id="vforecast-income-mode-wrap" style="display:none"><label>Mode de calcul du revenu</label><select id="vforecast-income-mode" onchange="v28ForecastEventModeChanged()"><option value="budget" ${(editEvent?.forecastMode||'budget')!=='projection'?'selected':''}>Modifier / suivre une ligne Budget</option><option value="projection" ${editEvent?.forecastMode==='projection'?'selected':''}>Ajustement prévisionnel uniquement</option></select><div class="vforecast-target-help">Le mode prévisionnel ajoute ou retire le montant chaque mois sans modifier le Budget.</div></div><div class="full" id="vforecast-linked-wrap" style="display:none"><label>Ligne Budget concernée</label><select id="vforecast-linked" data-selected="${editEvent?.linkedIndex??''}"></select><div id="vforecast-target-help" class="vforecast-target-help"></div></div><div class="full" id="vforecast-investment-wrap" style="display:none"><label>Placement concerné</label><select id="vforecast-investment-target" data-selected="${escapeHtml(editEvent?.investmentTarget||'')}"></select><div class="vforecast-target-help">Le versement sera intégré à la projection de ce placement à partir de la date prévue.</div></div><div><label>Date de début</label><input id="vforecast-date" type="date" value="${escapeHtml(editEvent?.date||'')}"></div><div><label>Date de fin <span class="vlab">(si période)</span></label><input id="vforecast-end-date" type="date" value="${escapeHtml(editEvent?.endDate||'')}"></div><div><label id="vforecast-amount-label">Montant / variation €</label><input id="vforecast-amount" type="number" min="0" step="0.01" inputmode="decimal" value="${editEvent?Number.isFinite(Number(editEvent.targetAmount))?Number(editEvent.targetAmount):Number(editEvent.amount)||'':''}"></div><div><label>Alerte avant (jours) <span class="vlab">(facultatif)</span></label><input id="vforecast-alert" type="number" min="0" placeholder="Aucune alerte" value="${editEvent?.alertDays??''}"></div></div><div class="vforecast-actions"><button class="vsecondary" onclick="v28ToggleForecastForm()">Annuler</button><button class="vprimary" style="margin:0;padding:10px" onclick="v28SaveForecastEvent()">${editEvent?'Enregistrer les modifications':'Enregistrer'}</button></div></div></div>`:''}
  <div class="vforecast-card"><div class="vhead vforecast-collapse ${v28ForecastBlocks.variables?'open':''}" onclick="v28ToggleForecastBlock('variables')"><div><b>Dépenses variables moyennes</b><div class="vlab">Incompressible · ${v28Money(v28ForecastVariableTotal())}/mois</div></div><span class="vchev">⌄</span></div>${v28ForecastBlocks.variables?`</div><div class="vforecast-segment">${[3,6,12].map(n=>`<button class="${Number(f.averageMonths)===n?'on':''}" onclick="v28SetForecastAverageMonths(${n})">${n} mois</button>`).join('')}</div>${avg.length?avg.map(x=>`<div><div class="vforecast-row"><div><b>${escapeHtml(x.label)}</b><small>${x.overridden?`Valeur manuelle · moyenne calculée ${v28Money(x.auto)}`:`Moyenne automatique sur ${Math.min(f.averageMonths,monthHistory.length)} mois`}</small>${x.overridden?'<span class="vforecast-pill">Manuel</span>':'<span class="vforecast-pill">Historique</span>'}</div><div style="text-align:right"><div class="vforecast-amount money">${v28Money(x.value)}/mois</div><button class="vlink" onclick="v28ToggleForecastVariableLines('${x.cat}')">${v28ForecastOpenVariableCat===x.cat?'Masquer':'Voir les lignes'}</button> · <button class="vlink" onclick="v28ForecastOverride('${x.cat}')">Modifier</button>${x.overridden?` · <button class="vlink" onclick="v28ForecastResetOverride('${x.cat}')">Auto</button>`:''}</div></div>${v28ForecastOpenVariableCat===x.cat?v28ForecastVariableLinesHtml(x.cat):''}</div>`).join(''):'<div class="vforecast-empty">Pas encore assez d’historique clôturé pour calculer les dépenses variables.</div>'}</div>
  `:''}</div>
