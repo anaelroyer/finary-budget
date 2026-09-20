@@ -54,12 +54,13 @@
 <!-- V28.9.60 : Menus — demande d’extraction de recette enregistrée dans Firestore pour traitement horaire à la demande. -->
 <!-- V28.9.59 : Budget — résumé du cycle harmonisé avec les pastilles débit orange / crédit vert des soldes par compte. -->
 <!-- V28.9.58 : Budget — résumé du cycle affiché en total des comptes + débits non cochés + crédits non cochés. -->
+<!-- V28.9.67 : Frais fixes — profil mensuel réservé aux prévisions ; le montant du mois en cours reste inchangé dans Budget et à la clôture. -->
 <!-- V28.9.56 : Prévisions — correction épargne supplémentaire : capacité disponible moins reste à vivre, sans réintégrer les virements enfants. -->
 <!-- V28.9.45 : Prévisions — distingue épargne programmée, épargne supplémentaire et épargne totale potentielle. -->
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-VQ/tHpUjq8cNtuYmKaesLbJ0PF5CayU7Qs+AtH7LvZM=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-k5LQ0/nvZRoIUxGtfbO4NtPEDlWnnEqT0XONNLFOTxs='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-kvOPyR+ijiZ2vE1oOPMPh2OpAF23EvgwN/PtsgSl/Bc=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-8u8ZAK+NalxqhwbDZ7CXDCMSq/EgFgaoEokj3KJMcOM='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -2409,16 +2410,16 @@ body > .modal-overlay canvas{
   </div>
 </div>
 
-<!-- MODAL MENSUALITÉS FRAIS FIXE -->
+<!-- MODAL PRÉVISION ANNUELLE FRAIS FIXE -->
 <div class="modal-overlay" id="fixedMonthlyModal">
   <div class="modal" style="max-width:520px;">
-    <h3 id="fixedMonthlyTitle">Mensualités du frais fixe</h3>
+    <h3 id="fixedMonthlyTitle">Prévision annuelle du frais fixe</h3>
     <div id="fixedMonthlyHint" class="budget-category-hint" style="margin:-4px 0 12px;"></div>
     <div id="fixedMonthlyGrid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"></div>
     <div id="fixedMonthlySummary" style="margin-top:12px;padding:10px 12px;border:1px solid rgba(139,148,158,.25);border-radius:10px;font-size:13px;color:#c9d1d9;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
       <button class="btn btn-secondary" type="button" onclick="resetFixedMonthlyScheduleToBase()">Même montant toute l’année</button>
-      <button class="btn btn-secondary" type="button" onclick="editFixedMonthlyBaseDetails()">Modifier libellé / compte</button>
+      <button class="btn btn-secondary" type="button" onclick="editFixedMonthlyBaseDetails()">Modifier montant actuel / libellé / compte</button>
     </div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeFixedMonthlyModal()">Annuler</button>
@@ -6529,9 +6530,29 @@ function getFixedMonthlyAmounts(item){
   return meta?meta.amounts.slice():Array(12).fill(base);
 }
 
+function fixedMonthKey(monthRef=new Date()){
+  if(monthRef instanceof Date&&!Number.isNaN(monthRef.getTime())){
+    return `${monthRef.getFullYear()}-${String(monthRef.getMonth()+1).padStart(2,'0')}`;
+  }
+  const raw=String(monthRef||'').trim();
+  const m=raw.match(/^(\d{4})-(\d{2})/);
+  if(m)return `${m[1]}-${m[2]}`;
+  const d=new Date(raw);
+  if(Number.isNaN(d.getTime()))return fixedMonthKey(new Date());
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
 function getFixedAmountForMonth(item,monthRef=new Date()){
-  const amounts=getFixedMonthlyAmounts(item);
-  return Number(amounts[fixedMonthIndex(monthRef)])||0;
+  const base=Math.max(0,Number(item?.[1])||0);
+  const meta=getFixedMonthlyScheduleMeta(item);
+  if(!meta)return base;
+
+  // Le profil à 12 mois est uniquement prévisionnel : il ne doit jamais
+  // réécrire le montant du mois civil en cours, qui reste le montant réel
+  // de la ligne Budget (et donc celui archivé à la clôture).
+  if(fixedMonthKey(monthRef)===fixedMonthKey(new Date()))return base;
+
+  return Number(meta.amounts[fixedMonthIndex(monthRef)])||0;
 }
 
 function hasFixedMonthlySchedule(item){
@@ -6542,7 +6563,7 @@ function fixedMonthlyScheduleShortLabel(item){
   const meta=getFixedMonthlyScheduleMeta(item);
   if(!meta)return '';
   const unique=[...new Set(meta.amounts.map(v=>Math.round(v*100)/100))];
-  return unique.length>1?'Montants variables selon le mois':'Montant identique sur 12 mois';
+  return unique.length>1?'Prévision variable selon le mois':'Prévision identique sur 12 mois';
 }
 
 function openFixedMonthlyModal(index){
@@ -6551,7 +6572,7 @@ function openFixedMonthlyModal(index){
   const item=data.budgetFixes[index],amounts=getFixedMonthlyAmounts(item),currentMonth=new Date().getMonth();
   const title=document.getElementById('fixedMonthlyTitle'),hint=document.getElementById('fixedMonthlyHint'),grid=document.getElementById('fixedMonthlyGrid');
   if(title)title.textContent=String(item[0]||'Frais fixe');
-  if(hint)hint.textContent='Définis le montant prélevé pour chaque mois. Ce calendrier se répète chaque année.';
+  if(hint)hint.textContent='Définis ici uniquement les montants à prévoir pour les prochains mois. Le montant du mois en cours reste celui de la ligne Budget et n’est jamais modifié par ce calendrier. Le profil se répète chaque année.';
   if(grid)grid.innerHTML=FIXED_MONTH_LABELS.map((label,i)=>`<div class="fixed-month-cell ${i===currentMonth?'current':''}"><label for="fixedMonthAmount${i}">${label}</label><input id="fixedMonthAmount${i}" type="number" min="0" step="0.01" inputmode="decimal" value="${Math.round((Number(amounts[i])||0)*100)/100}" oninput="updateFixedMonthlySummary()"></div>`).join('');
   updateFixedMonthlySummary();
   document.getElementById('fixedMonthlyModal')?.classList.add('active');
@@ -9129,12 +9150,12 @@ function render(){
             title="Cocher / décocher"
           >
 
-          <div class="budget-line-label" title="${key==='budgetFixes'?'Cliquer pour régler les mensualités':'Cliquer pour modifier'}">
+          <div class="budget-line-label" title="${key==='budgetFixes'?'Cliquer pour régler la prévision annuelle':'Cliquer pour modifier'}">
             <div class="budget-line-main">${escapeHtml(item[0] || 'Sans libellé')}</div>
-            <div class="budget-line-meta"><span class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</span><span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span>${key==='budgetFixes'&&hasFixedMonthlySchedule(item)?'<span class="budget-category-badge auto">12 mois personnalisés</span>':''}</div>
+            <div class="budget-line-meta"><span class="budget-line-account"><span class="bank-dot ${getBankDotClass(item[3]||'ca')}"></span>${escapeHtml(getBankAccountName(item[3]||'ca'))}</span><span class="budget-category-badge auto">${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span>${key==='budgetFixes'&&hasFixedMonthlySchedule(item)?'<span class="budget-category-badge auto">Prévision annuelle</span>':''}</div>
           </div>
 
-          <div class="budget-line-amount" title="${key==='budgetFixes'?'Montant du mois en cours':'Cliquer pour modifier'}">
+          <div class="budget-line-amount" title="${key==='budgetFixes'?'Montant du mois en cours — indépendant de la prévision annuelle':'Cliquer pour modifier'}">
             ${euro(key==='budgetFixes'?getFixedAmountForMonth(item,new Date()):(Number(item[1]) || 0))}
           </div>
 
@@ -15783,7 +15804,7 @@ function v28AccountBadge(item){
 function v28BudgetRows(key,icon){
  const rows=(data[key]||[]).map((item,i)=>({item,i})).sort((a,b)=>Number(!!a.item[2])-Number(!!b.item[2]));
  if(!rows.length)return '<div class="vlab">Aucune ligne.</div>';
- return rows.map(({item,i})=>{const isFixed=key==='budgetFixes',amount=isFixed?getFixedAmountForMonth(item,new Date()):(Number(item?.[1])||0),open=isFixed?`openFixedMonthlyModal(${i})`:`openBudgetEditModal('${key}',${i})`,schedule=isFixed&&hasFixedMonthlySchedule(item)?' · 12 mois personnalisés':'';return `<div class="vrow vbudgetrow ${item[2]?'paid':''}">
+ return rows.map(({item,i})=>{const isFixed=key==='budgetFixes',amount=isFixed?getFixedAmountForMonth(item,new Date()):(Number(item?.[1])||0),open=isFixed?`openFixedMonthlyModal(${i})`:`openBudgetEditModal('${key}',${i})`,schedule=isFixed&&hasFixedMonthlySchedule(item)?' · prévision annuelle':'';return `<div class="vrow vbudgetrow ${item[2]?'paid':''}">
  <input class="vcheck" type="checkbox" ${item[2]?'checked':''} onchange="togglePaid('${key}',${i});v28RenderMobile()">
  <div onclick="${open}"><b>${escapeHtml(item[0]||'Sans libellé')}</b><small>${v28AccountBadge(item)} <span>${escapeHtml(getBudgetCategoryLabel(key,getItemBudgetCategory(key,item)))}</span>${schedule}</small></div>
  <div class="vamt money" onclick="${open}">${v28Money(amount)}</div>
@@ -16591,7 +16612,7 @@ function v28ForecastFixedRowsWithoutLoans(key=v28ForecastMonthKey(new Date())){
 function v28ForecastFixedWithoutLoans(key=v28ForecastMonthKey(new Date())){return v28ForecastFixedRowsWithoutLoans(key).reduce((sum,x)=>sum+x.amount,0)}
 let v28ForecastFixedOpen=false;
 function v28ToggleForecastFixedLines(){v28ForecastFixedOpen=!v28ForecastFixedOpen;v28RenderForecast()}
-function v28ForecastFixedLinesHtml(key=v28ForecastMonthKey(new Date())){const rows=v28ForecastFixedRowsWithoutLoans(key);if(!rows.length)return '<div class="vforecast-empty">Aucun frais fixe hors crédits.</div>';return `<div class="vforecast-lines">${rows.map(x=>`<div class="vforecast-lineitem"><div><b>${escapeHtml(x.label)}</b><small>${escapeHtml(getBudgetCategoryLabel('budgetFixes',x.cat)||'Frais fixe')}${x.scheduled?' · montant de '+escapeHtml(v28ForecastMonthLabel(key)):''}</small></div><strong class="money">${v28Money(x.amount)}</strong></div>`).join('')}<div class="vforecast-row"><div><b>Total</b></div><div class="vforecast-amount money">${v28Money(rows.reduce((s,x)=>s+x.amount,0))}</div></div></div>`}
+function v28ForecastFixedLinesHtml(key=v28ForecastMonthKey(new Date())){const rows=v28ForecastFixedRowsWithoutLoans(key);if(!rows.length)return '<div class="vforecast-empty">Aucun frais fixe hors crédits.</div>';return `<div class="vforecast-lines">${rows.map(x=>`<div class="vforecast-lineitem"><div><b>${escapeHtml(x.label)}</b><small>${escapeHtml(getBudgetCategoryLabel('budgetFixes',x.cat)||'Frais fixe')}${x.scheduled?' · prévision '+escapeHtml(v28ForecastMonthLabel(key)):''}</small></div><strong class="money">${v28Money(x.amount)}</strong></div>`).join('')}<div class="vforecast-row"><div><b>Total</b></div><div class="vforecast-amount money">${v28Money(rows.reduce((s,x)=>s+x.amount,0))}</div></div></div>`}
 function v28ForecastVariableCategories(){return new Set(['courses','transport','tabac','animaux'])}
 function v28ForecastIsFuelExpense(item,cat){
  if(cat!=='transport')return true;
