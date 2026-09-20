@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.76 : Clôture — chaque frais fixe non prélevé crée une dépense de rattrapage au mois suivant, tout en conservant le frais fixe normal. -->
 <!-- V28.9.75 : Menus — correction du focus des champs : la vue mobile ne se reconstruit plus au clic dans un champ de saisie. -->
 <!-- V28.9.74 : Patrimoine — taux d’endettement bancaire automatique dans Emprunts, hors véranda familiale et Permis à 1 € du fils. -->
 <!-- V28.9.73 : Prévisions — dépenses variables moyennes lissées systématiquement sur 6 mois. -->
@@ -70,7 +71,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-2N7iQv8U/B8GcAxCsuw4hbF2GgJ/F0pQ5jivRspJ9k0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-pqo0rOEatEvkBqrz6HPd050EsiV/II5Dy538GpYuVMQ='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-Ocog+x/v5Wg8nF0xN7/bDyuIC2x/77SQsIrHHto2Gbc=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-pqo0rOEatEvkBqrz6HPd050EsiV/II5Dy538GpYuVMQ='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -10926,6 +10927,7 @@ function closeMonth(){
   // Clôture : seules les lignes réellement cochées / effectuées alimentent l'historique.
   const revenusArchives=revenusCourants.filter(item=>item[2]===true);
   const fixesArchives=fixesCourants.filter(item=>item[2]===true);
+  const fixesNonPreleves=fixesCourants.filter(item=>item[2]!==true);
   const depensesArchivees=depensesCourantes.filter(item=>item[2]===true);
   const depensesReconduites=depensesCourantes.filter(item=>item[2]!==true);
   const virementsArchives=virementsCourants.filter(t=>t.done===true);
@@ -10969,13 +10971,16 @@ function closeMonth(){
   if(depensesReconduites.length){
     message+=`${depensesReconduites.length} dépense${depensesReconduites.length>1?'s':''} non cochée${depensesReconduites.length>1?'s':''} sera${depensesReconduites.length>1?'ont':''} reconduite${depensesReconduites.length>1?'s':''} au mois suivant et exclue${depensesReconduites.length>1?'s':''} de l'historique.\n`;
   }
+  if(fixesNonPreleves.length){
+    message+=`${fixesNonPreleves.length} frais fixe${fixesNonPreleves.length>1?'s':''} non prélevé${fixesNonPreleves.length>1?'s':''} : le${fixesNonPreleves.length>1?'s':''} frais fixe${fixesNonPreleves.length>1?'s':''} normal${fixesNonPreleves.length>1?'aux':''} sera${fixesNonPreleves.length>1?'ont':''} conservé${fixesNonPreleves.length>1?'s':''} et une dépense de rattrapage sera créée pour ${monthLabel}.\n`;
+  }
 
   const virementsEnAttente=virementsCourants.filter(t=>t.done!==true).length;
   if(virementsEnAttente){
     message+=`${virementsEnAttente} virement${virementsEnAttente>1?'s':''} en attente sera${virementsEnAttente>1?'ont':''} reconduit${virementsEnAttente>1?'s':''} au mois suivant et exclu${virementsEnAttente>1?'s':''} de l'historique.\n`;
   }
 
-  if(depensesReconduites.length||virementsEnAttente)message+='\n';
+  if(depensesReconduites.length||fixesNonPreleves.length||virementsEnAttente)message+='\n';
 
   if(!hasAnyData){
     message+=`⚠️ Aucune donnée n'est enregistrée pour ce mois.\n\n`;
@@ -10983,7 +10988,7 @@ function closeMonth(){
 
   message+=`Après clôture :\n`;
   message+=`• Dépenses : les lignes cochées sont archivées puis supprimées ; les non cochées sont reconduites.\n`;
-  message+=`• Frais fixes : seules les lignes cochées sont archivées ; toutes les lignes sont conservées puis décochées.\n`;
+  message+=`• Frais fixes : seules les lignes cochées sont archivées ; toutes les lignes sont conservées puis décochées. Chaque frais fixe non prélevé crée aussi une dépense de rattrapage pour le mois suivant.\n`;
   message+=`• Entrées : seules les lignes cochées sont archivées ; Négatif/Positif est remplacé automatiquement par le solde actuel total et reste coché ; les autres lignes sont conservées puis décochées.\n`;
   message+=`• Virements : seuls les virements effectués sont archivés ; les virements en attente sont reconduits. Les permanents sont toujours reconduits et remis en attente.`;
 
@@ -11005,12 +11010,25 @@ function closeMonth(){
     }))
   });
 
-  // Dépenses : seules les non cochées sont reportées au mois suivant.
-  data.budgetDepenses=depensesReconduites.map(item=>{
-    const next=[...item];
-    next[2]=false;
-    return next;
-  });
+  // Dépenses : les non cochées sont reportées au mois suivant.
+  // Chaque frais fixe non prélevé génère en plus une dépense ponctuelle de rattrapage,
+  // avec le montant réellement prévu pour le mois clôturé, le même compte et la même catégorie.
+  const depensesRattrapageFixes=fixesNonPreleves.map(item=>{
+    const label=String(item?.[0]||'Frais fixe').trim()||'Frais fixe';
+    const amount=getFixedAmountForMonth(item,now);
+    const accountId=item?.[3]||'';
+    const accountName=item?.[4]||'';
+    const category=getItemBudgetCategory('budgetFixes',item);
+    return [`${label} — report ${monthLabel}`,amount,false,accountId,accountName,category];
+  }).filter(item=>(Number(item[1])||0)!==0);
+  data.budgetDepenses=[
+    ...depensesReconduites.map(item=>{
+      const next=[...item];
+      next[2]=false;
+      return next;
+    }),
+    ...depensesRattrapageFixes
+  ];
 
   // Frais fixes : toutes les lignes restent présentes, mais repartent décochées.
   data.budgetFixes=fixesCourants.map(item=>{
