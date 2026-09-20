@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.72 : Emprunts — CRD automatique du crédit véhicule selon l’échéancier contractuel 19 800 € / 4,29 % / 72 mois / 312,40 € hors assurance. Véranda inchangée en manuel. -->
 <!-- V28.9.70 : Prévisions — rapprochement crédits resserré : Permis exclu sans masquer Bibus Ewan ni les charges homonymes. -->
 <!-- V28.9.69 : Prévisions — détail contrôlable des frais fixes et emprunts, audit des crédits exclus pour éviter les doublons, projection annuelle 5 ans. -->
 <!-- V28.9.68 : Emprunts — CRD automatique mensuel uniquement pour le prêt Permis à 1 € à taux 0 %, sans modifier les autres règles de CRD. -->
@@ -66,7 +67,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-1WitFmOvHUmOYF6mnYXoCTNHLY5fzIFuUhnMg5rRrCQ=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-z9CvKlKNTbdbsEOu4wnFlLXPwZ7fowp+DLv73+vWGjU='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-2N7iQv8U/B8GcAxCsuw4hbF2GgJ/F0pQ5jivRspJ9k0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-z9CvKlKNTbdbsEOu4wnFlLXPwZ7fowp+DLv73+vWGjU='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -8303,6 +8304,63 @@ function v28SyncMortgageLoanBalances(){
   return changed;
 }
 
+/* V28.9.72 — CRD automatique du crédit véhicule.
+   Contrat Crédit Agricole : 19 800 €, taux débiteur fixe 4,29 %, 72 échéances,
+   mensualité d'amortissement 312,40 € hors assurance. La cotisation d'assurance
+   de 10,89 € reste dans le prélèvement Budget mais ne réduit pas le capital.
+   Première échéance amortissante : 05/03/2025 ; dernière : 05/02/2031. */
+const V28_VEHICLE_LOAN_CONTRACT={
+  principal:19800,
+  annualRate:4.29,
+  amortizingPayment:312.40,
+  firstPayment:'2025-03-05',
+  installments:72
+};
+function v28IsVehicleLoan(item){
+  const meta=getLoanMeta(item),label=normalizeBudgetText(item?.[0]||'');
+  const labelMatch=/(?:credit\s+)?(?:voiture|vehicule|automobile|auto)\b/.test(label);
+  const principalMatch=Math.abs((Number(meta.initialAmount)||0)-V28_VEHICLE_LOAN_CONTRACT.principal)<0.01;
+  const rateMatch=Math.abs((Number(meta.rate)||0)-V28_VEHICLE_LOAN_CONTRACT.annualRate)<0.001;
+  return labelMatch&&principalMatch&&rateMatch;
+}
+function v28VehicleLoanPaidInstallments(now=new Date()){
+  const first=new Date(V28_VEHICLE_LOAN_CONTRACT.firstPayment+'T12:00:00');
+  if(Number.isNaN(first.getTime())||now<first)return 0;
+  let count=(now.getFullYear()-first.getFullYear())*12+(now.getMonth()-first.getMonth());
+  if(now.getDate()>=first.getDate())count+=1;
+  return Math.max(0,Math.min(V28_VEHICLE_LOAN_CONTRACT.installments,count));
+}
+function v28VehicleLoanBalanceAfterPayments(count){
+  const c=V28_VEHICLE_LOAN_CONTRACT;
+  const monthlyRate=(c.annualRate/100)/12;
+  let balance=c.principal;
+  for(let i=0;i<Math.max(0,Math.min(c.installments,Number(count)||0));i++){
+    const interest=balance*monthlyRate;
+    const principalPaid=Math.min(balance,c.amortizingPayment-interest);
+    balance=Math.max(0,balance-principalPaid);
+  }
+  return Math.round(balance*100)/100;
+}
+function v28VehicleLoanTargetBalance(now=new Date()){
+  return v28VehicleLoanBalanceAfterPayments(v28VehicleLoanPaidInstallments(now));
+}
+function v28SyncVehicleLoanBalance(){
+  if(!Array.isArray(data.dettes))return false;
+  let changed=false;
+  data.dettes.forEach(item=>{
+    if(!v28IsVehicleLoan(item))return;
+    const target=v28VehicleLoanTargetBalance(new Date());
+    const current=Math.max(0,Number(item?.[1])||0);
+    if(Math.abs(current-target)>=0.005){item[1]=target;changed=true;}
+  });
+  if(changed){try{save();}catch(_){}}
+  return changed;
+}
+function v28VehicleAutoBalanceInfo(item){
+  if(!v28IsVehicleLoan(item))return '';
+  return 'CRD automatique · échéancier véhicule 4,29 % · 312,40 € hors assurance';
+}
+
 /* V28.9.68 — CRD automatique réservé au prêt « Permis à 1 € ».
    Le CRD saisi reste la référence du mois de saisie, puis une mensualité est
    déduite par mois civil. Aucun autre emprunt hors immobilier n'est modifié. */
@@ -8419,7 +8477,7 @@ function renderLoanCards(cont){
     const meta=getLoanMeta(item),current=Number(item[1])||0,progress=calculateLoanProgress(meta.initialAmount,current);
     const complete=meta.initialAmount>0||meta.startDate||meta.endDate||meta.monthlyPayment>0||meta.rate>0;
     const card=document.createElement('div');card.className='loan-card';
-    card.innerHTML=`<div class="loan-card-head"><div><div class="loan-card-title">${escapeHtml(item[0]||'Emprunt')}</div><div class="loan-card-sub">${meta.initialAmount>0?'sur '+euro(meta.initialAmount)+' empruntés':'Montant initial à renseigner'}${v28MortgageScheduleForItem(item)?' · '+v28MortgageAutoBalanceInfo(item):''}${v28PermitAutoBalanceInfo(item)?' · '+v28PermitAutoBalanceInfo(item):''}</div></div><div class="loan-card-current">${euro(current)}<small>restant dû</small></div></div>${complete?`<div><div class="loan-progress-line"><span>Capital remboursé</span><strong>${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</strong></div><div class="loan-progress"><div class="loan-progress-bar" style="width:${progress}%"></div></div></div><div class="loan-meta-grid"><div class="loan-meta"><span>Mensualité</span><strong>${meta.monthlyPayment>0?euro(meta.monthlyPayment):'—'}</strong></div><div class="loan-meta"><span>Taux</span><strong>${meta.rate>0?meta.rate.toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div class="loan-meta"><span>Début</span><strong>${formatLoanDate(meta.startDate)}</strong></div><div class="loan-meta"><span>Fin</span><strong>${formatLoanDate(meta.endDate)}</strong></div></div>`:`<div class="loan-legacy">Ancien emprunt : ouvre « Modifier » pour compléter les informations.</div>`}<div class="loan-card-actions"><button class="btn btn-secondary" onclick="openLoanModal(${idx})">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="delPatrimoine('dettes',${idx})">🗑 Supprimer</button></div>`;
+    card.innerHTML=`<div class="loan-card-head"><div><div class="loan-card-title">${escapeHtml(item[0]||'Emprunt')}</div><div class="loan-card-sub">${meta.initialAmount>0?'sur '+euro(meta.initialAmount)+' empruntés':'Montant initial à renseigner'}${v28MortgageScheduleForItem(item)?' · '+v28MortgageAutoBalanceInfo(item):''}${v28VehicleAutoBalanceInfo(item)?' · '+v28VehicleAutoBalanceInfo(item):''}${v28PermitAutoBalanceInfo(item)?' · '+v28PermitAutoBalanceInfo(item):''}</div></div><div class="loan-card-current">${euro(current)}<small>restant dû</small></div></div>${complete?`<div><div class="loan-progress-line"><span>Capital remboursé</span><strong>${progress.toLocaleString('fr-FR',{maximumFractionDigits:1})} %</strong></div><div class="loan-progress"><div class="loan-progress-bar" style="width:${progress}%"></div></div></div><div class="loan-meta-grid"><div class="loan-meta"><span>Mensualité</span><strong>${meta.monthlyPayment>0?euro(meta.monthlyPayment):'—'}</strong></div><div class="loan-meta"><span>Taux</span><strong>${meta.rate>0?meta.rate.toLocaleString('fr-FR',{maximumFractionDigits:3})+' %':'—'}</strong></div><div class="loan-meta"><span>Début</span><strong>${formatLoanDate(meta.startDate)}</strong></div><div class="loan-meta"><span>Fin</span><strong>${formatLoanDate(meta.endDate)}</strong></div></div>`:`<div class="loan-legacy">Ancien emprunt : ouvre « Modifier » pour compléter les informations.</div>`}<div class="loan-card-actions"><button class="btn btn-secondary" onclick="openLoanModal(${idx})">✏️ Modifier</button><button class="btn btn-secondary" style="color:#f85149" onclick="delPatrimoine('dettes',${idx})">🗑 Supprimer</button></div>`;
     cont.appendChild(card);
   });
 }
@@ -9092,6 +9150,7 @@ function render(){
   ensureV26Data();
   ensureAssetCategoryData();
   v28SyncMortgageLoanBalances();
+  v28SyncVehicleLoanBalance();
   v28SyncOneEuroPermitLoanBalance();
   if(getActiveAssetCategoryKeys().includes('crypto'))syncOkxBtcToCryptoData();
   renderPatrimoineProfileTabs();
