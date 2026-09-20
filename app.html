@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.57 : Budget — report automatique Négatif/Positif à la clôture, ventilation par compte et impact ponctuel dans les Prévisions -->
 <!-- V28.9.40 : Prévisions — revenus récurrents filtrés dans le calcul + décomposition visible -->
 <!-- V28.9.38 : Prévisions annuelles — déduction du reste à vivre cible + correctif CSP -->
 <!-- V28.9.31 : Soldes par compte — couleurs positif/négatif + variation orange dans Budget -->
@@ -51,7 +52,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-c0bmIlTCIkOcc+0NEluaTFIIqGk+Qp0Qyy3v3SxBWh0=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-wHMv4oFmSfe4PtDn8RMY9ePaaLCpDkpgStFoWxgoquc='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-e+q0OMAWIL3KB3kXmADRMR2m75kJ1ehqVf7fjDLHC/Y=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-JxEnEp7haXkbAjufsQUvI7TgIgcP0DTM8EKSYZYZNJc='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -6402,6 +6403,34 @@ function renderBankTransfers(){
   `).join('');
 }
 
+
+function isMonthlyBalanceCarryoverItem(item){
+  if(!Array.isArray(item))return false;
+  const label=normalizeBudgetText(item[0]||'');
+  return label==='negatif positif'||label==='positif negatif';
+}
+
+function getMonthlyBalanceCarryoverMeta(item){
+  if(!isMonthlyBalanceCarryoverItem(item))return null;
+  const meta=item?.[6];
+  if(!meta||typeof meta!=='object'||meta.type!=='monthly_balance_carryover')return null;
+  if(!meta.byAccount||typeof meta.byAccount!=='object'||Array.isArray(meta.byAccount))return null;
+
+  const sum=Object.values(meta.byAccount).reduce((s,v)=>s+(Number(v)||0),0);
+  const amount=Number(item?.[1])||0;
+
+  // Si l'utilisateur modifie manuellement le montant de la ligne,
+  // on n'applique plus une ancienne ventilation devenue incohérente.
+  if(Math.abs(sum-amount)>0.01)return null;
+  return meta;
+}
+
+function getMonthlyBalanceCarryoverAmount(){
+  return (data.budgetRevenus||[])
+    .filter(isMonthlyBalanceCarryoverItem)
+    .reduce((s,item)=>s+(Number(item?.[1])||0),0);
+}
+
 function calculateBankBalances(){
   const result={};
   getVisibleBankAccounts().forEach(a=>{
@@ -6415,8 +6444,24 @@ function calculateBankBalances(){
 
   const applyBudget=(key,sign)=>{
     (data[key]||[]).forEach(item=>{
-      const id=item[3]||'ca';
       const amount=Number(item[1])||0;
+
+      // Le report Négatif/Positif est affiché comme une seule ligne,
+      // mais sa ventilation réelle par compte est conservée en métadonnée.
+      // Cela évite d'attribuer artificiellement tout le solde à un seul compte.
+      if(key==='budgetRevenus'){
+        const carryMeta=getMonthlyBalanceCarryoverMeta(item);
+        if(carryMeta){
+          Object.entries(carryMeta.byAccount).forEach(([id,value])=>{
+            const n=Number(value)||0;
+            ensure(id).forecast+=n;
+            if(item[2])ensure(id).current+=n;
+          });
+          return;
+        }
+      }
+
+      const id=item[3]||'ca';
       ensure(id).forecast+=sign*amount;
       if(item[2])ensure(id).current+=sign*amount;
     });
@@ -10547,6 +10592,18 @@ function closeMonth(){
   const depensesCourantes=data.budgetDepenses||[];
   const virementsCourants=data.bankTransfers||[];
 
+  // Le report du mois suivant est figé AVANT toute remise à zéro :
+  // somme des "Soldes actuels" de tous les comptes, donc uniquement
+  // les opérations cochées et les virements effectivement réalisés.
+  const soldesAvantCloture=calculateBankBalances();
+  const reportByAccount={};
+  getVisibleBankAccounts().forEach(account=>{
+    reportByAccount[account.id]=Math.round((Number(soldesAvantCloture?.[account.id]?.current)||0)*100)/100;
+  });
+  const reportTotal=Math.round(Object.values(reportByAccount).reduce((s,v)=>s+(Number(v)||0),0)*100)/100;
+  const reportTargetDate=new Date(now.getFullYear(),now.getMonth()+1,1);
+  const reportTargetMonthKey=`${reportTargetDate.getFullYear()}-${String(reportTargetDate.getMonth()+1).padStart(2,'0')}`;
+
   // Clôture : seules les lignes réellement cochées / effectuées alimentent l'historique.
   const revenusArchives=revenusCourants.filter(item=>item[2]===true);
   const fixesArchives=fixesCourants.filter(item=>item[2]===true);
@@ -10587,7 +10644,8 @@ function closeMonth(){
   message+=`Frais fixes cochés : ${euro(fixes)}\n`;
   message+=`Dépenses cochées : ${euro(dep)}\n`;
   message+=`Virements effectués : ${virementsArchives.length}\n`;
-  message+=`Reste à vivre : ${euro(reste)}\n\n`;
+  message+=`Reste à vivre : ${euro(reste)}\n`;
+  message+=`Négatif/Positif reporté au mois suivant : ${euro(reportTotal)}\n\n`;
 
   if(depensesReconduites.length){
     message+=`${depensesReconduites.length} dépense${depensesReconduites.length>1?'s':''} non cochée${depensesReconduites.length>1?'s':''} sera${depensesReconduites.length>1?'ont':''} reconduite${depensesReconduites.length>1?'s':''} au mois suivant et exclue${depensesReconduites.length>1?'s':''} de l'historique.\n`;
@@ -10607,7 +10665,7 @@ function closeMonth(){
   message+=`Après clôture :\n`;
   message+=`• Dépenses : les lignes cochées sont archivées puis supprimées ; les non cochées sont reconduites.\n`;
   message+=`• Frais fixes : seules les lignes cochées sont archivées ; toutes les lignes sont conservées puis décochées.\n`;
-  message+=`• Entrées : seules les lignes cochées sont archivées ; toutes les lignes sont conservées puis décochées.\n`;
+  message+=`• Entrées : seules les lignes cochées sont archivées ; Négatif/Positif est remplacé automatiquement par le solde actuel total et reste coché ; les autres lignes sont conservées puis décochées.\n`;
   message+=`• Virements : seuls les virements effectués sont archivés ; les virements en attente sont reconduits. Les permanents sont toujours reconduits et remis en attente.`;
 
   if(!confirm(message))return;
@@ -10642,12 +10700,42 @@ function closeMonth(){
     return next;
   });
 
-  // Entrées : toutes les lignes restent présentes, mais repartent décochées.
-  data.budgetRevenus=revenusCourants.map(item=>{
-    const next=[...item];
-    next[2]=false;
-    return next;
-  });
+  // Entrées :
+  // - l'ancien Négatif/Positif est supprimé ;
+  // - une seule nouvelle ligne Négatif/Positif est créée avec le solde actuel
+  //   total de tous les comptes au moment exact de la clôture ;
+  // - cette ligne est déjà cochée car il s'agit d'un solde réellement constaté ;
+  // - la ventilation par compte est conservée en métadonnée pour garder des
+  //   soldes par compte exacts malgré une seule ligne visible.
+  const previousCarryover=revenusCourants.find(isMonthlyBalanceCarryoverItem);
+  const carryoverLabel=String(previousCarryover?.[0]||'Négatif/Positif').trim()||'Négatif/Positif';
+  const defaultAccountId=getVisibleBankAccounts()[0]?.id||'ca';
+
+  const revenusReconduits=revenusCourants
+    .filter(item=>!isMonthlyBalanceCarryoverItem(item))
+    .map(item=>{
+      const next=[...item];
+      next[2]=false;
+      return next;
+    });
+
+  const reportLine=[
+    carryoverLabel,
+    reportTotal,
+    true,
+    defaultAccountId,
+    null,
+    'autres',
+    {
+      type:'monthly_balance_carryover',
+      sourceMonth:monthLabel,
+      targetMonthKey:reportTargetMonthKey,
+      createdAt:getLocalDateKey(now),
+      byAccount:reportByAccount
+    }
+  ];
+
+  data.budgetRevenus=[reportLine,...revenusReconduits];
 
   // Virements : les occasionnels effectués disparaissent après archivage ;
   // les occasionnels en attente et tous les permanents sont reconduits décochés.
@@ -15754,7 +15842,18 @@ function v28ForecastActiveEvents(){return v28EnsureForecastData().events.filter(
 function v28ForecastArchivedEvents(){return v28EnsureForecastData().events.filter(v28ForecastEventEnded).sort((a,b)=>String(b.date).localeCompare(String(a.date)))}
 function v28ToggleProjectEvents(){const f=v28EnsureForecastData();f.includeProjects=!f.includeProjects;save();v28RenderForecast()}
 function v28ToggleEventScenario(id){const ev=v28EnsureForecastData().events.find(x=>String(x.id)===String(id));if(!ev)return;ev.status=ev.status==='project'?'certain':'project';save();v28RenderForecast()}
-function v28ForecastIncomeRows(){const allowed=new Set(['salaire anael','salaire laurene','allocations familiales','papa av enfants','negatif positif']);return (data.budgetRevenus||[]).map((x,i)=>({index:i,label:String(x?.[0]||'Revenu'),amount:Number(x?.[1])||0,cat:getItemBudgetCategory('budgetRevenus',x)})).filter(x=>x.amount&&allowed.has(normalizeBudgetText(x.label)))}
+function v28ForecastIncomeRows(){const allowed=new Set(['salaire anael','salaire laurene','allocations familiales','papa av enfants']);return (data.budgetRevenus||[]).map((x,i)=>({index:i,label:String(x?.[0]||'Revenu'),amount:Number(x?.[1])||0,cat:getItemBudgetCategory('budgetRevenus',x)})).filter(x=>x.amount&&allowed.has(normalizeBudgetText(x.label)))}
+function v28ForecastCarryoverForMonth(key){
+ let total=0;
+ (data.budgetRevenus||[]).filter(isMonthlyBalanceCarryoverItem).forEach(item=>{
+   const amount=Number(item?.[1])||0,meta=getMonthlyBalanceCarryoverMeta(item);
+   const target=String(meta?.targetMonthKey||'');
+   if(target){if(key===target)total+=amount;return}
+   // Compatibilité avec les anciennes lignes manuelles, sans métadonnée.
+   if(key===v28ForecastMonthKey(new Date()))total+=amount;
+ });
+ return total;
+}
 function v28ForecastSourcesCard(kind){if(kind==='income'){const rows=v28ForecastIncomeRows(),total=rows.reduce((s,x)=>s+x.amount,0),open=v28ForecastBlocks.income;return `<div class="vforecast-card"><div class="vhead vforecast-collapse ${open?'open':''}" onclick="v28ToggleForecastBlock('income')"><div><b>Revenus récurrents</b><div class="vlab">Base issue du Budget</div></div><div style="text-align:right"><strong class="vgreen money">${v28Money(total)}/mois</strong><div class="vchev">⌄</div></div></div>${open?`<div class="vforecast-source-list">${rows.map(x=>`<div class="vforecast-source-line"><div><b>${escapeHtml(x.label)}</b><small>${escapeHtml(getBudgetCategoryLabel('budgetRevenus',x.cat)||'Revenu')}</small></div><strong class="money">${v28Money(x.amount)}</strong></div>`).join('')}</div>`:''}</div>`}
  const key=v28ForecastMonthKey(new Date()),rows=v28ForecastLoanRowsForMonth(key),total=v28ForecastLoanPaymentForMonth(key),open=v28ForecastBlocks.loans;return `<div class="vforecast-card"><div class="vhead vforecast-collapse ${open?'open':''}" onclick="v28ToggleForecastBlock('loans')"><div><b>Emprunts</b><div class="vlab">Mensualités actives</div></div><div style="text-align:right"><strong class="money">${v28Money(total)}/mois</strong><div class="vchev">⌄</div></div></div>${open?`<div class="vforecast-source-list">${rows.map(x=>`<div class="vforecast-source-line"><div><b>${escapeHtml(x.label)}</b><small>${x.mortgageGroup?'Prélèvement immobilier lissé':(x.meta.endDate?'Fin '+new Date(x.meta.endDate+'T12:00:00').toLocaleDateString('fr-FR'):'')}</small></div><strong class="money">${v28Money(x.meta.monthlyPayment)}</strong></div>`).join('')}</div>`:''}</div>`}
 function v28ForecastAnnualHtml(rows){
@@ -15762,7 +15861,7 @@ function v28ForecastAnnualHtml(rows){
  const livingTarget=v28ForecastRequiredLiving();
  return Object.entries(groups).map(([y,rs])=>{
   const income=rs.reduce((s,r)=>s+r.income,0),fixed=rs.reduce((s,r)=>s+r.fixed,0),loans=rs.reduce((s,r)=>s+r.loans,0),variable=rs.reduce((s,r)=>s+r.variable,0),transfers=rs.reduce((s,r)=>s+(r.transfers||0),0),events=rs.reduce((s,r)=>s+r.eventImpact,0),available=rs.reduce((s,r)=>s+r.capacity,0),living=rs.length*livingTarget,savings=rs.reduce((s,r)=>s+v28ForecastTotalPotentialSavings(r),0),open=!!v28ForecastOpenYears[y];
-  return `<div class="vforecast-year"><div class="vforecast-year-head" onclick="v28ToggleForecastYear('${y}')"><div><b>${y}</b><small class="vlab">${rs.length} mois projetés</small></div><div style="text-align:right"><strong class="${savings>0?'vgreen':''} money">${savings>0?'+ ':''}${v28Money(savings)}</strong><small class="vlab">épargne totale potentielle</small><span class="vchev">⌄</span></div></div><div class="vforecast-year-kpis"><div class="vforecast-year-kpi"><span>Revenus</span><b class="vgreen money">${v28Money(income)}</b></div><div class="vforecast-year-kpi"><span>Charges + crédits + virements</span><b class="money">${v28Money(fixed+loans+variable+transfers)}</b></div><div class="vforecast-year-kpi"><span>Capacité disponible</span><b class="${available>=0?'vgreen':'vred'} money">${v28Money(available)}</b></div><div class="vforecast-year-kpi"><span>Reste à vivre cible</span><b class="money">− ${v28Money(living)}</b><small class="vlab">${v28Money(livingTarget)}/mois</small></div><div class="vforecast-year-kpi"><span>Épargne totale potentielle</span><b class="${savings>0?'vgreen':''} money">${v28Money(savings)}</b></div><div class="vforecast-year-kpi"><span>Événements</span><b class="${events>=0?'vgreen':'vred'} money">${events>=0?'+ ':''}${v28Money(events)}</b></div></div>${open?rs.map(r=>{const monthSavings=v28ForecastTotalPotentialSavings(r),livingKept=Math.min(Math.max(0,r.capacity),livingTarget);return `<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong></div><div class="vforecast-month-detail"><span>Revenus</span><strong class="vgreen money">+ ${v28Money(r.income)}</strong><span>Frais fixes</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(r.loans)}</strong><span>Variables</span><strong class="vred money">− ${v28Money(r.variable)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(r.transfers||0)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}<span>Capacité disponible</span><strong class="${r.capacity>=0?'vgreen':'vred'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong><span>Reste à vivre cible</span><strong class="money">− ${v28Money(livingTarget)}</strong><span>Épargne programmée Anaël & Laurène</span><strong class="vgreen money">+ ${v28Money(v28ForecastProgrammedInvestmentTransfers())}</strong><span>Épargne totale potentielle</span><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong>${r.capacity<livingTarget?`<span>Reste à vivre réellement couvert</span><strong class="${r.capacity<0?'vred':''} money">${v28Money(livingKept)}</strong>`:''}</div></div>`}).join(''):''}</div>`
+  return `<div class="vforecast-year"><div class="vforecast-year-head" onclick="v28ToggleForecastYear('${y}')"><div><b>${y}</b><small class="vlab">${rs.length} mois projetés</small></div><div style="text-align:right"><strong class="${savings>0?'vgreen':''} money">${savings>0?'+ ':''}${v28Money(savings)}</strong><small class="vlab">épargne totale potentielle</small><span class="vchev">⌄</span></div></div><div class="vforecast-year-kpis"><div class="vforecast-year-kpi"><span>Revenus</span><b class="vgreen money">${v28Money(income)}</b></div><div class="vforecast-year-kpi"><span>Charges + crédits + virements</span><b class="money">${v28Money(fixed+loans+variable+transfers)}</b></div><div class="vforecast-year-kpi"><span>Capacité disponible</span><b class="${available>=0?'vgreen':'vred'} money">${v28Money(available)}</b></div><div class="vforecast-year-kpi"><span>Reste à vivre cible</span><b class="money">− ${v28Money(living)}</b><small class="vlab">${v28Money(livingTarget)}/mois</small></div><div class="vforecast-year-kpi"><span>Épargne totale potentielle</span><b class="${savings>0?'vgreen':''} money">${v28Money(savings)}</b></div><div class="vforecast-year-kpi"><span>Événements</span><b class="${events>=0?'vgreen':'vred'} money">${events>=0?'+ ':''}${v28Money(events)}</b></div></div>${open?rs.map(r=>{const monthSavings=v28ForecastTotalPotentialSavings(r),livingKept=Math.min(Math.max(0,r.capacity),livingTarget);return `<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong></div><div class="vforecast-month-detail"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(r.recurringIncome??r.income)}</strong>${r.carryover?`<span>Report Négatif/Positif</span><strong class="${r.carryover>=0?'vgreen':'vred'} money">${r.carryover>=0?'+ ':'− '}${v28Money(Math.abs(r.carryover))}</strong>`:''}<span>Frais fixes</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(r.loans)}</strong><span>Variables</span><strong class="vred money">− ${v28Money(r.variable)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(r.transfers||0)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}<span>Capacité disponible</span><strong class="${r.capacity>=0?'vgreen':'vred'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong><span>Reste à vivre cible</span><strong class="money">− ${v28Money(livingTarget)}</strong><span>Épargne programmée Anaël & Laurène</span><strong class="vgreen money">+ ${v28Money(v28ForecastProgrammedInvestmentTransfers())}</strong><span>Épargne totale potentielle</span><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong>${r.capacity<livingTarget?`<span>Reste à vivre réellement couvert</span><strong class="${r.capacity<0?'vred':''} money">${v28Money(livingKept)}</strong>`:''}</div></div>`}).join(''):''}</div>`
  }).join('')
 }
 function v28ForecastFreedomEstimate(){const goal=v28ForecastFreedomGoal(),assets=v28ForecastInvestmentAssets();let capital=assets.reduce((s,a)=>s+a.value,0);if(capital>=goal)return {months:0,date:new Date()};const start=new Date();start.setDate(1);for(let i=0;i<600;i++){assets.forEach(a=>{const mr=Math.pow(1+Math.max(-.99,a.rate),1/12)-1;const key=v28ForecastMonthKey(v28ForecastAddMonths(start,i));const extra=(v28EnsureForecastData().events||[]).reduce((sum,ev)=>sum+v28ForecastInvestmentEventForMonth(ev,key,a.id),0);a._sim=(a._sim??a.value)*(1+mr)+a.monthly+extra});capital=assets.reduce((s,a)=>s+(a._sim??a.value),0);if(capital>=goal)return {months:i+1,date:v28ForecastAddMonths(start,i+1)}}return null}
@@ -16311,12 +16410,16 @@ function v28ForecastEventImpact(ev,key){
 }
 function v28ForecastProjection(months=v28ForecastHorizon){
  v28EnsureForecastData(); const start=v28ForecastAddMonths(new Date(),v28ForecastMonthOffset);start.setDate(1);start.setHours(0,0,0,0);
- const income=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0),fixed=v28ForecastFixedWithoutLoans(),variable=v28ForecastVariableTotal(),transfers=v28ForecastInternalTransfersMonthly(),rows=[];
+ const recurringIncome=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0),fixed=v28ForecastFixedWithoutLoans(),variable=v28ForecastVariableTotal(),transfers=v28ForecastInternalTransfersMonthly(),rows=[];
  for(let i=0;i<months;i++){
    const d=v28ForecastAddMonths(start,i),key=v28ForecastMonthKey(d); let eventImpact=0; const events=[];
    data.forecast.events.forEach(ev=>{if(ev.status==='project'&&!v28EnsureForecastData().includeProjects)return;const impact=v28ForecastEventImpact(ev,key);if(impact){eventImpact+=impact;events.push({...ev,impact})}});
+   // Négatif/Positif est un report de solde, pas un revenu mensuel récurrent :
+   // il n'agit que sur le mois civil courant.
+   const carryover=v28ForecastCarryoverForMonth(key);
+   const income=recurringIncome+carryover;
    const loans=v28ForecastLoanPaymentForMonth(key),capacity=income-fixed-loans-variable-transfers+eventImpact;
-   rows.push({key,income,fixed,loans,variable,transfers,eventImpact,capacity,closing:capacity,events,loanRows:v28ForecastLoanRowsForMonth(key)});
+   rows.push({key,income,recurringIncome,carryover,fixed,loans,variable,transfers,eventImpact,capacity,closing:capacity,events,loanRows:v28ForecastLoanRowsForMonth(key)});
  }
  return rows;
 }
@@ -16372,7 +16475,7 @@ function v28RenderForecast(){
  const host=document.getElementById('v28-forecast');if(!host)return;const f=v28EnsureForecastData(),editEvent=v28ForecastEditEventId?f.events.find(x=>String(x.id)===String(v28ForecastEditEventId)):null,rows=v28ForecastProjection(),avg=v28ForecastVariableAverages(),events=v28ForecastActiveEvents().sort((a,b)=>String(a.date).localeCompare(String(b.date))),archived=v28ForecastArchivedEvents(),alerts=v28ForecastUpcomingAlerts(),first=rows[0],periodCapacity=rows.reduce((s,r)=>s+r.capacity,0),avgCapacity=rows.length?periodCapacity/rows.length:0,currentKey=v28ForecastMonthKey(new Date()),selectedKey=first?.key||currentKey,currentLoans=first?.loans||0,monthlyBase=v28ForecastIncomeRows().reduce((sum,x)=>sum+x.amount,0)-v28ForecastFixedWithoutLoans()-currentLoans-v28ForecastVariableTotal()-v28ForecastInternalTransfersMonthly();
  const typeOpts=[['income_once','Entrée exceptionnelle'],['expense_once','Dépense exceptionnelle'],['income_change','Hausse de revenu (+)'],['income_decrease','Baisse de revenu (−)'],['fixed_change','Changement de charge'],['variable_change','Hausse dépense variable (+)'],['savings','Épargne / investissement']];
  host.innerHTML=`<button class="vforecast-back" onclick="v28Go('home')">‹ Retour à l’accueil</button><div class="vey">Planification</div><div class="vhead"><h1 class="vtitle" style="margin-bottom:8px">Prévisions long terme</h1><button class="vsecondary" onclick="v28ToggleForecastForm()">＋ Événement</button></div>
- <div class="vforecast-card vforecast-hero"><div class="vforecast-month-nav"><button type="button" onclick="v28ForecastNavigateMonth(-1)" aria-label="Mois précédent">‹</button><div><b>${escapeHtml(v28ForecastLongMonth(selectedKey).toUpperCase())}</b><small>ÉPARGNE TOTALE POTENTIELLE</small></div><button type="button" onclick="v28ForecastNavigateMonth(1)" aria-label="Mois suivant">›</button></div>${v28ForecastMonthOffset!==0?`<button class="vforecast-today" type="button" onclick="v28ForecastToday()">Aujourd’hui</button>`:''}<div class="vbig ${(v28ForecastTotalPotentialSavings(first))>0?'vgreen':''} money">${v28Money(v28ForecastTotalPotentialSavings(first))}/mois</div><div class="vforecast-target-help" style="margin:4px 0 9px">Revenus − emprunts − frais fixes − variables moyennes − virements internes ± événements.</div><div class="vforecast-month-detail" style="margin:0 0 10px"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(first?.income||0)}</strong><span>Frais fixes hors crédits</span><strong class="vred money">− ${v28Money(first?.fixed||0)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(first?.loans||0)}</strong><span>Variables moyennes</span><strong class="vred money">− ${v28Money(first?.variable||0)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(first?.transfers||0)}</strong>${first?.eventImpact?`<span>Événements</span><strong class="${first.eventImpact>=0?'vgreen':'vred'} money">${first.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(first.eventImpact))}</strong>`:''}<span><b>Capacité disponible</b></span><strong class="${(first?.capacity||0)>=0?'vgreen':'vred'} money">${(first?.capacity||0)>=0?'+ ':''}${v28Money(first?.capacity||0)}</strong></div><div class="vforecast-grid"><div class="vforecast-stat"><span>ÉPARGNE PROGRAMMÉE</span><b class="${v28ForecastProgrammedInvestmentTransfers()>0?'vgreen':''} money">${v28Money(v28ForecastProgrammedInvestmentTransfers())}/mois</b><small class="vlab">Actifs Anaël & Laurène</small></div><div class="vforecast-stat"><span>ÉPARGNE SUPPLÉMENTAIRE</span><b class="${Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving())>0?'vgreen':''} money">${v28Money(Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving()))}/mois</b><small class="vlab">Disponible hors épargne du couple</small></div><div class="vforecast-stat"><span>ÉPARGNE TOTALE POTENTIELLE</span><b class="${(v28ForecastTotalPotentialSavings(first))>0?'vgreen':''} money">${v28Money(v28ForecastTotalPotentialSavings(first))}/mois</b><small class="vlab">Programmée + supplémentaire</small></div></div><div class="vforecast-grid" style="margin-top:7px"><div class="vforecast-stat" onclick="v28SetForecastRequiredLiving(event)" style="cursor:pointer"><span>RESTE À VIVRE CIBLE ✎</span><b class="${(first?.capacity||0)>=v28ForecastRequiredLiving()?'vgreen':((first?.capacity||0)<0?'vred':'')} money">${v28Money((first?.capacity||0)>=v28ForecastRequiredLiving()?v28ForecastRequiredLiving():(first?.capacity||0))}</b><small class="vlab">Objectif ${v28Money(v28ForecastRequiredLiving())}/mois · toucher pour modifier</small></div><div class="vforecast-stat"><span>CRÉDITS ACTUELS</span><b class="money">${v28Money(currentLoans)}/mois</b></div><div class="vforecast-stat"><span>VARIABLE MOYEN</span><b class="money">${v28Money(v28ForecastVariableTotal())}</b></div></div></div>
+ <div class="vforecast-card vforecast-hero"><div class="vforecast-month-nav"><button type="button" onclick="v28ForecastNavigateMonth(-1)" aria-label="Mois précédent">‹</button><div><b>${escapeHtml(v28ForecastLongMonth(selectedKey).toUpperCase())}</b><small>ÉPARGNE TOTALE POTENTIELLE</small></div><button type="button" onclick="v28ForecastNavigateMonth(1)" aria-label="Mois suivant">›</button></div>${v28ForecastMonthOffset!==0?`<button class="vforecast-today" type="button" onclick="v28ForecastToday()">Aujourd’hui</button>`:''}<div class="vbig ${(v28ForecastTotalPotentialSavings(first))>0?'vgreen':''} money">${v28Money(v28ForecastTotalPotentialSavings(first))}/mois</div><div class="vforecast-target-help" style="margin:4px 0 9px">Revenus récurrents + report du mois précédent − emprunts − frais fixes − variables moyennes − virements internes ± événements.</div><div class="vforecast-month-detail" style="margin:0 0 10px"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(first?.recurringIncome??first?.income??0)}</strong>${first?.carryover?`<span>Report Négatif/Positif</span><strong class="${first.carryover>=0?'vgreen':'vred'} money">${first.carryover>=0?'+ ':'− '}${v28Money(Math.abs(first.carryover))}</strong>`:''}<span>Frais fixes hors crédits</span><strong class="vred money">− ${v28Money(first?.fixed||0)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(first?.loans||0)}</strong><span>Variables moyennes</span><strong class="vred money">− ${v28Money(first?.variable||0)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(first?.transfers||0)}</strong>${first?.eventImpact?`<span>Événements</span><strong class="${first.eventImpact>=0?'vgreen':'vred'} money">${first.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(first.eventImpact))}</strong>`:''}<span><b>Capacité disponible</b></span><strong class="${(first?.capacity||0)>=0?'vgreen':'vred'} money">${(first?.capacity||0)>=0?'+ ':''}${v28Money(first?.capacity||0)}</strong></div><div class="vforecast-grid"><div class="vforecast-stat"><span>ÉPARGNE PROGRAMMÉE</span><b class="${v28ForecastProgrammedInvestmentTransfers()>0?'vgreen':''} money">${v28Money(v28ForecastProgrammedInvestmentTransfers())}/mois</b><small class="vlab">Actifs Anaël & Laurène</small></div><div class="vforecast-stat"><span>ÉPARGNE SUPPLÉMENTAIRE</span><b class="${Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving())>0?'vgreen':''} money">${v28Money(Math.max(0,(first?.capacity||0)-v28ForecastRequiredLiving()))}/mois</b><small class="vlab">Disponible hors épargne du couple</small></div><div class="vforecast-stat"><span>ÉPARGNE TOTALE POTENTIELLE</span><b class="${(v28ForecastTotalPotentialSavings(first))>0?'vgreen':''} money">${v28Money(v28ForecastTotalPotentialSavings(first))}/mois</b><small class="vlab">Programmée + supplémentaire</small></div></div><div class="vforecast-grid" style="margin-top:7px"><div class="vforecast-stat" onclick="v28SetForecastRequiredLiving(event)" style="cursor:pointer"><span>RESTE À VIVRE CIBLE ✎</span><b class="${(first?.capacity||0)>=v28ForecastRequiredLiving()?'vgreen':((first?.capacity||0)<0?'vred':'')} money">${v28Money((first?.capacity||0)>=v28ForecastRequiredLiving()?v28ForecastRequiredLiving():(first?.capacity||0))}</b><small class="vlab">Objectif ${v28Money(v28ForecastRequiredLiving())}/mois · toucher pour modifier</small></div><div class="vforecast-stat"><span>CRÉDITS ACTUELS</span><b class="money">${v28Money(currentLoans)}/mois</b></div><div class="vforecast-stat"><span>VARIABLE MOYEN</span><b class="money">${v28Money(v28ForecastVariableTotal())}</b></div></div></div>
  <div class="vforecast-card"><div class="vhead vforecast-collapse ${v28ForecastBlocks.chart?'open':''}" onclick="v28ToggleForecastBlock('chart')"><b>Évolution de l’épargne totale potentielle</b><span class="vchev">⌄</span></div>${v28ForecastBlocks.chart?`<div class="vforecast-segment">${[[12,'1 an'],[36,'3 ans'],[60,'5 ans'],[120,'10 ans']].map(([n,l])=>`<button class="${v28ForecastHorizon===n?'on':''}" onclick="event.stopPropagation();v28SetForecastHorizon(${n})">${l}</button>`).join('')}</div>${v28ForecastChart(rows)}`:''}</div>
  ${alerts.length?`<div class="vforecast-card"><div class="vhead"><b>🔔 Alertes</b><span class="vlab">À venir</span></div>${alerts.map(ev=>`<div class="vforecast-alert"><b>${escapeHtml(ev.label)}</b> · ${ev.days===0?'aujourd’hui':`dans ${ev.days} j`} · ${v28Money(ev.amount)}</div>`).join('')}</div>`:''}
  ${v28ForecastInvestmentCard()}
