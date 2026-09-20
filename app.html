@@ -47,6 +47,7 @@
 <!-- V26.1.66 : bouton Enregistrer en PDF pour le rapport Patrimoine -->
 <html lang="fr">
 <head>
+<!-- V28.9.60 : Menus — demande d’extraction de recette enregistrée dans Firestore pour traitement horaire à la demande. -->
 <!-- V28.9.59 : Budget — résumé du cycle harmonisé avec les pastilles débit orange / crédit vert des soldes par compte. -->
 <!-- V28.9.58 : Budget — résumé du cycle affiché en total des comptes + débits non cochés + crédits non cochés. -->
 <!-- V28.9.56 : Prévisions — correction épargne supplémentaire : capacité disponible moins reste à vivre, sans réintégrer les virements enfants. -->
@@ -54,7 +55,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-3hs22SS1ESgS4vtW5BlrWfpG9bEiXKz2EckBloeYg4I=' 'sha256-e+q0OMAWIL3KB3kXmADRMR2m75kJ1ehqVf7fjDLHC/Y=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-DLlqEYD+iMembYCkoMtnWynpW0tfexutYRcGFLaKf58='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-SDpJs189BJjPeF+rmfq4CsDpUGtpgVH6886Z6rsb4Qs=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-DLlqEYD+iMembYCkoMtnWynpW0tfexutYRcGFLaKf58='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -3549,6 +3550,7 @@ function firebaseApplySnapshotAuxiliaryState(snapshot){
   const r=snapshot.data();
   window.okxBtcState=(r.okxBtc && typeof r.okxBtc==='object')?r.okxBtc:null;
   window.recipeDataState=(r.recipeData && typeof r.recipeData==='object')?r.recipeData:{};
+  window.recipeSyncRequestState=(r.recipeSyncRequest && typeof r.recipeSyncRequest==='object')?r.recipeSyncRequest:null;
   window.tradeRepublicSyncRequestState=(r.tradeRepublicSyncRequest && typeof r.tradeRepublicSyncRequest==='object')?r.tradeRepublicSyncRequest:null;
   window.linxeaSyncRequestState=(r.linxeaSyncRequest && typeof r.linxeaSyncRequest==='object')?r.linxeaSyncRequest:null;
   if(window.updateTradeRepublicSyncUI)window.updateTradeRepublicSyncUI();
@@ -3853,6 +3855,36 @@ window.requestLinxeaSync=async function(){
     window.linxeaSyncRequestState={...request,status:'error',errorMessage:'demande impossible à envoyer'};
     window.updateLinxeaSyncUI();
     alert("Impossible d'envoyer la demande de synchronisation Linxea.");
+  }
+};
+
+
+window.requestRecipeExtraction=async function(url,label=''){
+  if(!window.firebaseReady)return false;
+  const cleanUrl=String(url||'').trim();
+  if(!cleanUrl)return false;
+  const id=(window.crypto&&typeof window.crypto.randomUUID==='function')
+    ? window.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+  const request={
+    id,
+    status:'pending',
+    requestedAt:new Date().toISOString(),
+    url:cleanUrl,
+    label:String(label||'').trim().slice(0,160)
+  };
+  window.recipeSyncRequestState=request;
+  try{
+    // Écrit le lien de recette et la demande dans la même opération Firestore :
+    // le workflow ne peut donc pas voir la demande avant de voir la nouvelle URL.
+    await setDoc(sharedRef,{
+      data:JSON.stringify(window.data),
+      recipeSyncRequest:request
+    },{merge:true});
+    return true;
+  }catch(error){
+    console.error('Demande d’extraction de recette impossible :',error);
+    return false;
   }
 };
 
@@ -5606,7 +5638,7 @@ function closeMenuRecipeModal(){
   menuRecipeEditing={cycleKey:'',mealKey:''};
 }
 
-function saveMenuRecipeLink(){
+async function saveMenuRecipeLink(){
   const {cycleKey,mealKey}=menuRecipeEditing;
   const label=getMealDishLabel(cycleKey,mealKey);
   if(!label)return;
@@ -5628,9 +5660,11 @@ function saveMenuRecipeLink(){
 
   const stat=ensureMenuDishStat(label);
   if(!stat)return;
+  const previousUrl=String(stat.recipeUrl||'');
   stat.recipeUrl=url;
 
-  // Le workflow GitHub récupérera automatiquement les ingrédients.
+  // Le workflow horaire ne travaille que lorsqu'une nouvelle URL de recette
+  // a explicitement créé une demande dans Firestore.
   // On retire seulement un éventuel ancien résultat local lié à une autre URL.
   if(window.recipeDataState && typeof window.recipeDataState==='object'){
     for(const [k,v] of Object.entries(window.recipeDataState)){
@@ -5641,6 +5675,12 @@ function saveMenuRecipeLink(){
   }
 
   save();
+  if(previousUrl!==url && typeof window.requestRecipeExtraction==='function'){
+    const queued=await window.requestRecipeExtraction(url,label);
+    if(!queued && window.firebaseReady){
+      console.warn('Lien de recette enregistré, mais la demande d’extraction n’a pas pu être créée.');
+    }
+  }
   closeMenuRecipeModal();
   renderMenus();
 }
