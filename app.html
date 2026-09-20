@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.70 : Prévisions — rapprochement crédits resserré : Permis exclu sans masquer Bibus Ewan ni les charges homonymes. -->
 <!-- V28.9.69 : Prévisions — détail contrôlable des frais fixes et emprunts, audit des crédits exclus pour éviter les doublons, projection annuelle 5 ans. -->
 <!-- V28.9.68 : Emprunts — CRD automatique mensuel uniquement pour le prêt Permis à 1 € à taux 0 %, sans modifier les autres règles de CRD. -->
 <!-- V28.9.57 : Budget — report automatique Négatif/Positif à la clôture, ventilation par compte et impact ponctuel dans les Prévisions -->
@@ -58,12 +59,14 @@
 <!-- V28.9.58 : Budget — résumé du cycle affiché en total des comptes + débits non cochés + crédits non cochés. -->
 <!-- V28.9.67 : Frais fixes — profil mensuel réservé aux prévisions ; le montant du mois en cours reste inchangé dans Budget et à la clôture. -->
 <!-- V28.9.69 : Prévisions — horizon par défaut de la projection annuelle porté de 3 à 5 ans. -->
+<!-- V28.9.70 : Prévisions — dédoublonnage robuste Frais fixes / Emprunts par libellé normalisé + mensualité, indépendamment de la catégorie. -->
+<!-- V28.9.71 : Prévisions — restauration du rendu dépliable « Projection par année ». -->
 <!-- V28.9.56 : Prévisions — correction épargne supplémentaire : capacité disponible moins reste à vivre, sans réintégrer les virements enfants. -->
 <!-- V28.9.45 : Prévisions — distingue épargne programmée, épargne supplémentaire et épargne totale potentielle. -->
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-1WitFmOvHUmOYF6mnYXoCTNHLY5fzIFuUhnMg5rRrCQ=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-UFJ7m/4EPlMVi0mzy5fs/hMJ0Dx2vBZTXb1AfXEsM/g='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-1WitFmOvHUmOYF6mnYXoCTNHLY5fzIFuUhnMg5rRrCQ=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-z9CvKlKNTbdbsEOu4wnFlLXPwZ7fowp+DLv73+vWGjU='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -16149,6 +16152,14 @@ function v28ForecastSourcesCard(kind,key=v28ForecastMonthKey(new Date())){
  const rows=v28ForecastLoanRowsForMonth(key),total=v28ForecastLoanPaymentForMonth(key),open=v28ForecastBlocks.loans;
  return `<div class="vforecast-card"><div class="vhead vforecast-collapse ${open?'open':''}" onclick="v28ToggleForecastBlock('loans')"><div><b>Emprunts</b><div class="vlab">Mensualités actives · ${escapeHtml(v28ForecastLongMonth(key))}</div></div><div style="text-align:right"><strong class="money">${v28Money(total)}/mois</strong><div class="vchev">⌄</div></div></div>${open?`<div class="vforecast-source-list">${rows.map(x=>`<div class="vforecast-source-line"><div><b>${escapeHtml(x.label)}</b><small>${x.mortgageGroup?'Prélèvement immobilier lissé':(x.meta.endDate?'Fin '+new Date(x.meta.endDate+'T12:00:00').toLocaleDateString('fr-FR'):'Emprunt Patrimoine')}</small></div><strong class="money">${v28Money(x.meta.monthlyPayment)}</strong></div>`).join('')}</div>`:''}</div>`;
 }
+function v28ForecastAnnualHtml(rows){
+ const groups={};rows.forEach(r=>{const y=r.key.slice(0,4);(groups[y]||(groups[y]=[])).push(r)});
+ const livingTarget=v28ForecastRequiredLiving();
+ return Object.entries(groups).map(([y,rs])=>{
+  const income=rs.reduce((s,r)=>s+r.income,0),fixed=rs.reduce((s,r)=>s+r.fixed,0),loans=rs.reduce((s,r)=>s+r.loans,0),variable=rs.reduce((s,r)=>s+r.variable,0),transfers=rs.reduce((s,r)=>s+(r.transfers||0),0),events=rs.reduce((s,r)=>s+r.eventImpact,0),available=rs.reduce((s,r)=>s+r.capacity,0),living=rs.length*livingTarget,savings=rs.reduce((s,r)=>s+v28ForecastTotalPotentialSavings(r),0),open=!!v28ForecastOpenYears[y];
+  return `<div class="vforecast-year"><div class="vforecast-year-head" onclick="v28ToggleForecastYear('${y}')"><div><b>${y}</b><small class="vlab">${rs.length} mois projetés</small></div><div style="text-align:right"><strong class="${savings>0?'vgreen':''} money">${savings>0?'+ ':''}${v28Money(savings)}</strong><small class="vlab">épargne totale potentielle</small><span class="vchev">⌄</span></div></div><div class="vforecast-year-kpis"><div class="vforecast-year-kpi"><span>Revenus</span><b class="vgreen money">${v28Money(income)}</b></div><div class="vforecast-year-kpi"><span>Charges + crédits + virements</span><b class="money">${v28Money(fixed+loans+variable+transfers)}</b></div><div class="vforecast-year-kpi"><span>Capacité disponible</span><b class="${available>=0?'vgreen':'vred'} money">${v28Money(available)}</b></div><div class="vforecast-year-kpi"><span>Reste à vivre cible</span><b class="money">− ${v28Money(living)}</b><small class="vlab">${v28Money(livingTarget)}/mois</small></div><div class="vforecast-year-kpi"><span>Épargne totale potentielle</span><b class="${savings>0?'vgreen':''} money">${v28Money(savings)}</b></div><div class="vforecast-year-kpi"><span>Événements</span><b class="${events>=0?'vgreen':'vred'} money">${events>=0?'+ ':''}${v28Money(events)}</b></div></div>${open?rs.map(r=>{const monthSavings=v28ForecastTotalPotentialSavings(r),livingKept=Math.min(Math.max(0,r.capacity),livingTarget);return `<div class="vforecast-month"><div class="vforecast-month-head"><b>${escapeHtml(v28ForecastLongMonth(r.key))}</b><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong></div><div class="vforecast-month-detail"><span>Revenus récurrents</span><strong class="vgreen money">+ ${v28Money(r.recurringIncome??r.income)}</strong>${v28ForecastCarryoverLineHtml(r.key,r.carryover)}<span>Frais fixes</span><strong class="vred money">− ${v28Money(r.fixed)}</strong><span>Emprunts</span><strong class="vred money">− ${v28Money(r.loans)}</strong><span>Variables</span><strong class="vred money">− ${v28Money(r.variable)}</strong><span>Virements internes</span><strong class="vred money">− ${v28Money(r.transfers||0)}</strong>${r.eventImpact?`<span>Événements</span><strong class="${r.eventImpact>=0?'vgreen':'vred'} money">${r.eventImpact>=0?'+ ':'− '}${v28Money(Math.abs(r.eventImpact))}</strong>`:''}<span>Capacité disponible</span><strong class="${r.capacity>=0?'vgreen':'vred'} money">${r.capacity>=0?'+ ':''}${v28Money(r.capacity)}</strong><span>Reste à vivre cible</span><strong class="money">− ${v28Money(livingTarget)}</strong><span>Épargne programmée Anaël & Laurène</span><strong class="vgreen money">+ ${v28Money(v28ForecastProgrammedInvestmentTransfers())}</strong><span>Épargne totale potentielle</span><strong class="${monthSavings>0?'vgreen':''} money">${monthSavings>0?'+ ':''}${v28Money(monthSavings)}</strong>${r.capacity<livingTarget?`<span>Reste à vivre réellement couvert</span><strong class="${r.capacity<0?'vred':''} money">${v28Money(livingKept)}</strong>`:''}</div></div>`}).join(''):''}</div>`
+ }).join('')
+}
 function v28ForecastFreedomEstimate(){const goal=v28ForecastFreedomGoal(),assets=v28ForecastInvestmentAssets();let capital=assets.reduce((s,a)=>s+a.value,0);if(capital>=goal)return {months:0,date:new Date()};const start=new Date();start.setDate(1);for(let i=0;i<600;i++){assets.forEach(a=>{const mr=Math.pow(1+Math.max(-.99,a.rate),1/12)-1;const key=v28ForecastMonthKey(v28ForecastAddMonths(start,i));const extra=(v28EnsureForecastData().events||[]).reduce((sum,ev)=>sum+v28ForecastInvestmentEventForMonth(ev,key,a.id),0);a._sim=(a._sim??a.value)*(1+mr)+a.monthly+extra});capital=assets.reduce((s,a)=>s+(a._sim??a.value),0);if(capital>=goal)return {months:i+1,date:v28ForecastAddMonths(start,i+1)}}return null}
 
 function v28ForecastInvestmentEditor(){const a=v28ForecastInvestmentAssets().find(x=>x.id===v28ForecastInvestmentEditId);if(!a)return '';return `<div class="vforecast-modal" onclick="if(event.target===this)v28CloseInvestmentEditor()"><div class="vforecast-modal-panel"><div class="vhead"><div><b>${escapeHtml(a.label)}</b><div class="vlab">Paramètres de projection</div></div><button class="vlink" onclick="v28CloseInvestmentEditor()">Fermer</button></div><div class="vforecast-form"><div><label>Versement mensuel €</label><input id="vforecast-invest-monthly" type="number" min="0" step="0.01" inputmode="decimal" value="${Math.round(a.monthly*100)/100}"></div><div><label>Rendement annuel estimé %</label><input id="vforecast-invest-rate" type="number" step="0.01" inputmode="decimal" value="${Math.round(a.rate*10000)/100}"></div></div><div class="vforecast-target-help" style="margin-top:8px">Le capital actuel (${v28Money(a.value)}) reste synchronisé avec Patrimoine. Ces deux valeurs servent uniquement à la projection.</div><div class="vforecast-actions"><button class="vsecondary" onclick="v28CloseInvestmentEditor()">Annuler</button><button class="vprimary" style="margin:0;padding:10px" onclick="v28SaveInvestmentEditor()">Enregistrer</button></div></div></div>`}
@@ -16658,6 +16669,22 @@ function v28ForecastLoanRowsForMonth(key){
  v28ForecastOtherLoans().filter(x=>v28ForecastLoanActiveForMonth(x,key)).forEach(x=>rows.push(x));
  return rows;
 }
+function v28ForecastLoanLabelMatch(fixedLabel,loanLabel){
+ const a=normalizeBudgetText(fixedLabel),b=normalizeBudgetText(loanLabel);
+ if(!a||!b)return false;
+ // Priorité aux libellés identiques ou inclus l'un dans l'autre.
+ // Exemple : « Permis à 1€ Ewan » doit être rapproché même si le frais fixe
+ // est classé Enfants & éducation et non Crédits.
+ if(a===b||a.includes(b)||b.includes(a))return true;
+ const stop=new Set(['credit','credits','pret','prets','emprunt','emprunts','mensualite','mensualites','euro','euros']);
+ const aw=a.split(' ').filter(w=>w.length>=4&&!stop.has(w));
+ const bw=b.split(' ').filter(w=>w.length>=4&&!stop.has(w));
+ if(!aw.length||!bw.length)return false;
+ const common=aw.filter(w=>bw.includes(w));
+ // Deux mots significatifs communs = rapprochement sûr ; un seul mot suffit
+ // seulement s'il représente l'essentiel d'un des deux libellés.
+ return common.length>=2||(common.length===1&&(aw.length===1||bw.length===1));
+}
 function v28ForecastFixedAudit(key=v28ForecastMonthKey(new Date())){
  const loans=v28ForecastOtherLoans(),used=new Set(),mortgage=v28ForecastMortgagePaymentForMonth(key);let mortgageMatched=false,rows=[],excluded=[];
  (data.budgetFixes||[]).forEach((item,index)=>{
@@ -16668,8 +16695,10 @@ function v28ForecastFixedAudit(key=v28ForecastMonthKey(new Date())){
    let match=-1;
    loans.forEach((loan,j)=>{
      if(match>=0||used.has(j)||!v28ForecastLoanActiveForMonth(loan,key))return;
-     const lp=Number(loan.meta.monthlyPayment)||0,ll=normalizeBudgetText(loan.label),amountMatch=Math.abs(lp-amount)<0.02,words=ll.split(' ').filter(w=>w.length>=4),labelMatch=words.some(w=>label.includes(w));
-     if(amountMatch&&(cat==='credits'||labelMatch))match=j;
+     const lp=Number(loan.meta.monthlyPayment)||0;
+     const amountMatch=Math.abs(lp-amount)<0.02;
+     const labelMatch=v28ForecastLoanLabelMatch(rawLabel,loan.label);
+     if(amountMatch&&(labelMatch||cat==='credits'))match=j;
    });
    if(match>=0){used.add(match);excluded.push({index,label:rawLabel,amount,matched:String(loans[match].label||'Emprunt')});return}
    rows.push({index,label:rawLabel,amount,cat,scheduled:hasFixedMonthlySchedule(item)});
