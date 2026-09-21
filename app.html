@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.79 : Épargne — établissement bancaire modifiable par livret ; le sous-titre n’est plus figé sur Crédit Agricole. -->
 <!-- V28.9.78 : Endettement — revenus retenus limités aux salaires Anaël/Laurène et allocations familiales. -->
 <!-- V28.9.77 : Accueil — le lundi affiche le midi du cycle qui se termine et le soir du nouveau cycle. -->
 <!-- V28.9.76 : Clôture — chaque frais fixe non prélevé crée une dépense de rattrapage au mois suivant, tout en conservant le frais fixe normal. -->
@@ -211,6 +212,17 @@ details.card summary::-webkit-details-marker{display:none}details.card summary::
   border:1px solid rgba(63,185,80,.28);
   border-radius:11px;
 }
+.asset-provider-logo.savings-provider-generic{
+  width:46px;
+  height:46px;
+  padding:3px;
+  background:#fff;
+  border:1px solid rgba(63,185,80,.28);
+  border-radius:11px;
+  color:#0d1117;
+  font-size:19px;
+  font-weight:900;
+}
 .savings-compact-card{
   display:flex;
   flex-direction:column;
@@ -248,7 +260,7 @@ body.hide-amounts .savings-ceiling-progress{display:none}
   .stock-brand-heading,.crypto-brand-heading{gap:7px}
   .asset-provider-logo.trade-republic{width:40px;height:40px;padding:3px}
   .asset-provider-logo.okx{width:38px;height:38px;padding:3px}
-  .asset-provider-logo.credit-agricole{width:42px;height:42px}
+  .asset-provider-logo.credit-agricole,.asset-provider-logo.savings-provider-generic{width:42px;height:42px}
   .savings-brand-heading{gap:8px}
   .savings-ceiling-line,.savings-ceiling-foot{align-items:flex-start;flex-direction:column;gap:2px}
 }
@@ -2565,12 +2577,13 @@ body > .modal-overlay canvas{
   <div class="modal">
     <h3 id="savingsEditTitle">Ajouter un livret</h3>
     <div class="savings-modal-brand">
-      <div class="asset-provider-logo credit-agricole" aria-hidden="true"><img src="logo-credit-agricole.png" alt=""></div>
-      <div><strong>Crédit Agricole</strong><span>Livret d'épargne</span></div>
+      <div class="asset-provider-logo savings-provider-generic" aria-hidden="true">🏦</div>
+      <div><strong id="savingsProviderPreview">Crédit Agricole</strong><span>Livret d'épargne</span></div>
     </div>
+    <div class="modal-field"><label>Établissement bancaire</label><input type="text" id="savingsProviderInput" maxlength="120" placeholder="Ex : Crédit Agricole, Fortuneo" oninput="updateSavingsProviderPreview()"></div>
     <div class="modal-field"><label>Libellé du livret</label><input type="text" id="savingsLabelInput" maxlength="120" placeholder="Ex : Livret A, LEP, LDDS"></div>
     <div class="modal-field"><label>Solde actuel (€)</label><input type="number" id="savingsAmountInput" min="0" step="0.01" inputmode="decimal" placeholder="0"></div>
-    <div class="savings-modal-note">Le libellé sera affiché en lecture seule dans la carte du livret.</div>
+    <div class="savings-modal-note">L’établissement et le libellé seront affichés dans la carte du livret. Le logo reste modifiable séparément en cliquant sur l’image.</div>
     <div class="modal-buttons">
       <button class="btn btn-secondary" style="flex:1" onclick="closeSavingsEditModal()">Annuler</button>
       <button class="btn btn-primary" id="savingsEditSubmitBtn" style="flex:1" onclick="submitSavingsEdit()">Ajouter</button>
@@ -6978,19 +6991,44 @@ function submitPatrimoineAmount(){
 /* LIVRETS D'ÉPARGNE */
 let activeSavingsEditIndex=-1;
 
+function getSavingsProvider(item){
+  const meta=getAssetImageMeta(item);
+  const provider=String(meta.savingsProvider||'').trim();
+  return provider||'Crédit Agricole';
+}
+
+function updateSavingsProviderPreview(){
+  const input=document.getElementById('savingsProviderInput');
+  const preview=document.getElementById('savingsProviderPreview');
+  if(preview)preview.textContent=String(input?.value||'').trim()||'Établissement bancaire';
+}
+
+function savingsDefaultLogoHtml(item){
+  const provider=getSavingsProvider(item);
+  const normalized=normalizeText(provider);
+  if(normalized.includes('credit agricole')){
+    return `<div class="asset-provider-logo credit-agricole" aria-hidden="true"><img src="logo-credit-agricole.png" alt=""></div>`;
+  }
+  const initial=(provider.match(/[A-Za-zÀ-ÿ0-9]/)||['🏦'])[0].toUpperCase();
+  return `<div class="asset-provider-logo savings-provider-generic" aria-hidden="true">${escapeHtml(initial)}</div>`;
+}
+
 function openSavingsEditModal(index=-1){
  try{v28EnsureLegacyModalsVisible()}catch(_){}
   const editing=Number.isInteger(index)&&index>=0&&Array.isArray(data.epargne?.[index]);
   if(editing&&getItemOwner(data.epargne[index],'epargne')!==activePatrimoineOwner)return;
   activeSavingsEditIndex=editing?index:-1;
-  const item=editing?data.epargne[index]:['',0,{owner:activePatrimoineOwner}];
+  const item=editing?data.epargne[index]:['',0,{owner:activePatrimoineOwner,savingsProvider:'Crédit Agricole'}];
+  const providerInput=document.getElementById('savingsProviderInput');
   const labelInput=document.getElementById('savingsLabelInput');
   const amountInput=document.getElementById('savingsAmountInput');
 
   document.getElementById('savingsEditTitle').textContent=editing?'Modifier le livret':'Ajouter un livret';
   document.getElementById('savingsEditSubmitBtn').textContent=editing?'Enregistrer':'Ajouter';
+  providerInput.value=getSavingsProvider(item);
   labelInput.value=String(item[0]||'');
   amountInput.value=Number(item[1])||0;
+  updateSavingsProviderPreview();
   document.getElementById('savingsEditModal').classList.add('active');
   setTimeout(()=>{labelInput.focus();labelInput.select();},50);
 }
@@ -7003,21 +7041,27 @@ function closeSavingsEditModal(){
 }
 
 function submitSavingsEdit(){
+  const providerInput=document.getElementById('savingsProviderInput');
   const labelInput=document.getElementById('savingsLabelInput');
   const amountInput=document.getElementById('savingsAmountInput');
+  const provider=String(providerInput?.value||'').trim();
   const label=labelInput.value.trim();
   const amount=Number(amountInput.value);
 
+  if(!provider){providerInput?.focus();return;}
   if(!label){labelInput.focus();return;}
   if(amountInput.value.trim()===''){amountInput.focus();return;}
   if(!Number.isFinite(amount)||amount<0){amountInput.focus();return;}
 
   if(activeSavingsEditIndex>=0&&Array.isArray(data.epargne?.[activeSavingsEditIndex])){
+    const item=data.epargne[activeSavingsEditIndex];
+    const meta={...getAssetImageMeta(item),savingsProvider:provider};
     data.epargne[activeSavingsEditIndex][0]=label;
     data.epargne[activeSavingsEditIndex][1]=amount;
+    data.epargne[activeSavingsEditIndex][2]=meta;
   }else{
     if(!Array.isArray(data.epargne))data.epargne=[];
-    data.epargne.push([label,amount,{owner:activePatrimoineOwner}]);
+    data.epargne.push([label,amount,{owner:activePatrimoineOwner,savingsProvider:provider}]);
   }
 
   closeSavingsEditModal();
@@ -7075,6 +7119,7 @@ function renderSavingsCards(cont){
 
   owned.forEach(({item,idx})=>{
     const label=String(item[0]||'Livret sans nom').trim()||'Livret sans nom';
+    const provider=getSavingsProvider(item);
     const amount=Number(item[1])||0;
     const row=document.createElement('div');
     row.className='savings-compact-card';
@@ -7082,8 +7127,8 @@ function renderSavingsCards(cont){
     row.innerHTML=`
       <div class="savings-compact-top">
         <div class="savings-brand-heading">
-          ${assetImageButtonHtml('epargne',idx,item,`<div class="asset-provider-logo credit-agricole" aria-hidden="true"><img src="logo-credit-agricole.png" alt=""></div>`,`Modifier l’image de ${label}`)}
-          <div class="savings-compact-title"><strong>${escapeHtml(label)}</strong><div class="savings-compact-sub">Crédit Agricole · Livret d'épargne</div></div>
+          ${assetImageButtonHtml('epargne',idx,item,savingsDefaultLogoHtml(item),`Modifier l’image de ${label}`)}
+          <div class="savings-compact-title"><strong>${escapeHtml(label)}</strong><div class="savings-compact-sub">${escapeHtml(provider)} · Livret d'épargne</div></div>
         </div>
         <button class="stock-icon-btn delete" type="button" onclick="delPatrimoine('epargne',${idx})" title="Archiver ce livret" aria-label="Archiver ${escapeHtml(label)}">×</button>
       </div>
