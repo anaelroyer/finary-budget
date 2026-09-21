@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- V28.9.78 : Endettement — revenus retenus limités aux salaires Anaël/Laurène et allocations familiales. -->
 <!-- V28.9.77 : Accueil — le lundi affiche le midi du cycle qui se termine et le soir du nouveau cycle. -->
 <!-- V28.9.76 : Clôture — chaque frais fixe non prélevé crée une dépense de rattrapage au mois suivant, tout en conservant le frais fixe normal. -->
 <!-- V28.9.75 : Menus — correction du focus des champs : la vue mobile ne se reconstruit plus au clic dans un champ de saisie. -->
@@ -72,7 +73,7 @@
 <!-- V28.9.44 : Budget — affiche séparément les débits et crédits non cochés attendus par compte. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-Ocog+x/v5Wg8nF0xN7/bDyuIC2x/77SQsIrHHto2Gbc=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-1G6tcJjz+I+IwdTqzqhtaENNjjhk5Rpcn2R/K7GRAAU='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com https://www.recaptcha.net; script-src-elem 'self' https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js https://cdnjs.cloudflare.com/ajax/libs/qrcodejs@1.0.0/qrcode.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js https://www.gstatic.com/firebasejs/12.1.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/ 'sha256-jfnvFvivlcpMvVL1TgRLUaSOg4AqHUONlbC1BlZWTUg=' 'sha256-Ocog+x/v5Wg8nF0xN7/bDyuIC2x/77SQsIrHHto2Gbc=' 'sha256-1mI2Wp9BO1XCQplfhtm8tZCvYBRny9AiI8Awos3q7O0=' 'sha256-baRuhl+5fAyCwu1MV6rGpGSAXOkudXAjVsn6fCIxyXA=' 'sha256-oWCuOuktdRB6Uye24eWqV/dqWmn1aYHxh0ZmWN2QxLU='; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://res.cloudinary.com https://www.gstatic.com https://www.google.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://raw.githubusercontent.com https://res.cloudinary.com wss://*.googleapis.com; frame-src 'self' blob: data: https://*.firebaseapp.com https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; upgrade-insecure-requests">
 <!-- V26.1.65 : rapport Patrimoine détaillé — profils, poids, Bourse/PRU/performance, Crypto, Linxea, historique mensuel -->
 <!-- V26.1.64 : suppression du texte d’aide sous le récapitulatif entretien véhicules -->
 <!-- V26.1.63 : Véhicules — logique première échéance (date ou km) + détail À jour -->
@@ -16543,7 +16544,13 @@ function v28AssetDetailRows(owner=activePatrimoineOwner){
 function v28BankDebtRatioModel(){
  try{
    const key=v28ForecastMonthKey(new Date());
-   const income=v28ForecastIncomeRows().reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+   // Taux d'endettement : uniquement les deux salaires + allocations familiales.
+   // Les autres revenus utilisés par les Prévisions (ex. Papa AV enfants) sont exclus.
+   const allowedIncome=new Set(['salaire anael','salaire laurene','allocations familiales']);
+   const income=(data.budgetRevenus||[]).reduce((sum,item)=>{
+     const label=normalizeBudgetText(item?.[0]||'');
+     return sum+(allowedIncome.has(label)?Math.max(0,Number(item?.[1])||0):0);
+   },0);
    const excluded=x=>{const label=normalizeBudgetText(x?.label||'');return /veranda/.test(label)||/permis/.test(label)};
    const loans=v28ForecastLoanRowsForMonth(key).filter(x=>!excluded(x)).map(x=>({label:String(x?.label||'Emprunt'),monthlyPayment:Number(x?.meta?.monthlyPayment)||0})).filter(x=>x.monthlyPayment>0);
    const payments=loans.reduce((sum,x)=>sum+x.monthlyPayment,0);
