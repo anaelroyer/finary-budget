@@ -1,14 +1,14 @@
 {
-  "updatedAt": "2026-09-21T14:15:27Z",
+  "updatedAt": "2026-09-21T19:33:59Z",
   "quotes": {
     "IE00B4ND3602": {
-      "price": 73.41,
+      "price": 73.63,
       "currency": "EUR",
       "market": "ETFP",
       "quoteType": "Dernier cours traité",
       "source": "Euronext · ETFP · Dernier cours traité",
       "sourceUrl": "https://live.euronext.com/fr/product/etfs/IE00B4ND3602-ETFP",
-      "updatedAt": "2026-09-21T14:15:27Z",
+      "updatedAt": "2026-09-21T19:33:59Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -97,19 +97,19 @@
         },
         {
           "date": "2026-09-21",
-          "price": 73.41,
-          "updatedAt": "2026-09-21T14:15:27Z"
+          "price": 73.63,
+          "updatedAt": "2026-09-21T19:33:59Z"
         }
       ]
     },
     "IE0002XZSHO1": {
-      "price": 7.034,
+      "price": 7.049,
       "currency": "EUR",
       "market": "XPAR",
       "quoteType": "Dernier cours traité",
       "source": "Euronext · XPAR · Dernier cours traité",
       "sourceUrl": "https://live.euronext.com/fr/product/etfs/IE0002XZSHO1-XPAR",
-      "updatedAt": "2026-09-21T14:15:27Z",
+      "updatedAt": "2026-09-21T19:33:59Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -198,19 +198,19 @@
         },
         {
           "date": "2026-09-21",
-          "price": 7.034,
-          "updatedAt": "2026-09-21T14:15:27Z"
+          "price": 7.049,
+          "updatedAt": "2026-09-21T19:33:59Z"
         }
       ]
     },
     "FR0013412020": {
-      "price": 36.925,
+      "price": 37.1,
       "currency": "EUR",
       "market": "XPAR",
       "quoteType": "Dernier cours traité",
       "source": "Euronext · XPAR · Dernier cours traité",
       "sourceUrl": "https://live.euronext.com/fr/product/etfs/FR0013412020-XPAR",
-      "updatedAt": "2026-09-21T14:15:27Z",
+      "updatedAt": "2026-09-21T19:33:59Z",
       "history": [
         {
           "date": "2026-08-29",
@@ -299,19 +299,19 @@
         },
         {
           "date": "2026-09-21",
-          "price": 36.925,
-          "updatedAt": "2026-09-21T14:15:27Z"
+          "price": 37.1,
+          "updatedAt": "2026-09-21T19:33:59Z"
         }
       ]
     },
     "FR0011550193": {
-      "price": 21.14,
+      "price": 21.175,
       "currency": "EUR",
       "market": "XPAR",
       "quoteType": "Dernier cours traité",
       "source": "Euronext · XPAR · Dernier cours traité",
       "sourceUrl": "https://live.euronext.com/fr/product/etfs/FR0011550193-XPAR",
-      "updatedAt": "2026-09-21T14:15:27Z",
+      "updatedAt": "2026-09-21T19:33:59Z",
       "history": [
         {
           "date": "2026-08-30",
@@ -395,8 +395,8 @@
         },
         {
           "date": "2026-09-21",
-          "price": 21.14,
-          "updatedAt": "2026-09-21T14:15:27Z"
+          "price": 21.175,
+          "updatedAt": "2026-09-21T19:33:59Z"
         }
       ]
     }
